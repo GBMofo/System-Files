@@ -600,6 +600,7 @@ G2L["3e"]["BackgroundTransparency"] = 1;
 
 -- StarterGui.ScreenGui.Main
 G2L["3f"] = Instance.new("Frame", G2L["1"]);
+G2L["3f"]["Visible"] = false; -- [[ ADD THIS LINE TO FIX FLASHING ]]
 G2L["3f"]["Active"] = true;
 G2L["3f"]["BorderSizePixel"] = 0;
 G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
@@ -2030,7 +2031,7 @@ G2L["d0"]["BackgroundTransparency"] = 1;
 G2L["d0"]["RichText"] = true;
 G2L["d0"]["Size"] = UDim2.new(1, 0, 0.90405, 0);
 G2L["d0"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["d0"]["Text"] = [[Your keys are currently <font color="rgb(125, 255, 125)">active</font> and will expire on...]];
+G2L["d0"]["Text"] = [[Your key is currently <font color="rgb(125, 255, 125)">active</font> and will expire on...]];
 G2L["d0"]["Name"] = [[KeyText]];
 G2L["d0"]["Position"] = UDim2.new(0, 0, 0, 0);
 
@@ -5438,141 +5439,125 @@ if v.Name == "Popups" then v.Visible = false return end
 		end);
 	end
 	dragify(script.Parent.Open);
-	local KeyFrame = Pages:WaitForChild("Home"):WaitForChild("Key");
-	local Free4Now = RunService:IsStudio();
+	
+	-- [PART 1: UI SETUP AFTER LOAD]
 	task.spawn(function()
-		if Free4Now then
-			KeyFrame:WaitForChild("KeyText").Text = 'Keys are <font color="rgb(125, 255, 125)">FREE</font> for now!';
-			KeyFrame:WaitForChild("Duration").Text = "But expires soon!";
+		local command = "/e open";
+		repeat task.wait(0.1) until game.Players.LocalPlayer
+		
+		game.Players.LocalPlayer.Chatted:Connect(function(m)
+			if ((m:sub(1, #command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
+				script.Parent.Enabled = true;
+				if Main:FindFirstChild("EnableFrame") then
+					Main.EnableFrame.Visible = true;
+				end
+			end
+		end);
+
+		-- Wait for Key Validation before modifying UI text
+		local maxWait = 20
+		repeat 
+			task.wait(0.1)
+			maxWait = maxWait - 1
+		until KeyVailded or maxWait <= 0
+		
+		if KeyVailded then
+			if Main and Main:FindFirstChild("Title") and Main.Title:FindFirstChild("TextLabel") then
+				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
+			end
 		end
 	end);
-	-- [PART 1: UI LOGIC (Username, Open Command)]
-    task.spawn(function()
-        -- 1. Setup Open Command (Wait for Main UI)
-        local command = "/e open";
-        repeat task.wait(0.1) until game.Players.LocalPlayer
-        
-        game.Players.LocalPlayer.Chatted:Connect(function(m)
-            if ((m:sub(1, #command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
-                script.Parent.Enabled = true;
-                if Main:FindFirstChild("EnableFrame") then
-                    Main.EnableFrame.Visible = true;
-                end
-            end
-        end);
 
-        -- 2. Wait for Key Validation before showing Name
-        local maxWait = 20
-        repeat 
-            task.wait(0.1)
-            maxWait = maxWait - 1
-        until KeyVailded or maxWait <= 0
-        
-        if not KeyVailded then return end -- Stop if key failed
+	-- [PART 2: KEY VALIDATION LOGIC]
+	do
+		print("[PUNK X] Script Loaded. Checking for Key...")
+		task.wait(0.5) -- Critical: Wait for Loader to pass variables
 
-        -- Safe to modify UI now
-        if Main and Main:FindFirstChild("Title") and Main.Title:FindFirstChild("TextLabel") then
-            Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
-        end
-    end);
+		-- Get Key from Global
+		local key = getgenv().PUNK_X_KEY or _G.PUNK_X_KEY
+		
+		-- Load Auth Library (GBMofo)
+		local success, KeyLib = pcall(function()
+			return loadstring(game:HttpGet("https://raw.githubusercontent.com/Silent-Caliber/System-Files/main/Auth.lua"))()
+		end)
 
-    -- [PART 2: KEY VALIDATION LOGIC]
-    do
-        print("[PUNK X] Script Loaded. Checking for Key...")
-        
-        -- CRITICAL: Wait a moment for variables to transfer from Loader
-        task.wait(0.5)
+		if not success or not KeyLib then
+			warn("[PUNK X] Auth Lib Failed.")
+			if script.Parent then script.Parent:Destroy() end
+			return
+		end
 
-        -- Check both Global environments
-        local key = getgenv().PUNK_X_KEY or _G.PUNK_X_KEY
-        
-        -- Debug Print
-        if key then print("[PUNK X] Key Found: " .. tostring(key)) else print("[PUNK X] No Key Found in globals.") end
-
-        local success, KeyLib = pcall(function()
-            return loadstring(game:HttpGet("https://raw.githubusercontent.com/GBMofo/System-Files/main/Auth.lua"))()
-        end)
-
-        if not success or not KeyLib then
-            warn("[PUNK X] Auth Lib Failed.")
-            if script.Parent then script.Parent:Destroy() end
-            return
-        end
-
-        -- 3. Validate Key (Dev Bypass + Normal)
-        if key then
-            -- [[ 👇 NEW DEV BYPASS START 👇 ]] --
-            if key == "PUNK-X-8B29-4F1A-9C3D-7E11" then
-                print("[PUNK X] 🛠️ Dev Override Accepted")
-                KeyVailded = true 
-                
-                -- Clear keys for security
-                getgenv().PUNK_X_KEY = nil
-                _G.PUNK_X_KEY = nil
-                
-                loadUI() -- Load the Executor immediately
-                
-            else
-                -- [[ 👇 STANDARD USER VALIDATION 👇 ]] --
-                local valid, data = KeyLib.Validate(key)
-                if valid then
-                    print("[PUNK X] Access Granted.")
-                    KeyVailded = true 
-                    
-                    -- Clear keys for security
-                    getgenv().PUNK_X_KEY = nil
-                    _G.PUNK_X_KEY = nil
-                    
-                    loadUI() 
-                    
-                    -- Update Expiry Date if available
-                    if getgenv().PUNK_X_EXPIRY then
-                        task.spawn(function()
-                            task.wait(1)
-                            if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
-                                Pages.Home.Key.KeyText.Text = 'Keys Active'
-                                Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
-                            end
-                            getgenv().PUNK_X_EXPIRY = nil
-                        end)
-                    end
-                else
-                    warn("[PUNK X] Invalid Key.")
-                    if script.Parent then script.Parent:Destroy() end
-                end
-            end
-            -- [[ 👆 NEW DEV BYPASS END 👆 ]] --
-        else
-            warn("⛔ No key provided! Use the Loader.")
-            -- Only destroy if not in Studio (for debugging)
-            if not game:GetService("RunService"):IsStudio() then
-                if script.Parent then script.Parent:Destroy() end
-            end
-        end
-    end
-    
-    -- [PART 3: UI SCALING]
-    task.defer(function()
-        local function UpdateSize()
-            task.wait()
-            if script.Parent and script.Parent:FindFirstChild("Main") then
-                for _, obj in ipairs(script.Parent.Main.Leftside:GetChildren()) do
-                    if (obj:IsA("Frame") or obj:IsA("TextButton")) then
-                        scaleUIElement(obj);
-                    end
-                end
-                for _, obj in ipairs(script.Parent.Main.Pages.Editor.Panel:GetChildren()) do
-                    if (obj:IsA("UIListLayout") or obj:IsA("UIPadding") or obj:IsA("UICorner") or obj:IsA("TextButton")) then
-                        scaleUIElement(obj);
-                    end
-                end
-            end
-        end
-        if workspace.CurrentCamera then
-            workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateSize);
-        end
-        UpdateSize();
-        print("✅ UI Scaled")
-    end);
+		if key then
+			-- [[ 🔴 DEV BYPASS CHECK ]]
+			if key == "PUNK-X-8B29-4F1A-9C3D-7E11" then
+				print("[PUNK X] 🛠️ Dev Override Accepted")
+				KeyVailded = true
+				
+				-- Clear keys for security
+				getgenv().PUNK_X_KEY = nil
+				_G.PUNK_X_KEY = nil
+				
+				loadUI() -- Load Executor
+			else
+				-- [[ 🟢 STANDARD USER VALIDATION ]]
+				local valid, data = KeyLib.Validate(key)
+				if valid then
+					print("[PUNK X] Access Granted.")
+					KeyVailded = true
+					
+					-- Clear keys for security
+					getgenv().PUNK_X_KEY = nil
+					_G.PUNK_X_KEY = nil
+					
+					loadUI() -- Load Executor
+					
+					-- Update Expiry Date (Green Text)
+					if getgenv().PUNK_X_EXPIRY then
+						task.spawn(function()
+							task.wait(1)
+							if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
+								Pages.Home.Key.KeyText.Text = 'Keys Active'
+								Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
+							end
+							getgenv().PUNK_X_EXPIRY = nil
+						end)
+					end
+				else
+					warn("[PUNK X] Invalid Key.")
+					if script.Parent then script.Parent:Destroy() end
+				end
+			end
+		else
+			warn("⛔ No key provided! Use the Loader.")
+			-- Only destroy if not in Studio (for debugging purposes)
+			if not game:GetService("RunService"):IsStudio() then
+				if script.Parent then script.Parent:Destroy() end
+			end
+		end
+	end
+	
+	-- [PART 3: UI SCALING]
+	task.defer(function()
+		local function UpdateSize()
+			task.wait()
+			if script.Parent and script.Parent:FindFirstChild("Main") then
+				for _, obj in ipairs(script.Parent.Main.Leftside:GetChildren()) do
+					if (obj:IsA("Frame") or obj:IsA("TextButton")) then
+						scaleUIElement(obj);
+					end
+				end
+				for _, obj in ipairs(script.Parent.Main.Pages.Editor.Panel:GetChildren()) do
+					if (obj:IsA("UIListLayout") or obj:IsA("UIPadding") or obj:IsA("UICorner") or obj:IsA("TextButton")) then
+						scaleUIElement(obj);
+					end
+				end
+			end
+		end
+		if workspace.CurrentCamera then
+			workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateSize);
+		end
+		UpdateSize();
+		print("✅ UI Scaled")
+	end);
 end;
 C_2()
