@@ -2750,6 +2750,7 @@ G2L["120"]["Name"] = [[Glow]];
 
 -- StarterGui.ScreenGui.Icon
 G2L["121"] = Instance.new("ImageLabel", G2L["1"]);
+G2L["121"]["Visible"] = false; -- [[ ADD THIS ]]
 G2L["121"]["ZIndex"] = 2;
 G2L["121"]["BorderSizePixel"] = 0;
 G2L["121"]["ScaleType"] = Enum.ScaleType.Fit;
@@ -2765,6 +2766,7 @@ G2L["121"]["Position"] = UDim2.new(0.05907, 0, 0.10225, 0);
 
 -- StarterGui.ScreenGui.Side
 G2L["122"] = Instance.new("Frame", G2L["1"]);
+G2L["122"]["Visible"] = false; -- [[ ADD THIS ]]
 G2L["122"]["Active"] = true;
 G2L["122"]["ZIndex"] = 0;
 G2L["122"]["BorderSizePixel"] = 0;
@@ -5516,7 +5518,7 @@ if v.Name == "Popups" then v.Visible = false return end
 						task.spawn(function()
 							task.wait(1)
 							if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
-								Pages.Home.Key.KeyText.Text = 'Keys Active'
+								Pages.Home.Key.KeyText.Text = 'Your key is currently <font color="rgb(125, 255, 125)">active</font> and will expire on...'
 								Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
 							end
 							getgenv().PUNK_X_EXPIRY = nil
