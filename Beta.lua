@@ -4557,7 +4557,6 @@ if v.Name == "Popups" then v.Visible = false return end
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
 				
-				-- If NOT editing a saved file (normal tab), handle duplicates & auto-save to scripts/
 				if not isTemp then
 					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
@@ -4576,42 +4575,59 @@ if v.Name == "Popups" then v.Visible = false return end
 				UIEvents.EditorTabs.switchTab(TabName);
 				UIEvents.EditorTabs.updateUI();
 			end,
-			saveTab = function(tabName, Content)
+			saveTab = function(tabName, Content, isExplicitSave)
 				tabName = tabName or Data.Editor.CurrentTab;
 				if not tabName then return end
 
 				-- [[ MODE 1: EDITING SAVED FILE ]]
 				if Data.Editor.EditingSavedFile == tabName then
-					-- Overwrite the ACTUAL Saved file
-					UIEvents.Saved.SaveFile(tabName, Content, true) -- true = Overwrite
-					createNotification("Saved File Overwritten", "Success", 3)
-					
-					-- Cleanup Temp Tab
-					CLONED_Detectedly.delfile("scripts/" .. tabName .. ".lua")
-					Data.Editor.Tabs[tabName] = nil
-					Data.Editor.EditingSavedFile = nil
-					Data.Editor.CurrentTab = nil
-					
-					-- Redirect to Saved Tab
-					UIEvents.EditorTabs.updateUI()
-					UIEvents.Nav.goTo("Saved")
+					if isExplicitSave then
+						-- BUTTON CLICK: Overwrite the Saved File
+						UIEvents.Saved.SaveFile(tabName, Content, true) 
+						createNotification("Saved File Overwritten", "Success", 3)
+						
+						-- Cleanup Temp Tab & Redirect
+						CLONED_Detectedly.delfile("scripts/" .. tabName .. ".lua")
+						Data.Editor.Tabs[tabName] = nil
+						Data.Editor.EditingSavedFile = nil
+						Data.Editor.CurrentTab = nil
+						
+						UIEvents.EditorTabs.updateUI()
+						UIEvents.Nav.goTo("Saved")
+					else
+						-- TEXT CHANGE: Update the temp persistence file only (safety backup)
+						-- We do NOT overwrite the 'saves/' file here.
+						local TabData = Data.Editor.Tabs[tabName];
+						if TabData then
+							CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+								Name = tabName,
+								Content = Content,
+								Order = TabData[2]
+							}));
+							Data.Editor.Tabs[tabName] = { Content, TabData[2] };
+						end
+					end
 					return
 				end
 
-				-- [[ MODE 2: NORMAL EDITOR (Persistence Only) ]]
-				-- This saves to the hidden 'scripts/' folder so it stays when you rejoin, 
-				-- BUT it does NOT go to the 'Saved' tab.
-				local TabData = Data.Editor.Tabs[tabName];
-				if (TabData) then
-					CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-						Name = tabName,
-						Content = Content,
-						Order = TabData[2]
-					}));
-					Data.Editor.Tabs[tabName] = {
-						Content,
-						TabData[2]
-					};
+				-- [[ MODE 2: NORMAL EDITOR ]]
+				if isExplicitSave then
+					-- BUTTON CLICK: Save to 'Saved' Tab (creates new file)
+					UIEvents.Saved.SaveFile(tabName, Content, false)
+				else
+					-- TEXT CHANGE: Update Persistence only (scripts/ folder)
+					local TabData = Data.Editor.Tabs[tabName];
+					if (TabData) then
+						CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+							Name = tabName,
+							Content = Content,
+							Order = TabData[2]
+						}));
+						Data.Editor.Tabs[tabName] = {
+							Content,
+							TabData[2]
+						};
+					end
 				end
 			end,
 			switchTab = function(ToTab)
@@ -4620,12 +4636,9 @@ if v.Name == "Popups" then v.Visible = false return end
 					local editingName = Data.Editor.EditingSavedFile
 					
 					createNotification("Editing Cancelled", "Warn", 3)
-					
-					-- Cleanup
 					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
 					Data.Editor.Tabs[editingName] = nil;
 					Data.Editor.EditingSavedFile = nil
-					
 					UIEvents.EditorTabs.updateUI()
 				end
 
@@ -4635,19 +4648,11 @@ if v.Name == "Popups" then v.Visible = false return end
 					local EditorFrame = Editor:WaitForChild("Editor").Input;
 					local OldTab = Data.Editor.CurrentTab;
 					
-					-- Auto-save previous tab to persistent storage (scripts/) if normal
+					-- Auto-save previous tab persistence
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						local CurrentContent = EditorFrame.Text;
-						-- Save to persistence only
-						local TabData = Data.Editor.Tabs[OldTab]
-						if TabData then
-							CLONED_Detectedly.writefile("scripts/" .. OldTab .. ".lua", game.HttpService:JSONEncode({
-								Name = OldTab,
-								Content = CurrentContent,
-								Order = TabData[2]
-							}));
-							Data.Editor.Tabs[OldTab] = { CurrentContent, TabData[2] };
-						end
+						-- Explicitly calling saveTab with false to ensure persistence updates
+						UIEvents.EditorTabs.saveTab(OldTab, CurrentContent, false);
 					end
 					
 					Data.Editor.CurrentTab = ToTab;
@@ -4732,7 +4737,6 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end,
 			RenameFile = function(NewName, TargetTab)
-				-- [[ RENAME LOGIC FOR EDITING SAVED FILES ]]
 				if Data.Editor.EditingSavedFile == TargetTab then
 					NewName = getDuplicatedName(NewName, Data.Saves.Scripts or {});
 					if not Data.Saves.Scripts[NewName] then
@@ -4750,7 +4754,6 @@ if v.Name == "Popups" then v.Visible = false return end
 					return
 				end
 
-				-- Standard Rename
 				NewName = getDuplicatedName(NewName, Data.Editor.Tabs or {});
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then
@@ -4812,7 +4815,6 @@ if v.Name == "Popups" then v.Visible = false return end
 						UIEvents.Saved.DelFile(i);
 					end);
 
-					-- [[ EDIT BUTTON LOGIC ]]
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
 						if Data.Editor.EditingSavedFile == i then
 							UIEvents.Nav.goTo("Editor")
@@ -4833,7 +4835,6 @@ if v.Name == "Popups" then v.Visible = false return end
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
 
-					-- [[ AUTOEXEC BUTTON LOGIC ]]
 					local autoExecPath = "autoexec/" .. i .. ".lua"
 					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
 					
@@ -4898,7 +4899,6 @@ if v.Name == "Popups" then v.Visible = false return end
 					Pages.UIPageLayout:JumpTo(Pages[Name]);
 				end
 				
-				-- Manual Visual Update Logic (Fixes Blue Circle getting stuck)
 				local Button = nil
 				for _, frame in ipairs(Nav:GetChildren()) do
 					if frame:IsA("Frame") then
@@ -5248,7 +5248,8 @@ if v.Name == "Popups" then v.Visible = false return end
 		end);
 		
 		Panel.Save[Method]:Connect(function()
-			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text); 
+			-- Pass TRUE for explicit save (Button clicked)
+			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, true); 
 		end);
 		
 		Panel.Rename[Method]:Connect(function()
@@ -5263,14 +5264,15 @@ if v.Name == "Popups" then v.Visible = false return end
 		
 		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
 			update_lines(EditorFrame.Input, EditorFrame.Lines);
-			-- Only auto-save to scripts/ if NOT editing a saved file
-			if not Data.Editor.EditingSavedFile then
-				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text);
-			end
+			-- Pass FALSE for auto-save (Typing)
+			-- This updates persistence but does NOT create a Saved File.
+			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
 		end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
-		highlighter.highlight({ textObject = EditorFrame.Input });
+		highlighter.highlight({
+			textObject = EditorFrame.Input
+		});
 		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
@@ -5292,8 +5294,9 @@ if v.Name == "Popups" then v.Visible = false return end
 		Buttons["Confirm"][Method]:Connect(function()
 			local newName = script.Parent.Popups.Main.Input.Text;
 			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
-			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
-			
+			if (isEmpty or (newName == Data.Editor.CurrentTab)) then
+				return;
+			end
 			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
 			script.Parent.Popups.Visible = false;
 		end)
