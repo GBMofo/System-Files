@@ -4541,7 +4541,6 @@ if v.Name == "Popups" then v.Visible = false return end
 	
 	local InitTabs = {};
 	-- [[ UPDATED UI EVENTS ]]
-	-- [[ UPDATED UI EVENTS ]]
 	local UIEvents = {};
 	UIEvents = {
 		EditorTabs = {
@@ -4845,6 +4844,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end
 		}
+};
 	
 	-- [[ INIT SAVED TAB ]]
 	InitTabs.Saved = function()
