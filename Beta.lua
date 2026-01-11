@@ -4540,7 +4540,7 @@ if v.Name == "Popups" then v.Visible = false return end
 	};
 	
 	local InitTabs = {};
-	-- [[ UPDATED UI EVENTS ]]
+	-- [[ UPDATED UI EVENTS & LOGIC ]]
 	local UIEvents = {};
 	UIEvents = {
 		EditorTabs = {
@@ -4557,11 +4557,9 @@ if v.Name == "Popups" then v.Visible = false return end
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
 				
-				-- If NOT editing a saved file (normal tab), handle duplicates and Save to file immediately
+				-- If NOT editing a saved file, handle duplicates & auto-save to scripts/
 				if not isTemp then
 					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
-					
-					-- PERSISTENCE: Save to scripts folder immediately
 					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
 						Name = TabName,
 						Content = Content,
@@ -4582,27 +4580,27 @@ if v.Name == "Popups" then v.Visible = false return end
 				tabName = tabName or Data.Editor.CurrentTab;
 				if not tabName then return end
 
-				-- [[ SAVE LOGIC FOR EDIT MODE ]]
-				-- Only overwrite the Saved File if this function is called explicitly (via Save Button)
+				-- [[ MODE 1: EDITING SAVED FILE ]]
 				if Data.Editor.EditingSavedFile == tabName then
-					UIEvents.Saved.SaveFile(tabName, Content) 
+					-- Overwrite the ACTUAL Saved file
+					UIEvents.Saved.SaveFile(tabName, Content, true) -- true = Overwrite
 					createNotification("Saved File Overwritten", "Success", 3)
+					
+					-- Cleanup Temp Tab
+					CLONED_Detectedly.delfile("scripts/" .. tabName .. ".lua")
+					Data.Editor.Tabs[tabName] = nil
+					Data.Editor.EditingSavedFile = nil
+					Data.Editor.CurrentTab = nil
+					
+					-- Redirect to Saved Tab
+					UIEvents.EditorTabs.updateUI()
+					UIEvents.Nav.goTo("Saved")
 					return
 				end
 
-				-- Standard Editor Save Logic (Save to scripts/ folder for persistence)
-				local TabData = Data.Editor.Tabs[tabName];
-				if (TabData and Content) then
-					CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-						Name = tabName,
-						Content = Content,
-						Order = TabData[2]
-					}));
-					Data.Editor.Tabs[tabName] = {
-						Content,
-						TabData[2]
-					};
-				end
+				-- [[ MODE 2: NORMAL EDITOR ]]
+				-- Save to Saved Tab (New File)
+				UIEvents.Saved.SaveFile(tabName, Content, false)
 			end,
 			switchTab = function(ToTab)
 				-- [[ CANCELLATION LOGIC: SWITCHING TABS ]]
@@ -4611,11 +4609,13 @@ if v.Name == "Popups" then v.Visible = false return end
 					
 					createNotification("Editing Cancelled", "Warn", 3)
 					
-					-- Remove the temp tab
+					-- Cleanup
+					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
 					Data.Editor.Tabs[editingName] = nil;
-					
 					Data.Editor.EditingSavedFile = nil
+					
 					UIEvents.EditorTabs.updateUI()
+					-- Continue to switch...
 				end
 
 				if (Data.Editor.Tabs[ToTab] and not Data.Editor.IsSwitching) then
@@ -4624,10 +4624,19 @@ if v.Name == "Popups" then v.Visible = false return end
 					local EditorFrame = Editor:WaitForChild("Editor").Input;
 					local OldTab = Data.Editor.CurrentTab;
 					
-					-- Auto-save previous tab (Only if it's a normal tab)
+					-- Auto-save previous tab to persistent storage (scripts/) if normal
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						local CurrentContent = EditorFrame.Text;
-						UIEvents.EditorTabs.saveTab(OldTab, CurrentContent);
+						-- Save to scripts/ folder logic embedded here to avoid triggering 'Saved File Overwritten'
+						local TabData = Data.Editor.Tabs[OldTab]
+						if TabData then
+							CLONED_Detectedly.writefile("scripts/" .. OldTab .. ".lua", game.HttpService:JSONEncode({
+								Name = OldTab,
+								Content = CurrentContent,
+								Order = TabData[2]
+							}));
+							Data.Editor.Tabs[OldTab] = { CurrentContent, TabData[2] };
+						end
 					end
 					
 					Data.Editor.CurrentTab = ToTab;
@@ -4657,7 +4666,6 @@ if v.Name == "Popups" then v.Visible = false return end
 					end
 				end
 				
-				-- Only delete file if it's a persistent tab
 				if not isEditing then
 					CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua");
 				end
@@ -4667,6 +4675,8 @@ if v.Name == "Popups" then v.Visible = false return end
 				if isEditing then
 					createNotification("Editing Cancelled", "Warn", 3)
 					Data.Editor.EditingSavedFile = nil
+					-- If we deleted the editing tab, redirect to Saved
+					UIEvents.Nav.goTo("Saved") 
 				end
 
 				UIEvents.EditorTabs.updateUI();
@@ -4678,6 +4688,11 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
+					-- [[ HIDE OTHER TABS IN EDIT MODE ]]
+					if Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile then
+						continue
+					end
+					
 					total = total + 1;
 					local new = script.Yo:Clone();
 					new.Parent = Pages.Editor.Tabs;
@@ -4697,6 +4712,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				local Editor = Pages:WaitForChild("Editor");
 				local Panel = Editor:WaitForChild("Panel");
 				local EditorFrame = Editor:WaitForChild("Editor");
+				
 				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
 					EditorFrame.Visible = false;
 					Panel.Visible = false;
@@ -4710,11 +4726,9 @@ if v.Name == "Popups" then v.Visible = false return end
 				if Data.Editor.EditingSavedFile == TargetTab then
 					NewName = getDuplicatedName(NewName, Data.Saves.Scripts or {});
 					if not Data.Saves.Scripts[NewName] then
-						-- Rename Save File
-						UIEvents.Saved.SaveFile(NewName, Data.Editor.Tabs[TargetTab][1]);
+						UIEvents.Saved.SaveFile(NewName, Data.Editor.Tabs[TargetTab][1], false);
 						UIEvents.Saved.DelFile(TargetTab);
 						
-						-- Update Editor State
 						Data.Editor.EditingSavedFile = NewName
 						Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab]
 						Data.Editor.Tabs[TargetTab] = nil
@@ -4726,7 +4740,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					return
 				end
 
-				-- Standard Rename Logic
+				-- Standard Rename
 				NewName = getDuplicatedName(NewName, Data.Editor.Tabs or {});
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then
@@ -4738,8 +4752,8 @@ if v.Name == "Popups" then v.Visible = false return end
 						Content = Data.Editor.Tabs[TargetTab][1],
 						Order = Data.Editor.Tabs[TargetTab][2]
 					}));
-					
 					CLONED_Detectedly.delfile("scripts/" .. TargetTab .. ".lua");
+					
 					Data.Editor.Tabs[TargetTab] = nil
 					Data.Editor.CurrentTab = NewName
 					
@@ -4748,14 +4762,22 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		},
 		Saved = {
-			SaveFile = function(Name, Content)
-				Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
+			SaveFile = function(Name, Content, Overwrite)
+				-- If Overwrite is false/nil, generate a new name. If true, keep Name.
+				if not Overwrite then
+					Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
+				end
+				
 				CLONED_Detectedly.writefile("saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
 					Name = Name,
 					Content = Content
 				}));
 				Data.Saves.Scripts[Name] = Content;
 				UIEvents.Saved.UpdateUI();
+				
+				if not Overwrite then
+					createNotification("Saved to: " .. Name, "Success", 3)
+				end
 			end,
 			DelFile = function(Name)
 				CLONED_Detectedly.delfile("saves/" .. Name .. ".lua");
@@ -4783,25 +4805,21 @@ if v.Name == "Popups" then v.Visible = false return end
 
 					-- [[ EDIT BUTTON LOGIC ]]
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
-						-- If already editing this file, just switch to editor
 						if Data.Editor.EditingSavedFile == i then
 							UIEvents.Nav.goTo("Editor")
 							return
 						end
-
-						-- If editing another file, cancel it first
+						
 						if Data.Editor.EditingSavedFile then
-							createNotification("Previous Edit Cancelled", "Warn", 3)
 							local old = Data.Editor.EditingSavedFile
+							CLONED_Detectedly.delfile("scripts/" .. old .. ".lua")
 							Data.Editor.Tabs[old] = nil
 							Data.Editor.EditingSavedFile = nil
 						end
 
-						-- Create temp tab
 						UIEvents.EditorTabs.createTab(i, v, true)
 						Data.Editor.EditingSavedFile = i
 						
-						-- Force Redirect
 						UIEvents.Nav.goTo("Editor")
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
@@ -4811,9 +4829,9 @@ if v.Name == "Popups" then v.Visible = false return end
 					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
 					
 					if isAutoOn then
-						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(85, 255, 85) -- Green
+						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(85, 255, 85)
 					else
-						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(255, 50, 50) -- Red
+						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(255, 50, 50)
 					end
 					
 					new.Misc.Panel.AutoExec.MouseButton1Click:Connect(function()
@@ -4842,7 +4860,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			RenameFile = function(NewName, TargetTab)
 				NewName = getDuplicatedName(NewName, Data.Saves.Scripts or {});
 				if not Data.Saves.Scripts[NewName] then
-					UIEvents.Saved.SaveFile(NewName, Data.Saves.Scripts[TargetTab]);
+					UIEvents.Saved.SaveFile(NewName, Data.Saves.Scripts[TargetTab], false);
 					UIEvents.Saved.DelFile(TargetTab);
 					UIEvents.Saved.UpdateUI();
 				end
@@ -4867,6 +4885,11 @@ if v.Name == "Popups" then v.Visible = false return end
 		},
 		Nav = {
 			goTo = function(Name)
+				if Pages:FindFirstChild(Name) then
+					Pages.UIPageLayout:JumpTo(Pages[Name]);
+				end
+				
+				-- Manual Visual Update Logic (Fixes Blue Circle getting stuck)
 				local Button = nil
 				for _, frame in ipairs(Nav:GetChildren()) do
 					if frame:IsA("Frame") then
@@ -4876,64 +4899,56 @@ if v.Name == "Popups" then v.Visible = false return end
 					end
 				end
 				
-				if Pages:FindFirstChild(Name) then
-					Pages.UIPageLayout:JumpTo(Pages[Name]);
-				end
-				
 				if Button then
-					for _, c in pairs(getconnections(Button.MouseButton1Click)) do c:Fire() end
+					-- Directly invoke the animation logic manually
+					-- We access the same math used in InitTabs.Nav to move EnableFrame
+					EnableFrame.Visible = true;
+					Pages.Visible = true; -- Ensure page isn't hidden
+					local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
+					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
+					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y);
+					
+					-- Instant move to prevent animation conflicts during redirects
+					EnableFrame.Position = TargetPos;
+					EnableFrame.Size = TargetSize;
+					EnableFrame.BackgroundTransparency = 0
 				end
 			end
 		}
 	};
 
 	InitTabs.Settings = function()
-		-- [1] Handle Sliders
 		local SetData = {
 			UITransparency = {
 				Type = "Slider",
 				Callback = function(V)
-					if V then
-						script.Parent.Full.Transparency = V;
-					end
+					if V then script.Parent.Full.Transparency = V; end
 				end
 			}
 		};
 		local Settings = Pages:WaitForChild("Settings");
 		for _, v in pairs(Settings.Scripts:GetChildren()) do
-			if SetData[v.Name] then
-				if (SetData[v.Name].Type == "Slider") then
-					local UIS = game:GetService("UserInputService");
-					local Dragging = false;
-					v.Main.Line.Interact.MouseButton1Down:Connect(function()
-						Dragging = true;
-					end);
-					local function ChangeToValue(Percent)
-						local Value = math.floor(Percent * 100);
-						return Value;
+			if SetData[v.Name] and SetData[v.Name].Type == "Slider" then
+				local UIS = game:GetService("UserInputService");
+				local Dragging = false;
+				v.Main.Line.Interact.MouseButton1Down:Connect(function() Dragging = true; end);
+				UIS.InputChanged:Connect(function()
+					if Dragging then
+						local MousePos = UIS:GetMouseLocation() + Vector2.new(0, - 36);
+						local RelPos = MousePos - v.Main.Line.AbsolutePosition;
+						local Percent = math.clamp(RelPos.X / v.Main.Line.AbsoluteSize.X, 0, 1);
+						v.Main.Line.Interact.Position = UDim2.new(Percent, 0, v.Main.Line.Interact.Position.Y.Scale, 0);
+						v.Main.Line.Fill.Size = UDim2.new(Percent, 0, v.Main.Line.Fill.Size.Y.Scale, 0);
+						v.Main.Line.Percentage.Value = math.floor(Percent * 100);
+						SetData[v.Name].Callback(Percent);
 					end
-					UIS.InputChanged:Connect(function()
-						if Dragging then
-							local MousePos = UIS:GetMouseLocation() + Vector2.new(0, - 36);
-							local RelPos = MousePos - v.Main.Line.AbsolutePosition;
-							local Percent = math.clamp(RelPos.X / v.Main.Line.AbsoluteSize.X, 0, 1);
-							v.Main.Line.Interact.Position = UDim2.new(Percent, 0, v.Main.Line.Interact.Position.Y.Scale, 0);
-							v.Main.Line.Fill.Size = UDim2.new(Percent, 0, v.Main.Line.Fill.Size.Y.Scale, 0);
-							local FinalValue = ChangeToValue(Percent);
-							v.Main.Line.Percentage.Value = FinalValue;
-							SetData[v.Name].Callback(Percent);
-						end
-					end);
-					UIS.InputEnded:Connect(function(input)
-						if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then
-							Dragging = false;
-						end
-					end);
-				end
+				end);
+				UIS.InputEnded:Connect(function(input)
+					if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then Dragging = false; end
+				end);
 			end
 		end
 
-		-- [2] Helper: Create Action Button
 		local function newButton(title, btnText, callback)
 			local ButtonFrame = {};
 			do
@@ -4945,27 +4960,22 @@ if v.Name == "Popups" then v.Visible = false return end
 				G2L['d6']['Size'] = UDim2.new(1, 0, 0, 48);
 				G2L['d6']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
 				G2L['d6']['Name'] = title;
-				
 				local corner = Instance.new("UICorner", G2L['d6']);
 				corner['CornerRadius'] = UDim.new(0, 18);
-				
 				local layout = Instance.new("UIListLayout", G2L['d6']);
 				layout['HorizontalFlex'] = Enum.UIFlexAlignment.Fill;
 				layout['Wraps'] = true;
 				layout['VerticalAlignment'] = Enum.VerticalAlignment.Center;
 				layout['SortOrder'] = Enum.SortOrder.LayoutOrder;
-				
 				local stroke = Instance.new("UIStroke", G2L['d6']);
 				stroke['Transparency'] = 0.95;
 				stroke['Thickness'] = 2;
 				stroke['Color'] = Color3.fromRGB(232, 229, 255);
-				
 				local pad = Instance.new("UIPadding", G2L['d6']);
 				pad['PaddingTop'] = UDim.new(0, 6);
 				pad['PaddingRight'] = UDim.new(0, 12);
 				pad['PaddingLeft'] = UDim.new(0, 12);
 				pad['PaddingBottom'] = UDim.new(0, 6);
-				
 				local label = Instance.new("TextLabel", G2L['d6']);
 				label['TextWrapped'] = true;
 				label['BackgroundTransparency'] = 1;
@@ -4977,12 +4987,10 @@ if v.Name == "Popups" then v.Visible = false return end
 				label['TextSize'] = 14;
 				label['TextScaled'] = true; 
 				label['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
-				
 				local btnContainer = Instance.new("CanvasGroup", G2L['d6']);
 				btnContainer['BackgroundTransparency'] = 1;
 				btnContainer['Size'] = UDim2.new(0.25, 0, 0.75, 0); 
 				btnContainer['Position'] = UDim2.new(0.75, 0, 0.12, 0);
-				
 				local btn = Instance.new("TextButton", btnContainer);
 				btn['Size'] = UDim2.new(1, 0, 1, 0);
 				btn['BackgroundColor3'] = Color3.fromRGB(218, 50, 50); 
@@ -4990,15 +4998,12 @@ if v.Name == "Popups" then v.Visible = false return end
 				btn['Text'] = btnText;
 				btn['Font'] = Enum.Font.SourceSansBold;
 				btn['TextSize'] = 14;
-				
 				local btnCorner = Instance.new("UICorner", btn);
 				btnCorner['CornerRadius'] = UDim.new(0, 8);
-
 				btn.MouseButton1Click:Connect(function() callback() end)
 			end
 		end
 
-		-- [3] Helper: Create Toggle
 		local function newToggle(title, callbacl)
 			local Toggles = {};
 			local Enable = false;
@@ -5102,39 +5107,34 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 		
-		-- [4] Create the Settings
 		newToggle("Invisible Open Trigger", function(v)
 			InvisTriggerOpen = v;
 			if v then createNotification('Chat "/e open" to open UI', "Info", 5); end
 		end);
 
 		newToggle("Censored Name In UI", function(v)
-			if v then
-				Main.Title.TextLabel.Text = "Hello, User!";
-			else
-				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
-			end
+			if v then Main.Title.TextLabel.Text = "Hello, User!";
+			else Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!"; end
 		end);
 		
-		newToggle("Anti AFK", function()
+		newToggle("Anti AFK", function(v)
 			local speaker = game:GetService("Players").LocalPlayer
-			if getconnections then
-				for _, connection in pairs(getconnections(speaker.Idled)) do
-					if connection["Disable"] then connection["Disable"](connection)
-					elseif connection["Disconnect"] then connection["Disconnect"](connection) end
+			if v then
+				if getconnections then
+					for _, connection in pairs(getconnections(speaker.Idled)) do
+						connection:Disable()
+					end
+				else
+					speaker.Idled:Connect(function()
+						Services.VirtualUser:CaptureController()
+						Services.VirtualUser:ClickButton2(Vector2.new())
+					end)
 				end
-			else
-				speaker.Idled:Connect(function()
-					Services.VirtualUser:CaptureController()
-					Services.VirtualUser:ClickButton2(Vector2.new())
-				end)
+				createNotification("Anti AFK Enabled", "Success", 5)
 			end
-			createNotification("Anti AFK Enabled!", "Success", 5)
 		end)
 		
-		local fpsBoostActive = false
 		newToggle("FPS Boost", function(v)
-			fpsBoostActive = v
 			if v then
 				for _, obj in pairs(game:GetDescendants()) do
 					if obj:IsA("BasePart") then obj.CastShadow = false; obj.Material = "Plastic" end
@@ -5148,7 +5148,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			if delfile and isfile then
 				if isfile("punk-x-env.txt") then
 					delfile("punk-x-env.txt")
-					createNotification("Environment Reset! Re-inject to choose.", "Success", 5)
+					createNotification("Reset Success. Re-inject.", "Success", 5)
 				else
 					createNotification("No preference saved.", "Error", 3)
 				end
@@ -5178,7 +5178,6 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 		if (# scripts == 0) then
-			-- Create initial tab if none exist (this will auto-save due to new logic)
 			UIEvents.EditorTabs.createTab("Script", "");
 		end
 		UIEvents.EditorTabs.updateUI();
@@ -5208,9 +5207,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			local isEmpty = #hi:gsub("[%s]","") <= 0
 			if isEmpty then
 				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-					if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
-						v.Visible = true;
-					end
+					if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
 				end
 				return
 			end
@@ -5245,13 +5242,11 @@ if v.Name == "Popups" then v.Visible = false return end
 		end);
 		
 		Panel.Save[Method]:Connect(function()
-			-- This calls the central saveTab logic in UIEvents
 			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text); 
 		end);
 		
 		Panel.Rename[Method]:Connect(function()
 			script.Parent.Popups.Visible = true;
-			-- Pre-fill with current tab name
 			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
 		end);
 		
@@ -5262,16 +5257,14 @@ if v.Name == "Popups" then v.Visible = false return end
 		
 		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
 			update_lines(EditorFrame.Input, EditorFrame.Lines);
-			-- Only auto-save to temp/file if NOT editing a saved file to prevent accidental overwrite before button press
+			-- Only auto-save to scripts/ if NOT editing a saved file
 			if not Data.Editor.EditingSavedFile then
 				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text);
 			end
 		end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
-		highlighter.highlight({
-			textObject = EditorFrame.Input
-		});
+		highlighter.highlight({ textObject = EditorFrame.Input });
 		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
@@ -5293,10 +5286,8 @@ if v.Name == "Popups" then v.Visible = false return end
 		Buttons["Confirm"][Method]:Connect(function()
 			local newName = script.Parent.Popups.Main.Input.Text;
 			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
-			if (isEmpty or (newName == Data.Editor.CurrentTab)) then
-				return;
-			end
-			-- Call central Rename Logic
+			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
+			
 			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
 			script.Parent.Popups.Visible = false;
 		end)
@@ -5309,50 +5300,29 @@ if v.Name == "Popups" then v.Visible = false return end
 	InitTabs.Search = function()
 		local Search = Pages:WaitForChild("Search");
 		local TagsValid = {
-			Key = function(sData)
-				return sData.key;
-			end,
-			Universal = function(sData)
-				return sData.isUniversal;
-			end,
-			Patched = function(sData)
-				return sData.isPatched;
-			end,
-			Paid = function(sData)
-				return sData.scriptType == "paid";
-			end
+			Key = function(sData) return sData.key; end,
+			Universal = function(sData) return sData.isUniversal; end,
+			Patched = function(sData) return sData.isPatched; end,
+			Paid = function(sData) return sData.scriptType == "paid"; end
 		};
 		local verifyicon = utf8.char(57344);
 		local Trending = game:HttpGet("https://scriptblox.com/api/script/fetch");
-		local GameScript = game:HttpGet("https://scriptblox.com/api/script/fetch?placeId=" .. tostring(game.PlaceId) .. "&verified=1");
+		
 		local function Update()
 			for _, v in pairs(Search.Scripts:GetChildren()) do
-				if v:IsA("CanvasGroup") then
-					v:Destroy();
-				end
+				if v:IsA("CanvasGroup") then v:Destroy(); end
 			end
 			local text = Search.TextBox.Text;
-			local isGame;
-			do
-				local lowerText = string.lower(text);
-				if (lowerText == "current game") then
-					isGame = true;
-				elseif (lowerText == "game") then
-					isGame = true;
-				end
-			end
 			local isEmpty = # (string.gsub(text, "[%s]", "")) <= 0;
 			local search = game.HttpService:UrlEncode(text);
 			local scriptJson;
-			do
-				if isEmpty then
-					scriptJson = Trending;
-				elseif isGame then
-					scriptJson = isGame;
-				else
-					scriptJson = game:HttpGet("https://scriptblox.com/api/script/search?strict=true&q=" .. search .. "&max=20");
-				end
+			
+			if isEmpty then
+				scriptJson = Trending;
+			else
+				scriptJson = game:HttpGet("https://scriptblox.com/api/script/search?strict=true&q=" .. search .. "&max=20");
 			end
+			
 			local success, scripts = pcall(function()
 				return game:GetService("HttpService"):JSONDecode(scriptJson);
 			end);
@@ -5381,9 +5351,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				end);
 			end
 		end
-		Search.TextBox.FocusLost:Connect(function()
-			Update();
-		end);
+		Search.TextBox.FocusLost:Connect(function() Update(); end);
 	end;
 
 	InitTabs.Nav = function()
@@ -5398,19 +5366,8 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 			return nil;
 		end
-		local isAnimating = false;
-		local CurrentPage = nil;
-		EnableFrame.Active = false;
-		for _, page in ipairs(Pages:GetChildren()) do
-			if not page:IsA("Frame") then continue; end
-			local Button = findButton(page.Name);
-			if not Button then continue; end
-			page.LayoutOrder = Button.LayoutOrder;
-		end
 		
 		local function goTo(Name, f)
-			if isAnimating then return; end
-			
 			-- [[ CANCELLATION LOGIC: PAGE NAVIGATION ]]
 			if Data.Editor.EditingSavedFile and Name ~= "Editor" then
 				local editingName = Data.Editor.EditingSavedFile
@@ -5422,10 +5379,10 @@ if v.Name == "Popups" then v.Visible = false return end
 				Data.Editor.EditingSavedFile = nil
 				UIEvents.EditorTabs.updateUI();
 				
-				-- Force return to Saved tab if they were editing
-				if Name ~= "Saved" then
-					Name = "Saved"
-				end
+				-- FORCE REDIRECT TO SAVED TAB
+				-- We call the UIEvents.Nav.goTo wrapper to ensure everything syncs
+				UIEvents.Nav.goTo("Saved")
+				return -- Stop execution here
 			end
 
 			if Pages:FindFirstChild(Name) then
@@ -5434,16 +5391,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			local Button = findButton(Name);
 			if not Button then return; end
 			
-			if (CurrentPage == Name) then
-				EnableFrame.Visible = false;
-				Pages.Visible = false;
-				CurrentPage = nil;
-				return;
-			else
-				Pages.Visible = true;
-				EnableFrame.Visible = false;
-			end
-			CurrentPage = Name;
+			Pages.Visible = true;
 			EnableFrame.Visible = true;
 			local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
 			local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
@@ -5454,37 +5402,13 @@ if v.Name == "Popups" then v.Visible = false return end
 				if isInstantNext then isInstantNext = false; end
 				return;
 			end
-			isAnimating = true;
-			local StartPos = EnableFrame.Position;
-			local StartSize = EnableFrame.Size;
-			local StartX = StartPos.X.Offset;
-			local StartY = StartPos.Y.Offset;
-			local EndX = TargetPosition.X;
-			local EndY = TargetPosition.Y;
-			local DeltaX = EndX - StartX;
-			local DeltaY = EndY - StartY;
-			local Distance = math.sqrt((DeltaX ^ 2) + (DeltaY ^ 2));
-			local SmearAmount = math.min(Distance * 0.8, 100);
-			local Angle = math.atan2(DeltaY, DeltaX);
-			local SmearWidth = StartSize.X.Offset + (math.abs(math.cos(Angle)) * SmearAmount);
-			local SmearHeight = StartSize.Y.Offset + (math.abs(math.sin(Angle)) * SmearAmount);
-			local SmearSize = UDim2.new(0, SmearWidth, 0, SmearHeight);
-			local MidX = StartX + (DeltaX * 0.5);
-			local MidY = StartY + (DeltaY * 0.5);
-			local MidPos = UDim2.new(0, MidX, 0, MidY);
-			local SmearTween = TweenService:Create(EnableFrame, TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.In), {
-				Position = MidPos,
-				Size = SmearSize,
-				BackgroundTransparency = 0.75
-			});
-			local NormalTween = TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+			
+			local TweenService = game:GetService("TweenService")
+			TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 				Position = TargetPos,
 				Size = TargetSize,
 				BackgroundTransparency = 0
-			});
-			SmearTween:Play();
-			SmearTween.Completed:Connect(function() NormalTween:Play(); end);
-			NormalTween.Completed:Connect(function() isAnimating = false; end);
+			}):Play();
 		end
 		
 		for _, frame in ipairs(Nav:GetChildren()) do
@@ -5498,16 +5422,6 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end
 		end
-		local lastPage = Nav.UIPageLayout.CurrentPage;
-		Nav.UIPageLayout:GetPropertyChangedSignal("CurrentPage"):Connect(function()
-			local newPage = Nav.UIPageLayout.CurrentPage;
-			if (lastPage ~= newPage) then
-				EnableFrame.Visible = false;
-				isInstantNext = true;
-			else
-				EnableFrame.Visible = true;
-			end
-		end);
 		task.wait(1);
 		goTo("Home", true);
 	end;
