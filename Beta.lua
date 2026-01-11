@@ -4776,7 +4776,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 
-		-- [2] Helper: Create Action Button (NEW FUNCTION)
+		-- [2] Helper: Create Action Button (UPDATED)
 		local function newButton(title, btnText, callback)
 			local ButtonFrame = {};
 			do
@@ -4818,16 +4818,20 @@ if v.Name == "Popups" then v.Visible = false return end
 				label['TextColor3'] = Color3.fromRGB(255, 255, 255);
 				label['Text'] = title;
 				label['TextSize'] = 14;
+				
+				-- [[ FIX: ADDED TEXTSCALED TO MATCH OTHER SETTINGS ]] --
+				label['TextScaled'] = true; 
+				
 				label['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
 				
 				local btnContainer = Instance.new("CanvasGroup", G2L['d6']);
 				btnContainer['BackgroundTransparency'] = 1;
-				btnContainer['Size'] = UDim2.new(0.25, 0, 0.75, 0); -- Wider for text
+				btnContainer['Size'] = UDim2.new(0.25, 0, 0.75, 0); 
 				btnContainer['Position'] = UDim2.new(0.75, 0, 0.12, 0);
 				
 				local btn = Instance.new("TextButton", btnContainer);
 				btn['Size'] = UDim2.new(1, 0, 1, 0);
-				btn['BackgroundColor3'] = Color3.fromRGB(218, 50, 50); -- Red color to indicate reset action
+				btn['BackgroundColor3'] = Color3.fromRGB(218, 50, 50); 
 				btn['TextColor3'] = Color3.fromRGB(255, 255, 255);
 				btn['Text'] = btnText;
 				btn['Font'] = Enum.Font.SourceSansBold;
