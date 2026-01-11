@@ -477,7 +477,7 @@ G2L["33"]["ZIndex"] = 3;
 G2L["33"]["BorderSizePixel"] = 0;
 G2L["33"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
 G2L["33"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["33"]["Size"] = UDim2.new(0.35, 0, 0.98, 0); -- Widened for 4 buttons + gap
+G2L["33"]["Size"] = UDim2.new(0.35, 0, 0.98, 0); -- Widened for 4 buttons
 G2L["33"]["Position"] = UDim2.new(1, 0, 1, 0);
 G2L["33"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["33"]["Name"] = [[Panel]];
@@ -579,7 +579,7 @@ G2L["EditIcon"]["ScaleType"] = Enum.ScaleType.Fit;
 G2L["EditIcon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["EditIcon"]["ImageColor3"] = Color3.fromRGB(232, 229, 255);
 G2L["EditIcon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
-G2L["EditIcon"]["Image"] = [[rbxassetid://80861536658698]]; -- YOUR UI EDIT ICON
+G2L["EditIcon"]["Image"] = [[rbxassetid://129234394319564]]; -- Editor Icon
 G2L["EditIcon"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
 G2L["EditIcon"]["BackgroundTransparency"] = 1;
 G2L["EditIcon"]["Name"] = [[Icon]];
@@ -4554,21 +4554,20 @@ if v.Name == "Popups" then v.Visible = false return end
 				return HighestOrder;
 			end,
 			createTab = function(TabName, Content, isTemp)
-				-- Ensure persistence by default unless 'isTemp' (Edit Mode) is true
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
 				
-				-- If NOT editing a saved file, handle duplicates normally
+				-- If NOT editing a saved file (normal tab), handle duplicates and Save to file immediately
 				if not isTemp then
 					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
+					
+					-- PERSISTENCE: Save to scripts folder immediately
+					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
+						Name = TabName,
+						Content = Content,
+						Order = (HighestOrder + 1)
+					}));
 				end
-				
-				-- Save to disk immediately so it persists on rejoin
-				CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
-					Name = TabName,
-					Content = Content,
-					Order = (HighestOrder + 1)
-				}));
 
 				if Data.Editor.Tabs then
 					Data.Editor.Tabs[TabName] = {
@@ -4584,14 +4583,14 @@ if v.Name == "Popups" then v.Visible = false return end
 				if not tabName then return end
 
 				-- [[ SAVE LOGIC FOR EDIT MODE ]]
+				-- Only overwrite the Saved File if this function is called explicitly (via Save Button)
 				if Data.Editor.EditingSavedFile == tabName then
-					-- When clicking Save inside Editor while in Edit Mode, we overwrite the SAVE file, not the script temp file
 					UIEvents.Saved.SaveFile(tabName, Content) 
 					createNotification("Saved File Overwritten", "Success", 3)
 					return
 				end
 
-				-- Standard Editor Save Logic
+				-- Standard Editor Save Logic (Save to scripts/ folder for persistence)
 				local TabData = Data.Editor.Tabs[tabName];
 				if (TabData and Content) then
 					CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
@@ -4608,20 +4607,14 @@ if v.Name == "Popups" then v.Visible = false return end
 			switchTab = function(ToTab)
 				-- [[ CANCELLATION LOGIC: SWITCHING TABS ]]
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
-					-- If we were editing a file and switch to another tab
 					local editingName = Data.Editor.EditingSavedFile
 					
-					-- 1. Notify
 					createNotification("Editing Cancelled", "Warn", 3)
 					
-					-- 2. Delete the temp tab (Visual & File)
-					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
+					-- Remove the temp tab
 					Data.Editor.Tabs[editingName] = nil;
 					
-					-- 3. Reset Flag
 					Data.Editor.EditingSavedFile = nil
-					
-					-- 4. Update UI immediately to remove that tab
 					UIEvents.EditorTabs.updateUI()
 				end
 
@@ -4630,10 +4623,13 @@ if v.Name == "Popups" then v.Visible = false return end
 					local Editor = Pages:WaitForChild("Editor");
 					local EditorFrame = Editor:WaitForChild("Editor").Input;
 					local OldTab = Data.Editor.CurrentTab;
-					if (OldTab and Data.Editor.Tabs[OldTab]) then
+					
+					-- Auto-save previous tab (Only if it's a normal tab)
+					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						local CurrentContent = EditorFrame.Text;
 						UIEvents.EditorTabs.saveTab(OldTab, CurrentContent);
 					end
+					
 					Data.Editor.CurrentTab = ToTab;
 					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
 					EditorFrame.Text = TabContent;
@@ -4647,7 +4643,6 @@ if v.Name == "Popups" then v.Visible = false return end
 					total = total + 1;
 				end
 				
-				-- If it's the editing tab, allow deletion regardless of total check
 				local isEditing = (Data.Editor.EditingSavedFile == Name)
 				
 				if ((total - 1) <= 0) and not isEditing then
@@ -4662,7 +4657,11 @@ if v.Name == "Popups" then v.Visible = false return end
 					end
 				end
 				
-				CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua");
+				-- Only delete file if it's a persistent tab
+				if not isEditing then
+					CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua");
+				end
+				
 				Data.Editor.Tabs[Name] = nil;
 				
 				if isEditing then
@@ -4707,13 +4706,43 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end,
 			RenameFile = function(NewName, TargetTab)
+				-- [[ RENAME LOGIC FOR EDITING SAVED FILES ]]
+				if Data.Editor.EditingSavedFile == TargetTab then
+					NewName = getDuplicatedName(NewName, Data.Saves.Scripts or {});
+					if not Data.Saves.Scripts[NewName] then
+						-- Rename Save File
+						UIEvents.Saved.SaveFile(NewName, Data.Editor.Tabs[TargetTab][1]);
+						UIEvents.Saved.DelFile(TargetTab);
+						
+						-- Update Editor State
+						Data.Editor.EditingSavedFile = NewName
+						Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab]
+						Data.Editor.Tabs[TargetTab] = nil
+						Data.Editor.CurrentTab = NewName
+						
+						UIEvents.EditorTabs.updateUI()
+						createNotification("Saved Script Renamed", "Success", 3)
+					end
+					return
+				end
+
+				-- Standard Rename Logic
 				NewName = getDuplicatedName(NewName, Data.Editor.Tabs or {});
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then
 						Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab]
 					end
-					UIEvents.EditorTabs.saveTab(NewName, Data.Editor.Tabs[TargetTab][1]);
-					UIEvents.EditorTabs.delTab(TargetTab);
+					
+					CLONED_Detectedly.writefile("scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
+						Name = NewName,
+						Content = Data.Editor.Tabs[TargetTab][1],
+						Order = Data.Editor.Tabs[TargetTab][2]
+					}));
+					
+					CLONED_Detectedly.delfile("scripts/" .. TargetTab .. ".lua");
+					Data.Editor.Tabs[TargetTab] = nil
+					Data.Editor.CurrentTab = NewName
+					
 					UIEvents.EditorTabs.updateUI();
 				end
 			end
@@ -4744,26 +4773,35 @@ if v.Name == "Popups" then v.Visible = false return end
 					new.Name = i;
 					new.Title.Text = i;
 					
-					-- Execute
 					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
 						UIEvents.Executor.RunCode(v)();
 					end);
 					
-					-- Delete
 					new.Misc.Panel.Delete.MouseButton1Click:Connect(function()
 						UIEvents.Saved.DelFile(i);
 					end);
 
 					-- [[ EDIT BUTTON LOGIC ]]
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
-						-- 1. Create a temp tab in editor with exact name 'i'
-						-- Passing 'true' to isTemp to handle it specifically
+						-- If already editing this file, just switch to editor
+						if Data.Editor.EditingSavedFile == i then
+							UIEvents.Nav.goTo("Editor")
+							return
+						end
+
+						-- If editing another file, cancel it first
+						if Data.Editor.EditingSavedFile then
+							createNotification("Previous Edit Cancelled", "Warn", 3)
+							local old = Data.Editor.EditingSavedFile
+							Data.Editor.Tabs[old] = nil
+							Data.Editor.EditingSavedFile = nil
+						end
+
+						-- Create temp tab
 						UIEvents.EditorTabs.createTab(i, v, true)
-						
-						-- 2. Mark this name as being edited
 						Data.Editor.EditingSavedFile = i
 						
-						-- 3. Go to Editor
+						-- Force Redirect
 						UIEvents.Nav.goTo("Editor")
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
@@ -4790,7 +4828,6 @@ if v.Name == "Popups" then v.Visible = false return end
 						end
 					end)
 
-					-- Rename
 					new.Title.FocusLost:Connect(function(press)
 						local newName = new.Title.Text;
 						local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
@@ -4828,7 +4865,6 @@ if v.Name == "Popups" then v.Visible = false return end
 				CLONED_Detectedly.writefile("Key", Key);
 			end
 		},
-		-- [[ GLOBAL NAV FUNCTION FOR CROSS-FILE USE ]]
 		Nav = {
 			goTo = function(Name)
 				local Button = nil
@@ -4839,14 +4875,315 @@ if v.Name == "Popups" then v.Visible = false return end
 						end
 					end
 				end
+				
+				if Pages:FindFirstChild(Name) then
+					Pages.UIPageLayout:JumpTo(Pages[Name]);
+				end
+				
 				if Button then
 					for _, c in pairs(getconnections(Button.MouseButton1Click)) do c:Fire() end
 				end
 			end
 		}
-};
-	
-	-- [[ INIT SAVED TAB ]]
+	};
+
+	InitTabs.Settings = function()
+		-- [1] Handle Sliders
+		local SetData = {
+			UITransparency = {
+				Type = "Slider",
+				Callback = function(V)
+					if V then
+						script.Parent.Full.Transparency = V;
+					end
+				end
+			}
+		};
+		local Settings = Pages:WaitForChild("Settings");
+		for _, v in pairs(Settings.Scripts:GetChildren()) do
+			if SetData[v.Name] then
+				if (SetData[v.Name].Type == "Slider") then
+					local UIS = game:GetService("UserInputService");
+					local Dragging = false;
+					v.Main.Line.Interact.MouseButton1Down:Connect(function()
+						Dragging = true;
+					end);
+					local function ChangeToValue(Percent)
+						local Value = math.floor(Percent * 100);
+						return Value;
+					end
+					UIS.InputChanged:Connect(function()
+						if Dragging then
+							local MousePos = UIS:GetMouseLocation() + Vector2.new(0, - 36);
+							local RelPos = MousePos - v.Main.Line.AbsolutePosition;
+							local Percent = math.clamp(RelPos.X / v.Main.Line.AbsoluteSize.X, 0, 1);
+							v.Main.Line.Interact.Position = UDim2.new(Percent, 0, v.Main.Line.Interact.Position.Y.Scale, 0);
+							v.Main.Line.Fill.Size = UDim2.new(Percent, 0, v.Main.Line.Fill.Size.Y.Scale, 0);
+							local FinalValue = ChangeToValue(Percent);
+							v.Main.Line.Percentage.Value = FinalValue;
+							SetData[v.Name].Callback(Percent);
+						end
+					end);
+					UIS.InputEnded:Connect(function(input)
+						if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then
+							Dragging = false;
+						end
+					end);
+				end
+			end
+		end
+
+		-- [2] Helper: Create Action Button
+		local function newButton(title, btnText, callback)
+			local ButtonFrame = {};
+			do
+				local G2L = ButtonFrame;
+				G2L['d6'] = Instance.new("CanvasGroup", Pages.Settings.Scripts);
+				G2L['d6']['Visible'] = true;
+				G2L['d6']['BorderSizePixel'] = 0;
+				G2L['d6']['BackgroundColor3'] = Color3.fromRGB(55, 58, 68);
+				G2L['d6']['Size'] = UDim2.new(1, 0, 0, 48);
+				G2L['d6']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
+				G2L['d6']['Name'] = title;
+				
+				local corner = Instance.new("UICorner", G2L['d6']);
+				corner['CornerRadius'] = UDim.new(0, 18);
+				
+				local layout = Instance.new("UIListLayout", G2L['d6']);
+				layout['HorizontalFlex'] = Enum.UIFlexAlignment.Fill;
+				layout['Wraps'] = true;
+				layout['VerticalAlignment'] = Enum.VerticalAlignment.Center;
+				layout['SortOrder'] = Enum.SortOrder.LayoutOrder;
+				
+				local stroke = Instance.new("UIStroke", G2L['d6']);
+				stroke['Transparency'] = 0.95;
+				stroke['Thickness'] = 2;
+				stroke['Color'] = Color3.fromRGB(232, 229, 255);
+				
+				local pad = Instance.new("UIPadding", G2L['d6']);
+				pad['PaddingTop'] = UDim.new(0, 6);
+				pad['PaddingRight'] = UDim.new(0, 12);
+				pad['PaddingLeft'] = UDim.new(0, 12);
+				pad['PaddingBottom'] = UDim.new(0, 6);
+				
+				local label = Instance.new("TextLabel", G2L['d6']);
+				label['TextWrapped'] = true;
+				label['BackgroundTransparency'] = 1;
+				label['Size'] = UDim2.new(1, 0, 1, 0);
+				label['TextXAlignment'] = Enum.TextXAlignment.Left;
+				label['TextYAlignment'] = Enum.TextYAlignment.Top;
+				label['TextColor3'] = Color3.fromRGB(255, 255, 255);
+				label['Text'] = title;
+				label['TextSize'] = 14;
+				label['TextScaled'] = true; 
+				label['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+				
+				local btnContainer = Instance.new("CanvasGroup", G2L['d6']);
+				btnContainer['BackgroundTransparency'] = 1;
+				btnContainer['Size'] = UDim2.new(0.25, 0, 0.75, 0); 
+				btnContainer['Position'] = UDim2.new(0.75, 0, 0.12, 0);
+				
+				local btn = Instance.new("TextButton", btnContainer);
+				btn['Size'] = UDim2.new(1, 0, 1, 0);
+				btn['BackgroundColor3'] = Color3.fromRGB(218, 50, 50); 
+				btn['TextColor3'] = Color3.fromRGB(255, 255, 255);
+				btn['Text'] = btnText;
+				btn['Font'] = Enum.Font.SourceSansBold;
+				btn['TextSize'] = 14;
+				
+				local btnCorner = Instance.new("UICorner", btn);
+				btnCorner['CornerRadius'] = UDim.new(0, 8);
+
+				btn.MouseButton1Click:Connect(function() callback() end)
+			end
+		end
+
+		-- [3] Helper: Create Toggle
+		local function newToggle(title, callbacl)
+			local Toggles = {};
+			local Enable = false;
+			do
+				local G2L = Toggles;
+				G2L['d6'] = Instance.new("CanvasGroup", Pages.Settings.Scripts);
+				G2L['d6']['Visible'] = true;
+				G2L['d6']['BorderSizePixel'] = 0;
+				G2L['d6']['BackgroundColor3'] = Color3.fromRGB(55, 58, 68);
+				G2L['d6']['Size'] = UDim2.new(1, 0, 0, 48);
+				G2L['d6']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
+				G2L['d6']['Name'] = title;
+				local corner = Instance.new("UICorner", G2L['d6']);
+				corner['CornerRadius'] = UDim.new(0, 18);
+				local layout = Instance.new("UIListLayout", G2L['d6']);
+				layout['HorizontalFlex'] = Enum.UIFlexAlignment.Fill;
+				layout['Wraps'] = true;
+				layout['VerticalAlignment'] = Enum.VerticalAlignment.Center;
+				layout['SortOrder'] = Enum.SortOrder.LayoutOrder;
+				local stroke = Instance.new("UIStroke", G2L['d6']);
+				stroke['Transparency'] = 0.95;
+				stroke['Thickness'] = 2;
+				stroke['Color'] = Color3.fromRGB(232, 229, 255);
+				local pad = Instance.new("UIPadding", G2L['d6']);
+				pad['PaddingTop'] = UDim.new(0, 6);
+				pad['PaddingRight'] = UDim.new(0, 12);
+				pad['PaddingLeft'] = UDim.new(0, 12);
+				pad['PaddingBottom'] = UDim.new(0, 6);
+				local label = Instance.new("TextLabel", G2L['d6']);
+				label['TextWrapped'] = true;
+				label['Active'] = true;
+				label['ZIndex'] = 3;
+				label['BorderSizePixel'] = 0;
+				label['TextSize'] = 14;
+				label['TextXAlignment'] = Enum.TextXAlignment.Left;
+				label['TextYAlignment'] = Enum.TextYAlignment.Top;
+				label['TextScaled'] = true;
+				label['BackgroundColor3'] = Color3.fromRGB(255, 255, 255);
+				label['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+				label['TextColor3'] = Color3.fromRGB(255, 255, 255);
+				label['BackgroundTransparency'] = 1;
+				label['Size'] = UDim2.new(1, 0, 1, 0);
+				label['BorderColor3'] = Color3.fromRGB(0, 0, 0);
+				label['Text'] = title;
+				label['Name'] = [[Title]];
+				local toggleMain = Instance.new("CanvasGroup", G2L['d6']);
+				toggleMain['Active'] = true;
+				toggleMain['BorderSizePixel'] = 0;
+				toggleMain['BackgroundColor3'] = Color3.fromRGB(57, 143, 255);
+				toggleMain['Selectable'] = true;
+				toggleMain['Size'] = UDim2.new(0.09939, 0, 0.75553, 0);
+				toggleMain['Position'] = UDim2.new(0.90061, 0, 0.12223, 0);
+				toggleMain['BorderColor3'] = Color3.fromRGB(0, 0, 0);
+				toggleMain['Name'] = [[Main]];
+				toggleMain['BackgroundTransparency'] = 1;
+				local toggleCorner = Instance.new("UICorner", toggleMain);
+				toggleCorner['CornerRadius'] = UDim.new(1, 0);
+				local btn = Instance.new("TextButton", toggleMain);
+				btn['BorderSizePixel'] = 0;
+				btn['TextSize'] = 14;
+				btn['TextColor3'] = Color3.fromRGB(0, 0, 0);
+				btn['BackgroundColor3'] = Color3.fromRGB(69, 72, 85);
+				btn['FontFace'] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+				btn['Size'] = UDim2.new(1, 0, 1, 0);
+				btn['BorderColor3'] = Color3.fromRGB(0, 0, 0);
+				btn['Text'] = [[]];
+				btn['Name'] = [[Button]];
+				local btnCorner = Instance.new("UICorner", btn);
+				btnCorner['CornerRadius'] = UDim.new(1, 0);
+				local btnPad = Instance.new("UIPadding", btn);
+				btnPad['PaddingTop'] = UDim.new(0, 3);
+				btnPad['PaddingRight'] = UDim.new(0, 3);
+				btnPad['PaddingLeft'] = UDim.new(0, 3);
+				btnPad['PaddingBottom'] = UDim.new(0, 3);
+				local btnLayout = Instance.new("UIListLayout", btn);
+				btnLayout['HorizontalAlignment'] = Enum.HorizontalAlignment.Left;
+				btnLayout['SortOrder'] = Enum.SortOrder.LayoutOrder;
+				local circle = Instance.new("ImageLabel", btn);
+				circle['BorderSizePixel'] = 0;
+				circle['ScaleType'] = Enum.ScaleType.Fit;
+				circle['BackgroundColor3'] = Color3.fromRGB(194, 194, 194);
+				circle['ImageColor3'] = Color3.fromRGB(232, 229, 255);
+				circle['AnchorPoint'] = Vector2.new(0, 0.5);
+				circle['Image'] = [[rbxassetid://5552526748]];
+				circle['Size'] = UDim2.new(1, 0, 1, 0);
+				circle['ClipsDescendants'] = true;
+				circle['BorderColor3'] = Color3.fromRGB(0, 0, 0);
+				circle['BackgroundTransparency'] = 1;
+				circle['Name'] = [[Point]];
+				circle['Position'] = UDim2.new(0.5, 0, 0.5, 0);
+				local aspect = Instance.new("UIAspectRatioConstraint", circle);
+				local mainAspect = Instance.new("UIAspectRatioConstraint", toggleMain);
+				mainAspect['AspectRatio'] = 1.90335;
+				
+				btn.MouseButton1Click:Connect(function()
+					Enable = not Enable;
+					callbacl(Enable);
+					btnLayout['HorizontalAlignment'] = Enum.HorizontalAlignment[(Enable and "Right") or "Left"];
+					btn.BackgroundColor3 = (Enable and Color3.fromRGB(57, 143, 255)) or Color3.fromRGB(69, 72, 85);
+				end);
+			end
+		end
+		
+		-- [4] Create the Settings
+		newToggle("Invisible Open Trigger", function(v)
+			InvisTriggerOpen = v;
+			if v then createNotification('Chat "/e open" to open UI', "Info", 5); end
+		end);
+
+		newToggle("Censored Name In UI", function(v)
+			if v then
+				Main.Title.TextLabel.Text = "Hello, User!";
+			else
+				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
+			end
+		end);
+		
+		newToggle("Anti AFK", function()
+			local speaker = game:GetService("Players").LocalPlayer
+			if getconnections then
+				for _, connection in pairs(getconnections(speaker.Idled)) do
+					if connection["Disable"] then connection["Disable"](connection)
+					elseif connection["Disconnect"] then connection["Disconnect"](connection) end
+				end
+			else
+				speaker.Idled:Connect(function()
+					Services.VirtualUser:CaptureController()
+					Services.VirtualUser:ClickButton2(Vector2.new())
+				end)
+			end
+			createNotification("Anti AFK Enabled!", "Success", 5)
+		end)
+		
+		local fpsBoostActive = false
+		newToggle("FPS Boost", function(v)
+			fpsBoostActive = v
+			if v then
+				for _, obj in pairs(game:GetDescendants()) do
+					if obj:IsA("BasePart") then obj.CastShadow = false; obj.Material = "Plastic" end
+					if obj:IsA("Texture") or obj:IsA("Decal") then obj.Transparency = 1 end
+				end
+				game.Lighting.GlobalShadows = false
+			end
+		end)
+
+		newButton("Reset Loader Environment", "RESET", function()
+			if delfile and isfile then
+				if isfile("punk-x-env.txt") then
+					delfile("punk-x-env.txt")
+					createNotification("Environment Reset! Re-inject to choose.", "Success", 5)
+				else
+					createNotification("No preference saved.", "Error", 3)
+				end
+			else
+				createNotification("Not supported.", "Error", 5)
+			end
+		end)
+	end;
+
+	InitTabs.TabsData = function()
+		if not CLONED_Detectedly.isfolder("scripts") then
+			CLONED_Detectedly.makedir("scripts")
+		end
+
+		local scripts = CLONED_Detectedly.listfiles("scripts") or {};
+		for index, Nextpath in ipairs(scripts) do
+			if (Nextpath == "/recently.data") then continue; end
+			local success, Loadedscript = pcall(function() 
+				return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("scripts" .. Nextpath)); 
+			end)
+			
+			if success and Loadedscript and Loadedscript.Name then
+				Data.Editor.Tabs[Loadedscript.Name] = {
+					Loadedscript.Content,
+					Loadedscript.Order
+				};
+			end
+		end
+		if (# scripts == 0) then
+			-- Create initial tab if none exist (this will auto-save due to new logic)
+			UIEvents.EditorTabs.createTab("Script", "");
+		end
+		UIEvents.EditorTabs.updateUI();
+	end;
+
 	InitTabs.Saved = function()
 		if not CLONED_Detectedly.isfolder("saves") then
 			CLONED_Detectedly.makedir("saves");
@@ -4884,55 +5221,74 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end)
 	end;
-	
+
 	InitTabs.Editor = function()
 		local Editor = Pages:WaitForChild("Editor");
 		local Panel = Editor:WaitForChild("Panel");
 		local EditorFrame = Editor:WaitForChild("Editor");
 		local Method = "Activated";
+		
 		Panel.Execute[Method]:Connect(function()
 			UIEvents.Executor.RunCode(EditorFrame.Input.Text)();
 		end);
+		
 		Panel.Paste[Method]:Connect(function()
 			EditorFrame.Input.Text = (getclipboard and getclipboard()) or "";
 		end);
+		
 		Panel.ExecuteClipboard[Method]:Connect(function()
 			UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
 		end);
+		
 		Panel.Delete[Method]:Connect(function()
 			EditorFrame.Input.Text = "";
 		end);
+		
 		Panel.Save[Method]:Connect(function()
-			UIEvents.Saved.SaveFile(Data.Editor.CurrentTab, EditorFrame.Input.Text);
+			-- This calls the central saveTab logic in UIEvents
+			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text); 
 		end);
+		
 		Panel.Rename[Method]:Connect(function()
 			script.Parent.Popups.Visible = true;
+			-- Pre-fill with current tab name
+			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
 		end);
+		
 		if not highlighter then
 			highlighter = load_highlighter();
 			print("int");
 		end
+		
 		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
 			update_lines(EditorFrame.Input, EditorFrame.Lines);
-			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text);
+			-- Only auto-save to temp/file if NOT editing a saved file to prevent accidental overwrite before button press
+			if not Data.Editor.EditingSavedFile then
+				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text);
+			end
 		end);
+		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
 		highlighter.highlight({
 			textObject = EditorFrame.Input
 		});
+		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
 		EditorFrame.Input.Focused:Connect(function()
 			EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
 			EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
 		end);
+		
 		EditorFrame.Input.FocusLost:Connect(function()
 			EditorFrame.Position = pos;
 			EditorFrame.Size = size;
 		end);
+		
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
+		
 		local Buttons = script.Parent.Popups.Main.Button
 		Buttons["Confirm"][Method]:Connect(function()
 			local newName = script.Parent.Popups.Main.Input.Text;
@@ -4940,13 +5296,16 @@ if v.Name == "Popups" then v.Visible = false return end
 			if (isEmpty or (newName == Data.Editor.CurrentTab)) then
 				return;
 			end
+			-- Call central Rename Logic
 			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
 			script.Parent.Popups.Visible = false;
 		end)
+		
 		Buttons["Cancel"][Method]:Connect(function()
 			script.Parent.Popups.Visible = false;
 		end)
 	end;
+
 	InitTabs.Search = function()
 		local Search = Pages:WaitForChild("Search");
 		local TagsValid = {
@@ -5026,6 +5385,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			Update();
 		end);
 	end;
+
 	InitTabs.Nav = function()
 		local isInstantNext = false;
 		local function findButton(Name)
@@ -5055,17 +5415,17 @@ if v.Name == "Popups" then v.Visible = false return end
 			if Data.Editor.EditingSavedFile and Name ~= "Editor" then
 				local editingName = Data.Editor.EditingSavedFile
 				
-				-- 1. Notify
 				createNotification("Editing Cancelled", "Warn", 3)
 				
-				-- 2. Cleanup
 				CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
 				Data.Editor.Tabs[editingName] = nil;
 				Data.Editor.EditingSavedFile = nil
 				UIEvents.EditorTabs.updateUI();
 				
-				-- 3. Force redirect to Saved Tab
-				Name = "Saved"
+				-- Force return to Saved tab if they were editing
+				if Name ~= "Saved" then
+					Name = "Saved"
+				end
 			end
 
 			if Pages:FindFirstChild(Name) then
