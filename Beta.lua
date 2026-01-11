@@ -4582,11 +4582,9 @@ if v.Name == "Popups" then v.Visible = false return end
 				-- [[ MODE 1: EDITING SAVED FILE ]]
 				if Data.Editor.EditingSavedFile == tabName then
 					if isExplicitSave then
-						-- BUTTON CLICK: Overwrite the Saved File
 						UIEvents.Saved.SaveFile(tabName, Content, true) 
 						createNotification("Saved File Overwritten", "Success", 3)
 						
-						-- Cleanup Temp Tab & Redirect
 						CLONED_Detectedly.delfile("scripts/" .. tabName .. ".lua")
 						Data.Editor.Tabs[tabName] = nil
 						Data.Editor.EditingSavedFile = nil
@@ -4595,8 +4593,6 @@ if v.Name == "Popups" then v.Visible = false return end
 						UIEvents.EditorTabs.updateUI()
 						UIEvents.Nav.goTo("Saved")
 					else
-						-- TEXT CHANGE: Update the temp persistence file only (safety backup)
-						-- We do NOT overwrite the 'saves/' file here.
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
 							CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
@@ -4612,10 +4608,8 @@ if v.Name == "Popups" then v.Visible = false return end
 
 				-- [[ MODE 2: NORMAL EDITOR ]]
 				if isExplicitSave then
-					-- BUTTON CLICK: Save to 'Saved' Tab (creates new file)
 					UIEvents.Saved.SaveFile(tabName, Content, false)
 				else
-					-- TEXT CHANGE: Update Persistence only (scripts/ folder)
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
 						CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
@@ -4631,7 +4625,6 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end,
 			switchTab = function(ToTab)
-				-- [[ CANCELLATION LOGIC: SWITCHING TABS ]]
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 					local editingName = Data.Editor.EditingSavedFile
 					
@@ -4648,10 +4641,8 @@ if v.Name == "Popups" then v.Visible = false return end
 					local EditorFrame = Editor:WaitForChild("Editor").Input;
 					local OldTab = Data.Editor.CurrentTab;
 					
-					-- Auto-save previous tab persistence
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						local CurrentContent = EditorFrame.Text;
-						-- Explicitly calling saveTab with false to ensure persistence updates
 						UIEvents.EditorTabs.saveTab(OldTab, CurrentContent, false);
 					end
 					
@@ -4697,10 +4688,18 @@ if v.Name == "Popups" then v.Visible = false return end
 				UIEvents.EditorTabs.updateUI();
 			end,
 			updateUI = function()
+				-- 1. Clean up existing tabs
 				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
 					if v:GetAttribute("no") then continue end
 					if v:IsA("TextButton") then v:Destroy() end
 				end
+
+				-- 2. Toggle Visibility of the Plus (+) Button
+				-- If EditingSavedFile is present (true), Create button is Hidden (false)
+				if Pages.Editor.Tabs:FindFirstChild("Create") then
+					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil)
+				end
+
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
 					-- [[ HIDE OTHER TABS IN EDIT MODE ]]
