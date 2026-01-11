@@ -4557,8 +4557,10 @@ if v.Name == "Popups" then v.Visible = false return end
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
 				
+				-- If NOT editing a saved file (normal tab), handle duplicates & auto-save to scripts/
 				if not isTemp then
 					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
+					-- PERSISTENCE: Save to scripts folder immediately
 					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
 						Name = TabName,
 						Content = Content,
@@ -4582,17 +4584,22 @@ if v.Name == "Popups" then v.Visible = false return end
 				-- [[ MODE 1: EDITING SAVED FILE ]]
 				if Data.Editor.EditingSavedFile == tabName then
 					if isExplicitSave then
+						-- BUTTON CLICK: Overwrite the ACTUAL Saved file
 						UIEvents.Saved.SaveFile(tabName, Content, true) 
 						createNotification("Saved File Overwritten", "Success", 3)
 						
+						-- Cleanup Temp Tab
 						CLONED_Detectedly.delfile("scripts/" .. tabName .. ".lua")
 						Data.Editor.Tabs[tabName] = nil
 						Data.Editor.EditingSavedFile = nil
 						Data.Editor.CurrentTab = nil
 						
+						-- Redirect back to Saved Tab
 						UIEvents.EditorTabs.updateUI()
 						UIEvents.Nav.goTo("Saved")
 					else
+						-- TEXT CHANGE: Update the temp persistence file only (scripts/)
+						-- Does NOT overwrite the actual saved file yet
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
 							CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
@@ -4608,8 +4615,10 @@ if v.Name == "Popups" then v.Visible = false return end
 
 				-- [[ MODE 2: NORMAL EDITOR ]]
 				if isExplicitSave then
+					-- BUTTON CLICK: Save to 'Saved' Tab (creates new file)
 					UIEvents.Saved.SaveFile(tabName, Content, false)
 				else
+					-- TEXT CHANGE: Update Persistence only (scripts/ folder)
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
 						CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
@@ -4625,13 +4634,17 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end,
 			switchTab = function(ToTab)
+				-- [[ CANCELLATION LOGIC: SWITCHING TABS ]]
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 					local editingName = Data.Editor.EditingSavedFile
 					
 					createNotification("Editing Cancelled", "Warn", 3)
+					
+					-- Cleanup
 					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
 					Data.Editor.Tabs[editingName] = nil;
 					Data.Editor.EditingSavedFile = nil
+					
 					UIEvents.EditorTabs.updateUI()
 				end
 
@@ -4641,6 +4654,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					local EditorFrame = Editor:WaitForChild("Editor").Input;
 					local OldTab = Data.Editor.CurrentTab;
 					
+					-- Auto-save previous tab persistence (Only if normal tab)
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						local CurrentContent = EditorFrame.Text;
 						UIEvents.EditorTabs.saveTab(OldTab, CurrentContent, false);
@@ -4688,14 +4702,12 @@ if v.Name == "Popups" then v.Visible = false return end
 				UIEvents.EditorTabs.updateUI();
 			end,
 			updateUI = function()
-				-- 1. Clean up existing tabs
 				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
 					if v:GetAttribute("no") then continue end
 					if v:IsA("TextButton") then v:Destroy() end
 				end
-
-				-- 2. Toggle Visibility of the Plus (+) Button
-				-- If EditingSavedFile is present (true), Create button is Hidden (false)
+				
+				-- Toggle Plus Button Visibility
 				if Pages.Editor.Tabs:FindFirstChild("Create") then
 					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil)
 				end
@@ -4736,6 +4748,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end,
 			RenameFile = function(NewName, TargetTab)
+				-- [[ RENAME LOGIC FOR EDITING SAVED FILES ]]
 				if Data.Editor.EditingSavedFile == TargetTab then
 					NewName = getDuplicatedName(NewName, Data.Saves.Scripts or {});
 					if not Data.Saves.Scripts[NewName] then
@@ -4753,6 +4766,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					return
 				end
 
+				-- Standard Rename
 				NewName = getDuplicatedName(NewName, Data.Editor.Tabs or {});
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then
@@ -4814,6 +4828,7 @@ if v.Name == "Popups" then v.Visible = false return end
 						UIEvents.Saved.DelFile(i);
 					end);
 
+					-- [[ EDIT BUTTON LOGIC ]]
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
 						if Data.Editor.EditingSavedFile == i then
 							UIEvents.Nav.goTo("Editor")
@@ -4821,6 +4836,7 @@ if v.Name == "Popups" then v.Visible = false return end
 						end
 						
 						if Data.Editor.EditingSavedFile then
+							createNotification("Previous Edit Cancelled", "Warn", 3)
 							local old = Data.Editor.EditingSavedFile
 							CLONED_Detectedly.delfile("scripts/" .. old .. ".lua")
 							Data.Editor.Tabs[old] = nil
@@ -4894,6 +4910,18 @@ if v.Name == "Popups" then v.Visible = false return end
 		},
 		Nav = {
 			goTo = function(Name)
+				-- [[ CANCELLATION LOGIC: PAGE NAVIGATION ]]
+				if Data.Editor.EditingSavedFile and Name ~= "Editor" then
+					local editingName = Data.Editor.EditingSavedFile
+					createNotification("Editing Cancelled", "Warn", 3)
+					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
+					Data.Editor.Tabs[editingName] = nil;
+					Data.Editor.EditingSavedFile = nil
+					UIEvents.EditorTabs.updateUI();
+					-- Redirect to Saved if cancelled
+					if Name ~= "Saved" then Name = "Saved" end
+				end
+				
 				if Pages:FindFirstChild(Name) then
 					Pages.UIPageLayout:JumpTo(Pages[Name]);
 				end
@@ -5247,7 +5275,6 @@ if v.Name == "Popups" then v.Visible = false return end
 		end);
 		
 		Panel.Save[Method]:Connect(function()
-			-- Pass TRUE for explicit save (Button clicked)
 			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, true); 
 		end);
 		
@@ -5263,15 +5290,13 @@ if v.Name == "Popups" then v.Visible = false return end
 		
 		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
 			update_lines(EditorFrame.Input, EditorFrame.Lines);
-			-- Pass FALSE for auto-save (Typing)
-			-- This updates persistence but does NOT create a Saved File.
-			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
+			if not Data.Editor.EditingSavedFile then
+				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
+			end
 		end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
-		highlighter.highlight({
-			textObject = EditorFrame.Input
-		});
+		highlighter.highlight({ textObject = EditorFrame.Input });
 		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
@@ -5293,9 +5318,8 @@ if v.Name == "Popups" then v.Visible = false return end
 		Buttons["Confirm"][Method]:Connect(function()
 			local newName = script.Parent.Popups.Main.Input.Text;
 			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
-			if (isEmpty or (newName == Data.Editor.CurrentTab)) then
-				return;
-			end
+			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
+			
 			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
 			script.Parent.Popups.Visible = false;
 		end)
@@ -5376,21 +5400,14 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		
 		local function goTo(Name, f)
-			-- [[ CANCELLATION LOGIC: PAGE NAVIGATION ]]
 			if Data.Editor.EditingSavedFile and Name ~= "Editor" then
 				local editingName = Data.Editor.EditingSavedFile
-				
 				createNotification("Editing Cancelled", "Warn", 3)
-				
 				CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
 				Data.Editor.Tabs[editingName] = nil;
 				Data.Editor.EditingSavedFile = nil
 				UIEvents.EditorTabs.updateUI();
-				
-				-- FORCE REDIRECT TO SAVED TAB
-				-- We call the UIEvents.Nav.goTo wrapper to ensure everything syncs
-				UIEvents.Nav.goTo("Saved")
-				return -- Stop execution here
+				if Name ~= "Saved" then Name = "Saved" end
 			end
 
 			if Pages:FindFirstChild(Name) then
