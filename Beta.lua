@@ -477,7 +477,7 @@ G2L["33"]["ZIndex"] = 3;
 G2L["33"]["BorderSizePixel"] = 0;
 G2L["33"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
 G2L["33"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["33"]["Size"] = UDim2.new(0.3, 0, 0.98, 0); -- Widened to fit buttons
+G2L["33"]["Size"] = UDim2.new(0.35, 0, 0.98, 0); -- Widened for 4 buttons + gap
 G2L["33"]["Position"] = UDim2.new(1, 0, 1, 0);
 G2L["33"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["33"]["Name"] = [[Panel]];
@@ -495,61 +495,43 @@ G2L["34"]["FillDirection"] = Enum.FillDirection.Horizontal;
 G2L["35"] = Instance.new("UICorner", G2L["33"]);
 G2L["35"]["CornerRadius"] = UDim.new(0, 12);
 
--- [[ BUTTON 1: EXECUTE ]]
-G2L["38"] = Instance.new("TextButton", G2L["33"]);
-G2L["38"]["BorderSizePixel"] = 0;
-G2L["38"]["AutoButtonColor"] = false;
-G2L["38"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["38"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["38"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["38"]["ZIndex"] = 4;
-G2L["38"]["BackgroundTransparency"] = 1;
-G2L["38"]["Size"] = UDim2.new(0, 32, 0, 32);
-G2L["38"]["LayoutOrder"] = 1;
-G2L["38"]["Text"] = [[]];
-G2L["38"]["Name"] = [[Execute]];
+-- [[ 1. DELETE BUTTON (Leftmost) ]]
+G2L["DeleteBtn"] = Instance.new("TextButton", G2L["33"]);
+G2L["DeleteBtn"]["BorderSizePixel"] = 0;
+G2L["DeleteBtn"]["AutoButtonColor"] = false;
+G2L["DeleteBtn"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["DeleteBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["DeleteBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["DeleteBtn"]["ZIndex"] = 4;
+G2L["DeleteBtn"]["BackgroundTransparency"] = 1;
+G2L["DeleteBtn"]["Size"] = UDim2.new(0, 32, 0, 32);
+G2L["DeleteBtn"]["LayoutOrder"] = 1;
+G2L["DeleteBtn"]["Text"] = [[]];
+G2L["DeleteBtn"]["Name"] = [[Delete]];
 
-G2L["39"] = Instance.new("ImageLabel", G2L["38"]);
-G2L["39"]["ZIndex"] = 5;
-G2L["39"]["BorderSizePixel"] = 0;
-G2L["39"]["ScaleType"] = Enum.ScaleType.Fit;
-G2L["39"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["39"]["ImageColor3"] = Color3.fromRGB(232, 229, 255);
-G2L["39"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
-G2L["39"]["Image"] = [[rbxassetid://95804011254392]];
-G2L["39"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
-G2L["39"]["BackgroundTransparency"] = 1;
-G2L["39"]["Name"] = [[Icon]];
-G2L["39"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+G2L["DeleteIcon"] = Instance.new("ImageLabel", G2L["DeleteBtn"]);
+G2L["DeleteIcon"]["ZIndex"] = 5;
+G2L["DeleteIcon"]["BorderSizePixel"] = 0;
+G2L["DeleteIcon"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["DeleteIcon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["DeleteIcon"]["ImageColor3"] = Color3.fromRGB(199, 107, 107);
+G2L["DeleteIcon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["DeleteIcon"]["Image"] = [[rbxassetid://87426080563358]];
+G2L["DeleteIcon"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
+G2L["DeleteIcon"]["BackgroundTransparency"] = 1;
+G2L["DeleteIcon"]["Name"] = [[Icon]];
+G2L["DeleteIcon"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
--- [[ BUTTON 2: EDIT ]]
-G2L["EditBtn"] = Instance.new("TextButton", G2L["33"]);
-G2L["EditBtn"]["BorderSizePixel"] = 0;
-G2L["EditBtn"]["AutoButtonColor"] = false;
-G2L["EditBtn"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["EditBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["EditBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["EditBtn"]["ZIndex"] = 4;
-G2L["EditBtn"]["BackgroundTransparency"] = 1;
-G2L["EditBtn"]["Size"] = UDim2.new(0, 32, 0, 32);
-G2L["EditBtn"]["LayoutOrder"] = 2;
-G2L["EditBtn"]["Text"] = [[]];
-G2L["EditBtn"]["Name"] = [[Edit]];
+-- [[ 2. SPACER (Separates Delete from others) ]]
+G2L["Spacer"] = Instance.new("Frame", G2L["33"]);
+G2L["Spacer"]["BorderSizePixel"] = 0;
+G2L["Spacer"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["Spacer"]["Size"] = UDim2.new(0, 8, 0, 0); -- Invisible spacer
+G2L["Spacer"]["LayoutOrder"] = 2;
+G2L["Spacer"]["BackgroundTransparency"] = 1;
+G2L["Spacer"]["Name"] = [[Spacer]];
 
-G2L["EditIcon"] = Instance.new("ImageLabel", G2L["EditBtn"]);
-G2L["EditIcon"]["ZIndex"] = 5;
-G2L["EditIcon"]["BorderSizePixel"] = 0;
-G2L["EditIcon"]["ScaleType"] = Enum.ScaleType.Fit;
-G2L["EditIcon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["EditIcon"]["ImageColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["EditIcon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
-G2L["EditIcon"]["Image"] = [[rbxassetid://11419717444]]; -- Pencil Icon
-G2L["EditIcon"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
-G2L["EditIcon"]["BackgroundTransparency"] = 1;
-G2L["EditIcon"]["Name"] = [[Icon]];
-G2L["EditIcon"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
-
--- [[ BUTTON 3: AUTOEXEC ]]
+-- [[ 3. AUTOEXEC BUTTON ]]
 G2L["AutoExecBtn"] = Instance.new("TextButton", G2L["33"]);
 G2L["AutoExecBtn"]["BorderSizePixel"] = 0;
 G2L["AutoExecBtn"]["AutoButtonColor"] = false;
@@ -568,7 +550,7 @@ G2L["AutoExecIcon"]["ZIndex"] = 5;
 G2L["AutoExecIcon"]["BorderSizePixel"] = 0;
 G2L["AutoExecIcon"]["ScaleType"] = Enum.ScaleType.Fit;
 G2L["AutoExecIcon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["AutoExecIcon"]["ImageColor3"] = Color3.fromRGB(255, 50, 50); -- Default Red (Off)
+G2L["AutoExecIcon"]["ImageColor3"] = Color3.fromRGB(255, 50, 50); -- Red default
 G2L["AutoExecIcon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
 G2L["AutoExecIcon"]["Image"] = [[rbxassetid://11419714821]]; -- Lightning Icon
 G2L["AutoExecIcon"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
@@ -576,32 +558,59 @@ G2L["AutoExecIcon"]["BackgroundTransparency"] = 1;
 G2L["AutoExecIcon"]["Name"] = [[Icon]];
 G2L["AutoExecIcon"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
--- [[ BUTTON 4: DELETE ]]
-G2L["3a"] = Instance.new("TextButton", G2L["33"]);
-G2L["3a"]["BorderSizePixel"] = 0;
-G2L["3a"]["AutoButtonColor"] = false;
-G2L["3a"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["3a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["3a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-G2L["3a"]["ZIndex"] = 4;
-G2L["3a"]["BackgroundTransparency"] = 1;
-G2L["3a"]["Size"] = UDim2.new(0, 32, 0, 32);
-G2L["3a"]["LayoutOrder"] = 4;
-G2L["3a"]["Text"] = [[]];
-G2L["3a"]["Name"] = [[Delete]];
+-- [[ 4. EDIT BUTTON ]]
+G2L["EditBtn"] = Instance.new("TextButton", G2L["33"]);
+G2L["EditBtn"]["BorderSizePixel"] = 0;
+G2L["EditBtn"]["AutoButtonColor"] = false;
+G2L["EditBtn"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["EditBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["EditBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["EditBtn"]["ZIndex"] = 4;
+G2L["EditBtn"]["BackgroundTransparency"] = 1;
+G2L["EditBtn"]["Size"] = UDim2.new(0, 32, 0, 32);
+G2L["EditBtn"]["LayoutOrder"] = 4;
+G2L["EditBtn"]["Text"] = [[]];
+G2L["EditBtn"]["Name"] = [[Edit]];
 
-G2L["3b"] = Instance.new("ImageLabel", G2L["3a"]);
-G2L["3b"]["ZIndex"] = 5;
-G2L["3b"]["BorderSizePixel"] = 0;
-G2L["3b"]["ScaleType"] = Enum.ScaleType.Fit;
-G2L["3b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["3b"]["ImageColor3"] = Color3.fromRGB(199, 107, 107);
-G2L["3b"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
-G2L["3b"]["Image"] = [[rbxassetid://87426080563358]];
-G2L["3b"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
-G2L["3b"]["BackgroundTransparency"] = 1;
-G2L["3b"]["Name"] = [[Icon]];
-G2L["3b"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+G2L["EditIcon"] = Instance.new("ImageLabel", G2L["EditBtn"]);
+G2L["EditIcon"]["ZIndex"] = 5;
+G2L["EditIcon"]["BorderSizePixel"] = 0;
+G2L["EditIcon"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["EditIcon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["EditIcon"]["ImageColor3"] = Color3.fromRGB(232, 229, 255);
+G2L["EditIcon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["EditIcon"]["Image"] = [[rbxassetid://80861536658698]]; -- YOUR UI EDIT ICON
+G2L["EditIcon"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
+G2L["EditIcon"]["BackgroundTransparency"] = 1;
+G2L["EditIcon"]["Name"] = [[Icon]];
+G2L["EditIcon"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+-- [[ 5. EXECUTE BUTTON ]]
+G2L["ExecBtn"] = Instance.new("TextButton", G2L["33"]);
+G2L["ExecBtn"]["BorderSizePixel"] = 0;
+G2L["ExecBtn"]["AutoButtonColor"] = false;
+G2L["ExecBtn"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["ExecBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["ExecBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["ExecBtn"]["ZIndex"] = 4;
+G2L["ExecBtn"]["BackgroundTransparency"] = 1;
+G2L["ExecBtn"]["Size"] = UDim2.new(0, 32, 0, 32);
+G2L["ExecBtn"]["LayoutOrder"] = 5;
+G2L["ExecBtn"]["Text"] = [[]];
+G2L["ExecBtn"]["Name"] = [[Execute]];
+
+G2L["ExecIcon"] = Instance.new("ImageLabel", G2L["ExecBtn"]);
+G2L["ExecIcon"]["ZIndex"] = 5;
+G2L["ExecIcon"]["BorderSizePixel"] = 0;
+G2L["ExecIcon"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["ExecIcon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["ExecIcon"]["ImageColor3"] = Color3.fromRGB(232, 229, 255);
+G2L["ExecIcon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["ExecIcon"]["Image"] = [[rbxassetid://95804011254392]];
+G2L["ExecIcon"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
+G2L["ExecIcon"]["BackgroundTransparency"] = 1;
+G2L["ExecIcon"]["Name"] = [[Icon]];
+G2L["ExecIcon"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.UIScale
 G2L["3c"] = Instance.new("UIScale", G2L["33"]);
@@ -4532,6 +4541,7 @@ if v.Name == "Popups" then v.Visible = false return end
 	
 	local InitTabs = {};
 	-- [[ UPDATED UI EVENTS ]]
+	-- [[ UPDATED UI EVENTS ]]
 	local UIEvents = {};
 	UIEvents = {
 		EditorTabs = {
@@ -4544,15 +4554,23 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 				return HighestOrder;
 			end,
-			createTab = function(TabName, Content)
+			createTab = function(TabName, Content, isTemp)
+				-- Ensure persistence by default unless 'isTemp' (Edit Mode) is true
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
-				TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
+				
+				-- If NOT editing a saved file, handle duplicates normally
+				if not isTemp then
+					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
+				end
+				
+				-- Save to disk immediately so it persists on rejoin
 				CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
 					Name = TabName,
 					Content = Content,
 					Order = (HighestOrder + 1)
 				}));
+
 				if Data.Editor.Tabs then
 					Data.Editor.Tabs[TabName] = {
 						Content,
@@ -4564,17 +4582,17 @@ if v.Name == "Popups" then v.Visible = false return end
 			end,
 			saveTab = function(tabName, Content)
 				tabName = tabName or Data.Editor.CurrentTab;
-				if not tabName then
-					return;
-				end
-				-- Check if we are in "Edit Mode" for a saved script
-				if Data.Editor.IsEditingSavedFile then
-					-- We don't overwrite the actual 'tab' file here, we rely on the user clicking Save in the Save tab later
-					-- OR, if you want this to auto-update the Saved Tab content, do nothing here.
-					-- But standard behavior is just updating the text in RAM.
+				if not tabName then return end
+
+				-- [[ SAVE LOGIC FOR EDIT MODE ]]
+				if Data.Editor.EditingSavedFile == tabName then
+					-- When clicking Save inside Editor while in Edit Mode, we overwrite the SAVE file, not the script temp file
+					UIEvents.Saved.SaveFile(tabName, Content) 
+					createNotification("Saved File Overwritten", "Success", 3)
 					return
 				end
 
+				-- Standard Editor Save Logic
 				local TabData = Data.Editor.Tabs[tabName];
 				if (TabData and Content) then
 					CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
@@ -4589,10 +4607,23 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end,
 			switchTab = function(ToTab)
-				-- [[ EDITING CANCELLED LOGIC ]] --
-				if Data.Editor.IsEditingSavedFile then
+				-- [[ CANCELLATION LOGIC: SWITCHING TABS ]]
+				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
+					-- If we were editing a file and switch to another tab
+					local editingName = Data.Editor.EditingSavedFile
+					
+					-- 1. Notify
 					createNotification("Editing Cancelled", "Warn", 3)
-					Data.Editor.IsEditingSavedFile = nil -- Reset flag
+					
+					-- 2. Delete the temp tab (Visual & File)
+					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
+					Data.Editor.Tabs[editingName] = nil;
+					
+					-- 3. Reset Flag
+					Data.Editor.EditingSavedFile = nil
+					
+					-- 4. Update UI immediately to remove that tab
+					UIEvents.EditorTabs.updateUI()
 				end
 
 				if (Data.Editor.Tabs[ToTab] and not Data.Editor.IsSwitching) then
@@ -4607,7 +4638,6 @@ if v.Name == "Popups" then v.Visible = false return end
 					Data.Editor.CurrentTab = ToTab;
 					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
 					EditorFrame.Text = TabContent;
-					print("Switched to", ToTab);
 					Data.Editor.IsSwitching = false;
 					UIEvents.EditorTabs.updateUI();
 				end
@@ -4617,35 +4647,36 @@ if v.Name == "Popups" then v.Visible = false return end
 				for i, v in pairs(Data.Editor.Tabs) do
 					total = total + 1;
 				end
-				if ((total - 1) <= 0) then
+				
+				-- If it's the editing tab, allow deletion regardless of total check
+				local isEditing = (Data.Editor.EditingSavedFile == Name)
+				
+				if ((total - 1) <= 0) and not isEditing then
 					createNotification("Cannot delete last tab!", "Error", 5)
 					return;
 				end
 				
-				-- [[ EDITING CANCELLED LOGIC ]] --
-				if Data.Editor.IsEditingSavedFile then
-					createNotification("Editing Cancelled", "Warn", 3)
-					Data.Editor.IsEditingSavedFile = nil
-				end
-
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				for i, v in pairs(Data.Editor.Tabs) do
 					if (i ~= Name) then
 						UIEvents.EditorTabs.switchTab(i);
 					end
 				end
+				
 				CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua");
 				Data.Editor.Tabs[Name] = nil;
+				
+				if isEditing then
+					createNotification("Editing Cancelled", "Warn", 3)
+					Data.Editor.EditingSavedFile = nil
+				end
+
 				UIEvents.EditorTabs.updateUI();
 			end,
 			updateUI = function()
 				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
-					if v:GetAttribute("no") then
-						continue;
-					end
-					if v:IsA("TextButton") then
-						v:Destroy();
-					end
+					if v:GetAttribute("no") then continue end
+					if v:IsA("TextButton") then v:Destroy() end
 				end
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
@@ -4675,7 +4706,6 @@ if v.Name == "Popups" then v.Visible = false return end
 					EditorFrame.Visible = true;
 					Panel.Visible = true;
 				end
-				print("updated");
 			end,
 			RenameFile = function(NewName, TargetTab)
 				NewName = getDuplicatedName(NewName, Data.Editor.Tabs or {});
@@ -4691,7 +4721,6 @@ if v.Name == "Popups" then v.Visible = false return end
 		},
 		Saved = {
 			SaveFile = function(Name, Content)
-				createNotification("Successfully saved to Saves", "Success", 3);
 				Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
 				CLONED_Detectedly.writefile("saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
 					Name = Name,
@@ -4707,12 +4736,8 @@ if v.Name == "Popups" then v.Visible = false return end
 			end,
 			UpdateUI = function()
 				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-					if v:GetAttribute("no") then
-						continue;
-					end
-					if v:IsA("CanvasGroup") then
-						v:Destroy();
-					end
+					if v:GetAttribute("no") then continue end
+					if v:IsA("CanvasGroup") then v:Destroy() end
 				end
 				for i, v in pairs(Data.Saves.Scripts) do
 					local new = script.SaveTemplate:Clone();
@@ -4720,36 +4745,34 @@ if v.Name == "Popups" then v.Visible = false return end
 					new.Name = i;
 					new.Title.Text = i;
 					
-					-- 1. Execute Logic
+					-- Execute
 					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
 						UIEvents.Executor.RunCode(v)();
 					end);
 					
-					-- 2. Delete Logic
+					-- Delete
 					new.Misc.Panel.Delete.MouseButton1Click:Connect(function()
 						UIEvents.Saved.DelFile(i);
 					end);
 
-					-- 3. Edit Logic (NEW)
+					-- [[ EDIT BUTTON LOGIC ]]
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
-						-- Mark editor as "Editing Saved File"
-						Data.Editor.IsEditingSavedFile = true
+						-- 1. Create a temp tab in editor with exact name 'i'
+						-- Passing 'true' to isTemp to handle it specifically
+						UIEvents.EditorTabs.createTab(i, v, true)
 						
-						-- Force set the editor text without creating a new saved file yet
-						local Editor = Pages:WaitForChild("Editor")
-						local EditorFrame = Editor:WaitForChild("Editor").Input
-						EditorFrame.Text = v
+						-- 2. Mark this name as being edited
+						Data.Editor.EditingSavedFile = i
 						
-						-- Switch to Editor Page
+						-- 3. Go to Editor
 						UIEvents.Nav.goTo("Editor")
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
 
-					-- 4. AutoExec Logic (NEW)
+					-- [[ AUTOEXEC BUTTON LOGIC ]]
 					local autoExecPath = "autoexec/" .. i .. ".lua"
 					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
 					
-					-- Set Initial Color
 					if isAutoOn then
 						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(85, 255, 85) -- Green
 					else
@@ -4758,19 +4781,17 @@ if v.Name == "Popups" then v.Visible = false return end
 					
 					new.Misc.Panel.AutoExec.MouseButton1Click:Connect(function()
 						if CLONED_Detectedly.isfile(autoExecPath) then
-							-- Turn Off
 							CLONED_Detectedly.delfile(autoExecPath)
 							new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(255, 50, 50)
-							createNotification("AutoExec Deactivated", "Error", 3) -- Red/Error style for Off
+							createNotification("AutoExec Deactivated", "Error", 3)
 						else
-							-- Turn On
-							CLONED_Detectedly.writefile(autoExecPath, v) -- Write raw content to autoexec
+							CLONED_Detectedly.writefile(autoExecPath, v)
 							new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(85, 255, 85)
-							createNotification("AutoExec Activated", "Success", 3) -- Green/Success style for On
+							createNotification("AutoExec Activated", "Success", 3)
 						end
 					end)
 
-					-- Rename Logic
+					-- Rename
 					new.Title.FocusLost:Connect(function(press)
 						local newName = new.Title.Text;
 						local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
@@ -4796,14 +4817,11 @@ if v.Name == "Popups" then v.Visible = false return end
 				createNotification("Executed!", "Success", 5);
 				local func, x = loadstring(content);
 				if not func then
-					task.spawn(function()
-						error(x);
-					end);
+					task.spawn(function() error(x) end);
 				else
 					return func;
 				end
-				return function()
-				end;
+				return function() end;
 			end
 		},
 		Key = {
@@ -4811,15 +4829,9 @@ if v.Name == "Popups" then v.Visible = false return end
 				CLONED_Detectedly.writefile("Key", Key);
 			end
 		},
+		-- [[ GLOBAL NAV FUNCTION FOR CROSS-FILE USE ]]
 		Nav = {
 			goTo = function(Name)
-				-- Helper to switch pages from scripts
-				if Pages:FindFirstChild(Name) then
-					Pages.UIPageLayout:JumpTo(Pages[Name]);
-				end
-				-- Manually trigger the Nav button visual update if needed, 
-				-- though the original script handles this via Button clicks usually.
-				-- This is a wrapper to allow programmatic navigation.
 				local Button = nil
 				for _, frame in ipairs(Nav:GetChildren()) do
 					if frame:IsA("Frame") then
@@ -4829,21 +4841,16 @@ if v.Name == "Popups" then v.Visible = false return end
 					end
 				end
 				if Button then
-					-- Fire the click logic to run animations
-					for _, c in pairs(getconnections(Button.MouseButton1Click)) do
-						c:Fire()
-					end
+					for _, c in pairs(getconnections(Button.MouseButton1Click)) do c:Fire() end
 				end
 			end
 		}
-	};
 	
 	-- [[ INIT SAVED TAB ]]
 	InitTabs.Saved = function()
 		if not CLONED_Detectedly.isfolder("saves") then
 			CLONED_Detectedly.makedir("saves");
 		end
-		-- Ensure AutoExec folder exists
 		if not CLONED_Detectedly.isfolder("autoexec") then
 			CLONED_Detectedly.makedir("autoexec");
 		end
@@ -4859,7 +4866,6 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		UIEvents.Saved.UpdateUI();
 		
-		-- Search functionality for Saved Tab
 		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 			local hi = Pages.Saved.TextBox.Text
 			local isEmpty = #hi:gsub("[%s]","") <= 0
@@ -5024,16 +5030,10 @@ if v.Name == "Popups" then v.Visible = false return end
 		local isInstantNext = false;
 		local function findButton(Name)
 			for _, frame in ipairs(Nav:GetChildren()) do
-				if not frame:IsA("Frame") then
-					continue;
-				end
+				if not frame:IsA("Frame") then continue; end
 				for _, button in ipairs(frame:GetChildren()) do
-					if not button:IsA("TextButton") then
-						continue;
-					end
-					if (button.Name == Name) then
-						return button;
-					end
+					if not button:IsA("TextButton") then continue; end
+					if (button.Name == Name) then return button; end
 				end
 			end
 			return nil;
@@ -5042,28 +5042,38 @@ if v.Name == "Popups" then v.Visible = false return end
 		local CurrentPage = nil;
 		EnableFrame.Active = false;
 		for _, page in ipairs(Pages:GetChildren()) do
-			if not page:IsA("Frame") then
-				continue;
-			end
+			if not page:IsA("Frame") then continue; end
 			local Button = findButton(page.Name);
-			if not Button then
-				warn("Button not found:", page.Name);
-				continue;
-			end
+			if not Button then continue; end
 			page.LayoutOrder = Button.LayoutOrder;
 		end
+		
 		local function goTo(Name, f)
-			if isAnimating then
-				return;
+			if isAnimating then return; end
+			
+			-- [[ CANCELLATION LOGIC: PAGE NAVIGATION ]]
+			if Data.Editor.EditingSavedFile and Name ~= "Editor" then
+				local editingName = Data.Editor.EditingSavedFile
+				
+				-- 1. Notify
+				createNotification("Editing Cancelled", "Warn", 3)
+				
+				-- 2. Cleanup
+				CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
+				Data.Editor.Tabs[editingName] = nil;
+				Data.Editor.EditingSavedFile = nil
+				UIEvents.EditorTabs.updateUI();
+				
+				-- 3. Force redirect to Saved Tab
+				Name = "Saved"
 			end
+
 			if Pages:FindFirstChild(Name) then
 				Pages.UIPageLayout:JumpTo(Pages[Name]);
 			end
 			local Button = findButton(Name);
-			if not Button then
-				warn("Button not found:", Name);
-				return;
-			end
+			if not Button then return; end
+			
 			if (CurrentPage == Name) then
 				EnableFrame.Visible = false;
 				Pages.Visible = false;
@@ -5081,9 +5091,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			if (f or isInstantNext) then
 				EnableFrame.Position = TargetPos;
 				EnableFrame.Size = TargetSize;
-				if isInstantNext then
-					isInstantNext = false;
-				end
+				if isInstantNext then isInstantNext = false; end
 				return;
 			end
 			isAnimating = true;
@@ -5115,13 +5123,10 @@ if v.Name == "Popups" then v.Visible = false return end
 				BackgroundTransparency = 0
 			});
 			SmearTween:Play();
-			SmearTween.Completed:Connect(function()
-				NormalTween:Play();
-			end);
-			NormalTween.Completed:Connect(function()
-				isAnimating = false;
-			end);
+			SmearTween.Completed:Connect(function() NormalTween:Play(); end);
+			NormalTween.Completed:Connect(function() isAnimating = false; end);
 		end
+		
 		for _, frame in ipairs(Nav:GetChildren()) do
 			if frame:IsA("Frame") then
 				for _, button in ipairs(frame:GetChildren()) do
