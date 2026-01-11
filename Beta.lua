@@ -445,24 +445,20 @@ G2L["2d"]["Position"] = UDim2.new(0, 0, -0.5793, 0);
 G2L["2d"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["2d"]["Name"] = [[SaveTemplate]];
 
-
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.UICorner
 G2L["2e"] = Instance.new("UICorner", G2L["2d"]);
 G2L["2e"]["CornerRadius"] = UDim.new(0, 12);
-
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.UIListLayout
 G2L["2f"] = Instance.new("UIListLayout", G2L["2d"]);
 G2L["2f"]["VerticalFlex"] = Enum.UIFlexAlignment.Fill;
 G2L["2f"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
-
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.UIStroke
 G2L["30"] = Instance.new("UIStroke", G2L["2d"]);
 G2L["30"]["Transparency"] = 0.95;
 G2L["30"]["Thickness"] = 2;
 G2L["30"]["Color"] = Color3.fromRGB(232, 229, 255);
-
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.UIPadding
 G2L["31"] = Instance.new("UIPadding", G2L["2d"]);
@@ -471,11 +467,9 @@ G2L["31"]["PaddingRight"] = UDim.new(0, 6);
 G2L["31"]["PaddingLeft"] = UDim.new(0, 6);
 G2L["31"]["PaddingBottom"] = UDim.new(0, 6);
 
-
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc
 G2L["32"] = Instance.new("Folder", G2L["2d"]);
 G2L["32"]["Name"] = [[Misc]];
-
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel
 G2L["33"] = Instance.new("CanvasGroup", G2L["32"]);
@@ -483,12 +477,11 @@ G2L["33"]["ZIndex"] = 3;
 G2L["33"]["BorderSizePixel"] = 0;
 G2L["33"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
 G2L["33"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["33"]["Size"] = UDim2.new(0.14752, 0, 0.98, 0);
+G2L["33"]["Size"] = UDim2.new(0.3, 0, 0.98, 0); -- Widened to fit buttons
 G2L["33"]["Position"] = UDim2.new(1, 0, 1, 0);
 G2L["33"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["33"]["Name"] = [[Panel]];
 G2L["33"]["BackgroundTransparency"] = 0.5;
-
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.UIListLayout
 G2L["34"] = Instance.new("UIListLayout", G2L["33"]);
@@ -498,30 +491,11 @@ G2L["34"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
 G2L["34"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["34"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
-
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.UICorner
 G2L["35"] = Instance.new("UICorner", G2L["33"]);
 G2L["35"]["CornerRadius"] = UDim.new(0, 12);
 
-
--- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.Spacer1
-G2L["36"] = Instance.new("Frame", G2L["33"]);
-G2L["36"]["ZIndex"] = 4;
-G2L["36"]["BorderSizePixel"] = 0;
-G2L["36"]["BackgroundColor3"] = Color3.fromRGB(232, 229, 255);
-G2L["36"]["Size"] = UDim2.new(0, 2, 0.625, 0);
-G2L["36"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["36"]["Name"] = [[Spacer1]];
-G2L["36"]["LayoutOrder"] = 1;
-G2L["36"]["BackgroundTransparency"] = 0.93;
-
-
--- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.Spacer1.UICorner
-G2L["37"] = Instance.new("UICorner", G2L["36"]);
-G2L["37"]["CornerRadius"] = UDim.new(1, 0);
-
-
--- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.Execute
+-- [[ BUTTON 1: EXECUTE ]]
 G2L["38"] = Instance.new("TextButton", G2L["33"]);
 G2L["38"]["BorderSizePixel"] = 0;
 G2L["38"]["AutoButtonColor"] = false;
@@ -530,14 +504,11 @@ G2L["38"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["38"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["38"]["ZIndex"] = 4;
 G2L["38"]["BackgroundTransparency"] = 1;
-G2L["38"]["Size"] = UDim2.new(0.3863, 0, 0.94592, 0);
+G2L["38"]["Size"] = UDim2.new(0, 32, 0, 32);
 G2L["38"]["LayoutOrder"] = 1;
-G2L["38"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["38"]["Text"] = [[]];
 G2L["38"]["Name"] = [[Execute]];
 
-
--- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.Execute.Icon
 G2L["39"] = Instance.new("ImageLabel", G2L["38"]);
 G2L["39"]["ZIndex"] = 5;
 G2L["39"]["BorderSizePixel"] = 0;
@@ -546,14 +517,66 @@ G2L["39"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["39"]["ImageColor3"] = Color3.fromRGB(232, 229, 255);
 G2L["39"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
 G2L["39"]["Image"] = [[rbxassetid://95804011254392]];
-G2L["39"]["Size"] = UDim2.new(0.66667, 0, 0.66667, 0);
-G2L["39"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["39"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
 G2L["39"]["BackgroundTransparency"] = 1;
 G2L["39"]["Name"] = [[Icon]];
 G2L["39"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
+-- [[ BUTTON 2: EDIT ]]
+G2L["EditBtn"] = Instance.new("TextButton", G2L["33"]);
+G2L["EditBtn"]["BorderSizePixel"] = 0;
+G2L["EditBtn"]["AutoButtonColor"] = false;
+G2L["EditBtn"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["EditBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["EditBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["EditBtn"]["ZIndex"] = 4;
+G2L["EditBtn"]["BackgroundTransparency"] = 1;
+G2L["EditBtn"]["Size"] = UDim2.new(0, 32, 0, 32);
+G2L["EditBtn"]["LayoutOrder"] = 2;
+G2L["EditBtn"]["Text"] = [[]];
+G2L["EditBtn"]["Name"] = [[Edit]];
 
--- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.Delete
+G2L["EditIcon"] = Instance.new("ImageLabel", G2L["EditBtn"]);
+G2L["EditIcon"]["ZIndex"] = 5;
+G2L["EditIcon"]["BorderSizePixel"] = 0;
+G2L["EditIcon"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["EditIcon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["EditIcon"]["ImageColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["EditIcon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["EditIcon"]["Image"] = [[rbxassetid://11419717444]]; -- Pencil Icon
+G2L["EditIcon"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
+G2L["EditIcon"]["BackgroundTransparency"] = 1;
+G2L["EditIcon"]["Name"] = [[Icon]];
+G2L["EditIcon"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+-- [[ BUTTON 3: AUTOEXEC ]]
+G2L["AutoExecBtn"] = Instance.new("TextButton", G2L["33"]);
+G2L["AutoExecBtn"]["BorderSizePixel"] = 0;
+G2L["AutoExecBtn"]["AutoButtonColor"] = false;
+G2L["AutoExecBtn"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["AutoExecBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["AutoExecBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["AutoExecBtn"]["ZIndex"] = 4;
+G2L["AutoExecBtn"]["BackgroundTransparency"] = 1;
+G2L["AutoExecBtn"]["Size"] = UDim2.new(0, 32, 0, 32);
+G2L["AutoExecBtn"]["LayoutOrder"] = 3;
+G2L["AutoExecBtn"]["Text"] = [[]];
+G2L["AutoExecBtn"]["Name"] = [[AutoExec]];
+
+G2L["AutoExecIcon"] = Instance.new("ImageLabel", G2L["AutoExecBtn"]);
+G2L["AutoExecIcon"]["ZIndex"] = 5;
+G2L["AutoExecIcon"]["BorderSizePixel"] = 0;
+G2L["AutoExecIcon"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["AutoExecIcon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["AutoExecIcon"]["ImageColor3"] = Color3.fromRGB(255, 50, 50); -- Default Red (Off)
+G2L["AutoExecIcon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["AutoExecIcon"]["Image"] = [[rbxassetid://11419714821]]; -- Lightning Icon
+G2L["AutoExecIcon"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
+G2L["AutoExecIcon"]["BackgroundTransparency"] = 1;
+G2L["AutoExecIcon"]["Name"] = [[Icon]];
+G2L["AutoExecIcon"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+-- [[ BUTTON 4: DELETE ]]
 G2L["3a"] = Instance.new("TextButton", G2L["33"]);
 G2L["3a"]["BorderSizePixel"] = 0;
 G2L["3a"]["AutoButtonColor"] = false;
@@ -562,14 +585,11 @@ G2L["3a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["3a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["3a"]["ZIndex"] = 4;
 G2L["3a"]["BackgroundTransparency"] = 1;
-G2L["3a"]["Size"] = UDim2.new(0.3863, 0, 0.94592, 0);
-G2L["3a"]["LayoutOrder"] = -2;
-G2L["3a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["3a"]["Size"] = UDim2.new(0, 32, 0, 32);
+G2L["3a"]["LayoutOrder"] = 4;
 G2L["3a"]["Text"] = [[]];
 G2L["3a"]["Name"] = [[Delete]];
 
-
--- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.Delete.Icon
 G2L["3b"] = Instance.new("ImageLabel", G2L["3a"]);
 G2L["3b"]["ZIndex"] = 5;
 G2L["3b"]["BorderSizePixel"] = 0;
@@ -578,17 +598,14 @@ G2L["3b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["3b"]["ImageColor3"] = Color3.fromRGB(199, 107, 107);
 G2L["3b"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
 G2L["3b"]["Image"] = [[rbxassetid://87426080563358]];
-G2L["3b"]["Size"] = UDim2.new(0.645, 0, 0.645, 0);
-G2L["3b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["3b"]["Size"] = UDim2.new(0.7, 0, 0.7, 0);
 G2L["3b"]["BackgroundTransparency"] = 1;
 G2L["3b"]["Name"] = [[Icon]];
 G2L["3b"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.UIScale
 G2L["3c"] = Instance.new("UIScale", G2L["33"]);
 G2L["3c"]["Scale"] = 0.8;
-
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.UIPadding
 G2L["3d"] = Instance.new("UIPadding", G2L["33"]);
@@ -596,7 +613,6 @@ G2L["3d"]["PaddingTop"] = UDim.new(0, 2);
 G2L["3d"]["PaddingRight"] = UDim.new(0, 2);
 G2L["3d"]["PaddingLeft"] = UDim.new(0, 2);
 G2L["3d"]["PaddingBottom"] = UDim.new(0, 2);
-
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Title
 G2L["3e"] = Instance.new("TextBox", G2L["2d"]);
@@ -616,9 +632,8 @@ G2L["3e"]["ClearTextOnFocus"] = false;
 G2L["3e"]["Size"] = UDim2.new(1, 0, 0.49391, 0);
 G2L["3e"]["Position"] = UDim2.new(0, 0, -0, 0);
 G2L["3e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["3e"]["Text"] = [[menowewa]];
+G2L["3e"]["Text"] = [[Script Name]];
 G2L["3e"]["BackgroundTransparency"] = 1;
-
 
 -- StarterGui.ScreenGui.Main
 G2L["3f"] = Instance.new("Frame", G2L["1"]);
@@ -4516,6 +4531,7 @@ if v.Name == "Popups" then v.Visible = false return end
 	};
 	
 	local InitTabs = {};
+	-- [[ UPDATED UI EVENTS ]]
 	local UIEvents = {};
 	UIEvents = {
 		EditorTabs = {
@@ -4551,6 +4567,14 @@ if v.Name == "Popups" then v.Visible = false return end
 				if not tabName then
 					return;
 				end
+				-- Check if we are in "Edit Mode" for a saved script
+				if Data.Editor.IsEditingSavedFile then
+					-- We don't overwrite the actual 'tab' file here, we rely on the user clicking Save in the Save tab later
+					-- OR, if you want this to auto-update the Saved Tab content, do nothing here.
+					-- But standard behavior is just updating the text in RAM.
+					return
+				end
+
 				local TabData = Data.Editor.Tabs[tabName];
 				if (TabData and Content) then
 					CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
@@ -4565,6 +4589,12 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end,
 			switchTab = function(ToTab)
+				-- [[ EDITING CANCELLED LOGIC ]] --
+				if Data.Editor.IsEditingSavedFile then
+					createNotification("Editing Cancelled", "Warn", 3)
+					Data.Editor.IsEditingSavedFile = nil -- Reset flag
+				end
+
 				if (Data.Editor.Tabs[ToTab] and not Data.Editor.IsSwitching) then
 					Data.Editor.IsSwitching = true;
 					local Editor = Pages:WaitForChild("Editor");
@@ -4591,6 +4621,13 @@ if v.Name == "Popups" then v.Visible = false return end
 					createNotification("Cannot delete last tab!", "Error", 5)
 					return;
 				end
+				
+				-- [[ EDITING CANCELLED LOGIC ]] --
+				if Data.Editor.IsEditingSavedFile then
+					createNotification("Editing Cancelled", "Warn", 3)
+					Data.Editor.IsEditingSavedFile = nil
+				end
+
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				for i, v in pairs(Data.Editor.Tabs) do
 					if (i ~= Name) then
@@ -4682,12 +4719,58 @@ if v.Name == "Popups" then v.Visible = false return end
 					new.Parent = Pages.Saved.Scripts;
 					new.Name = i;
 					new.Title.Text = i;
+					
+					-- 1. Execute Logic
 					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
 						UIEvents.Executor.RunCode(v)();
 					end);
+					
+					-- 2. Delete Logic
 					new.Misc.Panel.Delete.MouseButton1Click:Connect(function()
 						UIEvents.Saved.DelFile(i);
 					end);
+
+					-- 3. Edit Logic (NEW)
+					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
+						-- Mark editor as "Editing Saved File"
+						Data.Editor.IsEditingSavedFile = true
+						
+						-- Force set the editor text without creating a new saved file yet
+						local Editor = Pages:WaitForChild("Editor")
+						local EditorFrame = Editor:WaitForChild("Editor").Input
+						EditorFrame.Text = v
+						
+						-- Switch to Editor Page
+						UIEvents.Nav.goTo("Editor")
+						createNotification("Editing: " .. i, "Info", 3)
+					end)
+
+					-- 4. AutoExec Logic (NEW)
+					local autoExecPath = "autoexec/" .. i .. ".lua"
+					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
+					
+					-- Set Initial Color
+					if isAutoOn then
+						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(85, 255, 85) -- Green
+					else
+						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(255, 50, 50) -- Red
+					end
+					
+					new.Misc.Panel.AutoExec.MouseButton1Click:Connect(function()
+						if CLONED_Detectedly.isfile(autoExecPath) then
+							-- Turn Off
+							CLONED_Detectedly.delfile(autoExecPath)
+							new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(255, 50, 50)
+							createNotification("AutoExec Deactivated", "Error", 3) -- Red/Error style for Off
+						else
+							-- Turn On
+							CLONED_Detectedly.writefile(autoExecPath, v) -- Write raw content to autoexec
+							new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(85, 255, 85)
+							createNotification("AutoExec Activated", "Success", 3) -- Green/Success style for On
+						end
+					end)
+
+					-- Rename Logic
 					new.Title.FocusLost:Connect(function(press)
 						local newName = new.Title.Text;
 						local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
@@ -4727,447 +4810,44 @@ if v.Name == "Popups" then v.Visible = false return end
 			Save = function(Key)
 				CLONED_Detectedly.writefile("Key", Key);
 			end
+		},
+		Nav = {
+			goTo = function(Name)
+				-- Helper to switch pages from scripts
+				if Pages:FindFirstChild(Name) then
+					Pages.UIPageLayout:JumpTo(Pages[Name]);
+				end
+				-- Manually trigger the Nav button visual update if needed, 
+				-- though the original script handles this via Button clicks usually.
+				-- This is a wrapper to allow programmatic navigation.
+				local Button = nil
+				for _, frame in ipairs(Nav:GetChildren()) do
+					if frame:IsA("Frame") then
+						for _, btn in ipairs(frame:GetChildren()) do
+							if btn.Name == Name then Button = btn break end
+						end
+					end
+				end
+				if Button then
+					-- Fire the click logic to run animations
+					for _, c in pairs(getconnections(Button.MouseButton1Click)) do
+						c:Fire()
+					end
+				end
+			end
 		}
 	};
-	InitTabs.Settings = function()
-		-- [1] Handle Sliders (Existing Code)
-		local SetData = {
-			UITransparency = {
-				Type = "Slider",
-				Callback = function(V)
-					if V then
-						script.Parent.Full.Transparency = V;
-					end
-				end
-			}
-		};
-		local Settings = Pages:WaitForChild("Settings");
-		local Misc = Settings:WaitForChild("Misc");
-		for _, v in pairs(Settings.Scripts:GetChildren()) do
-			if SetData[v.Name] then
-				if (SetData[v.Name].Type == "Slider") then
-					local UIS = game:GetService("UserInputService");
-					local Dragging = false;
-					v.Main.Line.Interact.MouseButton1Down:Connect(function()
-						Dragging = true;
-					end);
-					local function ChangeToValue(Percent)
-						local Value = math.floor(Percent * 100);
-						return Value;
-					end
-					UIS.InputChanged:Connect(function()
-						if Dragging then
-							local MousePos = UIS:GetMouseLocation() + Vector2.new(0, - 36);
-							local RelPos = MousePos - v.Main.Line.AbsolutePosition;
-							local Percent = math.clamp(RelPos.X / v.Main.Line.AbsoluteSize.X, 0, 1);
-							v.Main.Line.Interact.Position = UDim2.new(Percent, 0, v.Main.Line.Interact.Position.Y.Scale, 0);
-							v.Main.Line.Fill.Size = UDim2.new(Percent, 0, v.Main.Line.Fill.Size.Y.Scale, 0);
-							local FinalValue = ChangeToValue(Percent);
-							v.Main.Line.Percentage.Value = FinalValue;
-							SetData[v.Name].Callback(Percent);
-						end
-					end);
-					UIS.InputEnded:Connect(function(input)
-						if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then
-							Dragging = false;
-						end
-					end);
-				end
-			end
-		end
-
-		-- [2] Helper: Create Action Button (UPDATED)
-		local function newButton(title, btnText, callback)
-			local ButtonFrame = {};
-			do
-				local G2L = ButtonFrame;
-				G2L['d6'] = Instance.new("CanvasGroup", Pages.Settings.Scripts);
-				G2L['d6']['Visible'] = true;
-				G2L['d6']['BorderSizePixel'] = 0;
-				G2L['d6']['BackgroundColor3'] = Color3.fromRGB(55, 58, 68);
-				G2L['d6']['Size'] = UDim2.new(1, 0, 0, 48);
-				G2L['d6']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['d6']['Name'] = title;
-				
-				local corner = Instance.new("UICorner", G2L['d6']);
-				corner['CornerRadius'] = UDim.new(0, 18);
-				
-				local layout = Instance.new("UIListLayout", G2L['d6']);
-				layout['HorizontalFlex'] = Enum.UIFlexAlignment.Fill;
-				layout['Wraps'] = true;
-				layout['VerticalAlignment'] = Enum.VerticalAlignment.Center;
-				layout['SortOrder'] = Enum.SortOrder.LayoutOrder;
-				
-				local stroke = Instance.new("UIStroke", G2L['d6']);
-				stroke['Transparency'] = 0.95;
-				stroke['Thickness'] = 2;
-				stroke['Color'] = Color3.fromRGB(232, 229, 255);
-				
-				local pad = Instance.new("UIPadding", G2L['d6']);
-				pad['PaddingTop'] = UDim.new(0, 6);
-				pad['PaddingRight'] = UDim.new(0, 12);
-				pad['PaddingLeft'] = UDim.new(0, 12);
-				pad['PaddingBottom'] = UDim.new(0, 6);
-				
-				local label = Instance.new("TextLabel", G2L['d6']);
-				label['TextWrapped'] = true;
-				label['BackgroundTransparency'] = 1;
-				label['Size'] = UDim2.new(1, 0, 1, 0);
-				label['TextXAlignment'] = Enum.TextXAlignment.Left;
-				label['TextYAlignment'] = Enum.TextYAlignment.Top;
-				label['TextColor3'] = Color3.fromRGB(255, 255, 255);
-				label['Text'] = title;
-				label['TextSize'] = 14;
-				
-				-- [[ FIX: ADDED TEXTSCALED TO MATCH OTHER SETTINGS ]] --
-				label['TextScaled'] = true; 
-				
-				label['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
-				
-				local btnContainer = Instance.new("CanvasGroup", G2L['d6']);
-				btnContainer['BackgroundTransparency'] = 1;
-				btnContainer['Size'] = UDim2.new(0.25, 0, 0.75, 0); 
-				btnContainer['Position'] = UDim2.new(0.75, 0, 0.12, 0);
-				
-				local btn = Instance.new("TextButton", btnContainer);
-				btn['Size'] = UDim2.new(1, 0, 1, 0);
-				btn['BackgroundColor3'] = Color3.fromRGB(218, 50, 50); 
-				btn['TextColor3'] = Color3.fromRGB(255, 255, 255);
-				btn['Text'] = btnText;
-				btn['Font'] = Enum.Font.SourceSansBold;
-				btn['TextSize'] = 14;
-				
-				local btnCorner = Instance.new("UICorner", btn);
-				btnCorner['CornerRadius'] = UDim.new(0, 8);
-
-				-- Click Event
-				btn.MouseButton1Click:Connect(function()
-					callback()
-				end)
-			end
-		end
-
-		-- [3] Helper: Create Toggle (Existing Code)
-		local function newToggle(title, callbacl)
-			local Toggles = {};
-			local Enable = false;
-			do
-				local G2L = Toggles;
-				G2L['d6'] = Instance.new("CanvasGroup", Pages.Settings.Scripts);
-				G2L['d6']['Visible'] = true;
-				G2L['d6']['BorderSizePixel'] = 0;
-				G2L['d6']['BackgroundColor3'] = Color3.fromRGB(55, 58, 68);
-				G2L['d6']['Size'] = UDim2.new(1, 0, 0, 48);
-				G2L['d6']['Position'] = UDim2.new(0, 0, - 0.5793, 0);
-				G2L['d6']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['d6']['Name'] = title;
-				G2L['d7'] = Instance.new("UICorner", G2L['d6']);
-				G2L['d7']['CornerRadius'] = UDim.new(0, 18);
-				G2L['d8'] = Instance.new("UIListLayout", G2L['d6']);
-				G2L['d8']['HorizontalFlex'] = Enum.UIFlexAlignment.Fill;
-				G2L['d8']['Wraps'] = true;
-				G2L['d8']['VerticalAlignment'] = Enum.VerticalAlignment.Center;
-				G2L['d8']['SortOrder'] = Enum.SortOrder.LayoutOrder;
-				G2L['d9'] = Instance.new("UIStroke", G2L['d6']);
-				G2L['d9']['Transparency'] = 0.95;
-				G2L['d9']['Thickness'] = 2;
-				G2L['d9']['Color'] = Color3.fromRGB(232, 229, 255);
-				G2L['da'] = Instance.new("UIPadding", G2L['d6']);
-				G2L['da']['PaddingTop'] = UDim.new(0, 6);
-				G2L['da']['PaddingRight'] = UDim.new(0, 12);
-				G2L['da']['PaddingLeft'] = UDim.new(0, 12);
-				G2L['da']['PaddingBottom'] = UDim.new(0, 6);
-				G2L['db'] = Instance.new("TextLabel", G2L['d6']);
-				G2L['db']['TextWrapped'] = true;
-				G2L['db']['Active'] = true;
-				G2L['db']['ZIndex'] = 3;
-				G2L['db']['BorderSizePixel'] = 0;
-				G2L['db']['TextSize'] = 14;
-				G2L['db']['TextXAlignment'] = Enum.TextXAlignment.Left;
-				G2L['db']['TextYAlignment'] = Enum.TextYAlignment.Top;
-				G2L['db']['TextScaled'] = true;
-				G2L['db']['BackgroundColor3'] = Color3.fromRGB(255, 255, 255);
-				G2L['db']['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
-				G2L['db']['TextColor3'] = Color3.fromRGB(255, 255, 255);
-				G2L['db']['BackgroundTransparency'] = 1;
-				G2L['db']['Size'] = UDim2.new(1, 0, 1, 0);
-				G2L['db']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['db']['Text'] = title;
-				G2L['db']['Name'] = [[Title]];
-				G2L['db']['Position'] = UDim2.new(0, 0, "-0", 0);
-				G2L['dc'] = Instance.new("CanvasGroup", G2L['d6']);
-				G2L['dc']['Active'] = true;
-				G2L['dc']['BorderSizePixel'] = 0;
-				G2L['dc']['BackgroundColor3'] = Color3.fromRGB(57, 143, 255);
-				G2L['dc']['Selectable'] = true;
-				G2L['dc']['Size'] = UDim2.new(0.09939, 0, 0.75553, 0);
-				G2L['dc']['Position'] = UDim2.new(0.90061, 0, 0.12223, 0);
-				G2L['dc']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['dc']['Name'] = [[Main]];
-				G2L['dc']['BackgroundTransparency'] = 1;
-				G2L['dd'] = Instance.new("UICorner", G2L['dc']);
-				G2L['dd']['CornerRadius'] = UDim.new(1, 0);
-				G2L['de'] = Instance.new("TextButton", G2L['dc']);
-				G2L['de']['BorderSizePixel'] = 0;
-				G2L['de']['TextSize'] = 14;
-				G2L['de']['TextColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['de']['BackgroundColor3'] = Color3.fromRGB(69, 72, 85);
-				G2L['de']['FontFace'] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-				G2L['de']['Size'] = UDim2.new(1, 0, 1, 0);
-				G2L['de']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['de']['Text'] = [[]];
-				G2L['de']['Name'] = [[Button]];
-				G2L['df'] = Instance.new("UICorner", G2L['de']);
-				G2L['df']['CornerRadius'] = UDim.new(1, 0);
-				G2L['e0'] = Instance.new("UIPadding", G2L['de']);
-				G2L['e0']['PaddingTop'] = UDim.new(0, 3);
-				G2L['e0']['PaddingRight'] = UDim.new(0, 3);
-				G2L['e0']['PaddingLeft'] = UDim.new(0, 3);
-				G2L['e0']['PaddingBottom'] = UDim.new(0, 3);
-				G2L['e1'] = Instance.new("UIListLayout", G2L['de']);
-				G2L['e1']['HorizontalAlignment'] = Enum.HorizontalAlignment.Left;
-				G2L['e1']['SortOrder'] = Enum.SortOrder.LayoutOrder;
-				G2L['e2'] = Instance.new("ImageLabel", G2L['de']);
-				G2L['e2']['BorderSizePixel'] = 0;
-				G2L['e2']['ScaleType'] = Enum.ScaleType.Fit;
-				G2L['e2']['BackgroundColor3'] = Color3.fromRGB(194, 194, 194);
-				G2L['e2']['ImageColor3'] = Color3.fromRGB(232, 229, 255);
-				G2L['e2']['AnchorPoint'] = Vector2.new(0, 0.5);
-				G2L['e2']['Image'] = [[rbxassetid://5552526748]];
-				G2L['e2']['Size'] = UDim2.new(1, 0, 1, 0);
-				G2L['e2']['ClipsDescendants'] = true;
-				G2L['e2']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['e2']['BackgroundTransparency'] = 1;
-				G2L['e2']['Name'] = [[Point]];
-				G2L['e2']['Position'] = UDim2.new(0.5, 0, 0.5, 0);
-				G2L['e3'] = Instance.new("UIAspectRatioConstraint", G2L['e2']);
-				G2L['e4'] = Instance.new("UIAspectRatioConstraint", G2L['dc']);
-				G2L['e4']['AspectRatio'] = 1.90335;
-			end
-			Toggles['de'].MouseButton1Click:Connect(function()
-				Enable = not Enable;
-				callbacl(Enable);
-				Toggles['e1']['HorizontalAlignment'] = Enum.HorizontalAlignment[(Enable and "Right") or "Left"];
-				Toggles['de'].BackgroundColor3 = (Enable and Color3.fromRGB(57, 143, 255)) or Color3.fromRGB(69, 72, 85);
-			end);
-			return Toggles;
-		end
-		
-		-- [4] Create the Settings (Toggles & Buttons)
-		
-		newToggle("Invisible Open Trigger", function(v)
-			InvisTriggerOpen = v;
-			if v then
-				createNotification('Chat "/e open" to open UI', "Info", 5);
-			end
-		end);
-
-		newToggle("Censored Name In UI", function(v)
-			if v then
-				Main.Title.TextLabel.Text = "Hello, User!";
-			else
-				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
-			end
-		end);
-		
-		-- [[ NEW RESET BUTTON ]] --
-		newButton("Reset Loader Environment", "RESET", function()
-			if delfile and isfile then
-				if isfile("punk-x-env.txt") then
-					delfile("punk-x-env.txt")
-					createNotification("Environment Reset! Re-inject to choose.", "Success", 5)
-				else
-					createNotification("No preference saved.", "Error", 3)
-				end
-			else
-				createNotification("Not supported by your executor.", "Error", 5)
-			end
-		end)
-
-		newToggle("Anti AFK", function()
-			local speaker = game:GetService("Players").LocalPlayer
-			if getconnections then
-				for _, connection in pairs(getconnections(speaker.Idled)) do
-					if connection["Disable"] then
-						connection["Disable"](connection)
-					elseif connection["Disconnect"] then
-						connection["Disconnect"](connection)
-					end
-				end
-			else
-				speaker.Idled:Connect(function()
-					Services.VirtualUser:CaptureController()
-					Services.VirtualUser:ClickButton2(Vector2.new())
-				end)
-			end
-			createNotification("Anti AFK Enabled!", "Success", 5)
-		end)
-		
-		-- FPS Boost Logic (Existing)
-		local fpsBoostActive = false
-		local Last = {}
-		workspace.DescendantAdded:Connect(function(child)
-			if not fpsBoostActive then
-				return
-			end
-			task.spawn(function()
-				if child:IsA("ForceField") or child:IsA("Sparkles") or child:IsA("Smoke") or child:IsA("Fire") or child:IsA("Beam") then
-					RunService.Heartbeat:Wait()
-					child:Destroy()
-				elseif child:IsA("BasePart") then
-					child.CastShadow = false
-				end
-			end)
-		end)
-		newToggle("FPS Boost", function(v)
-			fpsBoostActive = v
 	
-			if v then
-				-- Save and modify Terrain
-				local Terrain = workspace:FindFirstChildWhichIsA("Terrain")
-				Last[Terrain] = {
-					WaterWaveSize = Terrain.WaterWaveSize,
-					WaterWaveSpeed = Terrain.WaterWaveSpeed,
-					WaterReflectance = Terrain.WaterReflectance,
-					WaterTransparency = Terrain.WaterTransparency
-				}
-				Terrain.WaterWaveSize = 0
-				Terrain.WaterWaveSpeed = 0
-				Terrain.WaterReflectance = 0
-				Terrain.WaterTransparency = 1
-	
-				-- Save and modify Lighting
-				Last[Lighting] = {
-					GlobalShadows = Lighting.GlobalShadows,
-					FogEnd = Lighting.FogEnd,
-					FogStart = Lighting.FogStart
-				}
-				Lighting.GlobalShadows = false
-				Lighting.FogEnd = 9e9
-				Lighting.FogStart = 9e9
-	
-				-- Save and modify Rendering settings
-				pcall(function()
-					Last["RenderingSettings"] = {
-						QualityLevel = settings().Rendering.QualityLevel
-					}
-					settings().Rendering.QualityLevel = 1
-				end)
-				-- Save and modify descendants
-				for _, obj in pairs(game:GetDescendants()) do
-					if obj:IsA("BasePart") then
-						Last[obj] = {
-							CastShadow = obj.CastShadow,
-							Material = obj.Material,
-							Reflectance = obj.Reflectance,
-							BackSurface = obj.BackSurface,
-							BottomSurface = obj.BottomSurface,
-							FrontSurface = obj.FrontSurface,
-							LeftSurface = obj.LeftSurface,
-							RightSurface = obj.RightSurface,
-							TopSurface = obj.TopSurface
-						}
-						obj.CastShadow = false
-						obj.Material = "Plastic"
-						obj.Reflectance = 0
-						obj.BackSurface = "SmoothNoOutlines"
-						obj.BottomSurface = "SmoothNoOutlines"
-						obj.FrontSurface = "SmoothNoOutlines"
-						obj.LeftSurface = "SmoothNoOutlines"
-						obj.RightSurface = "SmoothNoOutlines"
-						obj.TopSurface = "SmoothNoOutlines"
-					elseif obj:IsA("Decal") then
-						Last[obj] = {
-							Transparency = obj.Transparency,
-							Texture = obj.Texture
-						}
-						obj.Transparency = 1
-						obj.Texture = ""
-					elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
-						Last[obj] = {
-							Lifetime = obj.Lifetime
-						}
-						obj.Lifetime = NumberRange.new(0)
-					end
-				end
-	
-				-- Save and modify PostEffects
-				for _, obj in pairs(Lighting:GetDescendants()) do
-					if obj:IsA("PostEffect") then
-						Last[obj] = {
-							Enabled = obj.Enabled
-						}
-						obj.Enabled = false
-					end
-				end
-			else
-				-- Restore all saved properties
-				for obj, properties in pairs(Last) do
-					if obj == "RenderingSettings" then
-						pcall(function()settings().Rendering.QualityLevel = properties.QualityLevel end)
-					elseif typeof(obj) == "Instance" and obj.Parent then
-						-- Only restore if object still exists
-						for propName, propValue in pairs(properties) do
-							-- Check if current value matches what we set it to (confirming it's "our" change)
-							local shouldRestore = false
-							if obj:IsA("BasePart") then
-								shouldRestore = (propName == "CastShadow" and obj.CastShadow == false) or
-									(propName == "Material" and obj.Material == Enum.Material.Plastic) or
-									(propName == "Reflectance" and obj.Reflectance == 0) or
-									(propName:match("Surface") and obj[propName] == Enum.SurfaceType.SmoothNoOutlines)
-							elseif obj:IsA("Decal") then
-								shouldRestore = (propName == "Transparency" and obj.Transparency == 1) or
-									(propName == "Texture" and obj.Texture == "")
-							elseif obj:IsA("ParticleEmitter") or obj:IsA("Trail") then
-								shouldRestore = (propName == "Lifetime" and obj.Lifetime.Min == 0 and obj.Lifetime.Max == 0)
-							elseif obj:IsA("PostEffect") then
-								shouldRestore = (propName == "Enabled" and obj.Enabled == false)
-							elseif obj:IsA("Terrain") then
-								shouldRestore = (propName == "WaterWaveSize" and obj.WaterWaveSize == 0) or
-									(propName == "WaterWaveSpeed" and obj.WaterWaveSpeed == 0) or
-									(propName == "WaterReflectance" and obj.WaterReflectance == 0) or
-									(propName == "WaterTransparency" and obj.WaterTransparency == 1)
-							elseif obj == Lighting then
-								shouldRestore = (propName == "GlobalShadows" and obj.GlobalShadows == false) or
-									(propName == "FogEnd" and obj.FogEnd == 9e9) or
-									(propName == "FogStart" and obj.FogStart == 9e9)
-							end
-	
-							if shouldRestore then
-								pcall(function()
-									obj[propName] = propValue
-								end)
-							end
-						end
-					end
-				end
-	
-				-- Clear the Last table
-				Last = {}
-			end
-		end)
-	end;
-	InitTabs.TabsData = function()
-		local scripts = CLONED_Detectedly.listfiles("scripts") or {};
-		for index, Nextpath in ipairs(scripts) do
-			if (Nextpath == "/recently.data") then
-				continue;
-			end
-			local Loadedscript = game.HttpService:JSONDecode(CLONED_Detectedly.readfile("scripts" .. Nextpath));
-			Data.Editor.Tabs[Loadedscript.Name] = {
-				Loadedscript.Content,
-				Loadedscript.Order
-			};
-		end
-		if (# scripts == 0) then
-			UIEvents.EditorTabs.createTab("Script", "");
-		end
-		UIEvents.EditorTabs.updateUI();
-	end;
+	-- [[ INIT SAVED TAB ]]
 	InitTabs.Saved = function()
 		if not CLONED_Detectedly.isfolder("saves") then
 			CLONED_Detectedly.makedir("saves");
 		end
+		-- Ensure AutoExec folder exists
+		if not CLONED_Detectedly.isfolder("autoexec") then
+			CLONED_Detectedly.makedir("autoexec");
+		end
+		
 		local saves = CLONED_Detectedly.listfiles("saves") or {};
 		for index, Nextpath in ipairs(saves) do
 			local filename = Nextpath:match("([^/\\]+)$");
@@ -5178,6 +4858,8 @@ if v.Name == "Popups" then v.Visible = false return end
 			Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
 		end
 		UIEvents.Saved.UpdateUI();
+		
+		-- Search functionality for Saved Tab
 		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 			local hi = Pages.Saved.TextBox.Text
 			local isEmpty = #hi:gsub("[%s]","") <= 0
