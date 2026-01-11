@@ -4557,7 +4557,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
 				
-				-- If NOT editing a saved file, handle duplicates & auto-save to scripts/
+				-- If NOT editing a saved file (normal tab), handle duplicates & auto-save to scripts/
 				if not isTemp then
 					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
@@ -4598,9 +4598,21 @@ if v.Name == "Popups" then v.Visible = false return end
 					return
 				end
 
-				-- [[ MODE 2: NORMAL EDITOR ]]
-				-- Save to Saved Tab (New File)
-				UIEvents.Saved.SaveFile(tabName, Content, false)
+				-- [[ MODE 2: NORMAL EDITOR (Persistence Only) ]]
+				-- This saves to the hidden 'scripts/' folder so it stays when you rejoin, 
+				-- BUT it does NOT go to the 'Saved' tab.
+				local TabData = Data.Editor.Tabs[tabName];
+				if (TabData) then
+					CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+						Name = tabName,
+						Content = Content,
+						Order = TabData[2]
+					}));
+					Data.Editor.Tabs[tabName] = {
+						Content,
+						TabData[2]
+					};
+				end
 			end,
 			switchTab = function(ToTab)
 				-- [[ CANCELLATION LOGIC: SWITCHING TABS ]]
@@ -4615,7 +4627,6 @@ if v.Name == "Popups" then v.Visible = false return end
 					Data.Editor.EditingSavedFile = nil
 					
 					UIEvents.EditorTabs.updateUI()
-					-- Continue to switch...
 				end
 
 				if (Data.Editor.Tabs[ToTab] and not Data.Editor.IsSwitching) then
@@ -4627,7 +4638,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					-- Auto-save previous tab to persistent storage (scripts/) if normal
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						local CurrentContent = EditorFrame.Text;
-						-- Save to scripts/ folder logic embedded here to avoid triggering 'Saved File Overwritten'
+						-- Save to persistence only
 						local TabData = Data.Editor.Tabs[OldTab]
 						if TabData then
 							CLONED_Detectedly.writefile("scripts/" .. OldTab .. ".lua", game.HttpService:JSONEncode({
@@ -4675,7 +4686,6 @@ if v.Name == "Popups" then v.Visible = false return end
 				if isEditing then
 					createNotification("Editing Cancelled", "Warn", 3)
 					Data.Editor.EditingSavedFile = nil
-					-- If we deleted the editing tab, redirect to Saved
 					UIEvents.Nav.goTo("Saved") 
 				end
 
@@ -4763,7 +4773,6 @@ if v.Name == "Popups" then v.Visible = false return end
 		},
 		Saved = {
 			SaveFile = function(Name, Content, Overwrite)
-				-- If Overwrite is false/nil, generate a new name. If true, keep Name.
 				if not Overwrite then
 					Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
 				end
@@ -4900,15 +4909,12 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 				
 				if Button then
-					-- Directly invoke the animation logic manually
-					-- We access the same math used in InitTabs.Nav to move EnableFrame
 					EnableFrame.Visible = true;
-					Pages.Visible = true; -- Ensure page isn't hidden
+					Pages.Visible = true; 
 					local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
 					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
 					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y);
 					
-					-- Instant move to prevent animation conflicts during redirects
 					EnableFrame.Position = TargetPos;
 					EnableFrame.Size = TargetSize;
 					EnableFrame.BackgroundTransparency = 0
