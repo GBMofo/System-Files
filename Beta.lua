@@ -1,8 +1,8 @@
--- [[ MERGED SCRIPT: PUNK X REMAKE + LOADER + KEY SYSTEM ]] --
+-- [[ PUNK X: REMASTERED ]] --
 
 local G2L = {};
 
--- // 🛡️ SECURITY: SAFE PARENTING LOGIC //
+-- // 🛡️ SECURITY: PARENTING //
 local function GetSafeParent()
 	if gethui then return gethui() end
 	local CoreGui = game:GetService("CoreGui")
@@ -12,92 +12,557 @@ end
 
 local randomName = game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
 
--- // 1. EXECUTOR VISUALS //
+-- // 1. VISUALS (UI CREATION) //
 G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
 G2L["1"].Name = randomName
 G2L["1"]["IgnoreGuiInset"] = true
 G2L["1"]["ResetOnSpawn"] = false
-G2L["1"].Enabled = false -- Hidden by default, shown by Loader
+G2L["1"].Enabled = false -- Start Hidden (Loader will enable it)
 
 G2L["2"] = Instance.new("LocalScript", G2L["1"]);
 
--- [SEARCH TEMPLATE]
-G2L["a"] = Instance.new("CanvasGroup", G2L["2"]); G2L["a"]["BorderSizePixel"] = 0; G2L["a"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); G2L["a"]["Size"] = UDim2.new(1, 0, 0, 60); G2L["a"]["Name"] = [[SearchTemplate]];
-Instance.new("UICorner", G2L["a"]).CornerRadius = UDim.new(0, 10); local s1 = Instance.new("UIStroke", G2L["a"]); s1.Transparency = 0.5; s1.Color = Color3.fromRGB(60, 60, 80);
-local t1 = Instance.new("TextLabel", G2L["a"]); t1.TextSize = 16; t1.TextXAlignment = Enum.TextXAlignment.Left; t1.BackgroundColor3 = Color3.fromRGB(255, 255, 255); t1.FontFace = Font.new([[rbxassetid://12187365364]], Enum.FontWeight.Bold, Enum.FontStyle.Normal); t1.TextColor3 = Color3.fromRGB(255, 255, 255); t1.BackgroundTransparency = 1; t1.Size = UDim2.new(1, -60, 0, 25); t1.Position = UDim2.new(0, 60, 0, 5); t1.Text = [[Script Title]]; t1.Name = [[Title]];
-local f1 = Instance.new("Frame", G2L["a"]); f1.Name = [[Tags]]; f1.BackgroundTransparency = 1; f1.Position = UDim2.new(0, 60, 0, 30); f1.Size = UDim2.new(1, -200, 0, 25);
-local l1 = Instance.new("UIListLayout", f1); l1.Padding = UDim.new(0, 5); l1.FillDirection = Enum.FillDirection.Horizontal; l1.SortOrder = Enum.SortOrder.LayoutOrder;
-for _, name in pairs({"Key", "Paid", "Patched", "Universal"}) do local tag = Instance.new("TextLabel", f1); tag.Name = name; tag.Text = name; tag.BackgroundColor3 = Color3.fromRGB(40,40,50); tag.TextColor3 = Color3.fromRGB(200,200,200); tag.Size = UDim2.new(0,0,1,0); tag.AutomaticSize = Enum.AutomaticSize.X; tag.FontFace = Font.new([[rbxassetid://12187365364]], Enum.FontWeight.Medium, Enum.FontStyle.Normal); tag.TextSize = 12; local p = Instance.new("UIPadding", tag); p.PaddingLeft = UDim.new(0,8); p.PaddingRight = UDim.new(0,8); Instance.new("UICorner", tag).CornerRadius = UDim.new(0,6); end
-local fold1 = Instance.new("Folder", G2L["a"]); fold1.Name = [[Misc]]; local img1 = Instance.new("ImageLabel", fold1); img1.BackgroundColor3 = Color3.fromRGB(30, 30, 40); img1.Image = [[rbxassetid://109798560145884]]; img1.Size = UDim2.new(0, 48, 0, 48); img1.Position = UDim2.new(0, 6, 0, 6); img1.Name = [[Thumbnail]]; Instance.new("UICorner", img1).CornerRadius = UDim.new(0, 8);
-local cg1 = Instance.new("CanvasGroup", fold1); cg1.BackgroundTransparency = 1; cg1.AnchorPoint = Vector2.new(1, 0.5); cg1.Size = UDim2.new(0, 80, 1, 0); cg1.Position = UDim2.new(1, -5, 0.5, 0); cg1.Name = [[Panel]]; local l2 = Instance.new("UIListLayout", cg1); l2.Padding = UDim.new(0, 5); l2.FillDirection = Enum.FillDirection.Horizontal; l2.HorizontalAlignment = Enum.HorizontalAlignment.Right; l2.VerticalAlignment = Enum.VerticalAlignment.Center;
-local btnExec = Instance.new("TextButton", cg1); btnExec.BackgroundColor3 = Color3.fromRGB(0, 255, 170); btnExec.Size = UDim2.new(0, 35, 0, 35); btnExec.Text = ""; btnExec.Name = [[Execute]]; Instance.new("UICorner", btnExec).CornerRadius = UDim.new(0, 8); local iconExec = Instance.new("ImageLabel", btnExec); iconExec.BackgroundTransparency = 1; iconExec.Image = "rbxassetid://95804011254392"; iconExec.Size = UDim2.new(0.6,0,0.6,0); iconExec.Position = UDim2.new(0.2,0,0.2,0); iconExec.ImageColor3 = Color3.fromRGB(20,20,20);
-local btnSave = Instance.new("TextButton", cg1); btnSave.BackgroundColor3 = Color3.fromRGB(50, 50, 60); btnSave.Size = UDim2.new(0, 35, 0, 35); btnSave.Text = ""; btnSave.Name = [[Save]]; Instance.new("UICorner", btnSave).CornerRadius = UDim.new(0, 8); local iconSave = Instance.new("ImageLabel", btnSave); iconSave.BackgroundTransparency = 1; iconSave.Image = "rbxassetid://81882572588470"; iconSave.Size = UDim2.new(0.6,0,0.6,0); iconSave.Position = UDim2.new(0.2,0,0.2,0);
+-- [SEARCH CARD TEMPLATE]
+G2L["a"] = Instance.new("CanvasGroup", G2L["2"])
+G2L["a"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25)
+G2L["a"]["Size"] = UDim2.new(1, 0, 0, 60)
+G2L["a"]["Name"] = "SearchTemplate"
+G2L["a"]["BorderSizePixel"] = 0
+Instance.new("UICorner", G2L["a"]).CornerRadius = UDim.new(0, 10)
+local s1 = Instance.new("UIStroke", G2L["a"])
+s1.Transparency = 0.5
+s1.Color = Color3.fromRGB(60, 60, 80)
+
+local t1 = Instance.new("TextLabel", G2L["a"])
+t1.TextSize = 16
+t1.TextXAlignment = Enum.TextXAlignment.Left
+t1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+t1.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+t1.TextColor3 = Color3.fromRGB(255, 255, 255)
+t1.BackgroundTransparency = 1
+t1.Size = UDim2.new(1, -60, 0, 25)
+t1.Position = UDim2.new(0, 60, 0, 5)
+t1.Text = "Script Title"
+t1.Name = "Title"
+
+local f1 = Instance.new("Frame", G2L["a"])
+f1.Name = "Tags"
+f1.BackgroundTransparency = 1
+f1.Position = UDim2.new(0, 60, 0, 30)
+f1.Size = UDim2.new(1, -200, 0, 25)
+local l1 = Instance.new("UIListLayout", f1)
+l1.Padding = UDim.new(0, 5)
+l1.FillDirection = Enum.FillDirection.Horizontal
+l1.SortOrder = Enum.SortOrder.LayoutOrder
+
+for _, name in pairs({"Key", "Paid", "Patched", "Universal"}) do
+	local tag = Instance.new("TextLabel", f1)
+	tag.Name = name
+	tag.Text = name
+	tag.BackgroundColor3 = Color3.fromRGB(40,40,50)
+	tag.TextColor3 = Color3.fromRGB(200,200,200)
+	tag.Size = UDim2.new(0,0,1,0)
+	tag.AutomaticSize = Enum.AutomaticSize.X
+	tag.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Medium, Enum.FontStyle.Normal)
+	tag.TextSize = 12
+	local p = Instance.new("UIPadding", tag)
+	p.PaddingLeft = UDim.new(0,8)
+	p.PaddingRight = UDim.new(0,8)
+	Instance.new("UICorner", tag).CornerRadius = UDim.new(0,6)
+end
+
+local fold1 = Instance.new("Folder", G2L["a"])
+fold1.Name = "Misc"
+local img1 = Instance.new("ImageLabel", fold1)
+img1.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+img1.Image = "rbxassetid://109798560145884"
+img1.Size = UDim2.new(0, 48, 0, 48)
+img1.Position = UDim2.new(0, 6, 0, 6)
+img1.Name = "Thumbnail"
+Instance.new("UICorner", img1).CornerRadius = UDim.new(0, 8)
+
+local cg1 = Instance.new("CanvasGroup", fold1)
+cg1.BackgroundTransparency = 1
+cg1.AnchorPoint = Vector2.new(1, 0.5)
+cg1.Size = UDim2.new(0, 80, 1, 0)
+cg1.Position = UDim2.new(1, -5, 0.5, 0)
+cg1.Name = "Panel"
+local l2 = Instance.new("UIListLayout", cg1)
+l2.Padding = UDim.new(0, 5)
+l2.FillDirection = Enum.FillDirection.Horizontal
+l2.HorizontalAlignment = Enum.HorizontalAlignment.Right
+l2.VerticalAlignment = Enum.VerticalAlignment.Center
+
+local btnExec = Instance.new("TextButton", cg1)
+btnExec.BackgroundColor3 = Color3.fromRGB(0, 255, 170)
+btnExec.Size = UDim2.new(0, 35, 0, 35)
+btnExec.Text = ""
+btnExec.Name = "Execute"
+Instance.new("UICorner", btnExec).CornerRadius = UDim.new(0, 8)
+local iconExec = Instance.new("ImageLabel", btnExec)
+iconExec.BackgroundTransparency = 1
+iconExec.Image = "rbxassetid://95804011254392"
+iconExec.Size = UDim2.new(0.6,0,0.6,0)
+iconExec.Position = UDim2.new(0.2,0,0.2,0)
+iconExec.ImageColor3 = Color3.fromRGB(20,20,20)
+
+local btnSave = Instance.new("TextButton", cg1)
+btnSave.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+btnSave.Size = UDim2.new(0, 35, 0, 35)
+btnSave.Text = ""
+btnSave.Name = "Save"
+Instance.new("UICorner", btnSave).CornerRadius = UDim.new(0, 8)
+local iconSave = Instance.new("ImageLabel", btnSave)
+iconSave.BackgroundTransparency = 1
+iconSave.Image = "rbxassetid://81882572588470"
+iconSave.Size = UDim2.new(0.6,0,0.6,0)
+iconSave.Position = UDim2.new(0.2,0,0.2,0)
 
 -- [SAVED TEMPLATE]
-G2L["20"] = Instance.new("CanvasGroup", G2L["2"]); G2L["20"]["BorderSizePixel"] = 0; G2L["20"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); G2L["20"]["Size"] = UDim2.new(1, 0, 0, 50); G2L["20"]["Name"] = [[SaveTemplate]]; Instance.new("UICorner", G2L["20"]).CornerRadius = UDim.new(0, 10); local s2 = Instance.new("UIStroke", G2L["20"]); s2.Transparency = 0.5; s2.Color = Color3.fromRGB(60, 60, 80);
-local t2 = Instance.new("TextBox", G2L["20"]); t2.TextSize = 14; t2.TextXAlignment = Enum.TextXAlignment.Left; t2.BackgroundColor3 = Color3.fromRGB(255, 255, 255); t2.FontFace = Font.new([[rbxassetid://12187365364]], Enum.FontWeight.SemiBold, Enum.FontStyle.Normal); t2.TextColor3 = Color3.fromRGB(255, 255, 255); t2.BackgroundTransparency = 1; t2.Size = UDim2.new(0.6, 0, 1, 0); t2.Position = UDim2.new(0, 15, 0, 0); t2.Text = [[Saved Script Name]]; t2.Name = [[Title]]; t2.ClearTextOnFocus = false;
-local fold2 = Instance.new("Folder", G2L["20"]); fold2.Name = [[Misc]]; local cg2 = Instance.new("CanvasGroup", fold2); cg2.BackgroundTransparency = 1; cg2.AnchorPoint = Vector2.new(1, 0.5); cg2.Size = UDim2.new(0, 160, 1, 0); cg2.Position = UDim2.new(1, -5, 0.5, 0); cg2.Name = [[Panel]]; local l3 = Instance.new("UIListLayout", cg2); l3.Padding = UDim.new(0, 5); l3.FillDirection = Enum.FillDirection.Horizontal; l3.HorizontalAlignment = Enum.HorizontalAlignment.Right; l3.VerticalAlignment = Enum.VerticalAlignment.Center;
-local function createBtn(parent, name, iconId, color) local btn = Instance.new("TextButton", parent); btn.Name = name; btn.Text = ""; btn.BackgroundColor3 = Color3.fromRGB(40,40,50); btn.Size = UDim2.new(0,32,0,32); Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6); local i = Instance.new("ImageLabel", btn); i.Name = "Icon"; i.BackgroundTransparency = 1; i.Image = iconId; i.ImageColor3 = color or Color3.fromRGB(200,200,200); i.Size = UDim2.new(0.6,0,0.6,0); i.Position = UDim2.new(0.2,0,0.2,0); return btn end
-createBtn(cg2, "Delete", "rbxassetid://87426080563358", Color3.fromRGB(255, 80, 80)); createBtn(cg2, "AutoExec", "rbxassetid://11419714821", Color3.fromRGB(255, 50, 50)); createBtn(cg2, "Edit", "rbxassetid://129234394319564", Color3.fromRGB(100, 200, 255)); local ex2 = createBtn(cg2, "Execute", "rbxassetid://95804011254392", Color3.fromRGB(0, 255, 170)); ex2.BackgroundColor3 = Color3.fromRGB(40, 60, 50);
+G2L["20"] = Instance.new("CanvasGroup", G2L["2"])
+G2L["20"]["BorderSizePixel"] = 0
+G2L["20"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25)
+G2L["20"]["Size"] = UDim2.new(1, 0, 0, 50)
+G2L["20"]["Name"] = "SaveTemplate"
+Instance.new("UICorner", G2L["20"]).CornerRadius = UDim.new(0, 10)
+local s2 = Instance.new("UIStroke", G2L["20"])
+s2.Transparency = 0.5
+s2.Color = Color3.fromRGB(60, 60, 80)
+
+local t2 = Instance.new("TextBox", G2L["20"])
+t2.TextSize = 14
+t2.TextXAlignment = Enum.TextXAlignment.Left
+t2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+t2.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
+t2.TextColor3 = Color3.fromRGB(255, 255, 255)
+t2.BackgroundTransparency = 1
+t2.Size = UDim2.new(0.6, 0, 1, 0)
+t2.Position = UDim2.new(0, 15, 0, 0)
+t2.Text = "Saved Script Name"
+t2.Name = "Title"
+t2.ClearTextOnFocus = false
+
+local fold2 = Instance.new("Folder", G2L["20"])
+fold2.Name = "Misc"
+local cg2 = Instance.new("CanvasGroup", fold2)
+cg2.BackgroundTransparency = 1
+cg2.AnchorPoint = Vector2.new(1, 0.5)
+cg2.Size = UDim2.new(0, 160, 1, 0)
+cg2.Position = UDim2.new(1, -5, 0.5, 0)
+cg2.Name = "Panel"
+local l3 = Instance.new("UIListLayout", cg2)
+l3.Padding = UDim.new(0, 5)
+l3.FillDirection = Enum.FillDirection.Horizontal
+l3.HorizontalAlignment = Enum.HorizontalAlignment.Right
+l3.VerticalAlignment = Enum.VerticalAlignment.Center
+
+local function createBtn(parent, name, iconId, color)
+	local btn = Instance.new("TextButton", parent)
+	btn.Name = name
+	btn.Text = ""
+	btn.BackgroundColor3 = Color3.fromRGB(40,40,50)
+	btn.Size = UDim2.new(0,32,0,32)
+	Instance.new("UICorner", btn).CornerRadius = UDim.new(0,6)
+	local i = Instance.new("ImageLabel", btn)
+	i.Name = "Icon"
+	i.BackgroundTransparency = 1
+	i.Image = iconId
+	i.ImageColor3 = color or Color3.fromRGB(200,200,200)
+	i.Size = UDim2.new(0.6,0,0.6,0)
+	i.Position = UDim2.new(0.2,0,0.2,0)
+	return btn
+end
+createBtn(cg2, "Delete", "rbxassetid://87426080563358", Color3.fromRGB(255, 80, 80))
+createBtn(cg2, "AutoExec", "rbxassetid://11419714821", Color3.fromRGB(255, 50, 50))
+createBtn(cg2, "Edit", "rbxassetid://129234394319564", Color3.fromRGB(100, 200, 255))
+local ex2 = createBtn(cg2, "Execute", "rbxassetid://95804011254392", Color3.fromRGB(0, 255, 170))
+ex2.BackgroundColor3 = Color3.fromRGB(40, 60, 50)
 
 -- [TAB TEMPLATE]
-G2L["30"] = Instance.new("TextButton", G2L["2"]); G2L["30"]["Name"] = [[Yo]]; G2L["30"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 35); G2L["30"]["Size"] = UDim2.new(0, 100, 1, 0); G2L["30"]["Text"] = ""; G2L["30"]["AutoButtonColor"] = false;
-Instance.new("UICorner", G2L["30"]).CornerRadius = UDim.new(0, 6);
-local t3 = Instance.new("TextLabel", G2L["30"]); t3.Name = "Title"; t3.BackgroundTransparency = 1; t3.Size = UDim2.new(1,-25,1,0); t3.Position = UDim2.new(0,5,0,0); t3.TextXAlignment = Enum.TextXAlignment.Left; t3.TextColor3 = Color3.fromRGB(200,200,200); t3.Font = Enum.Font.GothamMedium; t3.TextSize = 12; t3.Text = "Script 1";
-local d3 = Instance.new("ImageButton", G2L["30"]); d3.Name = "Delete"; d3.BackgroundTransparency = 1; d3.Size = UDim2.new(0,16,0,16); d3.AnchorPoint = Vector2.new(1,0.5); d3.Position = UDim2.new(1,-5,0.5,0); d3.Image = "rbxassetid://122962777517764"; d3.ImageColor3 = Color3.fromRGB(150,150,150);
+G2L["30"] = Instance.new("TextButton", G2L["2"])
+G2L["30"]["Name"] = "Yo"
+G2L["30"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 35)
+G2L["30"]["Size"] = UDim2.new(0, 100, 1, 0)
+G2L["30"]["Text"] = ""
+G2L["30"]["AutoButtonColor"] = false
+Instance.new("UICorner", G2L["30"]).CornerRadius = UDim.new(0, 6)
+local t3 = Instance.new("TextLabel", G2L["30"])
+t3.Name = "Title"
+t3.BackgroundTransparency = 1
+t3.Size = UDim2.new(1,-25,1,0)
+t3.Position = UDim2.new(0,5,0,0)
+t3.TextXAlignment = Enum.TextXAlignment.Left
+t3.TextColor3 = Color3.fromRGB(200,200,200)
+t3.Font = Enum.Font.GothamMedium
+t3.TextSize = 12
+t3.Text = "Script 1"
+local d3 = Instance.new("ImageButton", G2L["30"])
+d3.Name = "Delete"
+d3.BackgroundTransparency = 1
+d3.Size = UDim2.new(0,16,0,16)
+d3.AnchorPoint = Vector2.new(1,0.5)
+d3.Position = UDim2.new(1,-5,0.5,0)
+d3.Image = "rbxassetid://122962777517764"
+d3.ImageColor3 = Color3.fromRGB(150,150,150)
 
 -- [MAIN FRAME]
-G2L["40"] = Instance.new("Frame", G2L["1"]); G2L["40"]["Name"] = "Main"; G2L["40"]["Size"] = UDim2.new(0, 750, 0, 450); G2L["40"]["Position"] = UDim2.new(0.5, 0, 0.5, 0); G2L["40"]["AnchorPoint"] = Vector2.new(0.5, 0.5); G2L["40"]["BackgroundColor3"] = Color3.fromRGB(15, 15, 20); G2L["40"]["Visible"] = false;
-Instance.new("UICorner", G2L["40"]).CornerRadius = UDim.new(0, 16); local s3 = Instance.new("UIStroke", G2L["40"]); s3.Color = Color3.fromRGB(0, 255, 255); s3.Thickness = 1.5; s3.Transparency = 0.6;
-local ef = Instance.new("Frame", G2L["40"]); ef.Name = "EnableFrame"; ef.Visible = false; ef.Size = UDim2.new(1,0,1,0); ef.BackgroundColor3 = Color3.fromRGB(0,0,0); ef.BackgroundTransparency = 0.5; Instance.new("UICorner", ef).CornerRadius = UDim.new(0,16);
+G2L["40"] = Instance.new("Frame", G2L["1"])
+G2L["40"]["Name"] = "Main"
+G2L["40"]["Size"] = UDim2.new(0, 750, 0, 450)
+G2L["40"]["Position"] = UDim2.new(0.5, 0, 0.5, 0)
+G2L["40"]["AnchorPoint"] = Vector2.new(0.5, 0.5)
+G2L["40"]["BackgroundColor3"] = Color3.fromRGB(15, 15, 20)
+G2L["40"]["Visible"] = false
+Instance.new("UICorner", G2L["40"]).CornerRadius = UDim.new(0, 16)
+local s3 = Instance.new("UIStroke", G2L["40"])
+s3.Color = Color3.fromRGB(0, 255, 255)
+s3.Thickness = 1.5
+s3.Transparency = 0.6
+
+local ef = Instance.new("Frame", G2L["40"])
+ef.Name = "EnableFrame"
+ef.Visible = false
+ef.Size = UDim2.new(1,0,1,0)
+ef.BackgroundColor3 = Color3.fromRGB(0,0,0)
+ef.BackgroundTransparency = 0.5
+Instance.new("UICorner", ef).CornerRadius = UDim.new(0,16)
 
 -- [SIDEBAR]
-local left = Instance.new("Frame", G2L["40"]); left.Name = "Leftside"; left.BackgroundTransparency = 1; left.Size = UDim2.new(0, 60, 1, 0); left.Position = UDim2.new(0, 0, 0, 0);
-local nav = Instance.new("Frame", left); nav.Name = "Nav"; nav.BackgroundColor3 = Color3.fromRGB(25, 25, 30); nav.Size = UDim2.new(0, 50, 0, 300); nav.AnchorPoint = Vector2.new(0.5, 0.5); nav.Position = UDim2.new(0.5, 0, 0.5, 0);
-Instance.new("UICorner", nav).CornerRadius = UDim.new(1, 0); local s4 = Instance.new("UIStroke", nav); s4.Color = Color3.fromRGB(60, 60, 80); s4.Thickness = 1;
-local pl = Instance.new("UIPageLayout", nav); pl.SortOrder = Enum.SortOrder.LayoutOrder; pl.FillDirection = Enum.FillDirection.Vertical;
-local p1 = Instance.new("Frame", nav); p1.Name = "Page1"; p1.BackgroundTransparency = 1; p1.Size = UDim2.new(1,0,1,0); local l4 = Instance.new("UIListLayout", p1); l4.HorizontalAlignment = Enum.HorizontalAlignment.Center; l4.VerticalAlignment = Enum.VerticalAlignment.Center; l4.Padding = UDim.new(0, 15);
-local function createNavBtn(name, icon, order) local btn = Instance.new("TextButton", p1); btn.Name = name; btn.LayoutOrder = order; btn.Size = UDim2.new(0, 32, 0, 32); btn.BackgroundColor3 = Color3.fromRGB(255,255,255); btn.BackgroundTransparency = 1; btn.Text = ""; local ico = Instance.new("ImageLabel", btn); ico.Name = "Icon"; ico.Size = UDim2.new(1,0,1,0); ico.BackgroundTransparency = 1; ico.Image = icon; ico.ImageColor3 = Color3.fromRGB(150,150,150); return btn end
-createNavBtn("Home", "rbxassetid://83248619918383", 1); createNavBtn("Editor", "rbxassetid://129234394319564", 2); createNavBtn("Saved", "rbxassetid://97513260941879", 3); createNavBtn("Search", "rbxassetid://127191938354199", 4); createNavBtn("Settings", "rbxassetid://91653586592354", 5);
-local closeBtn = Instance.new("TextButton", left); closeBtn.Name = "Close"; closeBtn.Size = UDim2.new(0, 14, 0, 14); closeBtn.Position = UDim2.new(0, 23, 0, 15); closeBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80); closeBtn.Text = ""; Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1,0);
+local left = Instance.new("Frame", G2L["40"])
+left.Name = "Leftside"
+left.BackgroundTransparency = 1
+left.Size = UDim2.new(0, 60, 1, 0)
+left.Position = UDim2.new(0, 0, 0, 0)
+
+local nav = Instance.new("Frame", left)
+nav.Name = "Nav"
+nav.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+nav.Size = UDim2.new(0, 50, 0, 300)
+nav.AnchorPoint = Vector2.new(0.5, 0.5)
+nav.Position = UDim2.new(0.5, 0, 0.5, 0)
+Instance.new("UICorner", nav).CornerRadius = UDim.new(1, 0)
+local s4 = Instance.new("UIStroke", nav)
+s4.Color = Color3.fromRGB(60, 60, 80)
+s4.Thickness = 1
+
+local pl = Instance.new("UIPageLayout", nav)
+pl.SortOrder = Enum.SortOrder.LayoutOrder
+pl.FillDirection = Enum.FillDirection.Vertical
+
+local p1 = Instance.new("Frame", nav)
+p1.Name = "Page1"
+p1.BackgroundTransparency = 1
+p1.Size = UDim2.new(1,0,1,0)
+local l4 = Instance.new("UIListLayout", p1)
+l4.HorizontalAlignment = Enum.HorizontalAlignment.Center
+l4.VerticalAlignment = Enum.VerticalAlignment.Center
+l4.Padding = UDim.new(0, 15)
+
+local function createNavBtn(name, icon, order)
+	local btn = Instance.new("TextButton", p1)
+	btn.Name = name
+	btn.LayoutOrder = order
+	btn.Size = UDim2.new(0, 32, 0, 32)
+	btn.BackgroundColor3 = Color3.fromRGB(255,255,255)
+	btn.BackgroundTransparency = 1
+	btn.Text = ""
+	local ico = Instance.new("ImageLabel", btn)
+	ico.Name = "Icon"
+	ico.Size = UDim2.new(1,0,1,0)
+	ico.BackgroundTransparency = 1
+	ico.Image = icon
+	ico.ImageColor3 = Color3.fromRGB(150,150,150)
+	return btn
+end
+createNavBtn("Home", "rbxassetid://83248619918383", 1)
+createNavBtn("Editor", "rbxassetid://129234394319564", 2)
+createNavBtn("Saved", "rbxassetid://97513260941879", 3)
+createNavBtn("Search", "rbxassetid://127191938354199", 4)
+createNavBtn("Settings", "rbxassetid://91653586592354", 5)
+
+local closeBtn = Instance.new("TextButton", left)
+closeBtn.Name = "Close"
+closeBtn.Size = UDim2.new(0, 14, 0, 14)
+closeBtn.Position = UDim2.new(0, 23, 0, 15)
+closeBtn.BackgroundColor3 = Color3.fromRGB(255, 80, 80)
+closeBtn.Text = ""
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(1,0)
 
 -- [PAGES]
-local pages = Instance.new("Frame", G2L["40"]); pages.Name = "Pages"; pages.Size = UDim2.new(1, -70, 1, -20); pages.Position = UDim2.new(0, 65, 0, 10); pages.BackgroundTransparency = 1;
-local pp = Instance.new("UIPageLayout", pages); pp.EasingStyle = Enum.EasingStyle.Circular; pp.EasingDirection = Enum.EasingDirection.Out; pp.TweenTime = 0.4; pp.SortOrder = Enum.SortOrder.LayoutOrder; pp.ScrollWheelInputEnabled = false;
+local pages = Instance.new("Frame", G2L["40"])
+pages.Name = "Pages"
+pages.Size = UDim2.new(1, -70, 1, -20)
+pages.Position = UDim2.new(0, 65, 0, 10)
+pages.BackgroundTransparency = 1
+local pp = Instance.new("UIPageLayout", pages)
+pp.EasingStyle = Enum.EasingStyle.Circular
+pp.EasingDirection = Enum.EasingDirection.Out
+pp.TweenTime = 0.4
+pp.SortOrder = Enum.SortOrder.LayoutOrder
+pp.ScrollWheelInputEnabled = false
 
 -- Home Page
-local home = Instance.new("Frame", pages); home.Name = "Home"; home.BackgroundTransparency = 1; home.LayoutOrder = 1; Instance.new("UIListLayout", home).Padding = UDim.new(0,10);
-local titleF = Instance.new("Frame", G2L["40"]); titleF.Name = "Title"; titleF.BackgroundTransparency = 1; titleF.Size = UDim2.new(0, 200, 0, 30); titleF.Position = UDim2.new(0, 70, 0, 15);
-local hello = Instance.new("TextLabel", titleF); hello.Name = "TextLabel"; hello.Size = UDim2.new(1,0,1,0); hello.BackgroundTransparency = 1; hello.TextXAlignment = Enum.TextXAlignment.Left; hello.TextColor3 = Color3.fromRGB(0, 255, 255); hello.FontFace = Font.new([[rbxassetid://12187365364]], Enum.FontWeight.Bold, Enum.FontStyle.Normal); hello.TextSize = 20; hello.Text = "Hello, User!";
-local keyF = Instance.new("Frame", home); keyF.Name = "Key"; keyF.BackgroundColor3 = Color3.fromRGB(25, 25, 30); keyF.Size = UDim2.new(1, 0, 0, 80); Instance.new("UICorner", keyF).CornerRadius = UDim.new(0, 12); local sk = Instance.new("UIStroke", keyF); sk.Color = Color3.fromRGB(0, 255, 100); sk.Transparency = 0.5;
-local kt = Instance.new("TextLabel", keyF); kt.Name = "KeyText"; kt.Size = UDim2.new(1, -20, 0, 30); kt.Position = UDim2.new(0, 15, 0, 10); kt.BackgroundTransparency = 1; kt.TextColor3 = Color3.fromRGB(255,255,255); kt.TextXAlignment = Enum.TextXAlignment.Left; kt.TextSize = 14; kt.RichText = true; kt.Text = "Checking key status..."; kt.Font = Enum.Font.GothamMedium;
-local dur = Instance.new("TextLabel", keyF); dur.Name = "Duration"; dur.Size = UDim2.new(1, -20, 0, 20); dur.Position = UDim2.new(0, 15, 0, 45); dur.BackgroundTransparency = 1; dur.TextColor3 = Color3.fromRGB(150,150,150); dur.TextXAlignment = Enum.TextXAlignment.Left; dur.Text = "Loading..."; dur.Font = Enum.Font.Gotham;
+local home = Instance.new("Frame", pages)
+home.Name = "Home"
+home.BackgroundTransparency = 1
+home.LayoutOrder = 1
+Instance.new("UIListLayout", home).Padding = UDim.new(0,10)
+local titleF = Instance.new("Frame", G2L["40"])
+titleF.Name = "Title"
+titleF.BackgroundTransparency = 1
+titleF.Size = UDim2.new(0, 200, 0, 30)
+titleF.Position = UDim2.new(0, 70, 0, 15)
+local hello = Instance.new("TextLabel", titleF)
+hello.Name = "TextLabel"
+hello.Size = UDim2.new(1,0,1,0)
+hello.BackgroundTransparency = 1
+hello.TextXAlignment = Enum.TextXAlignment.Left
+hello.TextColor3 = Color3.fromRGB(0, 255, 255)
+hello.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+hello.TextSize = 20
+hello.Text = "Hello, User!"
+
+local keyF = Instance.new("Frame", home)
+keyF.Name = "Key"
+keyF.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+keyF.Size = UDim2.new(1, 0, 0, 80)
+Instance.new("UICorner", keyF).CornerRadius = UDim.new(0, 12)
+local sk = Instance.new("UIStroke", keyF)
+sk.Color = Color3.fromRGB(0, 255, 100)
+sk.Transparency = 0.5
+local kt = Instance.new("TextLabel", keyF)
+kt.Name = "KeyText"
+kt.Size = UDim2.new(1, -20, 0, 30)
+kt.Position = UDim2.new(0, 15, 0, 10)
+kt.BackgroundTransparency = 1
+kt.TextColor3 = Color3.fromRGB(255,255,255)
+kt.TextXAlignment = Enum.TextXAlignment.Left
+kt.TextSize = 14
+kt.RichText = true
+kt.Text = "Checking key status..."
+kt.Font = Enum.Font.GothamMedium
+local dur = Instance.new("TextLabel", keyF)
+dur.Name = "Duration"
+dur.Size = UDim2.new(1, -20, 0, 20)
+dur.Position = UDim2.new(0, 15, 0, 45)
+dur.BackgroundTransparency = 1
+dur.TextColor3 = Color3.fromRGB(150,150,150)
+dur.TextXAlignment = Enum.TextXAlignment.Left
+dur.Text = "Loading..."
+dur.Font = Enum.Font.Gotham
 
 -- Editor Page
-local edP = Instance.new("Frame", pages); edP.Name = "Editor"; edP.BackgroundTransparency = 1; edP.LayoutOrder = 2;
-local tabS = Instance.new("ScrollingFrame", edP); tabS.Name = "Tabs"; tabS.Size = UDim2.new(1, 0, 0, 35); tabS.BackgroundTransparency = 1; tabS.ScrollBarThickness = 0; tabS.ScrollingDirection = Enum.ScrollingDirection.X; tabS.AutomaticCanvasSize = Enum.AutomaticSize.X; local tl = Instance.new("UIListLayout", tabS); tl.FillDirection = Enum.FillDirection.Horizontal; tl.Padding = UDim.new(0,5);
-local crTab = Instance.new("TextButton", tabS); crTab.Name = "Create"; crTab.LayoutOrder = 999; crTab.Size = UDim2.new(0, 30, 1, 0); crTab.BackgroundColor3 = Color3.fromRGB(0, 255, 255); crTab.Text = "+"; crTab.TextColor3 = Color3.fromRGB(0,0,0); crTab.FontFace = Font.new([[rbxassetid://12187365364]], Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal); Instance.new("UICorner", crTab).CornerRadius = UDim.new(0, 6);
-local edBox = Instance.new("ScrollingFrame", edP); edBox.Name = "Editor"; edBox.Size = UDim2.new(1, 0, 1, -85); edBox.Position = UDim2.new(0, 0, 0, 45); edBox.BackgroundColor3 = Color3.fromRGB(18, 18, 22); edBox.ScrollBarThickness = 4; edBox.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 255); Instance.new("UICorner", edBox).CornerRadius = UDim.new(0, 8); Instance.new("UIStroke", edBox).Color = Color3.fromRGB(40,40,50);
-local inp = Instance.new("TextBox", edBox); inp.Name = "Input"; inp.MultiLine = true; inp.Size = UDim2.new(1, -25, 1, 0); inp.Position = UDim2.new(0, 25, 0, 0); inp.BackgroundTransparency = 1; inp.TextColor3 = Color3.fromRGB(220, 220, 220); inp.TextSize = 14; inp.FontFace = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal); inp.TextXAlignment = Enum.TextXAlignment.Left; inp.TextYAlignment = Enum.TextYAlignment.Top; inp.ClearTextOnFocus = false; inp.Text = "-- Welcome";
-local lines = Instance.new("TextLabel", edBox); lines.Name = "Lines"; lines.Size = UDim2.new(0, 20, 1, 0); lines.BackgroundTransparency = 1; lines.TextColor3 = Color3.fromRGB(80, 80, 80); lines.TextSize = 14; lines.FontFace = inp.FontFace; lines.TextYAlignment = Enum.TextYAlignment.Top; lines.Text = "1";
-local pan = Instance.new("CanvasGroup", edP); pan.Name = "Panel"; pan.Size = UDim2.new(1, 0, 0, 35); pan.AnchorPoint = Vector2.new(0, 1); pan.Position = UDim2.new(0, 0, 1, 0); pan.BackgroundTransparency = 1; local pl2 = Instance.new("UIListLayout", pan); pl2.FillDirection = Enum.FillDirection.Horizontal; pl2.HorizontalAlignment = Enum.HorizontalAlignment.Right; pl2.Padding = UDim.new(0, 8);
-local function mkEdBtn(name, icon, color) local b = Instance.new("TextButton", pan); b.Name = name; b.Text = ""; b.BackgroundColor3 = Color3.fromRGB(30,30,35); b.Size = UDim2.new(0,35,0,35); Instance.new("UICorner", b).CornerRadius = UDim.new(0,8); local i = Instance.new("ImageLabel", b); i.Name = "Icon"; i.BackgroundTransparency = 1; i.Image = icon; i.ImageColor3 = color; i.Size = UDim2.new(0.6,0,0.6,0); i.Position = UDim2.new(0.2,0,0.2,0); return b end
-mkEdBtn("Execute", "rbxassetid://95804011254392", Color3.fromRGB(0,255,180)); mkEdBtn("ExecuteClipboard", "rbxassetid://74812558983299", Color3.fromRGB(255,255,255)); mkEdBtn("Save", "rbxassetid://81882572588470", Color3.fromRGB(100,200,255)); mkEdBtn("Paste", "rbxassetid://88661060655687", Color3.fromRGB(200,200,200)); mkEdBtn("Rename", "rbxassetid://80861536658698", Color3.fromRGB(255,200,100)); mkEdBtn("Delete", "rbxassetid://98690572665832", Color3.fromRGB(255,80,80));
+local edP = Instance.new("Frame", pages)
+edP.Name = "Editor"
+edP.BackgroundTransparency = 1
+edP.LayoutOrder = 2
+local tabS = Instance.new("ScrollingFrame", edP)
+tabS.Name = "Tabs"
+tabS.Size = UDim2.new(1, 0, 0, 35)
+tabS.BackgroundTransparency = 1
+tabS.ScrollBarThickness = 0
+tabS.ScrollingDirection = Enum.ScrollingDirection.X
+tabS.AutomaticCanvasSize = Enum.AutomaticSize.X
+local tl = Instance.new("UIListLayout", tabS)
+tl.FillDirection = Enum.FillDirection.Horizontal
+tl.Padding = UDim.new(0,5)
+local crTab = Instance.new("TextButton", tabS)
+crTab.Name = "Create"
+crTab.LayoutOrder = 999
+crTab.Size = UDim2.new(0, 30, 1, 0)
+crTab.BackgroundColor3 = Color3.fromRGB(0, 255, 255)
+crTab.Text = "+"
+crTab.TextColor3 = Color3.fromRGB(0,0,0)
+crTab.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.ExtraBold, Enum.FontStyle.Normal)
+Instance.new("UICorner", crTab).CornerRadius = UDim.new(0, 6)
+
+local edBox = Instance.new("ScrollingFrame", edP)
+edBox.Name = "Editor"
+edBox.Size = UDim2.new(1, 0, 1, -85)
+edBox.Position = UDim2.new(0, 0, 0, 45)
+edBox.BackgroundColor3 = Color3.fromRGB(18, 18, 22)
+edBox.ScrollBarThickness = 4
+edBox.ScrollBarImageColor3 = Color3.fromRGB(0, 255, 255)
+Instance.new("UICorner", edBox).CornerRadius = UDim.new(0, 8)
+Instance.new("UIStroke", edBox).Color = Color3.fromRGB(40,40,50)
+local inp = Instance.new("TextBox", edBox)
+inp.Name = "Input"
+inp.MultiLine = true
+inp.Size = UDim2.new(1, -25, 1, 0)
+inp.Position = UDim2.new(0, 25, 0, 0)
+inp.BackgroundTransparency = 1
+inp.TextColor3 = Color3.fromRGB(220, 220, 220)
+inp.TextSize = 14
+inp.FontFace = Font.new("rbxasset://fonts/families/RobotoMono.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+inp.TextXAlignment = Enum.TextXAlignment.Left
+inp.TextYAlignment = Enum.TextYAlignment.Top
+inp.ClearTextOnFocus = false
+inp.Text = "-- Welcome"
+local lines = Instance.new("TextLabel", edBox)
+lines.Name = "Lines"
+lines.Size = UDim2.new(0, 20, 1, 0)
+lines.BackgroundTransparency = 1
+lines.TextColor3 = Color3.fromRGB(80, 80, 80)
+lines.TextSize = 14
+lines.FontFace = inp.FontFace
+lines.TextYAlignment = Enum.TextYAlignment.Top
+lines.Text = "1"
+
+local pan = Instance.new("CanvasGroup", edP)
+pan.Name = "Panel"
+pan.Size = UDim2.new(1, 0, 0, 35)
+pan.AnchorPoint = Vector2.new(0, 1)
+pan.Position = UDim2.new(0, 0, 1, 0)
+pan.BackgroundTransparency = 1
+local pl2 = Instance.new("UIListLayout", pan)
+pl2.FillDirection = Enum.FillDirection.Horizontal
+pl2.HorizontalAlignment = Enum.HorizontalAlignment.Right
+pl2.Padding = UDim.new(0, 8)
+
+local function mkEdBtn(name, icon, color)
+	local b = Instance.new("TextButton", pan)
+	b.Name = name
+	b.Text = ""
+	b.BackgroundColor3 = Color3.fromRGB(30,30,35)
+	b.Size = UDim2.new(0,35,0,35)
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,8)
+	local i = Instance.new("ImageLabel", b)
+	i.Name = "Icon"
+	i.BackgroundTransparency = 1
+	i.Image = icon
+	i.ImageColor3 = color
+	i.Size = UDim2.new(0.6,0,0.6,0)
+	i.Position = UDim2.new(0.2,0,0.2,0)
+	return b
+end
+mkEdBtn("Execute", "rbxassetid://95804011254392", Color3.fromRGB(0,255,180))
+mkEdBtn("ExecuteClipboard", "rbxassetid://74812558983299", Color3.fromRGB(255,255,255))
+mkEdBtn("Save", "rbxassetid://81882572588470", Color3.fromRGB(100,200,255))
+mkEdBtn("Paste", "rbxassetid://88661060655687", Color3.fromRGB(200,200,200))
+mkEdBtn("Rename", "rbxassetid://80861536658698", Color3.fromRGB(255,200,100))
+mkEdBtn("Delete", "rbxassetid://98690572665832", Color3.fromRGB(255,80,80))
 
 -- Saved & Search & Settings
-local svP = Instance.new("Frame", pages); svP.Name = "Saved"; svP.BackgroundTransparency = 1; svP.LayoutOrder = 3; local sbox = Instance.new("TextBox", svP); sbox.Name = "TextBox"; sbox.Size = UDim2.new(1, 0, 0, 35); sbox.BackgroundColor3 = Color3.fromRGB(25, 25, 30); sbox.TextColor3 = Color3.fromRGB(255,255,255); sbox.PlaceholderText = "Search saved scripts..."; sbox.Text = ""; Instance.new("UICorner", sbox).CornerRadius = UDim.new(0, 8); local svSc = Instance.new("ScrollingFrame", svP); svSc.Name = "Scripts"; svSc.Size = UDim2.new(1, 0, 1, -45); svSc.Position = UDim2.new(0, 0, 0, 45); svSc.BackgroundTransparency = 1; svSc.ScrollBarThickness = 2; Instance.new("UIListLayout", svSc).Padding = UDim.new(0, 5);
-local srP = Instance.new("Frame", pages); srP.Name = "Search"; srP.BackgroundTransparency = 1; srP.LayoutOrder = 4; local cBox = Instance.new("TextBox", srP); cBox.Name = "TextBox"; cBox.Size = UDim2.new(1, 0, 0, 35); cBox.BackgroundColor3 = Color3.fromRGB(25, 25, 30); cBox.TextColor3 = Color3.fromRGB(255,255,255); cBox.PlaceholderText = "Search ScriptBlox..."; cBox.Text = ""; Instance.new("UICorner", cBox).CornerRadius = UDim.new(0, 8); local cSc = Instance.new("ScrollingFrame", srP); cSc.Name = "Scripts"; cSc.Size = UDim2.new(1, 0, 1, -45); cSc.Position = UDim2.new(0, 0, 0, 45); cSc.BackgroundTransparency = 1; cSc.ScrollBarThickness = 2; Instance.new("UIListLayout", cSc).Padding = UDim.new(0, 5);
-local setP = Instance.new("Frame", pages); setP.Name = "Settings"; setP.BackgroundTransparency = 1; setP.LayoutOrder = 5; local setSc = Instance.new("ScrollingFrame", setP); setSc.Name = "Scripts"; setSc.Size = UDim2.new(1, 0, 1, 0); setSc.BackgroundTransparency = 1; setSc.ScrollBarThickness = 2; Instance.new("UIListLayout", setSc).Padding = UDim.new(0, 8);
+local svP = Instance.new("Frame", pages)
+svP.Name = "Saved"
+svP.BackgroundTransparency = 1
+svP.LayoutOrder = 3
+local sbox = Instance.new("TextBox", svP)
+sbox.Name = "TextBox"
+sbox.Size = UDim2.new(1, 0, 0, 35)
+sbox.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+sbox.TextColor3 = Color3.fromRGB(255,255,255)
+sbox.PlaceholderText = "Search saved scripts..."
+sbox.Text = ""
+Instance.new("UICorner", sbox).CornerRadius = UDim.new(0, 8)
+local svSc = Instance.new("ScrollingFrame", svP)
+svSc.Name = "Scripts"
+svSc.Size = UDim2.new(1, 0, 1, -45)
+svSc.Position = UDim2.new(0, 0, 0, 45)
+svSc.BackgroundTransparency = 1
+svSc.ScrollBarThickness = 2
+Instance.new("UIListLayout", svSc).Padding = UDim.new(0, 5)
+
+local srP = Instance.new("Frame", pages)
+srP.Name = "Search"
+srP.BackgroundTransparency = 1
+srP.LayoutOrder = 4
+local cBox = Instance.new("TextBox", srP)
+cBox.Name = "TextBox"
+cBox.Size = UDim2.new(1, 0, 0, 35)
+cBox.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+cBox.TextColor3 = Color3.fromRGB(255,255,255)
+cBox.PlaceholderText = "Search ScriptBlox..."
+cBox.Text = ""
+Instance.new("UICorner", cBox).CornerRadius = UDim.new(0, 8)
+local cSc = Instance.new("ScrollingFrame", srP)
+cSc.Name = "Scripts"
+cSc.Size = UDim2.new(1, 0, 1, -45)
+cSc.Position = UDim2.new(0, 0, 0, 45)
+cSc.BackgroundTransparency = 1
+cSc.ScrollBarThickness = 2
+Instance.new("UIListLayout", cSc).Padding = UDim.new(0, 5)
+
+local setP = Instance.new("Frame", pages)
+setP.Name = "Settings"
+setP.BackgroundTransparency = 1
+setP.LayoutOrder = 5
+local setSc = Instance.new("ScrollingFrame", setP)
+setSc.Name = "Scripts"
+setSc.Size = UDim2.new(1, 0, 1, 0)
+setSc.BackgroundTransparency = 1
+setSc.ScrollBarThickness = 2
+Instance.new("UIListLayout", setSc).Padding = UDim.new(0, 8)
 
 -- Popups & Open Button
-local pop = Instance.new("Frame", G2L["1"]); pop.Name = "Popups"; pop.Size = UDim2.new(1, 0, 1, 0); pop.BackgroundColor3 = Color3.fromRGB(0,0,0); pop.BackgroundTransparency = 0.4; pop.Visible = false; pop.ZIndex = 999;
-local pm = Instance.new("Frame", pop); pm.Name = "Main"; pm.Size = UDim2.new(0, 300, 0, 160); pm.Position = UDim2.new(0.5, 0, 0.5, 0); pm.AnchorPoint = Vector2.new(0.5, 0.5); pm.BackgroundColor3 = Color3.fromRGB(20, 20, 25); Instance.new("UICorner", pm).CornerRadius = UDim.new(0, 12); Instance.new("UIStroke", pm).Color = Color3.fromRGB(100, 100, 255);
-local pt = Instance.new("TextLabel", pm); pt.Text = "Enter Name"; pt.TextColor3 = Color3.fromRGB(255,255,255); pt.BackgroundTransparency = 1; pt.Size = UDim2.new(1, 0, 0, 40); pt.Font = Enum.Font.GothamBold; pt.TextSize = 16;
-local pi = Instance.new("TextBox", pm); pi.Name = "Input"; pi.Size = UDim2.new(0.8, 0, 0, 35); pi.Position = UDim2.new(0.1, 0, 0.3, 0); pi.BackgroundColor3 = Color3.fromRGB(10, 10, 15); pi.TextColor3 = Color3.fromRGB(255,255,255); pi.Text = ""; Instance.new("UICorner", pi).CornerRadius = UDim.new(0, 6); Instance.new("UIStroke", pi).Color = Color3.fromRGB(60,60,80);
-local pbtns = Instance.new("Frame", pm); pbtns.Name = "Button"; pbtns.BackgroundTransparency = 1; pbtns.Size = UDim2.new(1, 0, 0, 40); pbtns.Position = UDim2.new(0, 0, 0.7, 0);
-local pconf = Instance.new("TextButton", pbtns); pconf.Name = "Confirm"; pconf.Text = "Confirm"; pconf.BackgroundColor3 = Color3.fromRGB(0, 200, 100); pconf.TextColor3 = Color3.fromRGB(255,255,255); pconf.Size = UDim2.new(0, 100, 0, 30); pconf.Position = UDim2.new(0.5, 10, 0, 0); Instance.new("UICorner", pconf).CornerRadius = UDim.new(0, 6);
-local pcanc = Instance.new("TextButton", pbtns); pcanc.Name = "Cancel"; pcanc.Text = "Cancel"; pcanc.BackgroundColor3 = Color3.fromRGB(200, 50, 50); pcanc.TextColor3 = Color3.fromRGB(255,255,255); pcanc.Size = UDim2.new(0, 100, 0, 30); pcanc.Position = UDim2.new(0.5, -110, 0, 0); Instance.new("UICorner", pcanc).CornerRadius = UDim.new(0, 6);
-local open = Instance.new("ImageButton", G2L["1"]); open.Name = "Open"; open.Size = UDim2.new(0, 50, 0, 50); open.Position = UDim2.new(0.5, -25, 0, 10); open.BackgroundColor3 = Color3.fromRGB(20, 20, 25); open.Image = "rbxassetid://109798560145884"; open.ImageColor3 = Color3.fromRGB(0, 255, 255); open.Visible = false; Instance.new("UICorner", open).CornerRadius = UDim.new(0, 12); Instance.new("UIStroke", open).Color = Color3.fromRGB(0, 255, 255);
+local pop = Instance.new("Frame", G2L["1"])
+pop.Name = "Popups"
+pop.Size = UDim2.new(1, 0, 1, 0)
+pop.BackgroundColor3 = Color3.fromRGB(0,0,0)
+pop.BackgroundTransparency = 0.4
+pop.Visible = false
+pop.ZIndex = 999
+
+local pm = Instance.new("Frame", pop)
+pm.Name = "Main"
+pm.Size = UDim2.new(0, 300, 0, 160)
+pm.Position = UDim2.new(0.5, 0, 0.5, 0)
+pm.AnchorPoint = Vector2.new(0.5, 0.5)
+pm.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+Instance.new("UICorner", pm).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", pm).Color = Color3.fromRGB(100, 100, 255)
+
+local pt = Instance.new("TextLabel", pm)
+pt.Text = "Enter Name"
+pt.TextColor3 = Color3.fromRGB(255,255,255)
+pt.BackgroundTransparency = 1
+pt.Size = UDim2.new(1, 0, 0, 40)
+pt.Font = Enum.Font.GothamBold
+pt.TextSize = 16
+
+local pi = Instance.new("TextBox", pm)
+pi.Name = "Input"
+pi.Size = UDim2.new(0.8, 0, 0, 35)
+pi.Position = UDim2.new(0.1, 0, 0.3, 0)
+pi.BackgroundColor3 = Color3.fromRGB(10, 10, 15)
+pi.TextColor3 = Color3.fromRGB(255,255,255)
+pi.Text = ""
+Instance.new("UICorner", pi).CornerRadius = UDim.new(0, 6)
+Instance.new("UIStroke", pi).Color = Color3.fromRGB(60,60,80)
+
+local pbtns = Instance.new("Frame", pm)
+pbtns.Name = "Button"
+pbtns.BackgroundTransparency = 1
+pbtns.Size = UDim2.new(1, 0, 0, 40)
+pbtns.Position = UDim2.new(0, 0, 0.7, 0)
+
+local pconf = Instance.new("TextButton", pbtns)
+pconf.Name = "Confirm"
+pconf.Text = "Confirm"
+pconf.BackgroundColor3 = Color3.fromRGB(0, 200, 100)
+pconf.TextColor3 = Color3.fromRGB(255,255,255)
+pconf.Size = UDim2.new(0, 100, 0, 30)
+pconf.Position = UDim2.new(0.5, 10, 0, 0)
+Instance.new("UICorner", pconf).CornerRadius = UDim.new(0, 6)
+
+local pcanc = Instance.new("TextButton", pbtns)
+pcanc.Name = "Cancel"
+pcanc.Text = "Cancel"
+pcanc.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+pcanc.TextColor3 = Color3.fromRGB(255,255,255)
+pcanc.Size = UDim2.new(0, 100, 0, 30)
+pcanc.Position = UDim2.new(0.5, -110, 0, 0)
+Instance.new("UICorner", pcanc).CornerRadius = UDim.new(0, 6)
+
+local open = Instance.new("ImageButton", G2L["1"])
+open.Name = "Open"
+open.Size = UDim2.new(0, 50, 0, 50)
+open.Position = UDim2.new(0.5, -25, 0, 10)
+open.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+open.Image = "rbxassetid://109798560145884"
+open.ImageColor3 = Color3.fromRGB(0, 255, 255)
+open.Visible = false
+Instance.new("UICorner", open).CornerRadius = UDim.new(0, 12)
+Instance.new("UIStroke", open).Color = Color3.fromRGB(0, 255, 255)
 
 
 -- // 2. LOGIC HANDLER //
@@ -138,27 +603,35 @@ local function C_2()
 	local function deepCopy(tbl) if (type(tbl) ~= "table") then return tbl; end local copy = {}; for key, value in pairs(tbl) do copy[key] = deepCopy(value); end return copy; end
 	local Services = setmetatable({}, { __index = function(self, name) local success, cache = pcall(function() return cloneref(game:GetService(name)) end) if success then rawset(self, name, cache) return cache else error("Invalid Service: " .. tostring(name)) end end })
 	local clonefunction = clonefunction or function(func) return func end
-	local InvisTriggerOpen = false;
-	local TweenService = game:GetService("TweenService");
-	local UserInputService = game:GetService("UserInputService");
-	local Main = script.Parent:WaitForChild("Main");
-	local Leftside = Main:WaitForChild("Leftside");
-	local Nav = Leftside:WaitForChild("Nav");
-	local Pages = Main:WaitForChild("Pages");
-	local EnableFrame = Main:WaitForChild("EnableFrame");
-	local KeyVailded = false;
-	local highlighter = nil;
+	local InvisTriggerOpen = false
+	local TweenService = game:GetService("TweenService")
+	local UserInputService = game:GetService("UserInputService")
+	local Main = script.Parent:WaitForChild("Main")
+	local Leftside = Main:WaitForChild("Leftside")
+	local Nav = Leftside:WaitForChild("Nav")
+	local Pages = Main:WaitForChild("Pages")
+	local EnableFrame = Main:WaitForChild("EnableFrame")
+	local KeyVailded = false
+	local highlighter = nil
 	
 	local function hideUI(bool, forKey)
-		if (not bool and InvisTriggerOpen) then script.Parent.Enabled = false; end
-		for _, v in ipairs(script.Parent:GetChildren()) do if v.Name == "Popups" then v.Visible = false return end if (v.Name == "EnableFrame") then continue; end if (v:IsA("Frame") or v:IsA("ImageLabel")) then v.Visible = bool; elseif v:IsA("ImageButton") then v.Visible = not bool; end end
+		if (not bool and InvisTriggerOpen) then script.Parent.Enabled = false end
+		for _, v in ipairs(script.Parent:GetChildren()) do
+			if v.Name == "Popups" then v.Visible = false return end
+			if (v.Name == "EnableFrame") then continue end
+			if (v:IsA("Frame") or v:IsA("ImageLabel")) then v.Visible = bool
+			elseif v:IsA("ImageButton") then v.Visible = not bool end
+		end
 	end
-	hideUI(false); -- Hide Executor initially
+	hideUI(false) -- Hide Executor initially
 
-	pcall(function() getgenv()._PULL_INT(); end);
-	local CLONED_Detectedly = deepCopy(Detectedly or {}); Detectedly = nil;
-	local print = function(...) end;
-	for i, v in pairs({'pushautoexec','runcode','open_url','toast','writefile','appendfile','readfile','isfile','listfiles','delfile','deldir','isfolder','makedir'}) do if not CLONED_Detectedly[v] then CLONED_Detectedly[v] = function(...) print(v,"|", ...) end end end
+	pcall(function() getgenv()._PULL_INT() end)
+	local CLONED_Detectedly = deepCopy(Detectedly or {})
+	Detectedly = nil
+	local print = function(...) end
+	for i, v in pairs({'pushautoexec','runcode','open_url','toast','writefile','appendfile','readfile','isfile','listfiles','delfile','deldir','isfolder','makedir'}) do
+		if not CLONED_Detectedly[v] then CLONED_Detectedly[v] = function(...) print(v,"|", ...) end end
+	end
 	
 	local load_highlighter = function()
 		local utility = {}; utility.sanitizeRichText = function(s) return string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(s, "&", "&amp;"), "<", "&lt;"), ">", "&gt;"), '"', "&quot;"), "'", "&apos;"); end;
@@ -364,6 +837,6 @@ local function C_2()
 		end
 
 		if not autoLogged then OpenLoader() end
-	end);
-end;
+	end)
+end
 C_2()
