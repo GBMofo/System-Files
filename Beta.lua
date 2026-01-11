@@ -12,7 +12,7 @@ end
 
 local randomName = game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
 
--- // 1. EXECUTOR VISUALS (Do Not Touch) //
+-- // 1. EXECUTOR VISUALS //
 G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
 G2L["1"].Name = randomName
 G2L["1"]["IgnoreGuiInset"] = true
