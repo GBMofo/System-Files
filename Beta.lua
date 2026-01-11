@@ -1,12 +1,34 @@
 local G2L = {};
 
 -- StarterGui.ScreenGui
-G2L["1"] = Instance.new("ScreenGui", game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"));
-G2L["1"]["IgnoreGuiInset"] = true;
-G2L["1"]["DisplayOrder"] = 999;
-G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets;
-G2L["1"]["ClipToDeviceSafeArea"] = false;
-G2L["1"]["ResetOnSpawn"] = false;
+-- // 🛡️ SECURITY: SAFE PARENTING LOGIC //
+local function GetSafeParent()
+    -- 1. BEST: Modern Hidden UI (Invisible to Games)
+    if gethui then 
+        return gethui() 
+    end
+    
+    -- 2. GOOD: CoreGui (Hard to detect)
+    local CoreGui = game:GetService("CoreGui")
+    if CoreGui:FindFirstChild("RobloxGui") then 
+        return CoreGui 
+    end
+    
+    -- 3. RISKY: PlayerGui (Visible, fallback)
+    return game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+end
+
+-- // 🛡️ SECURITY: RANDOM NAME //
+local randomName = game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
+
+-- // CREATE UI //
+G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
+G2L["1"].Name = randomName
+G2L["1"]["IgnoreGuiInset"] = true
+G2L["1"]["DisplayOrder"] = 999
+G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets
+G2L["1"]["ClipToDeviceSafeArea"] = false
+G2L["1"]["ResetOnSpawn"] = false
 
 
 -- StarterGui.ScreenGui.LocalScript
@@ -4708,6 +4730,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		}
 	};
 	InitTabs.Settings = function()
+		-- [1] Handle Sliders (Existing Code)
 		local SetData = {
 			UITransparency = {
 				Type = "Slider",
@@ -4752,6 +4775,75 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end
 		end
+
+		-- [2] Helper: Create Action Button (NEW FUNCTION)
+		local function newButton(title, btnText, callback)
+			local ButtonFrame = {};
+			do
+				local G2L = ButtonFrame;
+				G2L['d6'] = Instance.new("CanvasGroup", Pages.Settings.Scripts);
+				G2L['d6']['Visible'] = true;
+				G2L['d6']['BorderSizePixel'] = 0;
+				G2L['d6']['BackgroundColor3'] = Color3.fromRGB(55, 58, 68);
+				G2L['d6']['Size'] = UDim2.new(1, 0, 0, 48);
+				G2L['d6']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
+				G2L['d6']['Name'] = title;
+				
+				local corner = Instance.new("UICorner", G2L['d6']);
+				corner['CornerRadius'] = UDim.new(0, 18);
+				
+				local layout = Instance.new("UIListLayout", G2L['d6']);
+				layout['HorizontalFlex'] = Enum.UIFlexAlignment.Fill;
+				layout['Wraps'] = true;
+				layout['VerticalAlignment'] = Enum.VerticalAlignment.Center;
+				layout['SortOrder'] = Enum.SortOrder.LayoutOrder;
+				
+				local stroke = Instance.new("UIStroke", G2L['d6']);
+				stroke['Transparency'] = 0.95;
+				stroke['Thickness'] = 2;
+				stroke['Color'] = Color3.fromRGB(232, 229, 255);
+				
+				local pad = Instance.new("UIPadding", G2L['d6']);
+				pad['PaddingTop'] = UDim.new(0, 6);
+				pad['PaddingRight'] = UDim.new(0, 12);
+				pad['PaddingLeft'] = UDim.new(0, 12);
+				pad['PaddingBottom'] = UDim.new(0, 6);
+				
+				local label = Instance.new("TextLabel", G2L['d6']);
+				label['TextWrapped'] = true;
+				label['BackgroundTransparency'] = 1;
+				label['Size'] = UDim2.new(1, 0, 1, 0);
+				label['TextXAlignment'] = Enum.TextXAlignment.Left;
+				label['TextYAlignment'] = Enum.TextYAlignment.Top;
+				label['TextColor3'] = Color3.fromRGB(255, 255, 255);
+				label['Text'] = title;
+				label['TextSize'] = 14;
+				label['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
+				
+				local btnContainer = Instance.new("CanvasGroup", G2L['d6']);
+				btnContainer['BackgroundTransparency'] = 1;
+				btnContainer['Size'] = UDim2.new(0.25, 0, 0.75, 0); -- Wider for text
+				btnContainer['Position'] = UDim2.new(0.75, 0, 0.12, 0);
+				
+				local btn = Instance.new("TextButton", btnContainer);
+				btn['Size'] = UDim2.new(1, 0, 1, 0);
+				btn['BackgroundColor3'] = Color3.fromRGB(218, 50, 50); -- Red color to indicate reset action
+				btn['TextColor3'] = Color3.fromRGB(255, 255, 255);
+				btn['Text'] = btnText;
+				btn['Font'] = Enum.Font.SourceSansBold;
+				btn['TextSize'] = 14;
+				
+				local btnCorner = Instance.new("UICorner", btn);
+				btnCorner['CornerRadius'] = UDim.new(0, 8);
+
+				-- Click Event
+				btn.MouseButton1Click:Connect(function()
+					callback()
+				end)
+			end
+		end
+
+		-- [3] Helper: Create Toggle (Existing Code)
 		local function newToggle(title, callbacl)
 			local Toggles = {};
 			local Enable = false;
@@ -4856,12 +4948,16 @@ if v.Name == "Popups" then v.Visible = false return end
 			end);
 			return Toggles;
 		end
+		
+		-- [4] Create the Settings (Toggles & Buttons)
+		
 		newToggle("Invisible Open Trigger", function(v)
 			InvisTriggerOpen = v;
 			if v then
 				createNotification('Chat "/e open" to open UI', "Info", 5);
 			end
 		end);
+
 		newToggle("Censored Name In UI", function(v)
 			if v then
 				Main.Title.TextLabel.Text = "Hello, User!";
@@ -4869,6 +4965,21 @@ if v.Name == "Popups" then v.Visible = false return end
 				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
 			end
 		end);
+		
+		-- [[ NEW RESET BUTTON ]] --
+		newButton("Reset Loader Environment", "RESET", function()
+			if delfile and isfile then
+				if isfile("punk-x-env.txt") then
+					delfile("punk-x-env.txt")
+					createNotification("Environment Reset! Re-inject to choose.", "Success", 5)
+				else
+					createNotification("No preference saved.", "Error", 3)
+				end
+			else
+				createNotification("Not supported by your executor.", "Error", 5)
+			end
+		end)
+
 		newToggle("Anti AFK", function()
 			local speaker = game:GetService("Players").LocalPlayer
 			if getconnections then
@@ -4887,6 +4998,8 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 			createNotification("Anti AFK Enabled!", "Success", 5)
 		end)
+		
+		-- FPS Boost Logic (Existing)
 		local fpsBoostActive = false
 		local Last = {}
 		workspace.DescendantAdded:Connect(function(child)
