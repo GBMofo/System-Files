@@ -5192,6 +5192,7 @@ if v.Name == "Popups" then v.Visible = false return end
 	end;
 
 	InitTabs.Saved = function()
+		-- Create folders if they don't exist
 		if not CLONED_Detectedly.isfolder("saves") then
 			CLONED_Detectedly.makedir("saves");
 		end
@@ -5199,17 +5200,36 @@ if v.Name == "Popups" then v.Visible = false return end
 			CLONED_Detectedly.makedir("autoexec");
 		end
 		
+		-- List files
 		local saves = CLONED_Detectedly.listfiles("saves") or {};
+		
 		for index, Nextpath in ipairs(saves) do
+			-- Extract filename (compatible with both / and \ paths)
 			local filename = Nextpath:match("([^/\\]+)$");
-			if not filename:match("%.lua$") then
-				continue;
+			
+			-- Only process .lua files
+			if filename and filename:match("%.lua$") then
+				
+				-- [[ FIX START: Wrapped in pcall to stop crashes ]] --
+				local success, Loadedscript = pcall(function()
+					local content = CLONED_Detectedly.readfile("saves/" .. filename)
+					return game.HttpService:JSONDecode(content)
+				end)
+
+				-- Only add to table if JSON was valid
+				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
+					Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
+				else
+					warn("[PunkX] Skipped corrupted file: " .. filename)
+				end
+				-- [[ FIX END ]] --
 			end
-			local Loadedscript = game.HttpService:JSONDecode(CLONED_Detectedly.readfile("saves/" .. filename));
-			Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
 		end
+		
+		-- Update the UI now that the table is filled
 		UIEvents.Saved.UpdateUI();
 		
+		-- Search bar logic
 		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 			local hi = Pages.Saved.TextBox.Text
 			local isEmpty = #hi:gsub("[%s]","") <= 0
