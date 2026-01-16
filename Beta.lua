@@ -3981,17 +3981,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		local COMMENT_MULTI = "%-%-%[(=*)%[.-%]%1%]";
 		local COMMENT_MULTI_INCOMP = "%-%-%[=*%[.-.*";
 		local COMMENT_PLAIN = "%-%-.-\n";
-		
-363.0s
-Model
-ThinkingThoughts
-Expand to view model thoughts
-
-chevron_right
-Here is the continuation of the code, applying the "Neon Purple / Deep Dark" theme to the scripted UI elements (Notifications, Settings Buttons/Toggles, and Logic-based UI updates) while preserving the backend logic exactly.
-code
-Lua
-local COMMENT_INCOMP = "%-%-.*";
+        local COMMENT_INCOMP = "%-%-.*";
 		local FUNCTION_NAME = "function%s+([%a_][%w_%.]*)";
 		local lang = language;
 		local lua_keyword = lang.keyword;
