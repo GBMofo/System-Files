@@ -5564,7 +5564,7 @@ InitTabs.Search = function()
 		return scriptList
 	end
 	
-	-- 🔴 RENDER (WITH STATS)
+	-- 🔴 RENDER (FIXED OVERLAY ISSUE)
 	local function renderScripts(scriptList)
 		for _, v in pairs(Scripts:GetChildren()) do
 			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
@@ -5593,35 +5593,47 @@ InitTabs.Search = function()
 				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
 				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
 				
-				-- STATS LABEL
+				-- 🟢 FIX 1: Make sure buttons are ON TOP
+				if new.Misc:FindFirstChild("Panel") then
+					new.Misc.Panel.ZIndex = 10
+					for _, btn in pairs(new.Misc.Panel:GetChildren()) do
+						if btn:IsA("GuiObject") then btn.ZIndex = 10 end
+					end
+				end
+				
+				-- 🟢 FIX 2: Better Stats Label position
 				local StatsLabel = Instance.new("TextLabel", new.Misc)
 				StatsLabel.Name = "Stats"
 				StatsLabel.BackgroundTransparency = 1
-				StatsLabel.Size = UDim2.new(1, 0, 0, 20)
-				StatsLabel.Position = UDim2.new(0, 0, 1, -25)
+				StatsLabel.Size = UDim2.new(0.6, 0, 0, 20) -- Only take up 60% of width
+				StatsLabel.Position = UDim2.new(0, 5, 1, -25)
 				StatsLabel.Font = Enum.Font.GothamBold
 				StatsLabel.TextSize = 11
-				StatsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-				StatsLabel.TextXAlignment = Enum.TextXAlignment.Center
-				StatsLabel.ZIndex = 5
+				StatsLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
+				StatsLabel.TextXAlignment = Enum.TextXAlignment.Left -- Align left
+				StatsLabel.ZIndex = 3
 				
 				local statsText = "👁️ " .. formatNumber(scriptData.views or 0)
 				if scriptData.likeCount then
-					statsText = statsText .. "  |  👍 " .. formatNumber(scriptData.likeCount)
+					statsText = statsText .. "   👍 " .. formatNumber(scriptData.likeCount)
 				end
 				StatsLabel.Text = statsText
 				
+				-- 🟢 FIX 3: Shadow is now smaller and behind buttons
 				local GradientFrame = Instance.new("Frame", new.Misc)
-				GradientFrame.Size = UDim2.new(1, 0, 0, 30)
-				GradientFrame.Position = UDim2.new(0, 0, 1, -30)
+				GradientFrame.Size = UDim2.new(0.7, 0, 0, 40) -- Shorter width (0.7) so it avoids buttons
+				GradientFrame.Position = UDim2.new(0, 0, 1, -40)
 				GradientFrame.BorderSizePixel = 0
 				GradientFrame.BackgroundColor3 = Color3.new(0,0,0)
-				GradientFrame.BackgroundTransparency = 0.5
-				GradientFrame.ZIndex = 4
+				GradientFrame.BackgroundTransparency = 0.3
+				GradientFrame.ZIndex = 2 -- Low ZIndex to stay behind buttons
+				GradientFrame.Active = false -- Can click through it
+				
 				local UiGrad = Instance.new("UIGradient", GradientFrame)
 				UiGrad.Rotation = -90
 				UiGrad.Transparency = NumberSequence.new({
 					NumberSequenceKeypoint.new(0, 1), 
+					NumberSequenceKeypoint.new(0.5, 0.2),
 					NumberSequenceKeypoint.new(1, 0)
 				})
 				
