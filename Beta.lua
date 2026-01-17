@@ -4941,45 +4941,54 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		},
 		Nav = {
-			goTo = function(Name)
-				if Pages:FindFirstChild(Name) then
-					Pages.UIPageLayout:JumpTo(Pages[Name]);
-				end
-				
-				local Button = nil
-				for _, frame in ipairs(Nav:GetChildren()) do
-					if frame:IsA("Frame") then
-						for _, btn in ipairs(frame:GetChildren()) do
-							if btn.Name == Name then 
-    Button = btn 
-    break 
-end
-						end
-					end
-				end
-				
-				if Button then
-					EnableFrame.Visible = true;
-					Pages.Visible = true; 
-					local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
-					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
-					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y);
-					if (f or isInstantNext) then
-						EnableFrame.Position = TargetPos;
-						EnableFrame.Size = TargetSize;
-						if isInstantNext then isInstantNext = false; end
-						return;
-					end
-					
-					local TweenService = game:GetService("TweenService")
-					TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-						Position = TargetPos,
-						Size = TargetSize,
-						BackgroundTransparency = 0
-					}):Play();
-				end
-			end
-		}
+    goTo = function(Name)
+        -- 🔴 FIX: Hide all pages first to prevent overlap
+        for _, page in pairs(Pages:GetChildren()) do
+            if page:IsA("Frame") and page ~= Pages.UIPageLayout then
+                page.Visible = false
+            end
+        end
+        
+        -- Show and jump to target page
+        if Pages:FindFirstChild(Name) then
+            Pages[Name].Visible = true
+            Pages.UIPageLayout:JumpTo(Pages[Name])
+        end
+        
+        local Button = nil
+        for _, frame in ipairs(Nav:GetChildren()) do
+            if frame:IsA("Frame") then
+                for _, btn in ipairs(frame:GetChildren()) do
+                    if btn.Name == Name then 
+                        Button = btn 
+                        break 
+                    end
+                end
+            end
+        end
+        
+        if Button then
+            EnableFrame.Visible = true
+            Pages.Visible = true 
+            local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y)
+            local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition
+            local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y)
+            if (f or isInstantNext) then
+                EnableFrame.Position = TargetPos
+                EnableFrame.Size = TargetSize
+                if isInstantNext then isInstantNext = false end
+                return
+            end
+            
+            local TweenService = game:GetService("TweenService")
+            TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                Position = TargetPos,
+                Size = TargetSize,
+                BackgroundTransparency = 0
+            }):Play()
+        end
+    end
+}
 	};
 
 	InitTabs.Settings = function()
@@ -5439,69 +5448,85 @@ end
 	end;
 
 	InitTabs.Nav = function()
-		local isInstantNext = false;
-		local function findButton(Name)
-			for _, frame in ipairs(Nav:GetChildren()) do
-				if not frame:IsA("Frame") then continue; end
-				for _, button in ipairs(frame:GetChildren()) do
-					if not button:IsA("TextButton") then continue; end
-					if (button.Name == Name) then return button; end
-				end
-			end
-			return nil;
-		end
-		
-		local function goTo(Name, f)
-			if Data.Editor.EditingSavedFile and Name ~= "Editor" then
-				local editingName = Data.Editor.EditingSavedFile
-				createNotification("Editing Cancelled", "Warn", 3)
-				CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
-				Data.Editor.Tabs[editingName] = nil;
-				Data.Editor.EditingSavedFile = nil
-				UIEvents.EditorTabs.updateUI();
-				if Name ~= "Saved" then Name = "Saved" end
-			end
+    local isInstantNext = false;
+    
+    local function goTo(Name, f)
+        -- Handle editing cancellation
+        if Data.Editor.EditingSavedFile and Name ~= "Editor" then
+            local editingName = Data.Editor.EditingSavedFile
+            createNotification("Editing Cancelled", "Warn", 3)
+            CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
+            Data.Editor.Tabs[editingName] = nil;
+            Data.Editor.EditingSavedFile = nil
+            UIEvents.EditorTabs.updateUI();
+            if Name ~= "Saved" then Name = "Saved" end
+        end
 
-			if Pages:FindFirstChild(Name) then
-				Pages.UIPageLayout:JumpTo(Pages[Name]);
-			end
-			local Button = findButton(Name);
-			if not Button then return; end
-			
-			Pages.Visible = true;
-			EnableFrame.Visible = true;
-			local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
-			local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
-			local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y);
-			if (f or isInstantNext) then
-				EnableFrame.Position = TargetPos;
-				EnableFrame.Size = TargetSize;
-				if isInstantNext then isInstantNext = false; end
-				return;
-			end
-			
-			local TweenService = game:GetService("TweenService")
-			TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-				Position = TargetPos,
-				Size = TargetSize,
-				BackgroundTransparency = 0
-			}):Play();
-		end
-		
-		for _, frame in ipairs(Nav:GetChildren()) do
-			if frame:IsA("Frame") then
-				for _, button in ipairs(frame:GetChildren()) do
-					if button:IsA("TextButton") then
-						button.MouseButton1Click:Connect(function()
-							goTo(button.Name);
-						end);
-					end
-				end
-			end
-		end
-		task.wait(1);
-		goTo("Home", true);
-	end;
+        -- 🔴 FIX: Hide all pages first
+        for _, page in pairs(Pages:GetChildren()) do
+            if page:IsA("Frame") and page ~= Pages.UIPageLayout then
+                page.Visible = false
+            end
+        end
+        
+        -- Show and jump to target page
+        if Pages:FindFirstChild(Name) then
+            Pages[Name].Visible = true
+            Pages.UIPageLayout:JumpTo(Pages[Name]);
+        end
+        
+        -- Find navigation button
+        local Button = nil
+        for _, frame in ipairs(Nav:GetChildren()) do
+            if not frame:IsA("Frame") then continue; end
+            for _, button in ipairs(frame:GetChildren()) do
+                if not button:IsA("TextButton") then continue; end
+                if (button.Name == Name) then 
+                    Button = button
+                    break
+                end
+            end
+        end
+        
+        if not Button then return; end
+        
+        Pages.Visible = true;
+        EnableFrame.Visible = true;
+        local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
+        local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
+        local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y);
+        
+        if (f or isInstantNext) then
+            EnableFrame.Position = TargetPos;
+            EnableFrame.Size = TargetSize;
+            if isInstantNext then isInstantNext = false; end
+            return;
+        end
+        
+        local TweenService = game:GetService("TweenService")
+        TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Position = TargetPos,
+            Size = TargetSize,
+            BackgroundTransparency = 0
+        }):Play();
+    end
+    
+    -- Connect buttons
+    for _, frame in ipairs(Nav:GetChildren()) do
+        if frame:IsA("Frame") then
+            for _, button in ipairs(frame:GetChildren()) do
+                if button:IsA("TextButton") then
+                    button.MouseButton1Click:Connect(function()
+                        goTo(button.Name);
+                    end);
+                end
+            end
+        end
+    end
+    
+    task.wait(1);
+    goTo("Home", true);
+end;
 	InitTabs.Autoexecute = function()
 		local request = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request);
 		local UrI = game:HttpGet("https://pastefy.app/7YWsqemN/raw");
