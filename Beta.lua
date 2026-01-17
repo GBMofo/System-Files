@@ -5502,7 +5502,44 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 	end
 	
-	-- 🔴 SORT LOGIC
+	-- 🔴 FILTER LOGIC (CLIENT-SIDE FILTERING)
+	local function filterScripts(scriptList)
+		local filtered = {}
+		
+		print("[Filter] Filtering", #scriptList, "scripts with filter:", CurrentFilter)
+		
+		for _, scriptData in pairs(scriptList) do
+			local passes = false
+			
+			if CurrentFilter == "All" then
+				-- 🌐 ALL - No filter, show everything
+				passes = true
+				
+			elseif CurrentFilter == "NoKey" then
+				-- 🔓 NO KEY - No Key only
+				passes = (scriptData.key == false or scriptData.key == nil)
+				
+			elseif CurrentFilter == "KeyRequired" then
+				-- 🔑 KEY REQUIRED - Key OR Paid
+				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
+				
+			elseif CurrentFilter == "Recommended" then
+				-- ⭐ RECOMMENDED - Verified only
+				passes = (scriptData.verified == true)
+				
+			elseif CurrentFilter == "Trending" then
+				-- 🔥 TRENDING - High Views (1000+)
+				passes = ((tonumber(scriptData.views) or 0) >= 1000)
+			end
+			
+			if passes then
+				table.insert(filtered, scriptData)
+			end
+		end
+		
+		print("[Filter] ✅ After filtering:", #filtered, "scripts match", CurrentFilter)
+		return filtered
+	end
 	local function sortScripts(scriptList)
 		table.sort(scriptList, function(a, b)
 			local viewsA = tonumber(a.views) or 0
@@ -5593,49 +5630,49 @@ if v.Name == "Popups" then v.Visible = false return end
 			print("[Update] 🔍 Search mode:", query)
 			
 		elseif CurrentFilter == "All" then
-			-- 🌐 ALL FILTER - Current game (or universal if no game)
+			-- 🌐 ALL FILTER - Universal scripts only (no game filter)
+			endpoint = "https://scriptblox.com/api/script/fetch?max=30"
+			print("[Update] 🌐 All filter - Universal scripts")
+			
+		elseif CurrentFilter == "NoKey" then
+			-- 🔓 NO KEY - Game scripts with no key filter
 			if currentGameName then
 				local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
 				endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
 			else
 				endpoint = "https://scriptblox.com/api/script/fetch?max=30"
 			end
-			print("[Update] 🌐 All filter")
-			
-		elseif CurrentFilter == "NoKey" then
-			-- 🔓 NO KEY - Use search with key=false + verified=true
-			if currentGameName then
-				local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
-				endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedGame .. "&key=false&verified=true&max=30"
-			else
-				endpoint = "https://scriptblox.com/api/script/search?key=false&verified=true&max=30"
-			end
-			print("[Update] 🔓 No Key filter")
+			print("[Update] 🔓 No Key filter - Game scripts")
 			
 		elseif CurrentFilter == "KeyRequired" then
-			-- 🔑 KEY REQUIRED - Use search with key=true + verified=true
+			-- 🔑 KEY REQUIRED - Game scripts with key filter
 			if currentGameName then
 				local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
-				endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedGame .. "&key=true&verified=true&max=30"
+				endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
 			else
-				endpoint = "https://scriptblox.com/api/script/search?key=true&verified=true&max=30"
+				endpoint = "https://scriptblox.com/api/script/fetch?max=30"
 			end
-			print("[Update] 🔑 Key Required filter")
+			print("[Update] 🔑 Key Required filter - Game scripts")
 			
 		elseif CurrentFilter == "Recommended" then
-			-- ⭐ RECOMMENDED - Use search with verified=true, sort by views
+			-- ⭐ RECOMMENDED - Game scripts with verified filter
 			if currentGameName then
 				local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
-				endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedGame .. "&verified=true&sortBy=views&max=30"
+				endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
 			else
-				endpoint = "https://scriptblox.com/api/script/search?verified=true&sortBy=views&max=30"
+				endpoint = "https://scriptblox.com/api/script/fetch?max=30"
 			end
-			print("[Update] ⭐ Recommended filter")
+			print("[Update] ⭐ Recommended filter - Game scripts")
 			
 		elseif CurrentFilter == "Trending" then
-			-- 🔥 TRENDING - Use fetch endpoint (universal), sort by views
-			endpoint = "https://scriptblox.com/api/script/fetch?max=30"
-			print("[Update] 🔥 Trending filter")
+			-- 🔥 TRENDING - Game scripts with high views
+			if currentGameName then
+				local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
+				endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
+			else
+				endpoint = "https://scriptblox.com/api/script/fetch?max=30"
+			end
+			print("[Update] 🔥 Trending filter - Game scripts")
 		end
 		
 		-- 🟢 FETCH FROM API
@@ -5740,8 +5777,17 @@ if v.Name == "Popups" then v.Visible = false return end
 		
 		print("[Update] ✅ Fetched", #scriptsToRender, "scripts")
 		
-		-- 🟢 SORT AND RENDER
-		local finalScripts = sortScripts(scriptsToRender)
+		-- 🟢 APPLY CLIENT-SIDE FILTERS AND SORT
+		local finalScripts
+		if isEmpty then
+			-- Apply filter to fetched scripts
+			finalScripts = filterScripts(scriptsToRender)
+			finalScripts = sortScripts(finalScripts)
+		else
+			-- Search results, just sort
+			finalScripts = sortScripts(scriptsToRender)
+		end
+		
 		renderScripts(finalScripts)
 		
 		task.wait(0.1)
