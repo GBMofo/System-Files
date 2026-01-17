@@ -5732,35 +5732,6 @@ if v.Name == "Popups" then v.Visible = false return end
     updateUI()
     Update("")
 end;
-    
-    AllBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "All"
-        SearchBox.Text = ""  -- Clear search when clicking filter
-        updateUI()
-        Update("")
-    end)
-    
-    NoKeyBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "NoKey"
-        SearchBox.Text = ""  -- Clear search when clicking filter
-        updateUI()
-        Update("")
-    end)
-    
-    KeyBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "KeyRequired"
-        SearchBox.Text = ""  -- Clear search when clicking filter
-        updateUI()
-        Update("")
-    end)
-    
-    TrendingBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "Trending"
-        SearchBox.Text = ""  -- Clear search when clicking filter
-        updateUI()
-        Update("")
-    end)
-    
     -- 🔴 SEARCH BOX EVENT
     SearchBox.FocusLost:Connect(function()
         Update(SearchBox.Text)
@@ -6065,6 +6036,5 @@ end;
 		UpdateSize();
 		print("✅ UI Scaled")
 	end);
-end
 end;
 C_2()
