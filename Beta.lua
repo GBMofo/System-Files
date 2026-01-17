@@ -4992,6 +4992,10 @@ if v.Name == "Popups" then v.Visible = false return end
 	};
 
 	InitTabs.Settings = function()
+-- 🔴 FORCE DELETE OLD THEME (ONE-TIME FIX)
+		if CLONED_Detectedly.isfile("theme.json") then
+			CLONED_Detectedly.delfile("theme.json")
+		end
 		local Settings = Pages:WaitForChild("Settings")
 		local Scripts = Settings.Scripts
 		
@@ -5039,15 +5043,40 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		
 		local function ApplyTheme(color)
+			local oldTheme = CurrentTheme
 			CurrentTheme = color
 			SaveTheme(color)
 			
-			-- Update all purple UI elements
+			-- 1. Update all UIStrokes (borders/edges)
 			for _, obj in pairs(script.Parent:GetDescendants()) do
 				if obj:IsA("UIStroke") then
-					if obj.Color == Color3.fromRGB(160, 85, 255) or obj.Color == CurrentTheme then
+					-- Check if it's a themed stroke (purple or old theme color)
+					if obj.Color == Color3.fromRGB(160, 85, 255) or obj.Color == oldTheme then
 						obj.Color = color
 					end
+				end
+			end
+			
+			-- 2. Update all ENABLED toggles in Settings
+			for _, card in pairs(Scripts:GetChildren()) do
+				if card:IsA("Frame") then
+					local toggleContainer = card:FindFirstChild("ToggleContainer")
+					if toggleContainer then
+						local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
+						if toggleBg then
+							-- If toggle is ON (not gray), update to new theme
+							if toggleBg.BackgroundColor3 ~= Color3.fromRGB(50, 50, 60) then
+								toggleBg.BackgroundColor3 = color
+							end
+						end
+					end
+				end
+			end
+			
+			-- 3. Update slider fills
+			for _, slider in pairs(Scripts:GetDescendants()) do
+				if slider.Name == "sliderFill" and slider:IsA("Frame") then
+					slider.BackgroundColor3 = color
 				end
 			end
 			
@@ -5162,6 +5191,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			toggleContainer.BackgroundTransparency = 1
 			toggleContainer.Size = UDim2.new(0.12, 0, 0.8, 0)
 			toggleContainer.Position = UDim2.new(0.88, 0, 0.1, 0)
+			toggleContainer.Name = "ToggleContainer"
 			
 			local toggleBg = Instance.new("Frame", toggleContainer)
 			toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
@@ -5169,6 +5199,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
 			toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
 			toggleBg.BorderSizePixel = 0
+			toggleBg.Name = "ToggleBg"
 			
 			local toggleCorner = Instance.new("UICorner", toggleBg)
 			toggleCorner.CornerRadius = UDim.new(1, 0)
@@ -5200,11 +5231,12 @@ if v.Name == "Popups" then v.Visible = false return end
 			toggleBtn.MouseButton1Click:Connect(function()
 				isEnabled = not isEnabled
 				toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+				-- 🔴 FIX: Use CurrentTheme instead of hardcoded pink
 				toggleBg.BackgroundColor3 = isEnabled and CurrentTheme or Color3.fromRGB(50, 50, 60)
 				callback(isEnabled)
 			end)
 			
-			return toggleContainer
+			return toggleContainer, toggleBg -- 🔴 Return toggleBg so we can update it later
 		end
 		
 		local function createButton(card, btnText, color, callback)
@@ -5242,6 +5274,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			
 			local sliderFill = Instance.new("Frame", sliderBg)
 			sliderFill.BackgroundColor3 = CurrentTheme
+            sliderFill.Name = "sliderFill" -- 🔴 ADD THIS
 			sliderFill.Size = UDim2.new(0, 0, 1, 0)
 			sliderFill.Position = UDim2.new(0, 0, 0, 0)
 			sliderFill.BorderSizePixel = 0
