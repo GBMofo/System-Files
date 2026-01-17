@@ -1356,7 +1356,10 @@ G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], 
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY;
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["PlaceholderText"] = [[-- Paste script here]];
+G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X
+-- 
+-- Paste your code here
+-- Join Discord: discord.gg/JxEjAtdgWD]];
 G2L["83"]["Size"] = UDim2.new(1, -24, 1, -8);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
