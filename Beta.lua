@@ -653,7 +653,7 @@ G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(45, 20, 70); -- Deep purple base
 G2L["3f"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["3f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3f"]["Name"] = [[Main]];
-G2L["3f"]["BackgroundTransparency"] = 0.6; -- Keep opaque for gradient control
+G2L["3f"]["BackgroundTransparency"] = 0.4; -- 🔴 CHANGED: See-through (0.3-0.6)
 
 -- Purple gradient overlay (light to dark)
 local gradient = Instance.new("Frame", G2L["3f"]);
@@ -661,7 +661,7 @@ gradient.Name = "GradientOverlay";
 gradient.Size = UDim2.new(1, 0, 1, 0);
 gradient.Position = UDim2.new(0, 0, 0, 0);
 gradient.BackgroundColor3 = Color3.fromRGB(120, 60, 180); -- Brighter purple
-gradient.BackgroundTransparency = 0.3;
+gradient.BackgroundTransparency = 0.5; -- 🔴 CHANGED: More transparent
 gradient.BorderSizePixel = 0;
 gradient.ZIndex = 0;
 
@@ -673,9 +673,9 @@ gradientUI.Color = ColorSequence.new{
 };
 gradientUI.Rotation = 135; -- Diagonal gradient
 gradientUI.Transparency = NumberSequence.new{
-    NumberSequenceKeypoint.new(0, 0.2),
-    NumberSequenceKeypoint.new(0.5, 0.1),
-    NumberSequenceKeypoint.new(1, 0.3)
+    NumberSequenceKeypoint.new(0, 0.3), -- 🔴 CHANGED
+    NumberSequenceKeypoint.new(0.5, 0.2),
+    NumberSequenceKeypoint.new(1, 0.4)
 };
 
 -- Noise texture for grain effect
@@ -685,19 +685,19 @@ noise.Size = UDim2.new(1, 0, 1, 0);
 noise.BackgroundTransparency = 1;
 noise.Image = "rbxassetid://8992230677";
 noise.ImageColor3 = Color3.fromRGB(100, 50, 150);
-noise.ImageTransparency = 0.85;
+noise.ImageTransparency = 0.9; -- 🔴 CHANGED: More subtle
 noise.ScaleType = Enum.ScaleType.Tile;
 noise.TileSize = UDim2.new(0, 100, 0, 100);
 noise.ZIndex = 2;
 
--- Dark vignette edges (like in the image)
+-- Dark vignette edges (lighter for transparency)
 local vignette = Instance.new("ImageLabel", G2L["3f"]);
 vignette.Name = "Vignette";
 vignette.Size = UDim2.new(1, 0, 1, 0);
 vignette.BackgroundTransparency = 1;
 vignette.Image = "rbxassetid://5250216449";
 vignette.ImageColor3 = Color3.fromRGB(20, 10, 40); -- Very dark purple
-vignette.ImageTransparency = 0.3; -- Strong vignette
+vignette.ImageTransparency = 0.5; -- 🔴 CHANGED: Lighter vignette
 vignette.ZIndex = 3;
 
 -- Subtle glow effect
@@ -708,7 +708,7 @@ glow.Position = UDim2.new(-0.25, 0, -0.25, 0);
 glow.BackgroundTransparency = 1;
 glow.Image = "rbxassetid://5250216449";
 glow.ImageColor3 = Color3.fromRGB(160, 85, 255); -- Your accent purple
-glow.ImageTransparency = 0.8;
+glow.ImageTransparency = 0.85; -- 🔴 CHANGED: More subtle
 glow.ZIndex = 1;
 
 -- Rounded corners
