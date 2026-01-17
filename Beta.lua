@@ -5600,7 +5600,7 @@ InitTabs.Search = function()
 				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
 				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
 				
-				-- STATS PILL
+				-- STATS PILL (FIXED POSITION: -110)
 				local StatsPill = Instance.new("Frame", new.Misc)
 				StatsPill.Name = "StatsPill"
 				StatsPill.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -5608,7 +5608,7 @@ InitTabs.Search = function()
 				StatsPill.Size = UDim2.new(0, 0, 0, 22)
 				StatsPill.AutomaticSize = Enum.AutomaticSize.X
 				StatsPill.AnchorPoint = Vector2.new(1, 1) 
-				StatsPill.Position = UDim2.new(1, -110, 1, -8)
+				StatsPill.Position = UDim2.new(1, -110, 1, -8) -- Correct position
 				StatsPill.BorderSizePixel = 0
 				StatsPill.ZIndex = 5
 				
@@ -5651,7 +5651,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE
+	-- 🔴 MAIN UPDATE (SMART HYBRID FIX)
 	local function Update()
 		if isUpdating then return end
 		isUpdating = true
@@ -5674,18 +5674,23 @@ InitTabs.Search = function()
 		end
 		
 		-- 🟢 FETCH HELPER
-		local function fetchBothModes(query)
+		-- Allows enabling/disabling SortByViews dynamically
+		local function fetchBothModes(query, useSort)
 			local encoded = HttpService:UrlEncode(query)
 			local results = {}
-			-- Always sort by views so top scripts (like Infinite Yield) show first
-			local sortParam = "&sortBy=views"
+			local sortParam = ""
 			
-			-- 1. Free: Increased Limit to 100 to catch more scripts
-			local urlFree = "https://scriptblox.com/api/script/search?q="..encoded.."&max=100&mode=free&strict=false"..sortParam
+			if useSort then
+				sortParam = "&sortBy=views"
+			end
+			
+			-- Limit: 50 Free + 20 Paid
+			-- 1. Free
+			local urlFree = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free&strict=false"..sortParam
 			local listFree = fetchScripts(urlFree)
 			for _, v in pairs(listFree) do table.insert(results, v) end
 			
-			-- 2. Paid: Limit 20 (Paid scripts are rare)
+			-- 2. Paid
 			local urlPaid = "https://scriptblox.com/api/script/search?q="..encoded.."&max=20&mode=paid&strict=false"..sortParam
 			local listPaid = fetchScripts(urlPaid)
 			for _, v in pairs(listPaid) do table.insert(results, v) end
@@ -5698,17 +5703,19 @@ InitTabs.Search = function()
 		
 		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
 			-- 1. USER SEARCH
-			-- We now use fetchBothModes which ENFORCES 'sortBy=views'.
-			-- This fixes "Infinite Yield" not appearing.
+			-- ⚠️ MAGIC FIX: Pass `false` for sorting. 
+			-- This uses RELEVANCE, so "Infinite Yield" appears first!
 			if GameLabel then GameLabel.Text = "Custom: " .. currentQuery end
-			MasterList = fetchBothModes(currentQuery)
+			MasterList = fetchBothModes(currentQuery, false) 
 			
 		elseif OriginalGameName then
 			-- 2. GAME MODE
+			-- Pass `true` for sorting (Views). We want popular scripts here.
 			if GameLabel then GameLabel.Text = "Game: " .. OriginalGameName end
 			
-			local listGame = fetchBothModes(OriginalGameName)
-			local listUni = fetchBothModes("Universal")
+			-- Combine Game Scripts + Universal Scripts
+			local listGame = fetchBothModes(OriginalGameName, true)
+			local listUni = fetchBothModes("Universal", true)
 			
 			for _, v in pairs(listGame) do table.insert(MasterList, v) end
 			for _, v in pairs(listUni) do table.insert(MasterList, v) end
@@ -5716,12 +5723,17 @@ InitTabs.Search = function()
 		else
 			-- 3. UNIVERSAL MODE
 			if GameLabel then GameLabel.Text = "Mode: Universal" end
-			MasterList = fetchBothModes("Universal")
+			MasterList = fetchBothModes("Universal", true)
 		end
 		
 		CachedScripts = MasterList
 		local finalScripts = filterScripts(CachedScripts)
-		finalScripts = sortScripts(finalScripts)
+		
+		-- Sort by views locally ONLY if we aren't searching
+		if not (currentQuery and currentQuery ~= "") then
+			finalScripts = sortScripts(finalScripts)
+		end
+		
 		renderScripts(finalScripts)
 		
 		isUpdating = false
@@ -5747,7 +5759,6 @@ InitTabs.Search = function()
 	updateUI()
 	Update() 
 end
-
 	InitTabs.Nav = function()
     local isInstantNext = false;
     
