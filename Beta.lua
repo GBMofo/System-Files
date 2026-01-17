@@ -5401,6 +5401,10 @@ InitTabs.Search = function()
 	local CachedScripts = {}
 	local isUpdating = false
 	
+	-- 🔴 SETTINGS
+	local SEARCH_PAGES = 3 -- How many pages to fetch when searching (3 pages = ~90-150 scripts)
+	local BROWSE_PAGES = 2 -- How many pages to fetch per category when browsing (Game + Universal)
+	
 	-- 🔴 SERVICES
 	local HttpService = game:GetService("HttpService")
 	local MarketplaceService = game:GetService("MarketplaceService")
@@ -5444,7 +5448,6 @@ InitTabs.Search = function()
 			detected = cleanGameName(game.Name)
 		end
 		
-		-- DEBUG LABEL
 		local GameLabel = Search:FindFirstChild("GameLabel")
 		if not GameLabel then
 			GameLabel = Instance.new("TextLabel", Search)
@@ -5536,7 +5539,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 FILTER LOGIC (Applied AFTER fetch)
+	-- 🔴 FILTER & SORT
 	local function filterScripts(scriptList)
 		local filtered = {}
 		for _, scriptData in pairs(scriptList) do
@@ -5545,7 +5548,6 @@ InitTabs.Search = function()
 			if CurrentFilter == "Recommended" then
 				passes = (scriptData.verified == true)
 			elseif CurrentFilter == "NoKey" then
-				-- Must be FREE and NO KEY
 				local isPaid = (scriptData.scriptType == "paid")
 				local hasKey = (scriptData.key == true)
 				passes = (not isPaid) and (not hasKey)
@@ -5653,7 +5655,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE
+	-- 🔴 MAIN UPDATE (MULTI-PAGE FETCH)
 	local function Update()
 		if isUpdating then return end
 		isUpdating = true
@@ -5664,8 +5666,8 @@ InitTabs.Search = function()
 			SearchBox.Text = ""
 		end
 		
-		-- Helper fetcher
-		local function fetch(url)
+		-- 🟢 SINGLE PAGE FETCH
+		local function fetchOnePage(url)
 			local s, r = pcall(function() return game:HttpGet(url) end)
 			if s then
 				local s2, d = pcall(function() return HttpService:JSONDecode(r) end)
@@ -5674,36 +5676,47 @@ InitTabs.Search = function()
 			return {}
 		end
 		
+		-- 🟢 MULTI-PAGE FETCHER
+		local function fetchPages(baseUrl, numPages)
+			local combined = {}
+			for i = 1, numPages do
+				-- Append page number
+				local url = baseUrl .. "&page=" .. i
+				local result = fetchOnePage(url)
+				
+				-- If no results on this page, stop fetching deeper
+				if #result == 0 then break end
+				
+				for _, v in pairs(result) do table.insert(combined, v) end
+				
+				-- Small delay to prevent rate limiting if fetching many pages
+				if numPages > 1 then task.wait(0.05) end
+			end
+			return combined
+		end
+		
 		local MasterList = {}
 		local GameLabel = Search:FindFirstChild("GameLabel")
 		
-		-- 🟢 LOGIC: SEARCH VS BROWSING
-		
 		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-			-- 1️⃣ SEARCH MODE (Mimics your OLD code)
-			-- Logic: No "sortBy=views", No "mode=free". Just simple relevance search.
+			-- 1️⃣ SEARCH MODE (RELEVANCE)
 			if GameLabel then GameLabel.Text = "Custom: " .. currentQuery end
 			
 			local encoded = HttpService:UrlEncode(currentQuery)
-			-- Using max=60 to get a few more results than old code (which was 20)
-			-- Removing 'strict=true' but also NOT sorting by views allows "Relevance" to work.
-			local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=60"
+			local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50" -- Old logic URL
 			
-			MasterList = fetch(url)
+			MasterList = fetchPages(url, SEARCH_PAGES)
 			
 		elseif OriginalGameName then
-			-- 2️⃣ BROWSING GAME MODE (Dual Fetch)
-			-- Logic: Sort by views so we see Popular stuff.
+			-- 2️⃣ BROWSING GAME MODE (VIEWS + DUAL FETCH)
 			if GameLabel then GameLabel.Text = "Game: " .. OriginalGameName end
 			
 			local encodedGame = HttpService:UrlEncode(OriginalGameName)
-			-- Sort by views for the game
 			local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame.."&max=50&sortBy=views"
-			local listGame = fetch(urlGame)
-			
-			-- Sort by views for Universal
 			local urlUni = "https://scriptblox.com/api/script/search?q=Universal&max=50&sortBy=views"
-			local listUni = fetch(urlUni)
+			
+			local listGame = fetchPages(urlGame, BROWSE_PAGES)
+			local listUni = fetchPages(urlUni, BROWSE_PAGES)
 			
 			for _, v in pairs(listGame) do table.insert(MasterList, v) end
 			for _, v in pairs(listUni) do table.insert(MasterList, v) end
@@ -5711,14 +5724,14 @@ InitTabs.Search = function()
 		else
 			-- 3️⃣ UNIVERSAL MODE
 			if GameLabel then GameLabel.Text = "Mode: Universal" end
-			local url = "https://scriptblox.com/api/script/fetch?page=1&max=50"
-			MasterList = fetch(url)
+			local url = "https://scriptblox.com/api/script/fetch?max=50"
+			MasterList = fetchPages(url, BROWSE_PAGES)
 		end
 		
 		CachedScripts = MasterList
 		local finalScripts = filterScripts(CachedScripts)
 		
-		-- We sort by views locally for consistency, unless we just searched (keep relevance)
+		-- Locally sort by views ONLY if browsing (not searching)
 		if not (currentQuery and currentQuery ~= "") then
 			finalScripts = sortScripts(finalScripts)
 		end
