@@ -653,13 +653,80 @@ G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(45, 20, 70);
 G2L["3f"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["3f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3f"]["Name"] = [[Main]];
-G2L["3f"]["BackgroundTransparency"] = 0.6; -- Transparent
+G2L["3f"]["BackgroundTransparency"] = 0.6;
 
--- Rounded corners (MUST be before gradient frame!)
+-- Rounded corners FIRST
 local corner = Instance.new("UICorner", G2L["3f"]);
 corner.CornerRadius = UDim.new(0, 20);
 
--- Purple gradient overlay
+-- 🌟 OUTER GLOW (Behind frame - visible outside edges)
+local outerGlowContainer = Instance.new("Frame", G2L["3f"].Parent); -- Parent to ScreenGui!
+outerGlowContainer.Name = "GlowContainer";
+outerGlowContainer.Size = G2L["3f"].Size;
+outerGlowContainer.Position = G2L["3f"].Position;
+outerGlowContainer.AnchorPoint = G2L["3f"].AnchorPoint;
+outerGlowContainer.BackgroundTransparency = 1;
+outerGlowContainer.ZIndex = 0; -- Behind Main
+
+local outerGlow = Instance.new("ImageLabel", outerGlowContainer);
+outerGlow.Name = "OuterGlow";
+outerGlow.Size = UDim2.new(1, 120, 1, 120); -- Big glow
+outerGlow.Position = UDim2.new(0.5, 0, 0.5, 0);
+outerGlow.AnchorPoint = Vector2.new(0.5, 0.5);
+outerGlow.BackgroundTransparency = 1;
+outerGlow.Image = "rbxassetid://5028857472"; -- Soft glow
+outerGlow.ImageColor3 = Color3.fromRGB(255, 150, 255); -- BRIGHT pink-purple
+outerGlow.ImageTransparency = 0.2; -- Very visible
+outerGlow.ScaleType = Enum.ScaleType.Slice;
+outerGlow.SliceCenter = Rect.new(24, 24, 276, 276);
+outerGlow.ZIndex = 0;
+
+-- 🔥 TRIPLE STROKE LAYERING (Makes border POP)
+
+-- Layer 1: Outer bright glow
+local glowStroke1 = Instance.new("UIStroke", G2L["3f"]);
+glowStroke1.Name = "GlowLayer1";
+glowStroke1.Color = Color3.fromRGB(255, 180, 255); -- Bright pink
+glowStroke1.Thickness = 8;
+glowStroke1.Transparency = 0.6;
+glowStroke1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
+
+-- Layer 2: Middle purple glow
+local glowStroke2 = Instance.new("UIStroke", G2L["3f"]);
+glowStroke2.Name = "GlowLayer2";
+glowStroke2.Color = Color3.fromRGB(200, 120, 255);
+glowStroke2.Thickness = 4;
+glowStroke2.Transparency = 0.4;
+glowStroke2.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
+
+-- Layer 3: Sharp inner line
+local mainBorder = Instance.new("UIStroke", G2L["3f"]);
+mainBorder.Name = "MainBorder";
+mainBorder.Color = Color3.fromRGB(255, 200, 255); -- Very bright
+mainBorder.Thickness = 2;
+mainBorder.Transparency = 0.1; -- Almost opaque
+mainBorder.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
+
+-- 🌈 Animated gradient on main border
+local strokeGradient = Instance.new("UIGradient", mainBorder);
+strokeGradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(200, 100, 255)),   -- Purple
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 150, 255)), -- Pink
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(200, 100, 255))    -- Purple
+};
+strokeGradient.Rotation = 0;
+
+-- Optional: Rotate gradient animation
+task.spawn(function()
+    while true do
+        for i = 0, 360, 2 do
+            strokeGradient.Rotation = i
+            task.wait(0.05)
+        end
+    end
+end)
+
+-- Purple gradient overlay (your existing code)
 local gradient = Instance.new("Frame", G2L["3f"]);
 gradient.Name = "GradientOverlay";
 gradient.Size = UDim2.new(1, 0, 1, 0);
@@ -669,7 +736,7 @@ gradient.BackgroundTransparency = 0.5;
 gradient.BorderSizePixel = 0;
 gradient.ZIndex = 1;
 
-local gradientCorner = Instance.new("UICorner", gradient); -- Match parent corners
+local gradientCorner = Instance.new("UICorner", gradient);
 gradientCorner.CornerRadius = UDim.new(0, 20);
 
 local gradientUI = Instance.new("UIGradient", gradient);
@@ -700,7 +767,7 @@ noise.ZIndex = 2;
 local noiseCorner = Instance.new("UICorner", noise);
 noiseCorner.CornerRadius = UDim.new(0, 20);
 
--- Dark vignette edges
+-- Vignette
 local vignette = Instance.new("ImageLabel", G2L["3f"]);
 vignette.Name = "Vignette";
 vignette.Size = UDim2.new(1, 0, 1, 0);
@@ -712,47 +779,6 @@ vignette.ZIndex = 3;
 
 local vignetteCorner = Instance.new("UICorner", vignette);
 vignetteCorner.CornerRadius = UDim.new(0, 20);
-
--- 🔴 GLOWING BORDER (REPLACES YOUR OLD "glow") 🔴
-
--- Outer glow (extends beyond frame)
-local outerGlow = Instance.new("ImageLabel", G2L["3f"]);
-outerGlow.Name = "OuterGlow";
-outerGlow.Size = UDim2.new(1, 80, 1, 80); -- 40px on each side
-outerGlow.Position = UDim2.new(0.5, 0, 0.5, 0);
-outerGlow.AnchorPoint = Vector2.new(0.5, 0.5);
-outerGlow.BackgroundTransparency = 1;
-outerGlow.Image = "rbxassetid://5028857472";
-outerGlow.ImageColor3 = Color3.fromRGB(160, 85, 255); -- Your purple accent
-outerGlow.ImageTransparency = 0.6;
-outerGlow.ScaleType = Enum.ScaleType.Slice;
-outerGlow.SliceCenter = Rect.new(24, 24, 276, 276);
-outerGlow.ZIndex = -1; -- Behind main frame
-
--- Sharp border line
-local borderStroke = Instance.new("UIStroke", G2L["3f"]);
-borderStroke.Name = "MainBorder";
-borderStroke.Color = Color3.fromRGB(180, 100, 255);
-borderStroke.Thickness = 2;
-borderStroke.Transparency = 0.3;
-borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
-
--- Inner glow on border
-local innerGlow = Instance.new("UIStroke", G2L["3f"]);
-innerGlow.Name = "InnerGlow";
-innerGlow.Color = Color3.fromRGB(200, 130, 255);
-innerGlow.Thickness = 4;
-innerGlow.Transparency = 0.75;
-innerGlow.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
-
--- Animated gradient on border (optional)
-local strokeGradient = Instance.new("UIGradient", borderStroke);
-strokeGradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(140, 70, 220)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(200, 120, 255)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(140, 70, 220))
-};
-strokeGradient.Rotation = 45;
 
 -- StarterGui.ScreenGui.Main.Title
 G2L["40"] = Instance.new("Frame", G2L["3f"]);
