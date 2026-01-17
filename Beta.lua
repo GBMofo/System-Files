@@ -5562,6 +5562,7 @@ InitTabs.Search = function()
 		return filtered
 	end
 	
+	-- LOCAL SORT: Only used when Browsing (not searching)
 	local function sortScripts(scriptList)
 		table.sort(scriptList, function(a, b)
 			local viewsA = tonumber(a.views) or 0
@@ -5600,7 +5601,7 @@ InitTabs.Search = function()
 				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
 				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
 				
-				-- STATS PILL (FIXED POSITION: -110)
+				-- STATS PILL
 				local StatsPill = Instance.new("Frame", new.Misc)
 				StatsPill.Name = "StatsPill"
 				StatsPill.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -5608,7 +5609,7 @@ InitTabs.Search = function()
 				StatsPill.Size = UDim2.new(0, 0, 0, 22)
 				StatsPill.AutomaticSize = Enum.AutomaticSize.X
 				StatsPill.AnchorPoint = Vector2.new(1, 1) 
-				StatsPill.Position = UDim2.new(1, -110, 1, -8) -- Correct position
+				StatsPill.Position = UDim2.new(1, -110, 1, -8)
 				StatsPill.BorderSizePixel = 0
 				StatsPill.ZIndex = 5
 				
@@ -5651,7 +5652,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE (SMART HYBRID FIX)
+	-- 🔴 MAIN UPDATE
 	local function Update()
 		if isUpdating then return end
 		isUpdating = true
@@ -5674,7 +5675,8 @@ InitTabs.Search = function()
 		end
 		
 		-- 🟢 FETCH HELPER
-		-- Allows enabling/disabling SortByViews dynamically
+		-- 'useSort': If TRUE, we sort by Views (Good for browsing)
+		-- 'useSort': If FALSE, we rely on Relevance (Good for searching "Infinite Yield")
 		local function fetchBothModes(query, useSort)
 			local encoded = HttpService:UrlEncode(query)
 			local results = {}
@@ -5683,8 +5685,8 @@ InitTabs.Search = function()
 			if useSort then
 				sortParam = "&sortBy=views"
 			end
+			-- If useSort is false, sortParam is empty, so it defaults to Relevance
 			
-			-- Limit: 50 Free + 20 Paid
 			-- 1. Free
 			local urlFree = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free&strict=false"..sortParam
 			local listFree = fetchScripts(urlFree)
@@ -5702,18 +5704,18 @@ InitTabs.Search = function()
 		local GameLabel = Search:FindFirstChild("GameLabel")
 		
 		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-			-- 1. USER SEARCH
-			-- ⚠️ MAGIC FIX: Pass `false` for sorting. 
-			-- This uses RELEVANCE, so "Infinite Yield" appears first!
+			-- 1. USER SEARCHING MANUALLY
+			-- ⚠️ CRITICAL: Pass 'false' for useSort.
+			-- This tells API: "Give me relevant scripts matching this name, don't just sort by views."
 			if GameLabel then GameLabel.Text = "Custom: " .. currentQuery end
-			MasterList = fetchBothModes(currentQuery, false) 
+			MasterList = fetchBothModes(currentQuery, false)
 			
 		elseif OriginalGameName then
-			-- 2. GAME MODE
-			-- Pass `true` for sorting (Views). We want popular scripts here.
+			-- 2. BROWSING GAME SCRIPTS
+			-- ⚠️ CRITICAL: Pass 'true' for useSort.
+			-- This tells API: "Show me the most popular scripts for this game."
 			if GameLabel then GameLabel.Text = "Game: " .. OriginalGameName end
 			
-			-- Combine Game Scripts + Universal Scripts
 			local listGame = fetchBothModes(OriginalGameName, true)
 			local listUni = fetchBothModes("Universal", true)
 			
@@ -5721,7 +5723,7 @@ InitTabs.Search = function()
 			for _, v in pairs(listUni) do table.insert(MasterList, v) end
 			
 		else
-			-- 3. UNIVERSAL MODE
+			-- 3. BROWSING UNIVERSAL
 			if GameLabel then GameLabel.Text = "Mode: Universal" end
 			MasterList = fetchBothModes("Universal", true)
 		end
@@ -5729,7 +5731,9 @@ InitTabs.Search = function()
 		CachedScripts = MasterList
 		local finalScripts = filterScripts(CachedScripts)
 		
-		-- Sort by views locally ONLY if we aren't searching
+		-- 🟢 FINAL SORTING DECISION
+		-- If user SEARCHED, we respect the API's relevance order (don't re-sort by views locally).
+		-- If user is BROWSING, we re-sort by views locally so the list looks clean.
 		if not (currentQuery and currentQuery ~= "") then
 			finalScripts = sortScripts(finalScripts)
 		end
@@ -5759,6 +5763,7 @@ InitTabs.Search = function()
 	updateUI()
 	Update() 
 end
+
 	InitTabs.Nav = function()
     local isInstantNext = false;
     
