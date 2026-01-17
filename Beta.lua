@@ -5602,7 +5602,12 @@ if v.Name == "Popups" then v.Visible = false return end
 				new.Parent = Scripts
 				new.Name = scriptData.title
 				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
-				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
+				
+				-- Use 'image' property (new API) or fallback to game.imageUrl or default
+				local imageUrl = scriptData.image 
+					or (scriptData.game and scriptData.game.imageUrl) 
+					or "rbxassetid://109798560145884"
+				new.Misc.Thumbnail.Image = imageUrl
 				
 				new.Tags.Key.Visible = scriptData.key or false
 				new.Tags.Universal.Visible = scriptData.isUniversal or false
@@ -5708,14 +5713,51 @@ if v.Name == "Popups" then v.Visible = false return end
 				return game:GetService("HttpService"):JSONDecode(scriptJson)
 			end)
 			
-			if not success2 or not scripts.result or not scripts.result.scripts then
-				warn("[Update] ❌ Invalid JSON response")
+			if not success2 then
+				warn("[Update] ❌ JSON decode failed:", scripts)
+				isUpdating = false
+				renderScripts({})
+				return
+			end
+			
+			-- Check for API error message
+			if scripts.message then
+				warn("[Update] ❌ API Error:", scripts.message)
+				isUpdating = false
+				renderScripts({})
+				return
+			end
+			
+			-- ScriptBlox API returns: { result: { scripts: [...] } }
+			if not scripts or not scripts.result then
+				warn("[Update] ❌ Invalid API response - missing 'result'")
+				print("[Update] Response keys:", table.concat(scriptsToFilter and {} or {}, ", "))
+				for k, v in pairs(scripts or {}) do
+					print("[Update]   - Key:", k, "Type:", typeof(v))
+				end
+				isUpdating = false
+				renderScripts({})
+				return
+			end
+			
+			if not scripts.result.scripts then
+				warn("[Update] ❌ Invalid API response - missing 'scripts' in result")
+				for k, v in pairs(scripts.result or {}) do
+					print("[Update]   - Result key:", k, "Type:", typeof(v))
+				end
 				isUpdating = false
 				renderScripts({})
 				return
 			end
 			
 			scriptsToFilter = scripts.result.scripts
+			
+			if not scriptsToFilter or #scriptsToFilter == 0 then
+				print("[Update] ⚠️ No scripts in response (empty array)")
+				isUpdating = false
+				renderScripts({})
+				return
+			end
 			
 			-- Update cache
 			if isEmpty then -- Only cache filter results, not searches
