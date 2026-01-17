@@ -6065,5 +6065,6 @@ end;
 		UpdateSize();
 		print("✅ UI Scaled")
 	end);
+end
 end;
 C_2()
