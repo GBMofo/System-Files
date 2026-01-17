@@ -5399,15 +5399,13 @@ if v.Name == "Popups" then v.Visible = false return end
 	local CurrentFilter = "All"
 	local CachedScripts = {}
 	local isUpdating = false
-	local lastEndpoint = "" -- Track what we last fetched
+	local lastEndpoint = ""
 	
-	-- 🔴 DETECT CURRENT GAME (IMPROVED)
+	-- 🔴 DETECT CURRENT GAME
 	local currentGameName = nil
 	local currentGameId = game.PlaceId
 	
-	-- Try multiple methods to get game name
 	local function detectGame()
-		-- Method 1: MarketplaceService (most reliable)
 		local success, gameInfo = pcall(function()
 			return game:GetService("MarketplaceService"):GetProductInfo(currentGameId)
 		end)
@@ -5418,16 +5416,14 @@ if v.Name == "Popups" then v.Visible = false return end
 			return currentGameName
 		end
 		
-		-- Method 2: Use game name directly
 		if game.Name and game.Name ~= "" and game.Name ~= "Game" then
 			currentGameName = game.Name
 			print("[Search] ✅ Using game.Name:", currentGameName)
 			return currentGameName
 		end
 		
-		-- Method 3: Fallback to Universal
 		currentGameName = nil
-		warn("[Search] ⚠️ Could not detect game, will use Universal")
+		warn("[Search] ⚠️ Could not detect game, using Universal")
 		return nil
 	end
 	
@@ -5504,36 +5500,46 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 	end
 	
-	-- 🔴 FILTER LOGIC (FIXED - Now works on already-fetched scripts)
+	-- 🔴 FILTER LOGIC (RELAXED + DEBUG)
 	local function filterScripts(scriptList)
 		local filtered = {}
 		
-		print("[Filter] Filtering", #scriptList, "scripts with filter:", CurrentFilter)
+		print("[Filter] ==========================================")
+		print("[Filter] Current filter:", CurrentFilter)
+		print("[Filter] Input scripts:", #scriptList)
+		
+		-- 🟢 DEBUG: Sample first script to see what data we have
+		if scriptList[1] then
+			print("[Filter] Sample script data:")
+			print("  - title:", scriptList[1].title or "nil")
+			print("  - verified:", scriptList[1].verified or "nil")
+			print("  - views:", scriptList[1].views or "nil")
+			print("  - key:", scriptList[1].key or "nil")
+			print("  - scriptType:", scriptList[1].scriptType or "nil")
+		end
 		
 		for _, scriptData in pairs(scriptList) do
 			local passes = false
 			
 			if CurrentFilter == "Recommended" then
-				-- ⭐ Verified + High Views
-				passes = (scriptData.verified == true)
-					and ((tonumber(scriptData.views) or 0) >= 3000)
+				-- ⭐ RELAXED: Verified OR High Views (not both)
+				local isVerified = (scriptData.verified == true)
+				local hasHighViews = ((tonumber(scriptData.views) or 0) >= 1000) -- Lowered from 3000
+				passes = isVerified or hasHighViews
 				
 			elseif CurrentFilter == "NoKey" then
-				-- 🔓 No Key + Verified
+				-- 🔓 RELAXED: Just no key (removed verified requirement)
 				passes = (scriptData.key == false or scriptData.key == nil)
-					and (scriptData.verified == true)
 				
 			elseif CurrentFilter == "KeyRequired" then
-				-- 🔑 (Key OR Paid) + Verified
-				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
-					and (scriptData.verified == true)
+				-- 🔑 RELAXED: Just key or paid (removed verified requirement)
+				passes = (scriptData.key == true) or (scriptData.scriptType == "paid")
 				
 			elseif CurrentFilter == "Trending" then
-				-- 🔥 High Views
-				passes = ((tonumber(scriptData.views) or 0) >= 1000)
+				-- 🔥 RELAXED: Lowered threshold
+				passes = ((tonumber(scriptData.views) or 0) >= 500) -- Lowered from 1000
 			
 			elseif CurrentFilter == "All" then
-				-- Show everything
 				passes = true
 			end
 			
@@ -5542,7 +5548,9 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 		
-		print("[Filter] ✅ After filtering:", #filtered, "scripts match", CurrentFilter)
+		print("[Filter] ✅ Output scripts:", #filtered)
+		print("[Filter] ==========================================")
+		
 		return filtered
 	end
 	
@@ -5558,7 +5566,6 @@ if v.Name == "Popups" then v.Visible = false return end
 	
 	-- 🔴 RENDER SCRIPTS
 	local function renderScripts(scriptList)
-		-- Clear old scripts
 		for _, v in pairs(Scripts:GetChildren()) do
 			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then 
 				v:Destroy() 
@@ -5574,12 +5581,6 @@ if v.Name == "Popups" then v.Visible = false return end
 			noResults.Size = UDim2.new(1, 0, 0, 50)
 			noResults.Font = Enum.Font.GothamBold
 			noResults.TextSize = 16
-			
-			task.delay(2, function()
-				if noResults and noResults.Parent then
-					noResults:Destroy()
-				end
-			end)
 			return
 		end
 		
@@ -5611,7 +5612,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		print("[Render] ✅ Displayed", #scriptList, "scripts")
 	end
 	
-	-- 🔴 MAIN UPDATE FUNCTION (COMPLETELY FIXED)
+	-- 🔴 MAIN UPDATE FUNCTION (SIMPLIFIED)
 	local function Update(query, forceRefresh)
 		if isUpdating then 
 			print("[Update] ⚠️ Already updating, skipping...")
@@ -5623,95 +5624,82 @@ if v.Name == "Popups" then v.Visible = false return end
 		local isEmpty = #(string.gsub(query, "[%s]", "")) <= 0
 		
 		local endpoint = ""
-		local needsNewFetch = false
 		
-		-- 🟢 DETERMINE WHAT TO FETCH
+		print("[Update] ==========================================")
+		print("[Update] Current filter:", CurrentFilter)
+		print("[Update] Query:", isEmpty and "(empty)" or query)
+		print("[Update] Current game:", currentGameName or "Universal")
+		
+		-- 🟢 SIMPLIFIED LOGIC: Use Universal for ALL filters (for debugging)
 		if not isEmpty then
-			-- 🔍 USER SEARCH - Fetch from search API
 			local encodedQuery = game:GetService("HttpService"):UrlEncode(query)
 			endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=50"
-			needsNewFetch = true
-			print("[Update] 🔍 Search mode:", query)
-			
-		elseif CurrentFilter == "All" then
-			-- 🌐 ALL FILTER - Fetch universal scripts
+			print("[Update] Mode: Search")
+		else
+			-- 🟢 TEMPORARY: Always use universal (to test if game-specific is the problem)
 			endpoint = "https://scriptblox.com/api/script/fetch?max=50"
-			needsNewFetch = (lastEndpoint ~= endpoint) or forceRefresh
-			print("[Update] 🌐 All filter - Universal scripts")
-			
-		else
-			-- 🎮 GAME-SPECIFIC FILTERS
-			if currentGameName then
-				local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
-				endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=50"
-				needsNewFetch = (lastEndpoint ~= endpoint) or forceRefresh
-				print("[Update] 🎮 Game filter:", currentGameName, "| Filter:", CurrentFilter)
-			else
-				-- No game detected, fallback to universal
-				endpoint = "https://scriptblox.com/api/script/fetch?max=50"
-				needsNewFetch = (lastEndpoint ~= endpoint) or forceRefresh
-				print("[Update] ⚠️ No game detected, using universal for filter:", CurrentFilter)
-			end
+			print("[Update] Mode: Universal (testing)")
 		end
 		
-		-- 🟢 FETCH IF NEEDED
-		if needsNewFetch then
-			print("[Update] 📡 Fetching from:", endpoint)
-			
-			local success, scriptJson = pcall(function()
-				return game:HttpGet(endpoint)
-			end)
-			
-			if not success then
-				warn("[Update] ❌ HTTP request failed")
-				isUpdating = false
-				renderScripts({})
-				return
-			end
-			
-			local success2, scripts = pcall(function()
-				return game:GetService("HttpService"):JSONDecode(scriptJson)
-			end)
-			
-			if not success2 or not scripts.result or not scripts.result.scripts then
-				warn("[Update] ❌ Invalid JSON response")
-				isUpdating = false
-				renderScripts({})
-				return
-			end
-			
-			CachedScripts = scripts.result.scripts
-			lastEndpoint = endpoint
-			print("[Update] ✅ Fetched", #CachedScripts, "scripts from API")
-		else
-			print("[Update] 📦 Using cached", #CachedScripts, "scripts")
+		print("[Update] Endpoint:", endpoint)
+		
+		-- Fetch
+		local success, scriptJson = pcall(function()
+			return game:HttpGet(endpoint)
+		end)
+		
+		if not success then
+			warn("[Update] ❌ HTTP request failed:", scriptJson)
+			isUpdating = false
+			renderScripts({})
+			createNotification("API Request Failed", "Error", 3)
+			return
 		end
 		
-		-- 🟢 APPLY FILTERS
+		local success2, scripts = pcall(function()
+			return game:GetService("HttpService"):JSONDecode(scriptJson)
+		end)
+		
+		if not success2 or not scripts.result or not scripts.result.scripts then
+			warn("[Update] ❌ Invalid JSON response")
+			isUpdating = false
+			renderScripts({})
+			createNotification("Invalid API Response", "Error", 3)
+			return
+		end
+		
+		CachedScripts = scripts.result.scripts
+		lastEndpoint = endpoint
+		
+		print("[Update] ✅ Fetched", #CachedScripts, "scripts from API")
+		
+		-- Apply filters
 		local finalScripts
 		if isEmpty then
-			-- Apply filter to cached scripts
 			finalScripts = filterScripts(CachedScripts)
 			finalScripts = sortScripts(finalScripts)
+			
+			-- 🟢 DEBUG NOTIFICATION
+			createNotification(CurrentFilter .. ": " .. #finalScripts .. " scripts", "Info", 3)
 		else
-			-- Search results, just sort
 			finalScripts = sortScripts(CachedScripts)
 		end
 		
-		-- 🟢 RENDER
+		print("[Update] ==========================================")
+		
 		renderScripts(finalScripts)
 		
 		task.wait(0.1)
 		isUpdating = false
 	end
 	
-	-- 🔴 FILTER BUTTON EVENTS (FIXED - Force refresh on filter change)
+	-- 🔴 FILTER BUTTON EVENTS
 	RecommendedBtn.MouseButton1Click:Connect(function()
 		if CurrentFilter == "Recommended" then return end
 		CurrentFilter = "Recommended"
 		SearchBox.Text = ""
 		updateUI()
-		Update("", true) -- Force refresh
+		Update("", true)
 	end)
 	
 	AllBtn.MouseButton1Click:Connect(function()
@@ -5719,7 +5707,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		CurrentFilter = "All"
 		SearchBox.Text = ""
 		updateUI()
-		Update("", true) -- Force refresh
+		Update("", true)
 	end)
 	
 	NoKeyBtn.MouseButton1Click:Connect(function()
@@ -5727,7 +5715,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		CurrentFilter = "NoKey"
 		SearchBox.Text = ""
 		updateUI()
-		Update("", true) -- Force refresh
+		Update("", true)
 	end)
 	
 	KeyBtn.MouseButton1Click:Connect(function()
@@ -5735,7 +5723,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		CurrentFilter = "KeyRequired"
 		SearchBox.Text = ""
 		updateUI()
-		Update("", true) -- Force refresh
+		Update("", true)
 	end)
 	
 	TrendingBtn.MouseButton1Click:Connect(function()
@@ -5743,7 +5731,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		CurrentFilter = "Trending"
 		SearchBox.Text = ""
 		updateUI()
-		Update("", true) -- Force refresh
+		Update("", true)
 	end)
 	
 	-- 🔴 SEARCH BOX EVENT
@@ -5755,14 +5743,29 @@ if v.Name == "Popups" then v.Visible = false return end
 	updateUI()
 	Update("", true)
 	
-	-- 🔴 DEBUG: Show detected game in UI
+	-- 🔴 DEBUG INFO
 	task.spawn(function()
-		task.wait(1)
+		task.wait(2)
 		if currentGameName then
-			createNotification("Detected: " .. currentGameName, "Info", 3)
+			createNotification("Game: " .. currentGameName, "Info", 3)
 		else
 			createNotification("Using Universal Scripts", "Info", 3)
 		end
+		
+		-- Show filter counts after 3 seconds
+		task.wait(1)
+		print("[DEBUG] ==========================================")
+		print("[DEBUG] Current cached scripts:", #CachedScripts)
+		print("[DEBUG] Testing each filter:")
+		
+		for _, filterName in ipairs({"All", "Recommended", "NoKey", "KeyRequired", "Trending"}) do
+			CurrentFilter = filterName
+			local filtered = filterScripts(CachedScripts)
+			print("[DEBUG] " .. filterName .. ":", #filtered, "scripts")
+		end
+		
+		CurrentFilter = "All" -- Reset
+		print("[DEBUG] ==========================================")
 	end)
 end;
 
