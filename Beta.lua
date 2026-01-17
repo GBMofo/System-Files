@@ -5396,15 +5396,24 @@ if v.Name == "Popups" then v.Visible = false return end
     local SearchBox = Search.TextBox;
     
     -- 🔴 STATE
-    local CurrentFilter = "Recommended"  -- Start with recommended
+    local CurrentFilter = "All"  -- Start with "All" (safer default)
     local CachedScripts = {}
-    local isUpdating = false  -- Debounce flag
+    local isUpdating = false
     
-    -- 🔴 DETECT CURRENT GAME
-    local currentGameName = "Unknown"
-    pcall(function()
-        currentGameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
+    -- 🔴 DETECT CURRENT GAME (with better error handling)
+    local currentGameName = "Universal"
+    local currentGameId = game.PlaceId
+    
+    local success, gameInfo = pcall(function()
+        return game:GetService("MarketplaceService"):GetProductInfo(currentGameId)
     end)
+    
+    if success and gameInfo and gameInfo.Name then
+        currentGameName = gameInfo.Name
+        print("[Search] Detected game:", currentGameName)
+    else
+        warn("[Search] Failed to detect game, using Universal")
+    end
     
     -- 🔴 CREATE FILTER BAR
     local FilterBar = Instance.new("Frame", Search)
@@ -5477,35 +5486,32 @@ if v.Name == "Popups" then v.Visible = false return end
         end
     end
     
-    -- 🔴 FILTER LOGIC
+    -- 🔴 FILTER LOGIC (UPDATED TO REQUIREMENTS)
     local function filterScripts(scriptList)
         local filtered = {}
         
         for _, scriptData in pairs(scriptList) do
             local passes = true
             
-            -- Apply filter rules
             if CurrentFilter == "Recommended" then
-                -- Current Game + Verified + High Views + No Key
-                passes = (scriptData.verified == true) 
-                    and ((tonumber(scriptData.views) or 0) >= 5000)
-                    and (scriptData.key == false or scriptData.key == nil)
+                -- ⭐ Current Game + Verified + High Views
+                passes = (scriptData.verified == true)
+                    and ((tonumber(scriptData.views) or 0) >= 3000)
                     
             elseif CurrentFilter == "NoKey" then
-                -- Current Game + No Key + Verified
+                -- 🔓 Current Game + No Key + Verified
                 passes = (scriptData.key == false or scriptData.key == nil)
                     and (scriptData.verified == true)
                     
             elseif CurrentFilter == "KeyRequired" then
-                -- Current Game + Key + Verified
-                passes = (scriptData.key == true)
-                    and (scriptData.verified == true)
+                -- 🔑 Current Game + (Key OR Paid)
+                passes = (scriptData.key == true) or (scriptData.scriptType == "paid")
                     
             elseif CurrentFilter == "Trending" then
-                -- Current Game + High Views (mixed key status)
+                -- 🔥 Current Game + High Views
                 passes = ((tonumber(scriptData.views) or 0) >= 1000)
                 
-            -- "All" filter = no filtering, show everything
+            -- "All" = Universal (NO filters)
             end
             
             if passes then
@@ -5516,7 +5522,7 @@ if v.Name == "Popups" then v.Visible = false return end
         return filtered
     end
     
-    -- 🔴 SORT LOGIC (Always high to low views)
+    -- 🔴 SORT LOGIC
     local function sortScripts(scriptList)
         table.sort(scriptList, function(a, b)
             local viewsA = tonumber(a.views) or 0
@@ -5529,7 +5535,7 @@ if v.Name == "Popups" then v.Visible = false return end
     
     -- 🔴 RENDER SCRIPTS
     local function renderScripts(scriptList)
-        -- Clear ALL children (including error messages)
+        -- Clear ALL
         for _, v in pairs(Scripts:GetChildren()) do
             if v:IsA("CanvasGroup") or v:IsA("TextLabel") then 
                 v:Destroy() 
@@ -5537,7 +5543,6 @@ if v.Name == "Popups" then v.Visible = false return end
         end
         
         if not scriptList or #scriptList == 0 then
-            -- Single error message with auto-dismiss
             local noResults = Instance.new("TextLabel", Scripts)
             noResults.Name = "ErrorMessage"
             noResults.Text = "No scripts found"
@@ -5547,7 +5552,6 @@ if v.Name == "Popups" then v.Visible = false return end
             noResults.Font = Enum.Font.GothamBold
             noResults.TextSize = 16
             
-            -- Auto-dismiss after 2 seconds
             task.delay(2, function()
                 if noResults and noResults.Parent then
                     noResults:Destroy()
@@ -5566,13 +5570,11 @@ if v.Name == "Popups" then v.Visible = false return end
                 new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
                 new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
                 
-                -- Tags
                 new.Tags.Key.Visible = scriptData.key or false
                 new.Tags.Universal.Visible = scriptData.isUniversal or false
                 new.Tags.Patched.Visible = scriptData.isPatched or false
                 new.Tags.Paid.Visible = scriptData.scriptType == "paid"
                 
-                -- Buttons
                 new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
                     UIEvents.Executor.RunCode(scriptData.script)()
                 end)
@@ -5584,9 +5586,8 @@ if v.Name == "Popups" then v.Visible = false return end
         end
     end
     
-    -- 🔴 MAIN UPDATE FUNCTION
+    -- 🔴 MAIN UPDATE FUNCTION (FIXED TO REQUIREMENTS)
     local function Update(query)
-        -- Debounce (prevent spam)
         if isUpdating then return end
         isUpdating = true
         
@@ -5594,20 +5595,32 @@ if v.Name == "Popups" then v.Visible = false return end
         local isEmpty = #(string.gsub(query, "[%s]", "")) <= 0
         
         local endpoint
+        local useCurrentGame = false
         
-        -- 🟢 NEW LOGIC: User typed search = fetch ALL (40-50 scripts, no filter)
+        -- 🟢 UPDATED LOGIC TO MATCH REQUIREMENTS
         if not isEmpty then
+            -- User typed search = fetch ALL (50 scripts)
             local encodedQuery = game:GetService("HttpService"):UrlEncode(query)
             endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=50"
+            print("[Search] Searching for:", query)
         else
             -- Empty search = use filters
             if CurrentFilter == "All" then
-                -- Universal scripts
+                -- 🌐 All = Universal (NO game filter)
                 endpoint = "https://scriptblox.com/api/script/fetch?max=30"
+                print("[Search] Fetching universal scripts (All filter)")
             else
-                -- Current game filtered
-                local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
-                endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
+                -- All other filters = Current Game
+                if currentGameName ~= "Universal" then
+                    local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
+                    endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
+                    useCurrentGame = true
+                    print("[Search] Fetching scripts for current game:", currentGameName, "with filter:", CurrentFilter)
+                else
+                    -- Fallback to universal if game unknown
+                    endpoint = "https://scriptblox.com/api/script/fetch?max=30"
+                    print("[Search] Game unknown, using universal for filter:", CurrentFilter)
+                end
             end
         end
         
@@ -5617,8 +5630,9 @@ if v.Name == "Popups" then v.Visible = false return end
         end)
         
         if not success then
-            warn("[Search] Failed to fetch")
+            warn("[Search] HTTP request failed")
             isUpdating = false
+            renderScripts({})
             return
         end
         
@@ -5627,27 +5641,48 @@ if v.Name == "Popups" then v.Visible = false return end
         end)
         
         if not success2 or not scripts.result or not scripts.result.scripts then
-            warn("[Search] Invalid response")
+            warn("[Search] Invalid JSON response")
             isUpdating = false
+            renderScripts({})
             return
         end
         
         CachedScripts = scripts.result.scripts
+        print("[Search] Fetched", #CachedScripts, "scripts")
         
-        -- 🟢 NEW: Only filter if search is empty
+        -- 🟢 FALLBACK: If current game has no scripts, try universal (except for "All" filter)
+        if useCurrentGame and isEmpty and CurrentFilter ~= "All" and (#CachedScripts == 0 or #CachedScripts < 3) then
+            print("[Search] No scripts for current game, trying universal...")
+            
+            local fallbackSuccess, fallbackJson = pcall(function()
+                return game:HttpGet("https://scriptblox.com/api/script/fetch?max=30")
+            end)
+            
+            if fallbackSuccess then
+                local fallbackSuccess2, fallbackScripts = pcall(function()
+                    return game:GetService("HttpService"):JSONDecode(fallbackJson)
+                end)
+                
+                if fallbackSuccess2 and fallbackScripts.result and fallbackScripts.result.scripts then
+                    CachedScripts = fallbackScripts.result.scripts
+                    print("[Search] Fallback: Fetched", #CachedScripts, "universal scripts")
+                end
+            end
+        end
+        
+        -- Apply filters and sort
         local finalScripts
         if isEmpty then
-            local filtered = filterScripts(CachedScripts)
-            finalScripts = sortScripts(filtered)
+            finalScripts = filterScripts(CachedScripts)
+            finalScripts = sortScripts(finalScripts)
+            print("[Search] After", CurrentFilter, "filter:", #finalScripts, "scripts")
         else
-            -- Search query entered = show ALL results (no filter)
             finalScripts = sortScripts(CachedScripts)
         end
         
         -- Render
         renderScripts(finalScripts)
         
-        -- Cooldown (0.3s)
         task.wait(0.3)
         isUpdating = false
     end
@@ -5655,10 +5690,48 @@ if v.Name == "Popups" then v.Visible = false return end
     -- 🔴 FILTER EVENTS
     RecommendedBtn.MouseButton1Click:Connect(function()
         CurrentFilter = "Recommended"
-        SearchBox.Text = ""  -- Clear search when clicking filter
+        SearchBox.Text = ""
         updateUI()
         Update("")
     end)
+    
+    AllBtn.MouseButton1Click:Connect(function()
+        CurrentFilter = "All"
+        SearchBox.Text = ""
+        updateUI()
+        Update("")
+    end)
+    
+    NoKeyBtn.MouseButton1Click:Connect(function()
+        CurrentFilter = "NoKey"
+        SearchBox.Text = ""
+        updateUI()
+        Update("")
+    end)
+    
+    KeyBtn.MouseButton1Click:Connect(function()
+        CurrentFilter = "KeyRequired"
+        SearchBox.Text = ""
+        updateUI()
+        Update("")
+    end)
+    
+    TrendingBtn.MouseButton1Click:Connect(function()
+        CurrentFilter = "Trending"
+        SearchBox.Text = ""
+        updateUI()
+        Update("")
+    end)
+    
+    -- 🔴 SEARCH BOX EVENT
+    SearchBox.FocusLost:Connect(function()
+        Update(SearchBox.Text)
+    end)
+    
+    -- 🔴 INITIAL LOAD
+    updateUI()
+    Update("")
+end;
     
     AllBtn.MouseButton1Click:Connect(function()
         CurrentFilter = "All"
