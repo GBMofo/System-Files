@@ -5444,7 +5444,6 @@ InitTabs.Search = function()
 			detected = cleanGameName(game.Name)
 		end
 		
-		-- DEBUG LABEL
 		local GameLabel = Search:FindFirstChild("GameLabel")
 		if not GameLabel then
 			GameLabel = Instance.new("TextLabel", Search)
@@ -5536,32 +5535,23 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 FILTER & SORT LOGIC
+	-- 🔴 FILTER & SORT
 	local function filterScripts(scriptList)
 		local filtered = {}
 		for _, scriptData in pairs(scriptList) do
 			local passes = false
 			
 			if CurrentFilter == "Recommended" then
-				-- ONLY Verified. Everything else allowed.
 				passes = (scriptData.verified == true)
-				
 			elseif CurrentFilter == "NoKey" then
-				-- Must be Free AND No Key
 				local isPaid = (scriptData.scriptType == "paid")
 				local hasKey = (scriptData.key == true)
 				passes = (not isPaid) and (not hasKey)
-				
 			elseif CurrentFilter == "KeyRequired" then
-				-- Key OR Paid
 				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
-				
 			elseif CurrentFilter == "Trending" then
-				-- Everything (Sorted by views later)
 				passes = true
-				
 			elseif CurrentFilter == "All" then
-				-- EVERYTHING: Verified, Unverified, Key, No Key, Paid, Free
 				passes = true
 			end
 			
@@ -5618,7 +5608,7 @@ InitTabs.Search = function()
 				StatsPill.Size = UDim2.new(0, 0, 0, 22)
 				StatsPill.AutomaticSize = Enum.AutomaticSize.X
 				StatsPill.AnchorPoint = Vector2.new(1, 1) 
-				StatsPill.Position = UDim2.new(1, -110, 1, -8) -- Left of Save Icon
+				StatsPill.Position = UDim2.new(1, -110, 1, -8)
 				StatsPill.BorderSizePixel = 0
 				StatsPill.ZIndex = 5
 				
@@ -5661,7 +5651,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE
+	-- 🔴 MAIN UPDATE (DOUBLE FETCH FIX)
 	local function Update()
 		if isUpdating then return end
 		isUpdating = true
@@ -5672,6 +5662,7 @@ InitTabs.Search = function()
 			SearchBox.Text = ""
 		end
 		
+		-- 🟢 FETCH FUNCTION
 		local function fetchScripts(url)
 			local success, response = pcall(function() return game:HttpGet(url) end)
 			if success then
@@ -5683,40 +5674,46 @@ InitTabs.Search = function()
 			return {}
 		end
 		
-		local baseParams = "&max=50&sortBy=views&strict=false"
-		local MasterList = {}
+		-- 🟢 COMBINED FETCH (FREE + PAID)
+		local function fetchBothModes(query)
+			local encoded = HttpService:UrlEncode(query)
+			local results = {}
+			
+			-- 1. Fetch Free
+			local urlFree = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free&sortBy=views&strict=false"
+			local listFree = fetchScripts(urlFree)
+			for _, v in pairs(listFree) do table.insert(results, v) end
+			
+			-- 2. Fetch Paid
+			local urlPaid = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=paid&sortBy=views&strict=false"
+			local listPaid = fetchScripts(urlPaid)
+			for _, v in pairs(listPaid) do table.insert(results, v) end
+			
+			return results
+		end
 		
+		local MasterList = {}
 		local GameLabel = Search:FindFirstChild("GameLabel")
 		
 		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-			-- 1. USER SEARCH
+			-- 1. USER SEARCH (Strict Search)
 			if GameLabel then GameLabel.Text = "Custom: " .. currentQuery end
-			local encoded = HttpService:UrlEncode(currentQuery)
-			local url = "https://scriptblox.com/api/script/search?q="..encoded..baseParams
-			MasterList = fetchScripts(url)
+			MasterList = fetchBothModes(currentQuery)
 			
 		elseif OriginalGameName then
-			-- 2. GAME MODE (COMBINE: GAME + UNIVERSAL)
+			-- 2. GAME MODE (Combine Game + Universal)
 			if GameLabel then GameLabel.Text = "Game: " .. OriginalGameName end
 			
-			-- Fetch Game
-			local encodedGame = HttpService:UrlEncode(OriginalGameName)
-			local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame..baseParams
-			local listGame = fetchScripts(urlGame)
+			local listGame = fetchBothModes(OriginalGameName)
+			local listUni = fetchBothModes("Universal")
 			
-			-- Fetch Universal
-			local urlUni = "https://scriptblox.com/api/script/search?q=Universal"..baseParams
-			local listUni = fetchScripts(urlUni)
-			
-			-- Merge
 			for _, v in pairs(listGame) do table.insert(MasterList, v) end
 			for _, v in pairs(listUni) do table.insert(MasterList, v) end
 			
 		else
-			-- 3. UNIVERSAL MODE
+			-- 3. UNIVERSAL MODE (Fallback)
 			if GameLabel then GameLabel.Text = "Mode: Universal" end
-			local url = "https://scriptblox.com/api/script/fetch?page=1&max=50"
-			MasterList = fetchScripts(url)
+			MasterList = fetchBothModes("Universal")
 		end
 		
 		CachedScripts = MasterList
@@ -5747,6 +5744,7 @@ InitTabs.Search = function()
 	updateUI()
 	Update() 
 end
+
 	InitTabs.Nav = function()
     local isInstantNext = false;
     
