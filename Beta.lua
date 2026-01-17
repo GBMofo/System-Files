@@ -649,49 +649,61 @@ G2L["3f"] = Instance.new("Frame", G2L["1"]);
 G2L["3f"]["Visible"] = false;
 G2L["3f"]["Active"] = true;
 G2L["3f"]["BorderSizePixel"] = 0;
-G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(30, 20, 50);
+G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(30, 20, 50); -- Dark purple
 G2L["3f"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["3f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3f"]["Name"] = [[Main]];
-G2L["3f"]["BackgroundTransparency"] = 0.3;
+G2L["3f"]["BackgroundTransparency"] = 0.3; -- Semi-transparent
 
--- Rounded corners (same as key box)
+-- Rounded corners
 local corner = Instance.new("UICorner", G2L["3f"]);
-corner.CornerRadius = UDim.new(0, 16); -- Same 16px radius
+corner.CornerRadius = UDim.new(0, 20);
 
--- Purple border stroke (same as key box)
-local borderStroke = Instance.new("UIStroke", G2L["3f"]);
-borderStroke.Thickness = 1; -- Same thickness
-borderStroke.Color = Color3.fromRGB(160, 85, 255); -- Same purple color
-borderStroke.Transparency = 0; -- Fully visible (no transparency)
-borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
-
--- 🌟 BACKGROUND GLOW (This is the key!)
-local glowFolder = Instance.new("Folder", G2L["3f"]);
-glowFolder.Name = "Folder";
-
-local backgroundGlow = Instance.new("ImageLabel", glowFolder);
-backgroundGlow.Name = "Background";
-backgroundGlow.BorderSizePixel = 0;
-backgroundGlow.SliceCenter = Rect.new(65, 90, 335, 335);
-backgroundGlow.SliceScale = 0.12;
-backgroundGlow.ScaleType = Enum.ScaleType.Slice;
-backgroundGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
-backgroundGlow.ImageColor3 = Color3.fromRGB(160, 85, 255); -- Purple glow
-backgroundGlow.Image = "rbxassetid://99306270294516"; -- Same glow texture
-backgroundGlow.Size = UDim2.new(1, 24, 1, 24); -- Extends beyond frame
-backgroundGlow.BorderColor3 = Color3.fromRGB(0, 0, 0);
-backgroundGlow.BackgroundTransparency = 1;
-backgroundGlow.Position = UDim2.new(0, -12, 0, -12); -- Offset for glow
-backgroundGlow.ZIndex = -1; -- Behind everything
-
--- Gradient (optional - for the purple fade)
+-- Gradient (top lighter, bottom darker - like the image)
 local gradient = Instance.new("UIGradient", G2L["3f"]);
 gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 50, 120)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 25, 70))
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 50, 120)),   -- Top: Lighter purple
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 25, 70))      -- Bottom: Darker purple
 };
-gradient.Rotation = 90;
+gradient.Rotation = 90; -- Vertical gradient
+
+-- Glowing border (exactly like the image)
+local borderStroke = Instance.new("UIStroke", G2L["3f"]);
+borderStroke.Color = Color3.fromRGB(180, 100, 255); -- Purple glow
+borderStroke.Thickness = 2;
+borderStroke.Transparency = 0.3;
+borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
+
+-- Outer glow effect (soft purple aura around edges)
+local outerGlow = Instance.new("ImageLabel", G2L["3f"]);
+outerGlow.Name = "OuterGlow";
+outerGlow.Size = UDim2.new(1, 100, 1, 100); -- Extends 50px beyond frame
+outerGlow.Position = UDim2.new(0.5, 0, 0.5, 0);
+outerGlow.AnchorPoint = Vector2.new(0.5, 0.5);
+outerGlow.BackgroundTransparency = 1;
+outerGlow.Image = "rbxassetid://5028857472"; -- Soft glow texture
+outerGlow.ImageColor3 = Color3.fromRGB(160, 85, 255); -- Purple accent
+outerGlow.ImageTransparency = 0.5;
+outerGlow.ScaleType = Enum.ScaleType.Slice;
+outerGlow.SliceCenter = Rect.new(24, 24, 276, 276);
+outerGlow.ZIndex = -1; -- Behind frame
+
+-- 🔴 ADD THIS - THICK VISIBLE GLOW EDGE (Same as key box)
+local glowEdge = Instance.new("ImageLabel", G2L["3f"]);
+glowEdge.Name = "GlowEdge";
+glowEdge.BorderSizePixel = 0;
+glowEdge.SliceCenter = Rect.new(65, 90, 335, 335);
+glowEdge.SliceScale = 0.12;
+glowEdge.ScaleType = Enum.ScaleType.Slice;
+glowEdge.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
+glowEdge.ImageColor3 = Color3.fromRGB(160, 85, 255); -- Purple glow
+glowEdge.Image = "rbxassetid://99306270294516"; -- Thick glow texture
+glowEdge.Size = UDim2.new(1, 40, 1, 40); -- Thick glow (extends 20px each side)
+glowEdge.BorderColor3 = Color3.fromRGB(0, 0, 0);
+glowEdge.BackgroundTransparency = 1;
+glowEdge.ImageTransparency = 0.2; -- More visible (was 0.5)
+glowEdge.Position = UDim2.new(0, -20, 0, -20); -- Offset for glow
+glowEdge.ZIndex = -2; -- Behind outer glow
 
 -- StarterGui.ScreenGui.Main.Title
 G2L["40"] = Instance.new("Frame", G2L["3f"]);
