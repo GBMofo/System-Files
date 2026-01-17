@@ -4992,208 +4992,405 @@ if v.Name == "Popups" then v.Visible = false return end
 	};
 
 	InitTabs.Settings = function()
-		local SetData = {
-			UITransparency = {
-				Type = "Slider",
-				Callback = function(V)
-					if V then script.Parent.Full.Transparency = V; end
+		local Settings = Pages:WaitForChild("Settings")
+		local Scripts = Settings.Scripts
+		
+		-- Clear old settings UI
+		for _, child in pairs(Scripts:GetChildren()) do
+			if not child:IsA("UIListLayout") and not child:IsA("UIPadding") and not child:IsA("UICorner") and not child:IsA("UIStroke") then
+				child:Destroy()
+			end
+		end
+		
+		-- ========================================
+		-- THEME SYSTEM
+		-- ========================================
+		
+		local Themes = {
+			{name = "Neon Purple", color = Color3.fromRGB(160, 85, 255)},
+			{name = "Neon Pink", color = Color3.fromRGB(255, 20, 147)},
+			{name = "Fluorescent Cyan", color = Color3.fromRGB(0, 255, 255)},
+			{name = "Neon Green", color = Color3.fromRGB(57, 255, 20)},
+			{name = "Bright Yellow", color = Color3.fromRGB(255, 255, 0)},
+			{name = "Neon Scarlet", color = Color3.fromRGB(255, 36, 0)},
+			{name = "Vibrant Coral", color = Color3.fromRGB(255, 127, 80)},
+			{name = "Neon Blue", color = Color3.fromRGB(0, 191, 255)}
+		}
+		
+		local CurrentTheme = Color3.fromRGB(160, 85, 255)
+		
+		local function LoadTheme()
+			if CLONED_Detectedly.isfile("theme.json") then
+				local success, data = pcall(function()
+					return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("theme.json"))
+				end)
+				if success and data.r and data.g and data.b then
+					CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
 				end
-			}
-		};
-		local Settings = Pages:WaitForChild("Settings");
-		for _, v in pairs(Settings.Scripts:GetChildren()) do
-			if SetData[v.Name] and SetData[v.Name].Type == "Slider" then
-				local UIS = game:GetService("UserInputService");
-				local Dragging = false;
-				v.Main.Line.Interact.MouseButton1Down:Connect(function() Dragging = true; end);
-				UIS.InputChanged:Connect(function()
-					if Dragging then
-						local MousePos = UIS:GetMouseLocation() + Vector2.new(0, - 36);
-						local RelPos = MousePos - v.Main.Line.AbsolutePosition;
-						local Percent = math.clamp(RelPos.X / v.Main.Line.AbsoluteSize.X, 0, 1);
-						v.Main.Line.Interact.Position = UDim2.new(Percent, 0, v.Main.Line.Interact.Position.Y.Scale, 0);
-						v.Main.Line.Fill.Size = UDim2.new(Percent, 0, v.Main.Line.Fill.Size.Y.Scale, 0);
-						v.Main.Line.Percentage.Value = math.floor(Percent * 100);
-						SetData[v.Name].Callback(Percent);
+			end
+		end
+		
+		local function SaveTheme(color)
+			CLONED_Detectedly.writefile("theme.json", game.HttpService:JSONEncode({
+				r = math.floor(color.R * 255),
+				g = math.floor(color.G * 255),
+				b = math.floor(color.B * 255)
+			}))
+		end
+		
+		local function ApplyTheme(color)
+			CurrentTheme = color
+			SaveTheme(color)
+			
+			-- Update all purple UI elements
+			for _, obj in pairs(script.Parent:GetDescendants()) do
+				if obj:IsA("UIStroke") then
+					if obj.Color == Color3.fromRGB(160, 85, 255) or obj.Color == CurrentTheme then
+						obj.Color = color
 					end
-				end);
-				UIS.InputEnded:Connect(function(input)
-					if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then Dragging = false; end
-				end);
+				end
 			end
-		end
-
-		local function newButton(title, btnText, callback)
-			local ButtonFrame = {};
-			do
-				local G2L = ButtonFrame;
-				G2L['d6'] = Instance.new("CanvasGroup", Pages.Settings.Scripts);
-				G2L['d6']['Visible'] = true;
-				G2L['d6']['BorderSizePixel'] = 0;
-				G2L['d6']['BackgroundColor3'] = Color3.fromRGB(30, 30, 40); -- Dark theme
-				G2L['d6']['Size'] = UDim2.new(1, 0, 0, 48);
-				G2L['d6']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['d6']['Name'] = title;
-				local corner = Instance.new("UICorner", G2L['d6']);
-				corner['CornerRadius'] = UDim.new(0, 12);
-				local layout = Instance.new("UIListLayout", G2L['d6']);
-				layout['HorizontalFlex'] = Enum.UIFlexAlignment.Fill;
-				layout['Wraps'] = true;
-				layout['VerticalAlignment'] = Enum.VerticalAlignment.Center;
-				layout['SortOrder'] = Enum.SortOrder.LayoutOrder;
-				local stroke = Instance.new("UIStroke", G2L['d6']);
-				stroke['Transparency'] = 0.8;
-				stroke['Thickness'] = 1;
-				stroke['Color'] = Color3.fromRGB(160, 85, 255); -- Purple
-				local pad = Instance.new("UIPadding", G2L['d6']);
-				pad['PaddingTop'] = UDim.new(0, 6);
-				pad['PaddingRight'] = UDim.new(0, 12);
-				pad['PaddingLeft'] = UDim.new(0, 12);
-				pad['PaddingBottom'] = UDim.new(0, 6);
-				local label = Instance.new("TextLabel", G2L['d6']);
-				label['TextWrapped'] = true;
-				label['BackgroundTransparency'] = 1;
-				label['Size'] = UDim2.new(1, 0, 1, 0);
-				label['TextXAlignment'] = Enum.TextXAlignment.Left;
-				label['TextYAlignment'] = Enum.TextYAlignment.Top;
-				label['TextColor3'] = Color3.fromRGB(255, 255, 255);
-				label['Text'] = title;
-				label['TextSize'] = 14;
-				label['TextScaled'] = true; 
-				label['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
-				local btnContainer = Instance.new("CanvasGroup", G2L['d6']);
-				btnContainer['BackgroundTransparency'] = 1;
-				btnContainer['Size'] = UDim2.new(0.25, 0, 0.75, 0); 
-				btnContainer['Position'] = UDim2.new(0.75, 0, 0.12, 0);
-				local btn = Instance.new("TextButton", btnContainer);
-				btn['Size'] = UDim2.new(1, 0, 1, 0);
-				btn['BackgroundColor3'] = Color3.fromRGB(255, 80, 80); -- Red
-				btn['TextColor3'] = Color3.fromRGB(255, 255, 255);
-				btn['Text'] = btnText;
-				btn['Font'] = Enum.Font.SourceSansBold;
-				btn['TextSize'] = 14;
-				local btnCorner = Instance.new("UICorner", btn);
-				btnCorner['CornerRadius'] = UDim.new(0, 8);
-				btn.MouseButton1Click:Connect(function() callback() end)
+			
+			-- Update EnableFrame
+			if Main:FindFirstChild("EnableFrame") then
+				Main.EnableFrame.BackgroundColor3 = color
+				if Main.EnableFrame:FindFirstChild("Glow") then
+					Main.EnableFrame.Glow.BackgroundColor3 = color
+					Main.EnableFrame.Glow.ImageColor3 = color
+				end
 			end
-		end
-
-		local function newToggle(title, callbacl)
-			local Toggles = {};
-			local Enable = false;
-			do
-				local G2L = Toggles;
-				G2L['d6'] = Instance.new("CanvasGroup", Pages.Settings.Scripts);
-				G2L['d6']['Visible'] = true;
-				G2L['d6']['BorderSizePixel'] = 0;
-				G2L['d6']['BackgroundColor3'] = Color3.fromRGB(30, 30, 40);
-				G2L['d6']['Size'] = UDim2.new(1, 0, 0, 48);
-				G2L['d6']['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				G2L['d6']['Name'] = title;
-				local corner = Instance.new("UICorner", G2L['d6']);
-				corner['CornerRadius'] = UDim.new(0, 12);
-				local layout = Instance.new("UIListLayout", G2L['d6']);
-				layout['HorizontalFlex'] = Enum.UIFlexAlignment.Fill;
-				layout['Wraps'] = true;
-				layout['VerticalAlignment'] = Enum.VerticalAlignment.Center;
-				layout['SortOrder'] = Enum.SortOrder.LayoutOrder;
-				local stroke = Instance.new("UIStroke", G2L['d6']);
-				stroke['Transparency'] = 0.8;
-				stroke['Thickness'] = 1;
-				stroke['Color'] = Color3.fromRGB(160, 85, 255);
-				local pad = Instance.new("UIPadding", G2L['d6']);
-				pad['PaddingTop'] = UDim.new(0, 6);
-				pad['PaddingRight'] = UDim.new(0, 12);
-				pad['PaddingLeft'] = UDim.new(0, 12);
-				pad['PaddingBottom'] = UDim.new(0, 6);
-				local label = Instance.new("TextLabel", G2L['d6']);
-				label['TextWrapped'] = true;
-				label['Active'] = true;
-				label['ZIndex'] = 3;
-				label['BorderSizePixel'] = 0;
-				label['TextSize'] = 14;
-				label['TextXAlignment'] = Enum.TextXAlignment.Left;
-				label['TextYAlignment'] = Enum.TextYAlignment.Top;
-				label['TextScaled'] = true;
-				label['BackgroundColor3'] = Color3.fromRGB(255, 255, 255);
-				label['FontFace'] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
-				label['TextColor3'] = Color3.fromRGB(255, 255, 255);
-				label['BackgroundTransparency'] = 1;
-				label['Size'] = UDim2.new(1, 0, 1, 0);
-				label['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				label['Text'] = title;
-				label['Name'] = [[Title]];
-				local toggleMain = Instance.new("CanvasGroup", G2L['d6']);
-				toggleMain['Active'] = true;
-				toggleMain['BorderSizePixel'] = 0;
-				toggleMain['BackgroundColor3'] = Color3.fromRGB(160, 85, 255);
-				toggleMain['Selectable'] = true;
-				toggleMain['Size'] = UDim2.new(0.09939, 0, 0.75553, 0);
-				toggleMain['Position'] = UDim2.new(0.90061, 0, 0.12223, 0);
-				toggleMain['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				toggleMain['Name'] = [[Main]];
-				toggleMain['BackgroundTransparency'] = 1;
-				local toggleCorner = Instance.new("UICorner", toggleMain);
-				toggleCorner['CornerRadius'] = UDim.new(1, 0);
-				local btn = Instance.new("TextButton", toggleMain);
-				btn['BorderSizePixel'] = 0;
-				btn['TextSize'] = 14;
-				btn['TextColor3'] = Color3.fromRGB(0, 0, 0);
-				btn['BackgroundColor3'] = Color3.fromRGB(50, 50, 60); -- Inactive Gray
-				btn['FontFace'] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
-				btn['Size'] = UDim2.new(1, 0, 1, 0);
-				btn['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				btn['Text'] = [[]];
-				btn['Name'] = [[Button]];
-				local btnCorner = Instance.new("UICorner", btn);
-				btnCorner['CornerRadius'] = UDim.new(1, 0);
-				local btnPad = Instance.new("UIPadding", btn);
-				btnPad['PaddingTop'] = UDim.new(0, 3);
-				btnPad['PaddingRight'] = UDim.new(0, 3);
-				btnPad['PaddingLeft'] = UDim.new(0, 3);
-				btnPad['PaddingBottom'] = UDim.new(0, 3);
-				local btnLayout = Instance.new("UIListLayout", btn);
-				btnLayout['HorizontalAlignment'] = Enum.HorizontalAlignment.Left;
-				btnLayout['SortOrder'] = Enum.SortOrder.LayoutOrder;
-				local circle = Instance.new("ImageLabel", btn);
-				circle['BorderSizePixel'] = 0;
-				circle['ScaleType'] = Enum.ScaleType.Fit;
-				circle['BackgroundColor3'] = Color3.fromRGB(194, 194, 194);
-				circle['ImageColor3'] = Color3.fromRGB(232, 229, 255);
-				circle['AnchorPoint'] = Vector2.new(0, 0.5);
-				circle['Image'] = [[rbxassetid://5552526748]];
-				circle['Size'] = UDim2.new(1, 0, 1, 0);
-				circle['ClipsDescendants'] = true;
-				circle['BorderColor3'] = Color3.fromRGB(0, 0, 0);
-				circle['BackgroundTransparency'] = 1;
-				circle['Name'] = [[Point]];
-				circle['Position'] = UDim2.new(0.5, 0, 0.5, 0);
-				local aspect = Instance.new("UIAspectRatioConstraint", circle);
-				local mainAspect = Instance.new("UIAspectRatioConstraint", toggleMain);
-				mainAspect['AspectRatio'] = 1.90335;
-				
-				btn.MouseButton1Click:Connect(function()
-					Enable = not Enable;
-					callbacl(Enable);
-					btnLayout['HorizontalAlignment'] = Enum.HorizontalAlignment[(Enable and "Right") or "Left"];
-					btn.BackgroundColor3 = (Enable and Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60);
-				end);
+			
+			-- Update active tabs
+			for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
+				if tab:IsA("TextButton") and tab.BackgroundColor3 == Color3.fromRGB(160, 85, 255) then
+					tab.BackgroundColor3 = color
+				end
 			end
+			
+			-- Update Key box
+			if Pages.Home.Key and Pages.Home.Key:FindFirstChild("UIStroke") then
+				Pages.Home.Key.UIStroke.Color = color
+			end
+			if Pages.Home.Key and Pages.Home.Key.Folder:FindFirstChild("Background") then
+				Pages.Home.Key.Folder.Background.ImageColor3 = color
+			end
+			
+			createNotification("Theme Applied!", "Success", 3)
 		end
 		
-		newToggle("Invisible Open Trigger", function(v)
-			InvisTriggerOpen = v;
-			if v then createNotification('Chat "/e open" to open UI', "Info", 5); end
-		end);
-
-		newToggle("Censored Name In UI", function(v)
-			if v then Main.Title.TextLabel.Text = "Hello, User!";
-			else Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!"; end
-		end);
+		LoadTheme()
 		
-		newToggle("Anti AFK", function(v)
-			local speaker = game:GetService("Players").LocalPlayer
-			if v then
+		-- ========================================
+		-- UI BUILDER HELPERS
+		-- ========================================
+		
+		local function createSectionHeader(text, order)
+			local header = Instance.new("TextLabel", Scripts)
+			header.BackgroundTransparency = 1
+			header.Size = UDim2.new(1, 0, 0, 35)
+			header.Font = Enum.Font.GothamBold
+			header.TextSize = 16
+			header.TextColor3 = Color3.fromRGB(255, 255, 255)
+			header.TextXAlignment = Enum.TextXAlignment.Left
+			header.Text = text
+			header.LayoutOrder = order
+			return header
+		end
+		
+		local function createCard(title, description, order)
+			local card = Instance.new("Frame", Scripts)
+			card.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+			card.Size = UDim2.new(1, 0, 0, 60)
+			card.BorderSizePixel = 0
+			card.LayoutOrder = order
+			card.Name = title
+			
+			local corner = Instance.new("UICorner", card)
+			corner.CornerRadius = UDim.new(0, 12)
+			
+			local stroke = Instance.new("UIStroke", card)
+			stroke.Transparency = 0.8
+			stroke.Color = CurrentTheme
+			stroke.Thickness = 1
+			
+			local layout = Instance.new("UIListLayout", card)
+			layout.HorizontalFlex = Enum.UIFlexAlignment.Fill
+			layout.Wraps = true
+			layout.VerticalAlignment = Enum.VerticalAlignment.Center
+			layout.SortOrder = Enum.SortOrder.LayoutOrder
+			
+			local padding = Instance.new("UIPadding", card)
+			padding.PaddingTop = UDim.new(0, 8)
+			padding.PaddingRight = UDim.new(0, 12)
+			padding.PaddingLeft = UDim.new(0, 12)
+			padding.PaddingBottom = UDim.new(0, 8)
+			
+			-- Title
+			local titleLabel = Instance.new("TextLabel", card)
+			titleLabel.BackgroundTransparency = 1
+			titleLabel.Size = UDim2.new(0.7, 0, 0.5, 0)
+			titleLabel.Font = Enum.Font.GothamBold
+			titleLabel.TextSize = 14
+			titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+			titleLabel.TextYAlignment = Enum.TextYAlignment.Top
+			titleLabel.Text = title
+			titleLabel.TextWrapped = true
+			titleLabel.TextScaled = true
+			titleLabel.LayoutOrder = -2
+			
+			-- Description
+			if description then
+				local descLabel = Instance.new("TextLabel", card)
+				descLabel.BackgroundTransparency = 1
+				descLabel.Size = UDim2.new(0.7, 0, 0.4, 0)
+				descLabel.Font = Enum.Font.Gotham
+				descLabel.TextSize = 11
+				descLabel.TextColor3 = Color3.fromRGB(150, 150, 160)
+				descLabel.TextXAlignment = Enum.TextXAlignment.Left
+				descLabel.TextYAlignment = Enum.TextYAlignment.Top
+				descLabel.Text = description
+				descLabel.TextWrapped = true
+				descLabel.LayoutOrder = -1
+			end
+			
+			return card
+		end
+		
+		local function createToggle(card, callback)
+			local toggleContainer = Instance.new("CanvasGroup", card)
+			toggleContainer.BackgroundTransparency = 1
+			toggleContainer.Size = UDim2.new(0.12, 0, 0.8, 0)
+			toggleContainer.Position = UDim2.new(0.88, 0, 0.1, 0)
+			
+			local toggleBg = Instance.new("Frame", toggleContainer)
+			toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+			toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
+			toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+			toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+			toggleBg.BorderSizePixel = 0
+			
+			local toggleCorner = Instance.new("UICorner", toggleBg)
+			toggleCorner.CornerRadius = UDim.new(1, 0)
+			
+			local toggleBtn = Instance.new("TextButton", toggleBg)
+			toggleBtn.BackgroundTransparency = 1
+			toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+			toggleBtn.Text = ""
+			
+			local toggleLayout = Instance.new("UIListLayout", toggleBtn)
+			toggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+			toggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+			toggleLayout.Padding = UDim.new(0, 3)
+			
+			local togglePadding = Instance.new("UIPadding", toggleBtn)
+			togglePadding.PaddingLeft = UDim.new(0, 3)
+			togglePadding.PaddingRight = UDim.new(0, 3)
+			
+			local circle = Instance.new("ImageLabel", toggleBtn)
+			circle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+			circle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+			circle.Image = "rbxassetid://5552526748"
+			circle.Size = UDim2.new(0, 20, 0, 20)
+			circle.BackgroundTransparency = 1
+			circle.ScaleType = Enum.ScaleType.Fit
+			
+			local isEnabled = false
+			
+			toggleBtn.MouseButton1Click:Connect(function()
+				isEnabled = not isEnabled
+				toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+				toggleBg.BackgroundColor3 = isEnabled and CurrentTheme or Color3.fromRGB(50, 50, 60)
+				callback(isEnabled)
+			end)
+			
+			return toggleContainer
+		end
+		
+		local function createButton(card, btnText, color, callback)
+			local btn = Instance.new("TextButton", card)
+			btn.BackgroundColor3 = color
+			btn.Size = UDim2.new(0.25, 0, 0.7, 0)
+			btn.Text = btnText
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			btn.Font = Enum.Font.GothamBold
+			btn.TextSize = 12
+			btn.BorderSizePixel = 0
+			
+			local btnCorner = Instance.new("UICorner", btn)
+			btnCorner.CornerRadius = UDim.new(0, 8)
+			
+			btn.MouseButton1Click:Connect(callback)
+			return btn
+		end
+		
+		local function createSlider(card, callback)
+			local sliderContainer = Instance.new("Frame", card)
+			sliderContainer.BackgroundTransparency = 1
+			sliderContainer.Size = UDim2.new(0.3, 0, 0.6, 0)
+			sliderContainer.Position = UDim2.new(0.65, 0, 0.2, 0)
+			
+			local sliderBg = Instance.new("Frame", sliderContainer)
+			sliderBg.BackgroundColor3 = Color3.fromRGB(100, 100, 110)
+			sliderBg.AnchorPoint = Vector2.new(0.5, 0.5)
+			sliderBg.Size = UDim2.new(1, 0, 0.4, 0)
+			sliderBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+			sliderBg.BorderSizePixel = 0
+			
+			local sliderCorner = Instance.new("UICorner", sliderBg)
+			sliderCorner.CornerRadius = UDim.new(0.3, 0)
+			
+			local sliderFill = Instance.new("Frame", sliderBg)
+			sliderFill.BackgroundColor3 = CurrentTheme
+			sliderFill.Size = UDim2.new(0, 0, 1, 0)
+			sliderFill.Position = UDim2.new(0, 0, 0, 0)
+			sliderFill.BorderSizePixel = 0
+			
+			local fillCorner = Instance.new("UICorner", sliderFill)
+			fillCorner.CornerRadius = UDim.new(0.3, 0)
+			
+			local sliderBtn = Instance.new("TextButton", sliderBg)
+			sliderBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			sliderBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+			sliderBtn.Size = UDim2.new(0, 12, 1.5, 0)
+			sliderBtn.Position = UDim2.new(0, 0, 0.5, 0)
+			sliderBtn.Text = ""
+			sliderBtn.BorderSizePixel = 0
+			
+			local btnCorner = Instance.new("UICorner", sliderBtn)
+			btnCorner.CornerRadius = UDim.new(0, 4)
+			
+			local dragging = false
+			local UIS = game:GetService("UserInputService")
+			
+			sliderBtn.MouseButton1Down:Connect(function()
+				dragging = true
+			end)
+			
+			UIS.InputChanged:Connect(function()
+				if dragging then
+					local MousePos = UIS:GetMouseLocation() + Vector2.new(0, -36)
+					local RelPos = MousePos - sliderBg.AbsolutePosition
+					local Percent = math.clamp(RelPos.X / sliderBg.AbsoluteSize.X, 0, 1)
+					sliderBtn.Position = UDim2.new(Percent, 0, 0.5, 0)
+					sliderFill.Size = UDim2.new(Percent, 0, 1, 0)
+					callback(Percent)
+				end
+			end)
+			
+			UIS.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					dragging = false
+				end
+			end)
+			
+			return sliderContainer
+		end
+		
+		-- ========================================
+		-- APPEARANCE SECTION
+		-- ========================================
+		
+		createSectionHeader("📱 APPEARANCE", -100)
+		
+		-- Theme Changer
+		local themeCard = Instance.new("Frame", Scripts)
+		themeCard.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+		themeCard.Size = UDim2.new(1, 0, 0, 110)
+		themeCard.BorderSizePixel = 0
+		themeCard.LayoutOrder = -99
+		
+		local themeCorner = Instance.new("UICorner", themeCard)
+		themeCorner.CornerRadius = UDim.new(0, 12)
+		
+		local themeStroke = Instance.new("UIStroke", themeCard)
+		themeStroke.Transparency = 0.8
+		themeStroke.Color = CurrentTheme
+		themeStroke.Thickness = 1
+		
+		local themeLayout = Instance.new("UIListLayout", themeCard)
+		themeLayout.Padding = UDim.new(0, 6)
+		
+		local themePadding = Instance.new("UIPadding", themeCard)
+		themePadding.PaddingTop = UDim.new(0, 10)
+		themePadding.PaddingRight = UDim.new(0, 10)
+		themePadding.PaddingLeft = UDim.new(0, 10)
+		themePadding.PaddingBottom = UDim.new(0, 10)
+		
+		local themeTitle = Instance.new("TextLabel", themeCard)
+		themeTitle.BackgroundTransparency = 1
+		themeTitle.Size = UDim2.new(1, 0, 0, 18)
+		themeTitle.Font = Enum.Font.GothamBold
+		themeTitle.TextSize = 14
+		themeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+		themeTitle.TextXAlignment = Enum.TextXAlignment.Left
+		themeTitle.Text = "🎨 Theme Changer"
+		
+		local pillContainer = Instance.new("Frame", themeCard)
+		pillContainer.BackgroundTransparency = 1
+		pillContainer.Size = UDim2.new(1, 0, 0, 65)
+		
+		local pillLayout = Instance.new("UIListLayout", pillContainer)
+		pillLayout.FillDirection = Enum.FillDirection.Horizontal
+		pillLayout.Padding = UDim.new(0, 6)
+		pillLayout.Wraps = true
+		
+		for _, theme in ipairs(Themes) do
+			local pill = Instance.new("TextButton", pillContainer)
+			pill.BackgroundColor3 = theme.color
+			pill.Size = UDim2.new(0, 65, 0, 26)
+			pill.Text = ""
+			pill.BorderSizePixel = 0
+			
+			local pillCorner = Instance.new("UICorner", pill)
+			pillCorner.CornerRadius = UDim.new(0, 8)
+			
+			pill.MouseButton1Click:Connect(function()
+				ApplyTheme(theme.color)
+			end)
+		end
+		
+		-- UI Transparency
+		local transCard = createCard("UI Transparency", "Adjust background opacity", -98)
+		transCard.Size = UDim2.new(1, 0, 0, 55)
+		createSlider(transCard, function(v)
+			script.Parent.Full.Transparency = v
+		end)
+		
+		-- Censored Name
+		local nameCard = createCard("Censored Name In UI", "Hide your username from the UI", -97)
+		createToggle(nameCard, function(enabled)
+			if enabled then
+				Main.Title.TextLabel.Text = "Hello, User!"
+			else
+				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!"
+			end
+		end)
+		
+		-- ========================================
+		-- PRIVACY SECTION
+		-- ========================================
+		
+		createSectionHeader("🔒 PRIVACY & SECURITY", -50)
+		
+		local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -49)
+		createToggle(invisCard, function(enabled)
+			InvisTriggerOpen = enabled
+			if enabled then
+				createNotification('Chat "/e open" to open UI', "Info", 5)
+			end
+		end)
+		
+		-- ========================================
+		-- PERFORMANCE SECTION
+		-- ========================================
+		
+		createSectionHeader("⚡ PERFORMANCE", 0)
+		
+		local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
+		createToggle(afkCard, function(enabled)
+			if enabled then
+				local speaker = game:GetService("Players").LocalPlayer
 				if getconnections then
 					for _, connection in pairs(getconnections(speaker.Idled)) do
 						connection:Disable()
@@ -5208,17 +5405,32 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end)
 		
-		newToggle("FPS Boost", function(v)
-			if v then
+		local fpsCard = createCard("FPS Boost", "Removes shadows and textures", 2)
+		createToggle(fpsCard, function(enabled)
+			if enabled then
 				for _, obj in pairs(game:GetDescendants()) do
-					if obj:IsA("BasePart") then obj.CastShadow = false; obj.Material = "Plastic" end
-					if obj:IsA("Texture") or obj:IsA("Decal") then obj.Transparency = 1 end
+					if obj:IsA("BasePart") then
+						obj.CastShadow = false
+						obj.Material = Enum.Material.Plastic
+					end
+					if obj:IsA("Texture") or obj:IsA("Decal") then
+						obj.Transparency = 1
+					end
 				end
 				game.Lighting.GlobalShadows = false
+				createNotification("FPS Boost Activated", "Success", 3)
 			end
 		end)
-
-		newButton("Reset Loader Environment", "RESET", function()
+		
+		-- ========================================
+		-- ADVANCED SECTION
+		-- ========================================
+		
+		createSectionHeader("🔧 ADVANCED", 50)
+		
+		local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 51)
+		resetCard.Size = UDim2.new(1, 0, 0, 55)
+		createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
 			if delfile and isfile then
 				if isfile("punk-x-env.txt") then
 					delfile("punk-x-env.txt")
@@ -5230,6 +5442,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				createNotification("Not supported.", "Error", 5)
 			end
 		end)
+		
 	end;
 
 	InitTabs.TabsData = function()
