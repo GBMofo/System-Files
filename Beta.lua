@@ -5562,8 +5562,6 @@ InitTabs.Search = function()
 		return filtered
 	end
 	
-	-- SORTING: Only sort by views if we are NOT searching specific terms
-	-- (Logic handled in Update, this is just a final cleanup sort)
 	local function sortScripts(scriptList)
 		table.sort(scriptList, function(a, b)
 			local viewsA = tonumber(a.views) or 0
@@ -5610,7 +5608,7 @@ InitTabs.Search = function()
 				StatsPill.Size = UDim2.new(0, 0, 0, 22)
 				StatsPill.AutomaticSize = Enum.AutomaticSize.X
 				StatsPill.AnchorPoint = Vector2.new(1, 1) 
-				StatsPill.Position = UDim2.new(1, -110, 1, -8) -- Positioned left of Save
+				StatsPill.Position = UDim2.new(1, -110, 1, -8)
 				StatsPill.BorderSizePixel = 0
 				StatsPill.ZIndex = 5
 				
@@ -5653,7 +5651,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE (SMART SEARCH FIX)
+	-- 🔴 MAIN UPDATE
 	local function Update()
 		if isUpdating then return end
 		isUpdating = true
@@ -5676,24 +5674,19 @@ InitTabs.Search = function()
 		end
 		
 		-- 🟢 FETCH HELPER
-		-- sortType: "views" (for Game Mode) or "" (Empty = Relevance, for Search)
-		local function fetchBothModes(query, sortType)
+		local function fetchBothModes(query)
 			local encoded = HttpService:UrlEncode(query)
 			local results = {}
-			local sortParam = ""
+			-- Always sort by views so top scripts (like Infinite Yield) show first
+			local sortParam = "&sortBy=views"
 			
-			if sortType and sortType ~= "" then
-				sortParam = "&sortBy=" .. sortType
-			end
-			
-			-- 🟢 INCREASED LIMIT TO 100
-			-- 1. Free
+			-- 1. Free: Increased Limit to 100 to catch more scripts
 			local urlFree = "https://scriptblox.com/api/script/search?q="..encoded.."&max=100&mode=free&strict=false"..sortParam
 			local listFree = fetchScripts(urlFree)
 			for _, v in pairs(listFree) do table.insert(results, v) end
 			
-			-- 2. Paid
-			local urlPaid = "https://scriptblox.com/api/script/search?q="..encoded.."&max=100&mode=paid&strict=false"..sortParam
+			-- 2. Paid: Limit 20 (Paid scripts are rare)
+			local urlPaid = "https://scriptblox.com/api/script/search?q="..encoded.."&max=20&mode=paid&strict=false"..sortParam
 			local listPaid = fetchScripts(urlPaid)
 			for _, v in pairs(listPaid) do table.insert(results, v) end
 			
@@ -5705,18 +5698,17 @@ InitTabs.Search = function()
 		
 		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
 			-- 1. USER SEARCH
-			-- ⚠️ FIX: REMOVED "sortBy=views". Now uses RELEVANCE.
-			-- This fixes "Infinite Yield" not showing.
+			-- We now use fetchBothModes which ENFORCES 'sortBy=views'.
+			-- This fixes "Infinite Yield" not appearing.
 			if GameLabel then GameLabel.Text = "Custom: " .. currentQuery end
-			MasterList = fetchBothModes(currentQuery, "") -- No sort = Relevance
+			MasterList = fetchBothModes(currentQuery)
 			
 		elseif OriginalGameName then
 			-- 2. GAME MODE
-			-- We keep "sortBy=views" here so you see popular scripts for the game.
 			if GameLabel then GameLabel.Text = "Game: " .. OriginalGameName end
 			
-			local listGame = fetchBothModes(OriginalGameName, "views")
-			local listUni = fetchBothModes("Universal", "views")
+			local listGame = fetchBothModes(OriginalGameName)
+			local listUni = fetchBothModes("Universal")
 			
 			for _, v in pairs(listGame) do table.insert(MasterList, v) end
 			for _, v in pairs(listUni) do table.insert(MasterList, v) end
@@ -5724,18 +5716,12 @@ InitTabs.Search = function()
 		else
 			-- 3. UNIVERSAL MODE
 			if GameLabel then GameLabel.Text = "Mode: Universal" end
-			MasterList = fetchBothModes("Universal", "views")
+			MasterList = fetchBothModes("Universal")
 		end
 		
 		CachedScripts = MasterList
 		local finalScripts = filterScripts(CachedScripts)
-		
-		-- If user searched, we rely on API relevance order. 
-		-- If Game Mode, we sort by views again just to be safe.
-		if not (currentQuery and currentQuery ~= "") then
-			finalScripts = sortScripts(finalScripts)
-		end
-		
+		finalScripts = sortScripts(finalScripts)
 		renderScripts(finalScripts)
 		
 		isUpdating = false
