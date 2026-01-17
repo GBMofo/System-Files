@@ -5397,7 +5397,7 @@ InitTabs.Search = function()
 	
 	-- 🔴 STATE
 	local CurrentFilter = "All"
-	local OriginalGameName = nil -- Stores the auto-detected game
+	local OriginalGameName = nil 
 	local CachedScripts = {}
 	local isUpdating = false
 	
@@ -5418,6 +5418,19 @@ InitTabs.Search = function()
 	GameLabel.TextSize = 12
 	GameLabel.ZIndex = 5
 	
+	-- 🔴 HELPER: FORMAT NUMBERS (e.g. 1200 -> 1.2k)
+	local function formatNumber(n)
+		n = tonumber(n)
+		if not n then return "0" end
+		if n >= 1000000 then
+			return string.format("%.1fM", n / 1000000)
+		elseif n >= 1000 then
+			return string.format("%.1fk", n / 1000)
+		else
+			return tostring(n)
+		end
+	end
+	
 	-- 🔴 DETECT CURRENT GAME
 	local function cleanGameName(name)
 		if not name then return nil end
@@ -5433,8 +5446,6 @@ InitTabs.Search = function()
 	
 	local function detectGame()
 		local detected = nil
-		
-		-- 1. MarketplaceService
 		local success, gameInfo = pcall(function()
 			return MarketplaceService:GetProductInfo(game.PlaceId)
 		end)
@@ -5442,7 +5453,6 @@ InitTabs.Search = function()
 			detected = cleanGameName(gameInfo.Name)
 		end
 		
-		-- 2. Fallback
 		if (not detected or detected == "") and game.Name ~= "Game" then
 			detected = cleanGameName(game.Name)
 		end
@@ -5498,7 +5508,6 @@ InitTabs.Search = function()
 		
 		local btnCorner = Instance.new("UICorner", btn)
 		btnCorner.CornerRadius = UDim.new(0, 8)
-		
 		local btnPadding = Instance.new("UIPadding", btn)
 		btnPadding.PaddingLeft = UDim.new(0, 12)
 		btnPadding.PaddingRight = UDim.new(0, 12)
@@ -5555,7 +5564,7 @@ InitTabs.Search = function()
 		return scriptList
 	end
 	
-	-- 🔴 RENDER
+	-- 🔴 RENDER (WITH STATS)
 	local function renderScripts(scriptList)
 		for _, v in pairs(Scripts:GetChildren()) do
 			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
@@ -5584,6 +5593,38 @@ InitTabs.Search = function()
 				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
 				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
 				
+				-- STATS LABEL
+				local StatsLabel = Instance.new("TextLabel", new.Misc)
+				StatsLabel.Name = "Stats"
+				StatsLabel.BackgroundTransparency = 1
+				StatsLabel.Size = UDim2.new(1, 0, 0, 20)
+				StatsLabel.Position = UDim2.new(0, 0, 1, -25)
+				StatsLabel.Font = Enum.Font.GothamBold
+				StatsLabel.TextSize = 11
+				StatsLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+				StatsLabel.TextXAlignment = Enum.TextXAlignment.Center
+				StatsLabel.ZIndex = 5
+				
+				local statsText = "👁️ " .. formatNumber(scriptData.views or 0)
+				if scriptData.likeCount then
+					statsText = statsText .. "  |  👍 " .. formatNumber(scriptData.likeCount)
+				end
+				StatsLabel.Text = statsText
+				
+				local GradientFrame = Instance.new("Frame", new.Misc)
+				GradientFrame.Size = UDim2.new(1, 0, 0, 30)
+				GradientFrame.Position = UDim2.new(0, 0, 1, -30)
+				GradientFrame.BorderSizePixel = 0
+				GradientFrame.BackgroundColor3 = Color3.new(0,0,0)
+				GradientFrame.BackgroundTransparency = 0.5
+				GradientFrame.ZIndex = 4
+				local UiGrad = Instance.new("UIGradient", GradientFrame)
+				UiGrad.Rotation = -90
+				UiGrad.Transparency = NumberSequence.new({
+					NumberSequenceKeypoint.new(0, 1), 
+					NumberSequenceKeypoint.new(1, 0)
+				})
+				
 				new.Tags.Key.Visible = scriptData.key or false
 				new.Tags.Universal.Visible = scriptData.isUniversal or false
 				new.Tags.Patched.Visible = scriptData.isPatched or false
@@ -5600,7 +5641,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE LOGIC (THE FIX)
+	-- 🔴 MAIN UPDATE (SMART SEARCH ENABLED)
 	local function Update()
 		if isUpdating then return end
 		isUpdating = true
@@ -5609,31 +5650,35 @@ InitTabs.Search = function()
 		local currentQuery = SearchBox.Text
 		local activeTarget = ""
 		
-		-- 🟢 DECIDE WHAT TO FETCH
+		if currentQuery == "*" then
+			currentQuery = ""
+			SearchBox.Text = ""
+			activeTarget = OriginalGameName or "Universal"
+		end
+		
+		-- 🟢 WE NOW USE '&strict=false' AND '&sortBy=views'
+		local baseParams = "&max=50&mode=free&sortBy=views&strict=false"
+		
 		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-			-- 1. USER IS SEARCHING: Use the text box
 			activeTarget = currentQuery
 			GameLabel.Text = "Custom: " .. activeTarget
 			local encoded = HttpService:UrlEncode(activeTarget)
-			endpoint = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free"
+			endpoint = "https://scriptblox.com/api/script/search?q="..encoded..baseParams
 			
 		elseif OriginalGameName then
-			-- 2. TEXT BOX EMPTY: Restore Original Game
 			activeTarget = OriginalGameName
 			GameLabel.Text = "Game: " .. activeTarget
 			local encoded = HttpService:UrlEncode(activeTarget)
-			endpoint = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free"
+			endpoint = "https://scriptblox.com/api/script/search?q="..encoded..baseParams
 			
 		else
-			-- 3. NO GAME & NO SEARCH: Universal
 			activeTarget = "Universal"
 			GameLabel.Text = "Mode: Universal"
-			endpoint = "https://scriptblox.com/api/script/fetch?page=1&max=50"
+			endpoint = "https://scriptblox.com/api/script/fetch?page=1&max=50" -- Fetch doesn't support strict/sortBy same way
 		end
 		
 		print("🔎 Fetching:", activeTarget, "| Filter:", CurrentFilter)
 		
-		-- 🟢 FETCH
 		local fetchedScripts = {}
 		local success, response = pcall(function() return game:HttpGet(endpoint) end)
 		
@@ -5645,8 +5690,6 @@ InitTabs.Search = function()
 		end
 		
 		CachedScripts = fetchedScripts
-		
-		-- 🟢 FILTER & RENDER
 		local finalScripts = filterScripts(CachedScripts)
 		finalScripts = sortScripts(finalScripts)
 		renderScripts(finalScripts)
@@ -5655,11 +5698,10 @@ InitTabs.Search = function()
 	end
 	
 	-- 🔴 EVENTS
-	
 	local function onFilterClick(filterName)
 		CurrentFilter = filterName
 		updateUI()
-		Update() -- Uses whatever state (Search or Original) is currently valid
+		Update()
 	end
 	
 	RecommendedBtn.MouseButton1Click:Connect(function() onFilterClick("Recommended") end)
@@ -5668,12 +5710,10 @@ InitTabs.Search = function()
 	KeyBtn.MouseButton1Click:Connect(function() onFilterClick("KeyRequired") end)
 	TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
 	
-	-- 🟢 FIX: Trigger Update even if text is empty (to restore original game)
 	SearchBox.FocusLost:Connect(function()
 		Update()
 	end)
 	
-	-- 🔴 INITIAL RUN
 	updateUI()
 	Update() 
 end
