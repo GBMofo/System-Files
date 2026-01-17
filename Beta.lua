@@ -662,7 +662,7 @@ G2L["40"]["ZIndex"] = 2;
 G2L["40"]["BorderSizePixel"] = 0;
 G2L["40"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["40"]["Size"] = UDim2.new(0.92, 0, 0.18651, 0);
-G2L["40"]["Position"] = UDim2.new(0.04, 0, 0, 0); -- Adjusted for left padding
+G2L["40"]["Position"] = UDim2.new(0.12, 0, 0, 0); -- Moved to right (0.12) to avoid logo overlap
 G2L["40"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["40"]["Name"] = [[Title]];
 G2L["40"]["BackgroundTransparency"] = 1;
@@ -2772,7 +2772,7 @@ G2L["11e"] = Instance.new("Frame", G2L["3f"]);
 G2L["11e"]["Visible"] = false;
 G2L["11e"]["ZIndex"] = 2;
 G2L["11e"]["BorderSizePixel"] = 0;
-G2L["11e"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
+G2L["11e"]["BackgroundColor3"] = Color3.fromRGB(0, 117, 218);
 G2L["11e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["11e"]["Name"] = [[EnableFrame]];
 
@@ -2787,7 +2787,7 @@ G2L["120"] = Instance.new("ImageLabel", G2L["11e"]);
 G2L["120"]["ZIndex"] = 2;
 G2L["120"]["BorderSizePixel"] = 0;
 G2L["120"]["BackgroundColor3"] = Color3.fromRGB(0, 141, 255);
-G2L["120"]["ImageColor3"] = Color3.fromRGB(160, 85, 255);
+G2L["120"]["ImageColor3"] = Color3.fromRGB(0, 255, 255);
 G2L["120"]["Image"] = [[rbxassetid://84915499533164]];
 G2L["120"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["120"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
@@ -2812,7 +2812,6 @@ G2L["121"]["Position"] = UDim2.new(0.05907, 0, 0.10225, 0);
 
 
 -- StarterGui.ScreenGui.Side
--- [[ HIDDEN AS PART OF REDESIGN TO CLEAN UP ]]
 G2L["122"] = Instance.new("Frame", G2L["1"]);
 G2L["122"]["Visible"] = false; -- [[ ADD THIS ]]
 G2L["122"]["Active"] = true;
@@ -2830,13 +2829,13 @@ G2L["122"]["Name"] = [[Side]];
 G2L["123"] = Instance.new("Frame", G2L["1"]);
 G2L["123"]["ZIndex"] = 0;
 G2L["123"]["BorderSizePixel"] = 0;
-G2L["123"]["BackgroundColor3"] = Color3.fromRGB(15, 15, 20); -- Dark BG
+G2L["123"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
 G2L["123"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
 G2L["123"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["123"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 G2L["123"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["123"]["Name"] = [[Full]];
-G2L["123"]["BackgroundTransparency"] = 0.2;
+G2L["123"]["BackgroundTransparency"] = 0.3;
 
 
 -- StarterGui.ScreenGui.Open
@@ -2888,9 +2887,9 @@ G2L["13b"]["CornerRadius"] = UDim.new(1, 0);
 
 -- StarterGui.ScreenGui.Open.Outline.UIStroke
 G2L["13c"] = Instance.new("UIStroke", G2L["13a"]);
-G2L["13c"]["Transparency"] = 0.5;
+G2L["13c"]["Transparency"] = 0.95;
 G2L["13c"]["Thickness"] = 2;
-G2L["13c"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Glow
+G2L["13c"]["Color"] = Color3.fromRGB(232, 229, 255);
 
 
 -- StarterGui.ScreenGui.Open.UIAspectRatioConstraint
@@ -2914,7 +2913,7 @@ G2L["13e"]["BackgroundTransparency"] = 0.25;
 G2L["13f"] = Instance.new("Frame", G2L["13e"]);
 G2L["13f"]["ZIndex"] = 999999999;
 G2L["13f"]["BorderSizePixel"] = 0;
-G2L["13f"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
+G2L["13f"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
 G2L["13f"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
 G2L["13f"]["Size"] = UDim2.new(0.5, 0, 0.42481, 0);
 G2L["13f"]["Position"] = UDim2.new(0.5, 0, 0.46241, 0);
@@ -2924,7 +2923,7 @@ G2L["13f"]["Name"] = [[Main]];
 
 -- StarterGui.ScreenGui.Popups.Main.UICorner
 G2L["140"] = Instance.new("UICorner", G2L["13f"]);
-G2L["140"]["CornerRadius"] = UDim.new(0, 16);
+G2L["140"]["CornerRadius"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Popups.Main.UIListLayout
@@ -2961,12 +2960,12 @@ G2L["143"]["PaddingTop"] = UDim.new(0, 12);
 G2L["144"] = Instance.new("TextBox", G2L["13f"]);
 G2L["144"]["CursorPosition"] = -1;
 G2L["144"]["Name"] = [[Input]];
-G2L["144"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
+G2L["144"]["PlaceholderColor3"] = Color3.fromRGB(179, 179, 179);
 G2L["144"]["ZIndex"] = 999999999;
 G2L["144"]["BorderSizePixel"] = 0;
 G2L["144"]["TextSize"] = 18;
 G2L["144"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["144"]["BackgroundColor3"] = Color3.fromRGB(30, 30, 40);
+G2L["144"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
 G2L["144"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["144"]["ClearTextOnFocus"] = false;
 G2L["144"]["PlaceholderText"] = [[Name.]];
@@ -2979,15 +2978,15 @@ G2L["144"]["BackgroundTransparency"] = 1;
 
 -- StarterGui.ScreenGui.Popups.Main.Input.UIStroke
 G2L["145"] = Instance.new("UIStroke", G2L["144"]);
-G2L["145"]["Transparency"] = 0.8;
-G2L["145"]["Thickness"] = 1;
-G2L["145"]["Color"] = Color3.fromRGB(160, 85, 255);
+G2L["145"]["Transparency"] = 0.95;
+G2L["145"]["Thickness"] = 3;
+G2L["145"]["Color"] = Color3.fromRGB(232, 229, 255);
 G2L["145"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
 -- StarterGui.ScreenGui.Popups.Main.Input.UICorner
 G2L["146"] = Instance.new("UICorner", G2L["144"]);
-G2L["146"]["CornerRadius"] = UDim.new(0, 12);
+G2L["146"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.Popups.Main.Button
@@ -3015,7 +3014,7 @@ G2L["149"] = Instance.new("TextButton", G2L["147"]);
 G2L["149"]["BorderSizePixel"] = 0;
 G2L["149"]["TextSize"] = 14;
 G2L["149"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["149"]["BackgroundColor3"] = Color3.fromRGB(255, 80, 80);
+G2L["149"]["BackgroundColor3"] = Color3.fromRGB(159, 62, 64);
 G2L["149"]["FontFace"] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
 G2L["149"]["ZIndex"] = 999999999;
 G2L["149"]["Size"] = UDim2.new(0.32721, 0, 0.17347, 0);
@@ -3027,7 +3026,7 @@ G2L["149"]["Position"] = UDim2.new(0.22715, 0, 0.50288, 0);
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Cancel.UICorner
 G2L["14a"] = Instance.new("UICorner", G2L["149"]);
-G2L["14a"]["CornerRadius"] = UDim.new(0, 8);
+G2L["14a"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Cancel.UIStroke
@@ -3049,7 +3048,7 @@ G2L["14d"] = Instance.new("TextButton", G2L["147"]);
 G2L["14d"]["BorderSizePixel"] = 0;
 G2L["14d"]["TextSize"] = 14;
 G2L["14d"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["14d"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
+G2L["14d"]["BackgroundColor3"] = Color3.fromRGB(77, 159, 59);
 G2L["14d"]["FontFace"] = Font.new([[rbxassetid://16658221428]], Enum.FontWeight.Bold, Enum.FontStyle.Normal);
 G2L["14d"]["ZIndex"] = 999999999;
 G2L["14d"]["Size"] = UDim2.new(0.32721, 0, 0.17347, 0);
@@ -3061,7 +3060,7 @@ G2L["14d"]["Position"] = UDim2.new(0.22715, 0, 0.50288, 0);
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Confirm.UICorner
 G2L["14e"] = Instance.new("UICorner", G2L["14d"]);
-G2L["14e"]["CornerRadius"] = UDim.new(0, 8);
+G2L["14e"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Confirm.UIStroke
@@ -3924,7 +3923,6 @@ if v.Name == "Popups" then v.Visible = false return end
 					new = "function"
 				}
 			}
-		};
 		local enumLibraryTable = language.libraries.Enum;
 		for _, enum in ipairs(Enum:GetEnums()) do
 			enumLibraryTable[tostring(enum)] = "Enum";
@@ -3981,7 +3979,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		local COMMENT_MULTI = "%-%-%[(=*)%[.-%]%1%]";
 		local COMMENT_MULTI_INCOMP = "%-%-%[=*%[.-.*";
 		local COMMENT_PLAIN = "%-%-.-\n";
-        local COMMENT_INCOMP = "%-%-.*";
+		local COMMENT_INCOMP = "%-%-.*";
 		local FUNCTION_NAME = "function%s+([%a_][%w_%.]*)";
 		local lang = language;
 		local lua_keyword = lang.keyword;
@@ -4722,7 +4720,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					end);
 					new.LayoutOrder = v[2];
 					if (Data.Editor.CurrentTab == i) then
-						new.BackgroundColor3 = Color3.fromRGB(160, 85, 255); -- Neon Purple Active Tab
+						new.BackgroundColor3 = Color3.fromRGB(160, 85, 255); -- Neon Purple
 					end
 				end
 				local Editor = Pages:WaitForChild("Editor");
@@ -4808,6 +4806,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					new.Name = i;
 					new.Title.Text = i;
 					
+					-- [[ FIX: REFERENCES TO MATCH G2L NAMES ]] --
 					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
 						UIEvents.Executor.RunCode(v)();
 					end);
@@ -4816,8 +4815,7 @@ if v.Name == "Popups" then v.Visible = false return end
 						UIEvents.Saved.DelFile(i);
 					end);
 
-					-- [[ FIX: EDIT LOGIC ]]
-					new.Misc.Panel.EditBtn.MouseButton1Click:Connect(function()
+					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
 						if Data.Editor.EditingSavedFile == i then
 							UIEvents.Nav.goTo("Editor")
 							return
@@ -4830,8 +4828,6 @@ if v.Name == "Popups" then v.Visible = false return end
 							Data.Editor.EditingSavedFile = nil
 						end
 
-						-- [IMPORTANT] Set the flag BEFORE creating the tab
-						-- This ensures updateUI hides other tabs immediately
 						Data.Editor.EditingSavedFile = i
 						UIEvents.EditorTabs.createTab(i, v, true)
 						
@@ -4843,19 +4839,19 @@ if v.Name == "Popups" then v.Visible = false return end
 					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
 					
 					if isAutoOn then
-						new.Misc.Panel.AutoExecBtn.AutoExecIcon.ImageColor3 = Color3.fromRGB(85, 255, 85)
+						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(85, 255, 85)
 					else
-						new.Misc.Panel.AutoExecBtn.AutoExecIcon.ImageColor3 = Color3.fromRGB(200, 200, 200)
+						new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(200, 200, 200)
 					end
 					
-					new.Misc.Panel.AutoExecBtn.MouseButton1Click:Connect(function()
+					new.Misc.Panel.AutoExec.MouseButton1Click:Connect(function()
 						if CLONED_Detectedly.isfile(autoExecPath) then
 							CLONED_Detectedly.delfile(autoExecPath)
-							new.Misc.Panel.AutoExecBtn.AutoExecIcon.ImageColor3 = Color3.fromRGB(200, 200, 200)
+							new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(200, 200, 200)
 							createNotification("AutoExec Deactivated", "Error", 3)
 						else
 							CLONED_Detectedly.writefile(autoExecPath, v)
-							new.Misc.Panel.AutoExecBtn.AutoExecIcon.ImageColor3 = Color3.fromRGB(85, 255, 85)
+							new.Misc.Panel.AutoExec.Icon.ImageColor3 = Color3.fromRGB(85, 255, 85)
 							createNotification("AutoExec Activated", "Success", 3)
 						end
 					end)
@@ -4918,10 +4914,19 @@ if v.Name == "Popups" then v.Visible = false return end
 					local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
 					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
 					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y);
+					if (f or isInstantNext) then
+						EnableFrame.Position = TargetPos;
+						EnableFrame.Size = TargetSize;
+						if isInstantNext then isInstantNext = false; end
+						return;
+					end
 					
-					EnableFrame.Position = TargetPos;
-					EnableFrame.Size = TargetSize;
-					EnableFrame.BackgroundTransparency = 0
+					local TweenService = game:GetService("TweenService")
+					TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+						Position = TargetPos,
+						Size = TargetSize,
+						BackgroundTransparency = 0
+					}):Play();
 				end
 			end
 		}
