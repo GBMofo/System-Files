@@ -5405,20 +5405,7 @@ InitTabs.Search = function()
 	local HttpService = game:GetService("HttpService")
 	local MarketplaceService = game:GetService("MarketplaceService")
 	
-	-- 🔴 DEBUG LABEL
-	local GameLabel = Instance.new("TextLabel", Search)
-	GameLabel.Name = "GameLabel"
-	GameLabel.Size = UDim2.new(1, -20, 0, 20)
-	GameLabel.Position = UDim2.new(0, 10, 1, -25)
-	GameLabel.BackgroundTransparency = 1
-	GameLabel.Text = "Initializing..."
-	GameLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
-	GameLabel.TextXAlignment = Enum.TextXAlignment.Right
-	GameLabel.Font = Enum.Font.Gotham
-	GameLabel.TextSize = 12
-	GameLabel.ZIndex = 5
-	
-	-- 🔴 HELPER: FORMAT NUMBERS (e.g. 1200 -> 1.2k)
+	-- 🔴 HELPER: FORMAT NUMBERS
 	local function formatNumber(n)
 		n = tonumber(n)
 		if not n then return "0" end
@@ -5457,6 +5444,21 @@ InitTabs.Search = function()
 			detected = cleanGameName(game.Name)
 		end
 		
+		-- DEBUG LABEL
+		local GameLabel = Search:FindFirstChild("GameLabel")
+		if not GameLabel then
+			GameLabel = Instance.new("TextLabel", Search)
+			GameLabel.Name = "GameLabel"
+			GameLabel.Size = UDim2.new(1, -20, 0, 20)
+			GameLabel.Position = UDim2.new(0, 10, 1, -25)
+			GameLabel.BackgroundTransparency = 1
+			GameLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
+			GameLabel.TextXAlignment = Enum.TextXAlignment.Right
+			GameLabel.Font = Enum.Font.Gotham
+			GameLabel.TextSize = 12
+			GameLabel.ZIndex = 5
+		end
+
 		if detected and detected ~= "" then
 			OriginalGameName = detected
 			GameLabel.Text = "Game: " .. OriginalGameName
@@ -5534,23 +5536,38 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 FILTER & SORT
+	-- 🔴 FILTER & SORT LOGIC
 	local function filterScripts(scriptList)
 		local filtered = {}
 		for _, scriptData in pairs(scriptList) do
 			local passes = false
+			
 			if CurrentFilter == "Recommended" then
+				-- ONLY Verified. Everything else allowed.
 				passes = (scriptData.verified == true)
+				
 			elseif CurrentFilter == "NoKey" then
-				passes = (scriptData.key == false or scriptData.key == nil)
+				-- Must be Free AND No Key
+				local isPaid = (scriptData.scriptType == "paid")
+				local hasKey = (scriptData.key == true)
+				passes = (not isPaid) and (not hasKey)
+				
 			elseif CurrentFilter == "KeyRequired" then
+				-- Key OR Paid
 				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
+				
 			elseif CurrentFilter == "Trending" then
+				-- Everything (Sorted by views later)
 				passes = true
+				
 			elseif CurrentFilter == "All" then
+				-- EVERYTHING: Verified, Unverified, Key, No Key, Paid, Free
 				passes = true
 			end
-			if passes then table.insert(filtered, scriptData) end
+			
+			if passes then
+				table.insert(filtered, scriptData)
+			end
 		end
 		return filtered
 	end
@@ -5564,7 +5581,7 @@ InitTabs.Search = function()
 		return scriptList
 	end
 	
-	-- 🔴 RENDER (FIXED: Moved Left to avoid Save Icon)
+	-- 🔴 RENDER
 	local function renderScripts(scriptList)
 		for _, v in pairs(Scripts:GetChildren()) do
 			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
@@ -5593,30 +5610,24 @@ InitTabs.Search = function()
 				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
 				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
 				
-				-- 🟢 CONTAINER FOR STATS (The "Pill")
+				-- STATS PILL
 				local StatsPill = Instance.new("Frame", new.Misc)
 				StatsPill.Name = "StatsPill"
 				StatsPill.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 				StatsPill.BackgroundTransparency = 0.6
 				StatsPill.Size = UDim2.new(0, 0, 0, 22)
 				StatsPill.AutomaticSize = Enum.AutomaticSize.X
-				
-				-- 🟢 POSITION ADJUSTED: Moved from -95 to -110
 				StatsPill.AnchorPoint = Vector2.new(1, 1) 
-				StatsPill.Position = UDim2.new(1, -110, 1, -8) -- Moved left away from Save icon
+				StatsPill.Position = UDim2.new(1, -110, 1, -8) -- Left of Save Icon
 				StatsPill.BorderSizePixel = 0
 				StatsPill.ZIndex = 5
 				
-				-- 🟢 CURVED EDGES
 				local PillCorner = Instance.new("UICorner", StatsPill)
 				PillCorner.CornerRadius = UDim.new(0, 6)
-				
-				-- 🟢 PADDING
 				local PillPadding = Instance.new("UIPadding", StatsPill)
 				PillPadding.PaddingLeft = UDim.new(0, 8)
 				PillPadding.PaddingRight = UDim.new(0, 8)
 				
-				-- 🟢 TEXT LABEL
 				local StatsText = Instance.new("TextLabel", StatsPill)
 				StatsText.BackgroundTransparency = 1
 				StatsText.Size = UDim2.new(0, 0, 1, 0)
@@ -5634,7 +5645,6 @@ InitTabs.Search = function()
 				end
 				StatsText.Text = textContent
 				
-				-- Tags
 				new.Tags.Key.Visible = scriptData.key or false
 				new.Tags.Universal.Visible = scriptData.isUniversal or false
 				new.Tags.Patched.Visible = scriptData.isPatched or false
@@ -5651,55 +5661,65 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE (SMART SEARCH ENABLED)
+	-- 🔴 MAIN UPDATE
 	local function Update()
 		if isUpdating then return end
 		isUpdating = true
 		
-		local endpoint = ""
 		local currentQuery = SearchBox.Text
-		local activeTarget = ""
-		
 		if currentQuery == "*" then
 			currentQuery = ""
 			SearchBox.Text = ""
-			activeTarget = OriginalGameName or "Universal"
 		end
 		
-		-- 🟢 WE NOW USE '&strict=false' AND '&sortBy=views'
-		local baseParams = "&max=50&mode=free&sortBy=views&strict=false"
+		local function fetchScripts(url)
+			local success, response = pcall(function() return game:HttpGet(url) end)
+			if success then
+				local s2, data = pcall(function() return HttpService:JSONDecode(response) end)
+				if s2 and data.result and data.result.scripts then
+					return data.result.scripts
+				end
+			end
+			return {}
+		end
+		
+		local baseParams = "&max=50&sortBy=views&strict=false"
+		local MasterList = {}
+		
+		local GameLabel = Search:FindFirstChild("GameLabel")
 		
 		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-			activeTarget = currentQuery
-			GameLabel.Text = "Custom: " .. activeTarget
-			local encoded = HttpService:UrlEncode(activeTarget)
-			endpoint = "https://scriptblox.com/api/script/search?q="..encoded..baseParams
+			-- 1. USER SEARCH
+			if GameLabel then GameLabel.Text = "Custom: " .. currentQuery end
+			local encoded = HttpService:UrlEncode(currentQuery)
+			local url = "https://scriptblox.com/api/script/search?q="..encoded..baseParams
+			MasterList = fetchScripts(url)
 			
 		elseif OriginalGameName then
-			activeTarget = OriginalGameName
-			GameLabel.Text = "Game: " .. activeTarget
-			local encoded = HttpService:UrlEncode(activeTarget)
-			endpoint = "https://scriptblox.com/api/script/search?q="..encoded..baseParams
+			-- 2. GAME MODE (COMBINE: GAME + UNIVERSAL)
+			if GameLabel then GameLabel.Text = "Game: " .. OriginalGameName end
+			
+			-- Fetch Game
+			local encodedGame = HttpService:UrlEncode(OriginalGameName)
+			local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame..baseParams
+			local listGame = fetchScripts(urlGame)
+			
+			-- Fetch Universal
+			local urlUni = "https://scriptblox.com/api/script/search?q=Universal"..baseParams
+			local listUni = fetchScripts(urlUni)
+			
+			-- Merge
+			for _, v in pairs(listGame) do table.insert(MasterList, v) end
+			for _, v in pairs(listUni) do table.insert(MasterList, v) end
 			
 		else
-			activeTarget = "Universal"
-			GameLabel.Text = "Mode: Universal"
-			endpoint = "https://scriptblox.com/api/script/fetch?page=1&max=50" -- Fetch doesn't support strict/sortBy same way
+			-- 3. UNIVERSAL MODE
+			if GameLabel then GameLabel.Text = "Mode: Universal" end
+			local url = "https://scriptblox.com/api/script/fetch?page=1&max=50"
+			MasterList = fetchScripts(url)
 		end
 		
-		print("🔎 Fetching:", activeTarget, "| Filter:", CurrentFilter)
-		
-		local fetchedScripts = {}
-		local success, response = pcall(function() return game:HttpGet(endpoint) end)
-		
-		if success then
-			local s2, data = pcall(function() return HttpService:JSONDecode(response) end)
-			if s2 and data.result and data.result.scripts then
-				fetchedScripts = data.result.scripts
-			end
-		end
-		
-		CachedScripts = fetchedScripts
+		CachedScripts = MasterList
 		local finalScripts = filterScripts(CachedScripts)
 		finalScripts = sortScripts(finalScripts)
 		renderScripts(finalScripts)
@@ -5727,7 +5747,6 @@ InitTabs.Search = function()
 	updateUI()
 	Update() 
 end
-
 	InitTabs.Nav = function()
     local isInstantNext = false;
     
