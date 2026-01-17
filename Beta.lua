@@ -4767,8 +4767,8 @@ if v.Name == "Popups" then v.Visible = false return end
 					end);
 					new.LayoutOrder = v[2];
 					if (Data.Editor.CurrentTab == i) then
-						new.BackgroundColor3 = Color3.fromRGB(160, 85, 255); -- Neon Purple
-					end
+	                new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
+                 end
 				end
 				local Editor = Pages:WaitForChild("Editor");
 				local Panel = Editor:WaitForChild("Panel");
@@ -5021,7 +5021,8 @@ if v.Name == "Popups" then v.Visible = false return end
 			{name = "Neon Blue", color = Color3.fromRGB(0, 191, 255)}
 		}
 		
-		local CurrentTheme = Color3.fromRGB(160, 85, 255)
+		getgenv().CurrentTheme = Color3.fromRGB(160, 85, 255)
+		local CurrentTheme = getgenv().CurrentTheme
 		
 		local function LoadTheme()
 			if CLONED_Detectedly.isfile("theme.json") then
@@ -5044,43 +5045,47 @@ if v.Name == "Popups" then v.Visible = false return end
 		
 		local function ApplyTheme(color)
 			local oldTheme = CurrentTheme
-			CurrentTheme = color
+			getgenv().CurrentTheme = color
 			SaveTheme(color)
 			
-			-- 1. Update all UIStrokes (borders/edges)
+			-- ========================================
+			-- 1. UPDATE ALL UISTROKES (BORDERS/EDGES)
+			-- ========================================
 			for _, obj in pairs(script.Parent:GetDescendants()) do
 				if obj:IsA("UIStroke") then
-					-- Check if it's a themed stroke (purple or old theme color)
 					if obj.Color == Color3.fromRGB(160, 85, 255) or obj.Color == oldTheme then
 						obj.Color = color
 					end
 				end
 			end
 			
-			-- 2. Update all ENABLED toggles in Settings
+			-- ========================================
+			-- 2. UPDATE SETTINGS TOGGLES
+			-- ========================================
 			for _, card in pairs(Scripts:GetChildren()) do
 				if card:IsA("Frame") then
 					local toggleContainer = card:FindFirstChild("ToggleContainer")
 					if toggleContainer then
 						local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
-						if toggleBg then
-							-- If toggle is ON (not gray), update to new theme
-							if toggleBg.BackgroundColor3 ~= Color3.fromRGB(50, 50, 60) then
-								toggleBg.BackgroundColor3 = color
-							end
+						if toggleBg and toggleBg.BackgroundColor3 ~= Color3.fromRGB(50, 50, 60) then
+							toggleBg.BackgroundColor3 = color
 						end
 					end
 				end
 			end
 			
-			-- 3. Update slider fills
+			-- ========================================
+			-- 3. UPDATE SETTINGS SLIDERS
+			-- ========================================
 			for _, slider in pairs(Scripts:GetDescendants()) do
 				if slider.Name == "sliderFill" and slider:IsA("Frame") then
 					slider.BackgroundColor3 = color
 				end
 			end
 			
-			-- Update EnableFrame
+			-- ========================================
+			-- 4. UPDATE ENABLEFRAME (NAV INDICATOR)
+			-- ========================================
 			if Main:FindFirstChild("EnableFrame") then
 				Main.EnableFrame.BackgroundColor3 = color
 				if Main.EnableFrame:FindFirstChild("Glow") then
@@ -5089,19 +5094,112 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end
 			
-			-- Update active tabs
-			for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
-				if tab:IsA("TextButton") and tab.BackgroundColor3 == Color3.fromRGB(160, 85, 255) then
-					tab.BackgroundColor3 = color
+			-- ========================================
+			-- 5. UPDATE ACTIVE EDITOR TAB
+			-- ========================================
+			if Pages.Editor and Pages.Editor:FindFirstChild("Tabs") then
+				for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
+					if tab:IsA("TextButton") and tab.Name == Data.Editor.CurrentTab then
+						tab.BackgroundColor3 = color
+					end
 				end
 			end
 			
-			-- Update Key box
-			if Pages.Home.Key and Pages.Home.Key:FindFirstChild("UIStroke") then
-				Pages.Home.Key.UIStroke.Color = color
+			-- ========================================
+			-- 6. UPDATE EDITOR PANEL ICONS
+			-- ========================================
+			if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
+				local panel = Pages.Editor.Panel
+				
+				-- Execute button icon
+				if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+					panel.Execute.Icon.ImageColor3 = color
+				end
+				
+				-- Spacer lines
+				if panel:FindFirstChild("Spacer1") then
+					panel.Spacer1.BackgroundColor3 = color
+				end
+				if panel:FindFirstChild("Spacer2") then
+					panel.Spacer2.BackgroundColor3 = color
+				end
 			end
-			if Pages.Home.Key and Pages.Home.Key.Folder:FindFirstChild("Background") then
-				Pages.Home.Key.Folder.Background.ImageColor3 = color
+			
+			-- ========================================
+			-- 7. UPDATE SEARCH FILTER PILLS
+			-- ========================================
+			if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+				for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+					if btn:IsA("TextButton") and btn.Name == CurrentFilter then
+						btn.BackgroundColor3 = color
+					end
+				end
+			end
+			
+			-- ========================================
+			-- 8. UPDATE HOME PAGE KEY BOX
+			-- ========================================
+			if Pages.Home and Pages.Home:FindFirstChild("Key") then
+				local keyBox = Pages.Home.Key
+				
+				-- Border
+				if keyBox:FindFirstChild("UIStroke") then
+					keyBox.UIStroke.Color = color
+				end
+				
+				-- Background glow
+				if keyBox.Folder and keyBox.Folder:FindFirstChild("Background") then
+					keyBox.Folder.Background.ImageColor3 = color
+				end
+				
+				-- Update "active" text color
+				if keyBox:FindFirstChild("KeyText") then
+					keyBox.KeyText.Text = string.gsub(
+						keyBox.KeyText.Text,
+						'<font color="rgb%(%d+, %d+, %d+%)">',
+						'<font color="rgb(' .. math.floor(color.R * 255) .. ', ' .. math.floor(color.G * 255) .. ', ' .. math.floor(color.B * 255) .. ')">'
+					)
+				end
+			end
+			
+			-- ========================================
+			-- 9. UPDATE CLOSE BUTTON (X)
+			-- ========================================
+			if Leftside and Leftside:FindFirstChild("Close") then
+				Leftside.Close.BackgroundColor3 = color
+			end
+			
+			-- ========================================
+			-- 10. UPDATE HOME ICON IN NAV (IF ACTIVE)
+			-- ========================================
+			if Nav and Nav:FindFirstChild("Page1") then
+				for _, btn in pairs(Nav.Page1:GetChildren()) do
+					if btn:IsA("TextButton") and btn.BackgroundColor3 == oldTheme then
+						btn.BackgroundColor3 = color
+					end
+				end
+			end
+			
+			-- ========================================
+			-- 11. UPDATE BACKGROUND GRADIENTS
+			-- ========================================
+			for _, obj in pairs(script.Parent:GetDescendants()) do
+				if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
+					-- Update main background gradient colors
+					local newColorSeq = ColorSequence.new{
+						ColorSequenceKeypoint.new(0, Color3.fromRGB(
+							math.floor(color.R * 255 * 0.8),
+							math.floor(color.G * 255 * 0.5),
+							math.floor(color.B * 255 * 1.2)
+						)),
+						ColorSequenceKeypoint.new(1, Color3.fromRGB(
+							math.floor(color.R * 255 * 0.4),
+							math.floor(color.G * 255 * 0.25),
+							math.floor(color.B * 255 * 0.7)
+						))
+					}
+					obj.Color = newColorSeq
+				end
 			end
 			
 			createNotification("Theme Applied!", "Success", 3)
@@ -5991,6 +6089,18 @@ InitTabs.Search = function()
 	local function onFilterClick(filterName)
 		CurrentFilter = filterName
 		updateUI()
+-- Update button colors
+	for _, btn in pairs(FilterBar:GetChildren()) do
+		if btn:IsA("TextButton") then
+			if btn.Name == filterName then
+				btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+				btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			else
+				btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+				btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+			end
+		end
+	end
 		Update()
 	end
 	
