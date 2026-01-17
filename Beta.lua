@@ -653,7 +653,7 @@ G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(45, 20, 70); -- Deep purple base
 G2L["3f"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["3f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3f"]["Name"] = [[Main]];
-G2L["3f"]["BackgroundTransparency"] = 0.4; -- 🔴 CHANGED: See-through (0.3-0.6)
+G2L["3f"]["BackgroundTransparency"] = 0.6; -- 🔴 CHANGED: See-through (0.3-0.6)
 
 -- Purple gradient overlay (light to dark)
 local gradient = Instance.new("Frame", G2L["3f"]);
