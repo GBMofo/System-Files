@@ -1770,7 +1770,7 @@ G2L["a9"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["a9"]["Position"] = UDim2.new(0.00157, 0, 0.08058, 0);
 G2L["a9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["a9"]["ScrollBarThickness"] = 1;
-
+G2L["a9"]["BackgroundTransparency"] = 0.6;
 
 -- StarterGui.ScreenGui.Main.Pages.Saved.Scripts.UICorner1
 G2L["aa"] = Instance.new("UICorner", G2L["a9"]);
@@ -2216,7 +2216,7 @@ G2L["db"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["db"]["Position"] = UDim2.new(0.00157, 0, 0.08058, 0);
 G2L["db"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["db"]["ScrollBarThickness"] = 1;
-
+G2L["db"]["BackgroundTransparency"] = 0.6;
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UICorner1
 G2L["dc"] = Instance.new("UICorner", G2L["db"]);
