@@ -5452,7 +5452,7 @@ if v.Name == "Popups" then v.Visible = false return end
     -- 🔴 CREATE FILTER BUTTONS
     local AllBtn = createFilterButton("All", "All")
     local NoKeyBtn = createFilterButton("NoKey", "No Key")
-    local KeyBtn = createFilterButton("Key", "Key Required")
+    local KeyBtn = createFilterButton("KeyRequired", "Key Required")
     local TrendingBtn = createFilterButton("Trending", "🔥 Trending")
     
     -- 🔴 CREATE SORT BUTTON
