@@ -4959,24 +4959,25 @@ end
 				
 				if Button then
 					EnableFrame.Visible = true;
-				
+				    Pages.Visible = true;
 					local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
 					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
 					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y);
-					if (f or isInstantNext) then
-						EnableFrame.Position = TargetPos;
-						EnableFrame.Size = TargetSize;
-						if isInstantNext then isInstantNext = false; end
-						return;
-					end
-					
-					local TweenService = game:GetService("TweenService")
-					TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-						Position = TargetPos,
-						Size = TargetSize,
-						BackgroundTransparency = 0
-					}):Play();
-				end
+					 if f then
+        EnableFrame.Position = TargetPos;
+        EnableFrame.Size = TargetSize;
+        return;
+    end
+    
+    -- ONLY animate the EnableFrame (highlight), NOT the pages
+    local TweenService = game:GetService("TweenService")
+    TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+        Position = TargetPos,
+        Size = TargetSize
+    }):Play();
+    
+    -- Don't hide/show Pages - keep it visible
+end
 			end
 		}
 	};
