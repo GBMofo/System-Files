@@ -649,39 +649,72 @@ G2L["3f"] = Instance.new("Frame", G2L["1"]);
 G2L["3f"]["Visible"] = false;
 G2L["3f"]["Active"] = true;
 G2L["3f"]["BorderSizePixel"] = 0;
-G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(10, 10, 15); -- Darker background
+G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(45, 20, 70); -- Deep purple base
 G2L["3f"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["3f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3f"]["Name"] = [[Main]];
-G2L["3f"]["BackgroundTransparency"] = 0.3; -- Semi-transparent (adjust 0.2-0.5)
+G2L["3f"]["BackgroundTransparency"] = 0; -- Keep opaque for gradient control
 
--- Add ImageLabel for blur effect
-local blurBG = Instance.new("ImageLabel", G2L["3f"]);
-blurBG.Name = "BlurEffect";
-blurBG.Size = UDim2.new(1, 0, 1, 0);
-blurBG.Position = UDim2.new(0, 0, 0, 0);
-blurBG.BackgroundTransparency = 1;
-blurBG.Image = "rbxassetid://8992230677"; -- Noise texture for grain
-blurBG.ImageColor3 = Color3.fromRGB(15, 15, 20);
-blurBG.ImageTransparency = 0.7;
-blurBG.ScaleType = Enum.ScaleType.Tile;
-blurBG.TileSize = UDim2.new(0, 100, 0, 100);
-blurBG.ZIndex = 0;
+-- Purple gradient overlay (light to dark)
+local gradient = Instance.new("Frame", G2L["3f"]);
+gradient.Name = "GradientOverlay";
+gradient.Size = UDim2.new(1, 0, 1, 0);
+gradient.Position = UDim2.new(0, 0, 0, 0);
+gradient.BackgroundColor3 = Color3.fromRGB(120, 60, 180); -- Brighter purple
+gradient.BackgroundTransparency = 0.3;
+gradient.BorderSizePixel = 0;
+gradient.ZIndex = 0;
 
--- Add vignette effect (darker edges)
+local gradientUI = Instance.new("UIGradient", gradient);
+gradientUI.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(90, 40, 140)),   -- Top: Deep violet
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(130, 70, 200)), -- Middle: Bright purple
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 30, 110))     -- Bottom: Dark purple
+};
+gradientUI.Rotation = 135; -- Diagonal gradient
+gradientUI.Transparency = NumberSequence.new{
+    NumberSequenceKeypoint.new(0, 0.2),
+    NumberSequenceKeypoint.new(0.5, 0.1),
+    NumberSequenceKeypoint.new(1, 0.3)
+};
+
+-- Noise texture for grain effect
+local noise = Instance.new("ImageLabel", G2L["3f"]);
+noise.Name = "NoiseTexture";
+noise.Size = UDim2.new(1, 0, 1, 0);
+noise.BackgroundTransparency = 1;
+noise.Image = "rbxassetid://8992230677";
+noise.ImageColor3 = Color3.fromRGB(100, 50, 150);
+noise.ImageTransparency = 0.85;
+noise.ScaleType = Enum.ScaleType.Tile;
+noise.TileSize = UDim2.new(0, 100, 0, 100);
+noise.ZIndex = 2;
+
+-- Dark vignette edges (like in the image)
 local vignette = Instance.new("ImageLabel", G2L["3f"]);
 vignette.Name = "Vignette";
 vignette.Size = UDim2.new(1, 0, 1, 0);
-vignette.Position = UDim2.new(0, 0, 0, 0);
 vignette.BackgroundTransparency = 1;
-vignette.Image = "rbxassetid://5250216449"; -- Radial gradient
-vignette.ImageColor3 = Color3.fromRGB(0, 0, 0);
-vignette.ImageTransparency = 0.4; -- Adjust darkness (0.3-0.6)
-vignette.ZIndex = 1;
+vignette.Image = "rbxassetid://5250216449";
+vignette.ImageColor3 = Color3.fromRGB(20, 10, 40); -- Very dark purple
+vignette.ImageTransparency = 0.3; -- Strong vignette
+vignette.ZIndex = 3;
 
--- Optional: Add UICorner for rounded edges
+-- Subtle glow effect
+local glow = Instance.new("ImageLabel", G2L["3f"]);
+glow.Name = "CenterGlow";
+glow.Size = UDim2.new(1.5, 0, 1.5, 0);
+glow.Position = UDim2.new(-0.25, 0, -0.25, 0);
+glow.BackgroundTransparency = 1;
+glow.Image = "rbxassetid://5250216449";
+glow.ImageColor3 = Color3.fromRGB(160, 85, 255); -- Your accent purple
+glow.ImageTransparency = 0.8;
+glow.ZIndex = 1;
+
+-- Rounded corners
 local corner = Instance.new("UICorner", G2L["3f"]);
-corner.CornerRadius = UDim.new(0, 16);
+corner.CornerRadius = UDim.new(0, 20);
+
 
 
 -- StarterGui.ScreenGui.Main.Title
