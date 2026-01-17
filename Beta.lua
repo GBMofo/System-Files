@@ -5391,61 +5391,263 @@ if v.Name == "Popups" then v.Visible = false return end
 	end;
 
 	InitTabs.Search = function()
-		local Search = Pages:WaitForChild("Search");
-		local TagsValid = {
-			Key = function(sData) return sData.key; end,
-			Universal = function(sData) return sData.isUniversal; end,
-			Patched = function(sData) return sData.isPatched; end,
-			Paid = function(sData) return sData.scriptType == "paid"; end
-		};
-		local verifyicon = utf8.char(57344);
-		local Trending = game:HttpGet("https://scriptblox.com/api/script/fetch");
-		
-		local function Update()
-			for _, v in pairs(Search.Scripts:GetChildren()) do
-				if v:IsA("CanvasGroup") then v:Destroy(); end
-			end
-			local text = Search.TextBox.Text;
-			local isEmpty = # (string.gsub(text, "[%s]", "")) <= 0;
-			local search = game.HttpService:UrlEncode(text);
-			local scriptJson;
-			
-			if isEmpty then
-				scriptJson = Trending;
-			else
-				scriptJson = game:HttpGet("https://scriptblox.com/api/script/search?strict=true&q=" .. search .. "&max=20");
-			end
-			
-			local success, scripts = pcall(function()
-				return game:GetService("HttpService"):JSONDecode(scriptJson);
-			end);
-			if (not success or not scripts.result or (# scripts.result.scripts <= 0)) then
-				Search.TextBox.Text = "No results found.";
-				return;
-			end
-			for i, scriptData in pairs(scripts.result.scripts) do
-				task.spawn(function()
-					local new = script.SearchTemplate:Clone();
-					new.Parent = Search.Scripts;
-					new.Name = scriptData.title;
-					new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "");
-					new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884";
-					for _, tag in pairs(new.Tags:GetChildren()) do
-						if tag:IsA("TextLabel") then
-							tag.Visible = (TagsValid[tag.Name] and TagsValid[tag.Name](scriptData)) or false;
-						end
-					end
-					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
-						UIEvents.Executor.RunCode(scriptData.script)();
-					end);
-					new.Misc.Panel.Save.MouseButton1Click:Connect(function()
-						UIEvents.Saved.SaveFile(scriptData.title, scriptData.script);
-					end);
-				end);
-			end
-		end
-		Search.TextBox.FocusLost:Connect(function() Update(); end);
-	end;
+    local Search = Pages:WaitForChild("Search");
+    local Scripts = Search.Scripts;
+    local SearchBox = Search.TextBox;
+    
+    -- 🔴 STATE MANAGEMENT
+    local CurrentFilter = "All"  -- All, NoKey, KeyRequired, Trending
+    local SortOrder = "Descending"  -- Descending, Ascending
+    local CachedScripts = {}  -- Store fetched scripts
+    
+    -- 🔴 CREATE FILTER BAR UI
+    local FilterBar = Instance.new("Frame", Search)
+    FilterBar.Name = "FilterBar"
+    FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+    FilterBar.BorderSizePixel = 0
+    FilterBar.Size = UDim2.new(1, 0, 0, 50)
+    FilterBar.LayoutOrder = -2  -- Above search box
+    
+    local FilterBarCorner = Instance.new("UICorner", FilterBar)
+    FilterBarCorner.CornerRadius = UDim.new(0, 12)
+    
+    local FilterBarStroke = Instance.new("UIStroke", FilterBar)
+    FilterBarStroke.Transparency = 0.8
+    FilterBarStroke.Color = Color3.fromRGB(160, 85, 255)
+    
+    local FilterLayout = Instance.new("UIListLayout", FilterBar)
+    FilterLayout.FillDirection = Enum.FillDirection.Horizontal
+    FilterLayout.Padding = UDim.new(0, 8)
+    FilterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    FilterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    
+    local FilterPadding = Instance.new("UIPadding", FilterBar)
+    FilterPadding.PaddingLeft = UDim.new(0, 12)
+    FilterPadding.PaddingRight = UDim.new(0, 12)
+    
+    -- 🔴 HELPER: CREATE FILTER BUTTON
+    local function createFilterButton(name, displayText)
+        local btn = Instance.new("TextButton", FilterBar)
+        btn.Name = name
+        btn.Text = displayText
+        btn.AutoButtonColor = false
+        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+        btn.BorderSizePixel = 0
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 12
+        btn.Size = UDim2.new(0, 0, 0.7, 0)
+        btn.AutomaticSize = Enum.AutomaticSize.X
+        
+        local btnCorner = Instance.new("UICorner", btn)
+        btnCorner.CornerRadius = UDim.new(0, 8)
+        
+        local btnPadding = Instance.new("UIPadding", btn)
+        btnPadding.PaddingLeft = UDim.new(0, 12)
+        btnPadding.PaddingRight = UDim.new(0, 12)
+        
+        return btn
+    end
+    
+    -- 🔴 CREATE FILTER BUTTONS
+    local AllBtn = createFilterButton("All", "All")
+    local NoKeyBtn = createFilterButton("NoKey", "No Key")
+    local KeyBtn = createFilterButton("Key", "Key Required")
+    local TrendingBtn = createFilterButton("Trending", "🔥 Trending")
+    
+    -- 🔴 CREATE SORT BUTTON
+    local SortBtn = createFilterButton("Sort", "Views ↓")
+    SortBtn.LayoutOrder = 999  -- Push to right
+    
+    -- 🔴 HELPER: UPDATE ACTIVE FILTER
+    local function updateFilterUI()
+        for _, btn in pairs(FilterBar:GetChildren()) do
+            if btn:IsA("TextButton") and btn.Name ~= "Sort" then
+                if btn.Name == CurrentFilter then
+                    btn.BackgroundColor3 = Color3.fromRGB(160, 85, 255)  -- Purple = Active
+                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                else
+                    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)  -- Dark = Inactive
+                    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                end
+            end
+        end
+        
+        -- Update sort button text
+        SortBtn.Text = "Views " .. (SortOrder == "Descending" and "↓" or "↑")
+    end
+    
+    -- 🔴 HELPER: FILTER SCRIPTS
+    local function filterScripts(scriptList)
+        local filtered = {}
+        
+        for _, scriptData in pairs(scriptList) do
+            local passes = true
+            
+            -- Apply filter
+            if CurrentFilter == "NoKey" and scriptData.key then
+                passes = false
+            elseif CurrentFilter == "KeyRequired" and not scriptData.key then
+                passes = false
+            end
+            
+            if passes then
+                table.insert(filtered, scriptData)
+            end
+        end
+        
+        return filtered
+    end
+    
+    -- 🔴 HELPER: SORT SCRIPTS
+    local function sortScripts(scriptList)
+        table.sort(scriptList, function(a, b)
+            local viewsA = tonumber(a.views) or 0
+            local viewsB = tonumber(b.views) or 0
+            
+            if SortOrder == "Descending" then
+                return viewsA > viewsB
+            else
+                return viewsA < viewsB
+            end
+        end)
+        
+        return scriptList
+    end
+    
+    -- 🔴 HELPER: RENDER SCRIPTS
+    local function renderScripts(scriptList)
+        -- Clear existing
+        for _, v in pairs(Scripts:GetChildren()) do
+            if v:IsA("CanvasGroup") then v:Destroy() end
+        end
+        
+        if not scriptList or #scriptList == 0 then
+            -- Show "No results" message
+            local noResults = Instance.new("TextLabel", Scripts)
+            noResults.Text = "No scripts found"
+            noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
+            noResults.BackgroundTransparency = 1
+            noResults.Size = UDim2.new(1, 0, 0, 50)
+            noResults.Font = Enum.Font.GothamBold
+            noResults.TextSize = 16
+            return
+        end
+        
+        local verifyicon = utf8.char(57344)
+        
+        for i, scriptData in pairs(scriptList) do
+            task.spawn(function()
+                local new = script.SearchTemplate:Clone()
+                new.Parent = Scripts
+                new.Name = scriptData.title
+                new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
+                new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
+                
+                -- Show tags
+                new.Tags.Key.Visible = scriptData.key or false
+                new.Tags.Universal.Visible = scriptData.isUniversal or false
+                new.Tags.Patched.Visible = scriptData.isPatched or false
+                new.Tags.Paid.Visible = scriptData.scriptType == "paid"
+                
+                -- Execute button
+                new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
+                    UIEvents.Executor.RunCode(scriptData.script)()
+                end)
+                
+                -- Save button
+                new.Misc.Panel.Save.MouseButton1Click:Connect(function()
+                    UIEvents.Saved.SaveFile(scriptData.title, scriptData.script)
+                end)
+            end)
+        end
+    end
+    
+    -- 🔴 MAIN UPDATE FUNCTION
+    local function Update(query)
+        query = query or ""
+        local isEmpty = #(string.gsub(query, "[%s]", "")) <= 0
+        
+        local scriptJson
+        local endpoint
+        
+        -- Determine endpoint based on filter
+        if CurrentFilter == "Trending" or isEmpty then
+            endpoint = "https://scriptblox.com/api/script/fetch?max=20"
+        else
+            local encodedQuery = game:GetService("HttpService"):UrlEncode(query)
+            endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=20"
+        end
+        
+        -- Fetch scripts
+        local success, scriptJson = pcall(function()
+            return game:HttpGet(endpoint)
+        end)
+        
+        if not success then
+            warn("[Search] Failed to fetch scripts")
+            return
+        end
+        
+        local success2, scripts = pcall(function()
+            return game:GetService("HttpService"):JSONDecode(scriptJson)
+        end)
+        
+        if not success2 or not scripts.result or not scripts.result.scripts then
+            warn("[Search] Invalid response")
+            return
+        end
+        
+        CachedScripts = scripts.result.scripts
+        
+        -- Apply filters and sorting
+        local filtered = filterScripts(CachedScripts)
+        local sorted = sortScripts(filtered)
+        
+        -- Render
+        renderScripts(sorted)
+    end
+    
+    -- 🔴 FILTER BUTTON EVENTS
+    AllBtn.MouseButton1Click:Connect(function()
+        CurrentFilter = "All"
+        updateFilterUI()
+        Update(SearchBox.Text)
+    end)
+    
+    NoKeyBtn.MouseButton1Click:Connect(function()
+        CurrentFilter = "NoKey"
+        updateFilterUI()
+        Update(SearchBox.Text)
+    end)
+    
+    KeyBtn.MouseButton1Click:Connect(function()
+        CurrentFilter = "KeyRequired"
+        updateFilterUI()
+        Update(SearchBox.Text)
+    end)
+    
+    TrendingBtn.MouseButton1Click:Connect(function()
+        CurrentFilter = "Trending"
+        updateFilterUI()
+        Update("")  -- Empty query = trending
+    end)
+    
+    SortBtn.MouseButton1Click:Connect(function()
+        SortOrder = (SortOrder == "Descending") and "Ascending" or "Descending"
+        updateFilterUI()
+        Update(SearchBox.Text)
+    end)
+    
+    -- 🔴 SEARCH BOX EVENT
+    SearchBox.FocusLost:Connect(function()
+        Update(SearchBox.Text)
+    end)
+    
+    -- 🔴 INITIAL LOAD (Show trending by default)
+    updateFilterUI()
+    Update("")
+end;
 
 	InitTabs.Nav = function()
     local isInstantNext = false;
