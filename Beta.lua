@@ -2844,18 +2844,6 @@ G2L["121"]["Name"] = [[Icon]];
 G2L["121"]["Position"] = UDim2.new(0.05907, 0, 0.10225, 0);
 
 
--- StarterGui.ScreenGui.Side
-G2L["122"] = Instance.new("Frame", G2L["1"]);
-G2L["122"]["Visible"] = false; -- [[ ADD THIS ]]
-G2L["122"]["Active"] = true;
-G2L["122"]["ZIndex"] = 0;
-G2L["122"]["BorderSizePixel"] = 0;
-G2L["122"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
-G2L["122"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
-G2L["122"]["Size"] = UDim2.new(0.19418, 0, 1, 0);
-G2L["122"]["Position"] = UDim2.new(0.01314, 0, 0.5, 0);
-G2L["122"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["122"]["Name"] = [[Side]];
 
 
 -- StarterGui.ScreenGui.Full
