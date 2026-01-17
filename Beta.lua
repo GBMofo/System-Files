@@ -5025,15 +5025,17 @@ if v.Name == "Popups" then v.Visible = false return end
 		local CurrentTheme = getgenv().CurrentTheme
 		
 		local function LoadTheme()
-			if CLONED_Detectedly.isfile("theme.json") then
-				local success, data = pcall(function()
-					return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("theme.json"))
-				end)
-				if success and data.r and data.g and data.b then
-					CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
-				end
-			end
-		end
+    if CLONED_Detectedly.isfile("theme.json") then
+        local success, data = pcall(function()
+            return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("theme.json"))
+        end)
+        if success and data.r and data.g and data.b then
+            CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
+            getgenv().CurrentTheme = CurrentTheme -- 🔴 UPDATE GLOBAL
+            print("[Theme] Loaded:", CurrentTheme)
+        end
+    end
+end
 		
 		local function SaveTheme(color)
 			CLONED_Detectedly.writefile("theme.json", game.HttpService:JSONEncode({
@@ -5049,31 +5051,58 @@ if v.Name == "Popups" then v.Visible = false return end
 			SaveTheme(color)
 			
 			-- ========================================
-			-- 1. UPDATE ALL UISTROKES (BORDERS/EDGES)
-			-- ========================================
-			for _, obj in pairs(script.Parent:GetDescendants()) do
-				if obj:IsA("UIStroke") then
-					if obj.Color == Color3.fromRGB(160, 85, 255) or obj.Color == oldTheme then
-						obj.Color = color
-					end
-				end
-			end
+-- 1. UPDATE ALL UISTROKES (BORDERS/EDGES)
+-- ========================================
+for _, obj in pairs(script.Parent:GetDescendants()) do
+    if obj:IsA("UIStroke") then
+        -- Skip black/white strokes (those are intentional)
+        local isThemeStroke = (
+            obj.Color == Color3.fromRGB(160, 85, 255) or 
+            obj.Color == oldTheme or
+            obj.Thickness <= 2 -- Most theme strokes are thin
+        )
+        if isThemeStroke then
+            obj.Color = color
+        end
+    end
+end
 			
 			-- ========================================
-			-- 2. UPDATE SETTINGS TOGGLES
+-- 2. UPDATE SETTINGS CARDS (Toggles + Borders)
+-- ========================================
+if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
+    for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
+        if card:IsA("Frame") or card:IsA("CanvasGroup") then
+            -- Update card border
+            local stroke = card:FindFirstChild("UIStroke")
+            if stroke then
+                stroke.Color = color
+            end
+            
+            -- Update toggle if active
+            local toggleContainer = card:FindFirstChild("ToggleContainer")
+            if toggleContainer then
+                local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
+                if toggleBg and toggleBg:GetAttribute("IsToggleOn") then
+                    toggleBg.BackgroundColor3 = color
+                end
+            end
+        end
+    end
+end
 			-- ========================================
-			for _, card in pairs(Scripts:GetChildren()) do
-				if card:IsA("Frame") then
-					local toggleContainer = card:FindFirstChild("ToggleContainer")
-					if toggleContainer then
-						local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
-						if toggleBg and toggleBg.BackgroundColor3 ~= Color3.fromRGB(50, 50, 60) then
-							toggleBg.BackgroundColor3 = color
-						end
-					end
-				end
-			end
-			
+-- 2B. UPDATE THEME CHANGER CARD BORDER
+-- ========================================
+if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
+    for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
+        if card.Name == "themeCard" or (card:IsA("Frame") and card:FindFirstChild("pillContainer")) then
+            local stroke = card:FindFirstChild("themeStroke") or card:FindFirstChild("UIStroke")
+            if stroke then
+                stroke.Color = color
+            end
+        end
+    end
+end
 			-- ========================================
 			-- 3. UPDATE SETTINGS SLIDERS
 			-- ========================================
@@ -5492,20 +5521,22 @@ end
 		createSectionHeader("📱 APPEARANCE", -100)
 		
 		-- Theme Changer
-		local themeCard = Instance.new("Frame", Scripts)
-		themeCard.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-		themeCard.Size = UDim2.new(1, 0, 0, 110)
-		themeCard.BorderSizePixel = 0
-		themeCard.LayoutOrder = -99
-		
-		local themeCorner = Instance.new("UICorner", themeCard)
-		themeCorner.CornerRadius = UDim.new(0, 12)
-		
-		local themeStroke = Instance.new("UIStroke", themeCard)
-		themeStroke.Transparency = 0.8
-		themeStroke.Color = CurrentTheme
-		themeStroke.Thickness = 1
-		
+local themeCard = Instance.new("Frame", Scripts)
+themeCard.Name = "ThemeChangerCard" -- 🔴 ADD NAME
+themeCard.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+themeCard.Size = UDim2.new(1, 0, 0, 110)
+themeCard.BorderSizePixel = 0
+themeCard.LayoutOrder = -99
+
+local themeCorner = Instance.new("UICorner", themeCard)
+themeCorner.CornerRadius = UDim.new(0, 12)
+
+local themeStroke = Instance.new("UIStroke", themeCard)
+themeStroke.Name = "ThemeStroke" -- 🔴 ADD NAME
+themeStroke.Transparency = 0.8
+themeStroke.Color = CurrentTheme
+themeStroke.Thickness = 1
+
 		local themeLayout = Instance.new("UIListLayout", themeCard)
 		themeLayout.Padding = UDim.new(0, 6)
 		
@@ -5644,16 +5675,18 @@ end)
 -- ========================================
 -- AUTO-APPLY SAVED THEME ON STARTUP
 -- ========================================
-task.defer(function()
-    task.wait(0.5) -- Wait for ALL UI to build first
+task.spawn(function()
+    -- Wait for Settings page to fully render
+    repeat task.wait(0.1) until Pages:FindFirstChild("Settings")
+    task.wait(0.3) -- Extra safety delay
+    
     if getgenv().CurrentTheme then
+        print("[Theme] Auto-applying saved theme:", getgenv().CurrentTheme)
         ApplyTheme(getgenv().CurrentTheme)
-        print("[PUNK X] Theme auto-applied:", getgenv().CurrentTheme)
     end
 end)
 
 end;
-
 
 	InitTabs.TabsData = function()
 		if not CLONED_Detectedly.isfolder("scripts") then
