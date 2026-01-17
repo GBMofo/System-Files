@@ -5391,346 +5391,379 @@ if v.Name == "Popups" then v.Visible = false return end
 	end;
 
 	InitTabs.Search = function()
-    local Search = Pages:WaitForChild("Search");
-    local Scripts = Search.Scripts;
-    local SearchBox = Search.TextBox;
-    
-    -- 🔴 STATE
-    local CurrentFilter = "All"  -- Start with "All" (safer default)
-    local CachedScripts = {}
-    local isUpdating = false
-    
-    -- 🔴 DETECT CURRENT GAME (with better error handling)
-    local currentGameName = "Universal"
-    local currentGameId = game.PlaceId
-    
-    local success, gameInfo = pcall(function()
-        return game:GetService("MarketplaceService"):GetProductInfo(currentGameId)
-    end)
-    
-    if success and gameInfo and gameInfo.Name then
-        currentGameName = gameInfo.Name
-        print("[Search] Detected game:", currentGameName)
-    else
-        warn("[Search] Failed to detect game, using Universal")
-    end
-    
-    -- 🔴 CREATE FILTER BAR
-    local FilterBar = Instance.new("Frame", Search)
-    FilterBar.Name = "FilterBar"
-    FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    FilterBar.BorderSizePixel = 0
-    FilterBar.Size = UDim2.new(1, 0, 0, 50)
-    FilterBar.LayoutOrder = -2
-    
-    local FilterBarCorner = Instance.new("UICorner", FilterBar)
-    FilterBarCorner.CornerRadius = UDim.new(0, 12)
-    
-    local FilterBarStroke = Instance.new("UIStroke", FilterBar)
-    FilterBarStroke.Transparency = 0.8
-    FilterBarStroke.Color = Color3.fromRGB(160, 85, 255)
-    
-    local FilterLayout = Instance.new("UIListLayout", FilterBar)
-    FilterLayout.FillDirection = Enum.FillDirection.Horizontal
-    FilterLayout.Padding = UDim.new(0, 8)
-    FilterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    FilterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-    
-    local FilterPadding = Instance.new("UIPadding", FilterBar)
-    FilterPadding.PaddingLeft = UDim.new(0, 12)
-    FilterPadding.PaddingRight = UDim.new(0, 12)
-    
-    -- 🔴 HELPER: CREATE BUTTON
-    local function createButton(name, displayText)
-        local btn = Instance.new("TextButton", FilterBar)
-        btn.Name = name
-        btn.Text = displayText
-        btn.AutoButtonColor = false
-        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-        btn.BorderSizePixel = 0
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 12
-        btn.Size = UDim2.new(0, 0, 0.7, 0)
-        btn.AutomaticSize = Enum.AutomaticSize.X
-        
-        local btnCorner = Instance.new("UICorner", btn)
-        btnCorner.CornerRadius = UDim.new(0, 8)
-        
-        local btnPadding = Instance.new("UIPadding", btn)
-        btnPadding.PaddingLeft = UDim.new(0, 12)
-        btnPadding.PaddingRight = UDim.new(0, 12)
-        
-        return btn
-    end
-    
-    -- 🔴 CREATE FILTER BUTTONS
-    local RecommendedBtn = createButton("Recommended", "⭐ Recommended")
-    local AllBtn = createButton("All", "All")
-    local NoKeyBtn = createButton("NoKey", "No Key")
-    local KeyBtn = createButton("KeyRequired", "Key Required")
-    local TrendingBtn = createButton("Trending", "🔥 Trending")
-    
-    -- 🔴 UPDATE ACTIVE BUTTONS
-    local function updateUI()
-        for _, btn in pairs(FilterBar:GetChildren()) do
-            if btn:IsA("TextButton") then
-                if btn.Name == CurrentFilter then
-                    btn.BackgroundColor3 = Color3.fromRGB(160, 85, 255)
-                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                else
-                    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-                end
-            end
-        end
-    end
-    
-    -- 🔴 FILTER LOGIC (UPDATED TO REQUIREMENTS)
-    local function filterScripts(scriptList)
-        local filtered = {}
-        
-        for _, scriptData in pairs(scriptList) do
-            local passes = true
-            
-            if CurrentFilter == "Recommended" then
-                -- ⭐ Current Game + Verified + High Views
-                passes = (scriptData.verified == true)
-                    and ((tonumber(scriptData.views) or 0) >= 3000)
-                    
-            elseif CurrentFilter == "NoKey" then
-                -- 🔓 Current Game + No Key + Verified
-                passes = (scriptData.key == false or scriptData.key == nil)
-                    and (scriptData.verified == true)
-                    
-            elseif CurrentFilter == "KeyRequired" then
-                -- 🔑 Current Game + (Key OR Paid)
-                passes = (scriptData.key == true) or (scriptData.scriptType == "paid")
-                    
-            elseif CurrentFilter == "Trending" then
-                -- 🔥 Current Game + High Views
-                passes = ((tonumber(scriptData.views) or 0) >= 1000)
-                
-            -- "All" = Universal (NO filters)
-            end
-            
-            if passes then
-                table.insert(filtered, scriptData)
-            end
-        end
-        
-        return filtered
-    end
-    
-    -- 🔴 SORT LOGIC
-    local function sortScripts(scriptList)
-        table.sort(scriptList, function(a, b)
-            local viewsA = tonumber(a.views) or 0
-            local viewsB = tonumber(b.views) or 0
-            return viewsA > viewsB
-        end)
-        
-        return scriptList
-    end
-    
-    -- 🔴 RENDER SCRIPTS
-    local function renderScripts(scriptList)
-        -- Clear ALL
-        for _, v in pairs(Scripts:GetChildren()) do
-            if v:IsA("CanvasGroup") or v:IsA("TextLabel") then 
-                v:Destroy() 
-            end
-        end
-        
-        if not scriptList or #scriptList == 0 then
-            local noResults = Instance.new("TextLabel", Scripts)
-            noResults.Name = "ErrorMessage"
-            noResults.Text = "No scripts found"
-            noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
-            noResults.BackgroundTransparency = 1
-            noResults.Size = UDim2.new(1, 0, 0, 50)
-            noResults.Font = Enum.Font.GothamBold
-            noResults.TextSize = 16
-            
-            task.delay(2, function()
-                if noResults and noResults.Parent then
-                    noResults:Destroy()
-                end
-            end)
-            return
-        end
-        
-        local verifyicon = utf8.char(57344)
-        
-        for i, scriptData in pairs(scriptList) do
-            task.spawn(function()
-                local new = script.SearchTemplate:Clone()
-                new.Parent = Scripts
-                new.Name = scriptData.title
-                new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
-                new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
-                
-                new.Tags.Key.Visible = scriptData.key or false
-                new.Tags.Universal.Visible = scriptData.isUniversal or false
-                new.Tags.Patched.Visible = scriptData.isPatched or false
-                new.Tags.Paid.Visible = scriptData.scriptType == "paid"
-                
-                new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
-                    UIEvents.Executor.RunCode(scriptData.script)()
-                end)
-                
-                new.Misc.Panel.Save.MouseButton1Click:Connect(function()
-                    UIEvents.Saved.SaveFile(scriptData.title, scriptData.script)
-                end)
-            end)
-        end
-    end
-    
-    -- 🔴 MAIN UPDATE FUNCTION (FIXED TO REQUIREMENTS)
-    local function Update(query)
-        if isUpdating then return end
-        isUpdating = true
-        
-        query = query or ""
-        local isEmpty = #(string.gsub(query, "[%s]", "")) <= 0
-        
-        local endpoint
-        local useCurrentGame = false
-        
-        -- 🟢 UPDATED LOGIC TO MATCH REQUIREMENTS
-        if not isEmpty then
-            -- User typed search = fetch ALL (50 scripts)
-            local encodedQuery = game:GetService("HttpService"):UrlEncode(query)
-            endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=50"
-            print("[Search] Searching for:", query)
-        else
-            -- Empty search = use filters
-            if CurrentFilter == "All" then
-                -- 🌐 All = Universal (NO game filter)
-                endpoint = "https://scriptblox.com/api/script/fetch?max=30"
-                print("[Search] Fetching universal scripts (All filter)")
-            else
-                -- All other filters = Current Game
-                if currentGameName ~= "Universal" then
-                    local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
-                    endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
-                    useCurrentGame = true
-                    print("[Search] Fetching scripts for current game:", currentGameName, "with filter:", CurrentFilter)
-                else
-                    -- Fallback to universal if game unknown
-                    endpoint = "https://scriptblox.com/api/script/fetch?max=30"
-                    print("[Search] Game unknown, using universal for filter:", CurrentFilter)
-                end
-            end
-        end
-        
-        -- Fetch
-        local success, scriptJson = pcall(function()
-            return game:HttpGet(endpoint)
-        end)
-        
-        if not success then
-            warn("[Search] HTTP request failed")
-            isUpdating = false
-            renderScripts({})
-            return
-        end
-        
-        local success2, scripts = pcall(function()
-            return game:GetService("HttpService"):JSONDecode(scriptJson)
-        end)
-        
-        if not success2 or not scripts.result or not scripts.result.scripts then
-            warn("[Search] Invalid JSON response")
-            isUpdating = false
-            renderScripts({})
-            return
-        end
-        
-        CachedScripts = scripts.result.scripts
-        print("[Search] Fetched", #CachedScripts, "scripts")
-        
-        -- 🟢 FALLBACK: If current game has no scripts, try universal (except for "All" filter)
-        if useCurrentGame and isEmpty and CurrentFilter ~= "All" and (#CachedScripts == 0 or #CachedScripts < 3) then
-            print("[Search] No scripts for current game, trying universal...")
-            
-            local fallbackSuccess, fallbackJson = pcall(function()
-                return game:HttpGet("https://scriptblox.com/api/script/fetch?max=30")
-            end)
-            
-            if fallbackSuccess then
-                local fallbackSuccess2, fallbackScripts = pcall(function()
-                    return game:GetService("HttpService"):JSONDecode(fallbackJson)
-                end)
-                
-                if fallbackSuccess2 and fallbackScripts.result and fallbackScripts.result.scripts then
-                    CachedScripts = fallbackScripts.result.scripts
-                    print("[Search] Fallback: Fetched", #CachedScripts, "universal scripts")
-                end
-            end
-        end
-        
-        -- Apply filters and sort
-        local finalScripts
-        if isEmpty then
-            finalScripts = filterScripts(CachedScripts)
-            finalScripts = sortScripts(finalScripts)
-            print("[Search] After", CurrentFilter, "filter:", #finalScripts, "scripts")
-        else
-            finalScripts = sortScripts(CachedScripts)
-        end
-        
-        -- Render
-        renderScripts(finalScripts)
-        
-        task.wait(0.3)
-        isUpdating = false
-    end
-    
-    -- 🔴 FILTER EVENTS
-    RecommendedBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "Recommended"
-        SearchBox.Text = ""
-        updateUI()
-        Update("")
-    end)
-    
-    AllBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "All"
-        SearchBox.Text = ""
-        updateUI()
-        Update("")
-    end)
-    
-    NoKeyBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "NoKey"
-        SearchBox.Text = ""
-        updateUI()
-        Update("")
-    end)
-    
-    KeyBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "KeyRequired"
-        SearchBox.Text = ""
-        updateUI()
-        Update("")
-    end)
-    
-    TrendingBtn.MouseButton1Click:Connect(function()
-        CurrentFilter = "Trending"
-        SearchBox.Text = ""
-        updateUI()
-        Update("")
-    end)
-    
-    -- 🔴 SEARCH BOX EVENT
-    SearchBox.FocusLost:Connect(function()
-        Update(SearchBox.Text)
-    end)
-    
-    -- 🔴 INITIAL LOAD
-    updateUI()
-    Update("")
+	local Search = Pages:WaitForChild("Search");
+	local Scripts = Search.Scripts;
+	local SearchBox = Search.TextBox;
+	
+	-- 🔴 STATE
+	local CurrentFilter = "All"
+	local CachedScripts = {}
+	local isUpdating = false
+	local lastEndpoint = "" -- Track what we last fetched
+	
+	-- 🔴 DETECT CURRENT GAME (IMPROVED)
+	local currentGameName = nil
+	local currentGameId = game.PlaceId
+	
+	-- Try multiple methods to get game name
+	local function detectGame()
+		-- Method 1: MarketplaceService (most reliable)
+		local success, gameInfo = pcall(function()
+			return game:GetService("MarketplaceService"):GetProductInfo(currentGameId)
+		end)
+		
+		if success and gameInfo and gameInfo.Name then
+			currentGameName = gameInfo.Name
+			print("[Search] ✅ Detected game:", currentGameName, "| PlaceId:", currentGameId)
+			return currentGameName
+		end
+		
+		-- Method 2: Use game name directly
+		if game.Name and game.Name ~= "" and game.Name ~= "Game" then
+			currentGameName = game.Name
+			print("[Search] ✅ Using game.Name:", currentGameName)
+			return currentGameName
+		end
+		
+		-- Method 3: Fallback to Universal
+		currentGameName = nil
+		warn("[Search] ⚠️ Could not detect game, will use Universal")
+		return nil
+	end
+	
+	detectGame()
+	
+	-- 🔴 CREATE FILTER BAR
+	local FilterBar = Instance.new("Frame", Search)
+	FilterBar.Name = "FilterBar"
+	FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+	FilterBar.BorderSizePixel = 0
+	FilterBar.Size = UDim2.new(1, 0, 0, 50)
+	FilterBar.LayoutOrder = -2
+	
+	local FilterBarCorner = Instance.new("UICorner", FilterBar)
+	FilterBarCorner.CornerRadius = UDim.new(0, 12)
+	
+	local FilterBarStroke = Instance.new("UIStroke", FilterBar)
+	FilterBarStroke.Transparency = 0.8
+	FilterBarStroke.Color = Color3.fromRGB(160, 85, 255)
+	
+	local FilterLayout = Instance.new("UIListLayout", FilterBar)
+	FilterLayout.FillDirection = Enum.FillDirection.Horizontal
+	FilterLayout.Padding = UDim.new(0, 8)
+	FilterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	FilterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+	
+	local FilterPadding = Instance.new("UIPadding", FilterBar)
+	FilterPadding.PaddingLeft = UDim.new(0, 12)
+	FilterPadding.PaddingRight = UDim.new(0, 12)
+	
+	-- 🔴 HELPER: CREATE BUTTON
+	local function createButton(name, displayText)
+		local btn = Instance.new("TextButton", FilterBar)
+		btn.Name = name
+		btn.Text = displayText
+		btn.AutoButtonColor = false
+		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+		btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+		btn.BorderSizePixel = 0
+		btn.Font = Enum.Font.GothamBold
+		btn.TextSize = 12
+		btn.Size = UDim2.new(0, 0, 0.7, 0)
+		btn.AutomaticSize = Enum.AutomaticSize.X
+		
+		local btnCorner = Instance.new("UICorner", btn)
+		btnCorner.CornerRadius = UDim.new(0, 8)
+		
+		local btnPadding = Instance.new("UIPadding", btn)
+		btnPadding.PaddingLeft = UDim.new(0, 12)
+		btnPadding.PaddingRight = UDim.new(0, 12)
+		
+		return btn
+	end
+	
+	-- 🔴 CREATE FILTER BUTTONS
+	local RecommendedBtn = createButton("Recommended", "⭐ Recommended")
+	local AllBtn = createButton("All", "All")
+	local NoKeyBtn = createButton("NoKey", "No Key")
+	local KeyBtn = createButton("KeyRequired", "Key Required")
+	local TrendingBtn = createButton("Trending", "🔥 Trending")
+	
+	-- 🔴 UPDATE ACTIVE BUTTONS
+	local function updateUI()
+		for _, btn in pairs(FilterBar:GetChildren()) do
+			if btn:IsA("TextButton") then
+				if btn.Name == CurrentFilter then
+					btn.BackgroundColor3 = Color3.fromRGB(160, 85, 255)
+					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+				else
+					btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+					btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+				end
+			end
+		end
+	end
+	
+	-- 🔴 FILTER LOGIC (FIXED - Now works on already-fetched scripts)
+	local function filterScripts(scriptList)
+		local filtered = {}
+		
+		print("[Filter] Filtering", #scriptList, "scripts with filter:", CurrentFilter)
+		
+		for _, scriptData in pairs(scriptList) do
+			local passes = false
+			
+			if CurrentFilter == "Recommended" then
+				-- ⭐ Verified + High Views
+				passes = (scriptData.verified == true)
+					and ((tonumber(scriptData.views) or 0) >= 3000)
+				
+			elseif CurrentFilter == "NoKey" then
+				-- 🔓 No Key + Verified
+				passes = (scriptData.key == false or scriptData.key == nil)
+					and (scriptData.verified == true)
+				
+			elseif CurrentFilter == "KeyRequired" then
+				-- 🔑 (Key OR Paid) + Verified
+				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
+					and (scriptData.verified == true)
+				
+			elseif CurrentFilter == "Trending" then
+				-- 🔥 High Views
+				passes = ((tonumber(scriptData.views) or 0) >= 1000)
+			
+			elseif CurrentFilter == "All" then
+				-- Show everything
+				passes = true
+			end
+			
+			if passes then
+				table.insert(filtered, scriptData)
+			end
+		end
+		
+		print("[Filter] ✅ After filtering:", #filtered, "scripts match", CurrentFilter)
+		return filtered
+	end
+	
+	-- 🔴 SORT LOGIC
+	local function sortScripts(scriptList)
+		table.sort(scriptList, function(a, b)
+			local viewsA = tonumber(a.views) or 0
+			local viewsB = tonumber(b.views) or 0
+			return viewsA > viewsB
+		end)
+		return scriptList
+	end
+	
+	-- 🔴 RENDER SCRIPTS
+	local function renderScripts(scriptList)
+		-- Clear old scripts
+		for _, v in pairs(Scripts:GetChildren()) do
+			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then 
+				v:Destroy() 
+			end
+		end
+		
+		if not scriptList or #scriptList == 0 then
+			local noResults = Instance.new("TextLabel", Scripts)
+			noResults.Name = "ErrorMessage"
+			noResults.Text = "No scripts found for " .. CurrentFilter
+			noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
+			noResults.BackgroundTransparency = 1
+			noResults.Size = UDim2.new(1, 0, 0, 50)
+			noResults.Font = Enum.Font.GothamBold
+			noResults.TextSize = 16
+			
+			task.delay(2, function()
+				if noResults and noResults.Parent then
+					noResults:Destroy()
+				end
+			end)
+			return
+		end
+		
+		local verifyicon = utf8.char(57344)
+		
+		for i, scriptData in pairs(scriptList) do
+			task.spawn(function()
+				local new = script.SearchTemplate:Clone()
+				new.Parent = Scripts
+				new.Name = scriptData.title
+				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
+				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
+				
+				new.Tags.Key.Visible = scriptData.key or false
+				new.Tags.Universal.Visible = scriptData.isUniversal or false
+				new.Tags.Patched.Visible = scriptData.isPatched or false
+				new.Tags.Paid.Visible = scriptData.scriptType == "paid"
+				
+				new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
+					UIEvents.Executor.RunCode(scriptData.script)()
+				end)
+				
+				new.Misc.Panel.Save.MouseButton1Click:Connect(function()
+					UIEvents.Saved.SaveFile(scriptData.title, scriptData.script)
+				end)
+			end)
+		end
+		
+		print("[Render] ✅ Displayed", #scriptList, "scripts")
+	end
+	
+	-- 🔴 MAIN UPDATE FUNCTION (COMPLETELY FIXED)
+	local function Update(query, forceRefresh)
+		if isUpdating then 
+			print("[Update] ⚠️ Already updating, skipping...")
+			return 
+		end
+		isUpdating = true
+		
+		query = query or ""
+		local isEmpty = #(string.gsub(query, "[%s]", "")) <= 0
+		
+		local endpoint = ""
+		local needsNewFetch = false
+		
+		-- 🟢 DETERMINE WHAT TO FETCH
+		if not isEmpty then
+			-- 🔍 USER SEARCH - Fetch from search API
+			local encodedQuery = game:GetService("HttpService"):UrlEncode(query)
+			endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=50"
+			needsNewFetch = true
+			print("[Update] 🔍 Search mode:", query)
+			
+		elseif CurrentFilter == "All" then
+			-- 🌐 ALL FILTER - Fetch universal scripts
+			endpoint = "https://scriptblox.com/api/script/fetch?max=50"
+			needsNewFetch = (lastEndpoint ~= endpoint) or forceRefresh
+			print("[Update] 🌐 All filter - Universal scripts")
+			
+		else
+			-- 🎮 GAME-SPECIFIC FILTERS
+			if currentGameName then
+				local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
+				endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=50"
+				needsNewFetch = (lastEndpoint ~= endpoint) or forceRefresh
+				print("[Update] 🎮 Game filter:", currentGameName, "| Filter:", CurrentFilter)
+			else
+				-- No game detected, fallback to universal
+				endpoint = "https://scriptblox.com/api/script/fetch?max=50"
+				needsNewFetch = (lastEndpoint ~= endpoint) or forceRefresh
+				print("[Update] ⚠️ No game detected, using universal for filter:", CurrentFilter)
+			end
+		end
+		
+		-- 🟢 FETCH IF NEEDED
+		if needsNewFetch then
+			print("[Update] 📡 Fetching from:", endpoint)
+			
+			local success, scriptJson = pcall(function()
+				return game:HttpGet(endpoint)
+			end)
+			
+			if not success then
+				warn("[Update] ❌ HTTP request failed")
+				isUpdating = false
+				renderScripts({})
+				return
+			end
+			
+			local success2, scripts = pcall(function()
+				return game:GetService("HttpService"):JSONDecode(scriptJson)
+			end)
+			
+			if not success2 or not scripts.result or not scripts.result.scripts then
+				warn("[Update] ❌ Invalid JSON response")
+				isUpdating = false
+				renderScripts({})
+				return
+			end
+			
+			CachedScripts = scripts.result.scripts
+			lastEndpoint = endpoint
+			print("[Update] ✅ Fetched", #CachedScripts, "scripts from API")
+		else
+			print("[Update] 📦 Using cached", #CachedScripts, "scripts")
+		end
+		
+		-- 🟢 APPLY FILTERS
+		local finalScripts
+		if isEmpty then
+			-- Apply filter to cached scripts
+			finalScripts = filterScripts(CachedScripts)
+			finalScripts = sortScripts(finalScripts)
+		else
+			-- Search results, just sort
+			finalScripts = sortScripts(CachedScripts)
+		end
+		
+		-- 🟢 RENDER
+		renderScripts(finalScripts)
+		
+		task.wait(0.1)
+		isUpdating = false
+	end
+	
+	-- 🔴 FILTER BUTTON EVENTS (FIXED - Force refresh on filter change)
+	RecommendedBtn.MouseButton1Click:Connect(function()
+		if CurrentFilter == "Recommended" then return end
+		CurrentFilter = "Recommended"
+		SearchBox.Text = ""
+		updateUI()
+		Update("", true) -- Force refresh
+	end)
+	
+	AllBtn.MouseButton1Click:Connect(function()
+		if CurrentFilter == "All" then return end
+		CurrentFilter = "All"
+		SearchBox.Text = ""
+		updateUI()
+		Update("", true) -- Force refresh
+	end)
+	
+	NoKeyBtn.MouseButton1Click:Connect(function()
+		if CurrentFilter == "NoKey" then return end
+		CurrentFilter = "NoKey"
+		SearchBox.Text = ""
+		updateUI()
+		Update("", true) -- Force refresh
+	end)
+	
+	KeyBtn.MouseButton1Click:Connect(function()
+		if CurrentFilter == "KeyRequired" then return end
+		CurrentFilter = "KeyRequired"
+		SearchBox.Text = ""
+		updateUI()
+		Update("", true) -- Force refresh
+	end)
+	
+	TrendingBtn.MouseButton1Click:Connect(function()
+		if CurrentFilter == "Trending" then return end
+		CurrentFilter = "Trending"
+		SearchBox.Text = ""
+		updateUI()
+		Update("", true) -- Force refresh
+	end)
+	
+	-- 🔴 SEARCH BOX EVENT
+	SearchBox.FocusLost:Connect(function()
+		Update(SearchBox.Text)
+	end)
+	
+	-- 🔴 INITIAL LOAD
+	updateUI()
+	Update("", true)
+	
+	-- 🔴 DEBUG: Show detected game in UI
+	task.spawn(function()
+		task.wait(1)
+		if currentGameName then
+			createNotification("Detected: " .. currentGameName, "Info", 3)
+		else
+			createNotification("Using Universal Scripts", "Info", 3)
+		end
+	end)
 end;
 
 	InitTabs.Nav = function()
