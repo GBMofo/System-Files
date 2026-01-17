@@ -5587,7 +5587,7 @@ themeStroke.Thickness = 1
 		end)
 		
 		-- Censored Name
-		local nameCard = createCard("Censored Name In UI", "Hide your username from the UI", -97)
+		local nameCard = createCard("Censor Name", "Hide your username from the UI", -97)
 		createToggle(nameCard, function(enabled)
 			if enabled then
 				Main.Title.TextLabel.Text = "Hello, User!"
