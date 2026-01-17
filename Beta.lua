@@ -1119,6 +1119,52 @@ G2L["6c"] = Instance.new("UIAspectRatioConstraint", G2L["68"]);
 G2L["6c"]["DominantAxis"] = Enum.DominantAxis.Height;
 G2L["6c"]["Name"] = [[SizeRatio]];
 
+-- ========================================
+-- CONSOLE NAV BUTTON START
+-- ========================================
+
+-- StarterGui.ScreenGui.Main.Leftside.Nav.Page1.Console
+G2L["console_nav_btn"] = Instance.new("TextButton", G2L["53"]);
+G2L["console_nav_btn"]["Active"] = false;
+G2L["console_nav_btn"]["BorderSizePixel"] = 0;
+G2L["console_nav_btn"]["Modal"] = true;
+G2L["console_nav_btn"]["BackgroundColor3"] = Color3.fromRGB(26, 31, 36);
+G2L["console_nav_btn"]["Selectable"] = false;
+G2L["console_nav_btn"]["Size"] = UDim2.new(1, 0, 1, 0);
+G2L["console_nav_btn"]["LayoutOrder"] = 4;
+G2L["console_nav_btn"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["console_nav_btn"]["Text"] = [[]];
+G2L["console_nav_btn"]["Name"] = [[Console]];
+
+-- StarterGui.ScreenGui.Main.Leftside.Nav.Page1.Console.UICorner
+G2L["console_nav_corner"] = Instance.new("UICorner", G2L["console_nav_btn"]);
+G2L["console_nav_corner"]["CornerRadius"] = UDim.new(1, 0);
+
+-- StarterGui.ScreenGui.Main.Leftside.Nav.Page1.Console.Icon
+G2L["console_nav_icon"] = Instance.new("ImageLabel", G2L["console_nav_btn"]);
+G2L["console_nav_icon"]["ZIndex"] = 3;
+G2L["console_nav_icon"]["BorderSizePixel"] = 0;
+G2L["console_nav_icon"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["console_nav_icon"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["console_nav_icon"]["Image"] = [[rbxassetid://129234394319564]];
+G2L["console_nav_icon"]["Size"] = UDim2.new(1, 0, 1, 0);
+G2L["console_nav_icon"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["console_nav_icon"]["BackgroundTransparency"] = 1;
+G2L["console_nav_icon"]["Name"] = [[Icon]];
+G2L["console_nav_icon"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+-- StarterGui.ScreenGui.Main.Leftside.Nav.Page1.Console.Icon.UIScale
+G2L["console_nav_icon_scale"] = Instance.new("UIScale", G2L["console_nav_icon"]);
+G2L["console_nav_icon_scale"]["Scale"] = 0.5;
+
+-- StarterGui.ScreenGui.Main.Leftside.Nav.Page1.Console.SizeRatio
+G2L["console_nav_aspect"] = Instance.new("UIAspectRatioConstraint", G2L["console_nav_btn"]);
+G2L["console_nav_aspect"]["DominantAxis"] = Enum.DominantAxis.Height;
+G2L["console_nav_aspect"]["Name"] = [[SizeRatio]];
+
+-- ========================================
+-- CONSOLE NAV BUTTON END
+-- ========================================
 
 -- StarterGui.ScreenGui.Main.Leftside.Nav.Page1.UIListLayout1
 G2L["6d"] = Instance.new("UIListLayout", G2L["53"]);
@@ -2824,6 +2870,117 @@ G2L["11c"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 G2L["11d"] = Instance.new("UIScale", G2L["11c"]);
 G2L["11d"]["Scale"] = 0.5;
 
+-- ========================================
+-- CONSOLE PAGE START
+-- ========================================
+
+-- StarterGui.ScreenGui.Main.Pages.Console
+G2L["console_page"] = Instance.new("Frame", G2L["78"])
+G2L["console_page"]["BorderSizePixel"] = 0
+G2L["console_page"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255)
+G2L["console_page"]["Size"] = UDim2.new(1, 0, 1, 0)
+G2L["console_page"]["BorderColor3"] = Color3.fromRGB(0, 0, 0)
+G2L["console_page"]["Name"] = [[Console]]
+G2L["console_page"]["LayoutOrder"] = 4
+G2L["console_page"]["BackgroundTransparency"] = 1
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar
+G2L["console_topbar"] = Instance.new("Frame", G2L["console_page"])
+G2L["console_topbar"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25)
+G2L["console_topbar"]["Size"] = UDim2.new(1, 0, 0, 50)
+G2L["console_topbar"]["Position"] = UDim2.new(0, 0, 0, 0)
+G2L["console_topbar"]["BorderSizePixel"] = 0
+G2L["console_topbar"]["Name"] = [[TopBar]]
+G2L["console_topbar"]["LayoutOrder"] = -1
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar.UICorner
+G2L["console_topbar_corner"] = Instance.new("UICorner", G2L["console_topbar"])
+G2L["console_topbar_corner"]["CornerRadius"] = UDim.new(0, 16)
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar.UIStroke
+G2L["console_topbar_stroke"] = Instance.new("UIStroke", G2L["console_topbar"])
+G2L["console_topbar_stroke"]["Transparency"] = 0.8
+G2L["console_topbar_stroke"]["Color"] = Color3.fromRGB(160, 85, 255)
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar.UIListLayout
+G2L["console_topbar_layout"] = Instance.new("UIListLayout", G2L["console_topbar"])
+G2L["console_topbar_layout"]["FillDirection"] = Enum.FillDirection.Horizontal
+G2L["console_topbar_layout"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Right
+G2L["console_topbar_layout"]["Padding"] = UDim.new(0, 8)
+G2L["console_topbar_layout"]["VerticalAlignment"] = Enum.VerticalAlignment.Center
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar.UIPadding
+G2L["console_topbar_padding"] = Instance.new("UIPadding", G2L["console_topbar"])
+G2L["console_topbar_padding"]["PaddingRight"] = UDim.new(0, 12)
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar.Clear
+G2L["console_clear"] = Instance.new("TextButton", G2L["console_topbar"])
+G2L["console_clear"]["BackgroundColor3"] = Color3.fromRGB(255, 80, 80)
+G2L["console_clear"]["Size"] = UDim2.new(0, 70, 0, 32)
+G2L["console_clear"]["BorderSizePixel"] = 0
+G2L["console_clear"]["Text"] = [[Clear]]
+G2L["console_clear"]["Name"] = [[Clear]]
+G2L["console_clear"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+G2L["console_clear"]["Font"] = Enum.Font.GothamBold
+G2L["console_clear"]["TextSize"] = 12
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar.Clear.UICorner
+G2L["console_clear_corner"] = Instance.new("UICorner", G2L["console_clear"])
+G2L["console_clear_corner"]["CornerRadius"] = UDim.new(0, 8)
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar.Copy
+G2L["console_copy"] = Instance.new("TextButton", G2L["console_topbar"])
+G2L["console_copy"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255)
+G2L["console_copy"]["Size"] = UDim2.new(0, 70, 0, 32)
+G2L["console_copy"]["BorderSizePixel"] = 0
+G2L["console_copy"]["Text"] = [[Copy]]
+G2L["console_copy"]["Name"] = [[Copy]]
+G2L["console_copy"]["TextColor3"] = Color3.fromRGB(255, 255, 255)
+G2L["console_copy"]["Font"] = Enum.Font.GothamBold
+G2L["console_copy"]["TextSize"] = 12
+
+-- StarterGui.ScreenGui.Main.Pages.Console.TopBar.Copy.UICorner
+G2L["console_copy_corner"] = Instance.new("UICorner", G2L["console_copy"])
+G2L["console_copy_corner"]["CornerRadius"] = UDim.new(0, 8)
+
+-- StarterGui.ScreenGui.Main.Pages.Console.LogArea
+G2L["console_log"] = Instance.new("ScrollingFrame", G2L["console_page"])
+G2L["console_log"]["Active"] = true
+G2L["console_log"]["ScrollingDirection"] = Enum.ScrollingDirection.Y
+G2L["console_log"]["BorderSizePixel"] = 0
+G2L["console_log"]["CanvasSize"] = UDim2.new(0, 0, 0, 0)
+G2L["console_log"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25)
+G2L["console_log"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y
+G2L["console_log"]["Size"] = UDim2.new(1, 0, 1, -60)
+G2L["console_log"]["Position"] = UDim2.new(0, 0, 0, 57)
+G2L["console_log"]["ScrollBarThickness"] = 4
+G2L["console_log"]["BackgroundTransparency"] = 0.4
+G2L["console_log"]["Name"] = [[LogArea]]
+
+-- StarterGui.ScreenGui.Main.Pages.Console.LogArea.UICorner
+G2L["console_log_corner"] = Instance.new("UICorner", G2L["console_log"])
+G2L["console_log_corner"]["CornerRadius"] = UDim.new(0, 16)
+
+-- StarterGui.ScreenGui.Main.Pages.Console.LogArea.UIStroke
+G2L["console_log_stroke"] = Instance.new("UIStroke", G2L["console_log"])
+G2L["console_log_stroke"]["Transparency"] = 0.8
+G2L["console_log_stroke"]["Color"] = Color3.fromRGB(160, 85, 255)
+
+-- StarterGui.ScreenGui.Main.Pages.Console.LogArea.UIListLayout
+G2L["console_log_layout"] = Instance.new("UIListLayout", G2L["console_log"])
+G2L["console_log_layout"]["Padding"] = UDim.new(0, 4)
+G2L["console_log_layout"]["SortOrder"] = Enum.SortOrder.LayoutOrder
+
+-- StarterGui.ScreenGui.Main.Pages.Console.LogArea.UIPadding
+G2L["console_log_padding"] = Instance.new("UIPadding", G2L["console_log"])
+G2L["console_log_padding"]["PaddingTop"] = UDim.new(0, 8)
+G2L["console_log_padding"]["PaddingRight"] = UDim.new(0, 8)
+G2L["console_log_padding"]["PaddingLeft"] = UDim.new(0, 8)
+G2L["console_log_padding"]["PaddingBottom"] = UDim.new(0, 8)
+
+-- ========================================
+-- CONSOLE PAGE END
+-- ========================================
 
 -- StarterGui.ScreenGui.Main.EnableFrame
 G2L["11e"] = Instance.new("Frame", G2L["3f"]);
@@ -5231,6 +5388,86 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end)
 	end;
+
+-- ========================================
+	-- CONSOLE INIT START
+	-- ========================================
+	
+	InitTabs.Console = function()
+		local Console = Pages:WaitForChild("Console");
+		local LogArea = Console:WaitForChild("LogArea");
+		local TopBar = Console:WaitForChild("TopBar");
+		local ClearBtn = TopBar:WaitForChild("Clear");
+		local CopyBtn = TopBar:WaitForChild("Copy");
+		
+		local AutoScroll = true;
+		
+		-- Log Function
+		local function addLog(message, logType)
+			local colors = {
+				info = Color3.fromRGB(85, 255, 85),
+				warn = Color3.fromRGB(255, 200, 85),
+				error = Color3.fromRGB(255, 85, 85),
+				default = Color3.fromRGB(200, 200, 200)
+			};
+			
+			local color = colors[logType] or colors.default;
+			
+			local logLabel = Instance.new("TextLabel", LogArea);
+			logLabel.BackgroundTransparency = 1;
+			logLabel.Size = UDim2.new(1, -16, 0, 0);
+			logLabel.AutomaticSize = Enum.AutomaticSize.Y;
+			logLabel.Font = Enum.Font.RobotoMono;
+			logLabel.TextSize = 12;
+			logLabel.TextColor3 = color;
+			logLabel.TextXAlignment = Enum.TextXAlignment.Left;
+			logLabel.TextYAlignment = Enum.TextYAlignment.Top;
+			logLabel.TextWrapped = true;
+			logLabel.Text = message;
+			logLabel.RichText = true;
+			
+			if AutoScroll then
+				task.wait();
+				LogArea.CanvasPosition = Vector2.new(0, LogArea.AbsoluteCanvasSize.Y);
+			end
+		end
+		
+		-- Clear Button
+		ClearBtn.MouseButton1Click:Connect(function()
+			for _, child in pairs(LogArea:GetChildren()) do
+				if child:IsA("TextLabel") then
+					child:Destroy();
+				end
+			end
+		end);
+		
+		-- Copy Button
+		CopyBtn.MouseButton1Click:Connect(function()
+			local fullText = "";
+			for _, child in pairs(LogArea:GetChildren()) do
+				if child:IsA("TextLabel") then
+					fullText = fullText .. child.Text .. "\n";
+				end
+			end
+			if setclipboard then
+				setclipboard(fullText);
+				createNotification("Copied to Clipboard", "Success", 3);
+			else
+				createNotification("Clipboard not supported", "Error", 3);
+			end
+		end);
+		
+		-- Expose globally for logging
+		getgenv().ConsoleLog = addLog;
+		
+		-- Test logs on load
+		addLog("[INFO] Console Ready", "info");
+		addLog("[SYSTEM] Punk X Executor Loaded", "default");
+	end;
+	
+	-- ========================================
+	-- CONSOLE INIT END
+	-- ========================================
 
 	InitTabs.TabsData = function()
 		if not CLONED_Detectedly.isfolder("scripts") then
