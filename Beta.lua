@@ -649,44 +649,49 @@ G2L["3f"] = Instance.new("Frame", G2L["1"]);
 G2L["3f"]["Visible"] = false;
 G2L["3f"]["Active"] = true;
 G2L["3f"]["BorderSizePixel"] = 0;
-G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(30, 20, 50); -- Dark purple
+G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(30, 20, 50);
 G2L["3f"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["3f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3f"]["Name"] = [[Main]];
-G2L["3f"]["BackgroundTransparency"] = 0.3; -- Semi-transparent
+G2L["3f"]["BackgroundTransparency"] = 0.3;
 
--- Rounded corners
+-- Rounded corners (same as key box)
 local corner = Instance.new("UICorner", G2L["3f"]);
-corner.CornerRadius = UDim.new(0, 20);
+corner.CornerRadius = UDim.new(0, 16); -- Same 16px radius
 
--- Gradient (top lighter, bottom darker - like the image)
-local gradient = Instance.new("UIGradient", G2L["3f"]);
-gradient.Color = ColorSequence.new{
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 50, 120)),   -- Top: Lighter purple
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 25, 70))      -- Bottom: Darker purple
-};
-gradient.Rotation = 90; -- Vertical gradient
-
--- Glowing border (exactly like the image)
+-- Purple border stroke (same as key box)
 local borderStroke = Instance.new("UIStroke", G2L["3f"]);
-borderStroke.Color = Color3.fromRGB(180, 100, 255); -- Purple glow
-borderStroke.Thickness = 2;
-borderStroke.Transparency = 0.3;
+borderStroke.Thickness = 1; -- Same thickness
+borderStroke.Color = Color3.fromRGB(160, 85, 255); -- Same purple color
+borderStroke.Transparency = 0; -- Fully visible (no transparency)
 borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
 
--- Outer glow effect (soft purple aura around edges)
-local outerGlow = Instance.new("ImageLabel", G2L["3f"]);
-outerGlow.Name = "OuterGlow";
-outerGlow.Size = UDim2.new(1, 100, 1, 100); -- Extends 50px beyond frame
-outerGlow.Position = UDim2.new(0.5, 0, 0.5, 0);
-outerGlow.AnchorPoint = Vector2.new(0.5, 0.5);
-outerGlow.BackgroundTransparency = 1;
-outerGlow.Image = "rbxassetid://5028857472"; -- Soft glow texture
-outerGlow.ImageColor3 = Color3.fromRGB(160, 85, 255); -- Purple accent
-outerGlow.ImageTransparency = 0.5;
-outerGlow.ScaleType = Enum.ScaleType.Slice;
-outerGlow.SliceCenter = Rect.new(24, 24, 276, 276);
-outerGlow.ZIndex = -1; -- Behind frame
+-- 🌟 BACKGROUND GLOW (This is the key!)
+local glowFolder = Instance.new("Folder", G2L["3f"]);
+glowFolder.Name = "Folder";
+
+local backgroundGlow = Instance.new("ImageLabel", glowFolder);
+backgroundGlow.Name = "Background";
+backgroundGlow.BorderSizePixel = 0;
+backgroundGlow.SliceCenter = Rect.new(65, 90, 335, 335);
+backgroundGlow.SliceScale = 0.12;
+backgroundGlow.ScaleType = Enum.ScaleType.Slice;
+backgroundGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
+backgroundGlow.ImageColor3 = Color3.fromRGB(160, 85, 255); -- Purple glow
+backgroundGlow.Image = "rbxassetid://99306270294516"; -- Same glow texture
+backgroundGlow.Size = UDim2.new(1, 24, 1, 24); -- Extends beyond frame
+backgroundGlow.BorderColor3 = Color3.fromRGB(0, 0, 0);
+backgroundGlow.BackgroundTransparency = 1;
+backgroundGlow.Position = UDim2.new(0, -12, 0, -12); -- Offset for glow
+backgroundGlow.ZIndex = -1; -- Behind everything
+
+-- Gradient (optional - for the purple fade)
+local gradient = Instance.new("UIGradient", G2L["3f"]);
+gradient.Color = ColorSequence.new{
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 50, 120)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(40, 25, 70))
+};
+gradient.Rotation = 90;
 
 -- StarterGui.ScreenGui.Main.Title
 G2L["40"] = Instance.new("Frame", G2L["3f"]);
