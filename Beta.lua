@@ -5564,7 +5564,7 @@ InitTabs.Search = function()
 		return scriptList
 	end
 	
-	-- 🔴 RENDER (FIXED: Small Pill, Curved, Bottom-Right Placement)
+	-- 🔴 RENDER (FIXED: Moved Left to avoid Save Icon)
 	local function renderScripts(scriptList)
 		for _, v in pairs(Scripts:GetChildren()) do
 			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
@@ -5597,14 +5597,13 @@ InitTabs.Search = function()
 				local StatsPill = Instance.new("Frame", new.Misc)
 				StatsPill.Name = "StatsPill"
 				StatsPill.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-				StatsPill.BackgroundTransparency = 0.6 -- Semi-transparent dark
-				StatsPill.Size = UDim2.new(0, 0, 0, 22) -- Height 22, Width Auto
-				StatsPill.AutomaticSize = Enum.AutomaticSize.X -- Auto-width
+				StatsPill.BackgroundTransparency = 0.6
+				StatsPill.Size = UDim2.new(0, 0, 0, 22)
+				StatsPill.AutomaticSize = Enum.AutomaticSize.X
 				
-				-- 🟢 POSITION: Bottom Right (Left of the buttons)
-				-- We anchor it to the Bottom Right (1, 1) and offset it by -100px to avoid buttons
+				-- 🟢 POSITION ADJUSTED: Moved from -95 to -110
 				StatsPill.AnchorPoint = Vector2.new(1, 1) 
-				StatsPill.Position = UDim2.new(1, -95, 1, -8)
+				StatsPill.Position = UDim2.new(1, -110, 1, -8) -- Moved left away from Save icon
 				StatsPill.BorderSizePixel = 0
 				StatsPill.ZIndex = 5
 				
@@ -5612,7 +5611,7 @@ InitTabs.Search = function()
 				local PillCorner = Instance.new("UICorner", StatsPill)
 				PillCorner.CornerRadius = UDim.new(0, 6)
 				
-				-- 🟢 PADDING (Space inside the pill)
+				-- 🟢 PADDING
 				local PillPadding = Instance.new("UIPadding", StatsPill)
 				PillPadding.PaddingLeft = UDim.new(0, 8)
 				PillPadding.PaddingRight = UDim.new(0, 8)
