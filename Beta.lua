@@ -5106,35 +5106,104 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 			
 			-- ========================================
-			-- 6. UPDATE EDITOR PANEL ICONS
-			-- ========================================
-			if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
-				local panel = Pages.Editor.Panel
-				
-				-- Execute button icon
-				if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-					panel.Execute.Icon.ImageColor3 = color
-				end
-				
-				-- Spacer lines
-				if panel:FindFirstChild("Spacer1") then
-					panel.Spacer1.BackgroundColor3 = color
-				end
-				if panel:FindFirstChild("Spacer2") then
-					panel.Spacer2.BackgroundColor3 = color
-				end
-			end
+-- 6. UPDATE EDITOR PANEL ICONS
+-- ========================================
+if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
+    local panel = Pages.Editor.Panel
+    
+    -- Execute button icon
+    if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+        panel.Execute.Icon.ImageColor3 = color
+    end
+    
+    -- Spacer lines
+    if panel:FindFirstChild("Spacer1") then
+        panel.Spacer1.BackgroundColor3 = color
+    end
+    if panel:FindFirstChild("Spacer2") then
+        panel.Spacer2.BackgroundColor3 = color
+    end
+end
+
+-- ========================================
+-- 6B. UPDATE SEARCH SCRIPT CARDS (Execute/Save/Spacer)
+-- ========================================
+if Pages.Search and Pages.Search:FindFirstChild("Scripts") then
+    for _, card in pairs(Pages.Search.Scripts:GetChildren()) do
+        if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+            local panel = card.Misc:FindFirstChild("Panel")
+            if panel then
+                -- Execute button
+                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                    panel.Execute.Icon.ImageColor3 = color
+                end
+                -- Save button (keep grey)
+                -- Spacer line
+                if panel:FindFirstChild("Spacer1") then
+                    panel.Spacer1.BackgroundColor3 = color
+                end
+            end
+        end
+    end
+end
 			
 			-- ========================================
-			-- 7. UPDATE SEARCH FILTER PILLS
-			-- ========================================
-			if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-				for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-					if btn:IsA("TextButton") and btn.Name == CurrentFilter then
-						btn.BackgroundColor3 = color
-					end
-				end
-			end
+-- 7. UPDATE SEARCH FILTER PILLS (ALL BUTTONS)
+-- ========================================
+if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+        if btn:IsA("TextButton") then
+            if btn.Name == CurrentFilter then
+                -- Active button = theme color
+                btn.BackgroundColor3 = color
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                -- Inactive buttons stay grey (don't change)
+                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            end
+        end
+    end
+end
+
+-- ========================================
+-- 7B. UPDATE SAVED SCRIPT CARDS (Execute/AutoExec/Spacer)
+-- ========================================
+if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
+    for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
+        if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+            local panel = card.Misc:FindFirstChild("Panel")
+            if panel then
+                -- Execute button
+                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                    panel.Execute.Icon.ImageColor3 = color
+                end
+                -- Spacer line
+                if panel:FindFirstChild("Spacer") then
+                    panel.Spacer.BackgroundColor3 = color
+                end
+                -- AutoExec button (if active)
+                if panel:FindFirstChild("AutoExec") and panel.AutoExec:FindFirstChild("Icon") then
+                    local autoExecPath = "autoexec/" .. card.Name .. ".lua"
+                    if CLONED_Detectedly.isfile(autoExecPath) then
+                        -- If AutoExec is ON, update to green (don't change to theme color)
+                        -- Keep it green for visibility
+                    end
+                end
+            end
+        end
+    end
+end
+
+-- ========================================
+-- 7C. UPDATE FILTER BAR STROKE
+-- ========================================
+if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+    if stroke and stroke:IsA("UIStroke") then
+        stroke.Color = color
+    end
+end
 			
 			-- ========================================
 			-- 8. UPDATE HOME PAGE KEY BOX
@@ -5206,10 +5275,9 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		
 		LoadTheme()
-		
-		-- ========================================
-		-- UI BUILDER HELPERS
-		-- ========================================
+task.wait(0.1) -- Let UI finish building
+ApplyTheme(CurrentTheme) -- Apply saved theme IMMEDIATELY
+
 		
 		local function createSectionHeader(text, order)
 			local header = Instance.new("TextLabel", Scripts)
@@ -5293,6 +5361,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			
 			local toggleBg = Instance.new("Frame", toggleContainer)
 			toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            toggleBg:SetAttribute("IsToggleOn", false) -- Track state
 			toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
 			toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
 			toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -5327,12 +5396,12 @@ if v.Name == "Popups" then v.Visible = false return end
 			local isEnabled = false
 			
 			toggleBtn.MouseButton1Click:Connect(function()
-				isEnabled = not isEnabled
-				toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-				-- 🔴 FIX: Use CurrentTheme instead of hardcoded pink
-				toggleBg.BackgroundColor3 = isEnabled and CurrentTheme or Color3.fromRGB(50, 50, 60)
-				callback(isEnabled)
-			end)
+        isEnabled = not isEnabled
+        toggleBg:SetAttribute("IsToggleOn", isEnabled) -- Save state
+        toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+        toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        callback(isEnabled)
+    end)
 			
 			return toggleContainer, toggleBg -- 🔴 Return toggleBg so we can update it later
 		end
@@ -5829,8 +5898,9 @@ InitTabs.Search = function()
 	FilterBarCorner.CornerRadius = UDim.new(0, 12)
 	
 	local FilterBarStroke = Instance.new("UIStroke", FilterBar)
-	FilterBarStroke.Transparency = 0.8
-	FilterBarStroke.Color = Color3.fromRGB(160, 85, 255)
+FilterBarStroke.Transparency = 0.8
+FilterBarStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+FilterBarStroke.Name = "FilterBarStroke" -- Give it a name so we can find it
 	
 	local FilterLayout = Instance.new("UIListLayout", FilterBar)
 	FilterLayout.FillDirection = Enum.FillDirection.Horizontal
