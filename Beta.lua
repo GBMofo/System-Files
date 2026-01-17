@@ -5397,6 +5397,7 @@ InitTabs.Search = function()
 	
 	-- 🔴 STATE
 	local CurrentFilter = "All"
+	local OriginalGameName = nil -- Stores the auto-detected game
 	local CachedScripts = {}
 	local isUpdating = false
 	
@@ -5404,7 +5405,7 @@ InitTabs.Search = function()
 	local HttpService = game:GetService("HttpService")
 	local MarketplaceService = game:GetService("MarketplaceService")
 	
-	-- 🔴 DEBUG LABEL (Kept this because it helps)
+	-- 🔴 DEBUG LABEL
 	local GameLabel = Instance.new("TextLabel", Search)
 	GameLabel.Name = "GameLabel"
 	GameLabel.Size = UDim2.new(1, -20, 0, 20)
@@ -5418,8 +5419,6 @@ InitTabs.Search = function()
 	GameLabel.ZIndex = 5
 	
 	-- 🔴 DETECT CURRENT GAME
-	local currentGameName = nil 
-	
 	local function cleanGameName(name)
 		if not name then return nil end
 		name = string.split(name, "|")[1]
@@ -5443,17 +5442,16 @@ InitTabs.Search = function()
 			detected = cleanGameName(gameInfo.Name)
 		end
 		
-		-- 2. Fallback to game.Name
+		-- 2. Fallback
 		if (not detected or detected == "") and game.Name ~= "Game" then
 			detected = cleanGameName(game.Name)
 		end
 		
 		if detected and detected ~= "" then
-			currentGameName = detected
-			GameLabel.Text = "Game: " .. currentGameName
-			-- We do NOT set SearchBox.Text here automatically to keep it clean,
-			-- but the logic knows we are in this game.
+			OriginalGameName = detected
+			GameLabel.Text = "Game: " .. OriginalGameName
 		else
+			OriginalGameName = nil
 			GameLabel.Text = "Mode: Universal"
 		end
 	end
@@ -5563,10 +5561,12 @@ InitTabs.Search = function()
 			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
 		end
 		
+		local displayText = SearchBox.Text ~= "" and SearchBox.Text or (OriginalGameName or "Universal")
+		
 		if not scriptList or #scriptList == 0 then
 			local noResults = Instance.new("TextLabel", Scripts)
 			noResults.Name = "ErrorMessage"
-			noResults.Text = "No " .. CurrentFilter .. " scripts found."
+			noResults.Text = "No " .. CurrentFilter .. " scripts for: " .. displayText
 			noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
 			noResults.BackgroundTransparency = 1
 			noResults.Size = UDim2.new(1, 0, 0, 50)
@@ -5600,28 +5600,40 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE
+	-- 🔴 MAIN UPDATE LOGIC (THE FIX)
 	local function Update()
 		if isUpdating then return end
 		isUpdating = true
 		
 		local endpoint = ""
+		local currentQuery = SearchBox.Text
+		local activeTarget = ""
 		
-		-- Logic: We rely solely on 'currentGameName'.
-		-- 'currentGameName' is set by:
-		--   1. Auto-detection at start
-		--   2. User typing in SearchBox
-		
-		if currentGameName then
-			local encoded = HttpService:UrlEncode(currentGameName)
+		-- 🟢 DECIDE WHAT TO FETCH
+		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
+			-- 1. USER IS SEARCHING: Use the text box
+			activeTarget = currentQuery
+			GameLabel.Text = "Custom: " .. activeTarget
+			local encoded = HttpService:UrlEncode(activeTarget)
 			endpoint = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free"
-			print("🔎 Fetching:", currentGameName, "| Filter:", CurrentFilter)
+			
+		elseif OriginalGameName then
+			-- 2. TEXT BOX EMPTY: Restore Original Game
+			activeTarget = OriginalGameName
+			GameLabel.Text = "Game: " .. activeTarget
+			local encoded = HttpService:UrlEncode(activeTarget)
+			endpoint = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free"
+			
 		else
+			-- 3. NO GAME & NO SEARCH: Universal
+			activeTarget = "Universal"
+			GameLabel.Text = "Mode: Universal"
 			endpoint = "https://scriptblox.com/api/script/fetch?page=1&max=50"
-			print("🌐 Fetching Universal | Filter:", CurrentFilter)
 		end
 		
-		-- Fetch
+		print("🔎 Fetching:", activeTarget, "| Filter:", CurrentFilter)
+		
+		-- 🟢 FETCH
 		local fetchedScripts = {}
 		local success, response = pcall(function() return game:HttpGet(endpoint) end)
 		
@@ -5634,7 +5646,7 @@ InitTabs.Search = function()
 		
 		CachedScripts = fetchedScripts
 		
-		-- Filter & Render
+		-- 🟢 FILTER & RENDER
 		local finalScripts = filterScripts(CachedScripts)
 		finalScripts = sortScripts(finalScripts)
 		renderScripts(finalScripts)
@@ -5642,13 +5654,12 @@ InitTabs.Search = function()
 		isUpdating = false
 	end
 	
-	-- 🔴 EVENTS (FIXED: NO TEXT CLEARING)
+	-- 🔴 EVENTS
 	
 	local function onFilterClick(filterName)
 		CurrentFilter = filterName
 		updateUI()
-		-- DO NOT CLEAR SEARCHBOX HERE
-		Update() 
+		Update() -- Uses whatever state (Search or Original) is currently valid
 	end
 	
 	RecommendedBtn.MouseButton1Click:Connect(function() onFilterClick("Recommended") end)
@@ -5657,15 +5668,8 @@ InitTabs.Search = function()
 	KeyBtn.MouseButton1Click:Connect(function() onFilterClick("KeyRequired") end)
 	TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
 	
+	-- 🟢 FIX: Trigger Update even if text is empty (to restore original game)
 	SearchBox.FocusLost:Connect(function()
-		-- If user typed something, update the global game name
-		if SearchBox.Text ~= "" then
-			currentGameName = SearchBox.Text
-			GameLabel.Text = "Custom: " .. currentGameName
-		end
-		-- If user cleared it, we could reset to auto-detect, 
-		-- but keeping the last valid search is usually better UX.
-		
 		Update()
 	end)
 	
