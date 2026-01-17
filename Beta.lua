@@ -1236,15 +1236,15 @@ G2L["78"]["BackgroundTransparency"] = 1;
 
 -- StarterGui.ScreenGui.Main.Pages.UIPageLayout
 G2L["79"] = Instance.new("UIPageLayout", G2L["78"]);
-G2L["79"]["EasingStyle"] = Enum.EasingStyle.Cubic;
+G2L["79"]["EasingStyle"] = Enum.EasingStyle.Quart; -- 🔴 Changed from Cubic
 G2L["79"]["GamepadInputEnabled"] = false;
-G2L["79"]["EasingDirection"] = Enum.EasingDirection.InOut;
+G2L["79"]["EasingDirection"] = Enum.EasingDirection.Out; -- 🔴 Changed from InOut
 G2L["79"]["FillDirection"] = Enum.FillDirection.Vertical;
 G2L["79"]["TouchInputEnabled"] = false;
 G2L["79"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["79"]["ScrollWheelInputEnabled"] = false;
-G2L["79"]["Padding"] = UDim.new(1, 0);
-G2L["79"]["TweenTime"] = 0.5;
+G2L["79"]["Padding"] = UDim.new(0, 0); -- 🔴 Changed from (1, 0) to remove gaps
+G2L["79"]["TweenTime"] = 0.3; -- 🔴 Changed from 0.5 (faster)
 
 
 -- StarterGui.ScreenGui.Main.Pages.Editor
