@@ -1256,6 +1256,7 @@ G2L["7a"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["7a"]["Position"] = UDim2.new(0, 0, -0, 0);
 G2L["7a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["7a"]["Name"] = [[Editor]];
+G2L["7a"]["LayoutOrder"] = 0;
 G2L["7a"]["BackgroundTransparency"] = 1;
 
 
@@ -1668,6 +1669,7 @@ G2L["9c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["9c"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["9c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["9c"]["Name"] = [[Search]];
+G2L["9c"]["LayoutOrder"] = 1;
 G2L["9c"]["BackgroundTransparency"] = 1;
 
 
@@ -1766,6 +1768,7 @@ G2L["a7"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["a7"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["a7"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["a7"]["Name"] = [[Saved]];
+G2L["a7"]["LayoutOrder"] = 2;
 G2L["a7"]["BackgroundTransparency"] = 1;
 
 
@@ -2212,6 +2215,7 @@ G2L["d9"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["d9"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["d9"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["d9"]["Name"] = [[Settings]];
+G2L["d9"]["LayoutOrder"] = 3;
 G2L["d9"]["BackgroundTransparency"] = 1;
 
 
