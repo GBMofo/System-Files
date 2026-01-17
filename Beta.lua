@@ -1238,13 +1238,15 @@ G2L["78"]["BackgroundTransparency"] = 1;
 G2L["79"] = Instance.new("UIPageLayout", G2L["78"]);
 G2L["79"]["EasingStyle"] = Enum.EasingStyle.Cubic;
 G2L["79"]["GamepadInputEnabled"] = false;
-G2L["79"]["EasingDirection"] = Enum.EasingDirection.InOut;
+G2L["79"]["EasingDirection"] = Enum.EasingDirection.Out;
 G2L["79"]["FillDirection"] = Enum.FillDirection.Vertical;
 G2L["79"]["TouchInputEnabled"] = false;
 G2L["79"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["79"]["ScrollWheelInputEnabled"] = false;
 G2L["79"]["Padding"] = UDim.new(1, 0);
-G2L["79"]["TweenTime"] = 0.5;
+G2L["79"]["TweenTime"] = 0.4;
+
+
 
 -- StarterGui.ScreenGui.Main.Pages.Editor
 G2L["7a"] = Instance.new("Frame", G2L["78"]);
