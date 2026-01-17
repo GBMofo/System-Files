@@ -661,7 +661,7 @@ gradient.Name = "GradientOverlay";
 gradient.Size = UDim2.new(1, 0, 1, 0);
 gradient.Position = UDim2.new(0, 0, 0, 0);
 gradient.BackgroundColor3 = Color3.fromRGB(120, 60, 180); -- Brighter purple
-gradient.BackgroundTransparency = 0.5; -- 🔴 CHANGED: More transparent
+gradient.BackgroundTransparency = 0.6; -- 🔴 CHANGED: More transparent
 gradient.BorderSizePixel = 0;
 gradient.ZIndex = 0;
 
@@ -697,7 +697,7 @@ vignette.Size = UDim2.new(1, 0, 1, 0);
 vignette.BackgroundTransparency = 1;
 vignette.Image = "rbxassetid://5250216449";
 vignette.ImageColor3 = Color3.fromRGB(20, 10, 40); -- Very dark purple
-vignette.ImageTransparency = 0.5; -- 🔴 CHANGED: Lighter vignette
+vignette.ImageTransparency = 0.7; -- 🔴 CHANGED: Lighter vignette
 vignette.ZIndex = 3;
 
 -- Subtle glow effect
