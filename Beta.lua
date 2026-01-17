@@ -5300,7 +5300,7 @@ for _, obj in pairs(script.Parent:GetDescendants()) do
     end
 end
 			
-			createNotification("Theme Applied!", "Success", 3)
+			
 		end
 		
 		LoadTheme()
