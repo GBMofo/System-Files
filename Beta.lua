@@ -3923,6 +3923,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					new = "function"
 				}
 			}
+}
 		local enumLibraryTable = language.libraries.Enum;
 		for _, enum in ipairs(Enum:GetEnums()) do
 			enumLibraryTable[tostring(enum)] = "Enum";
