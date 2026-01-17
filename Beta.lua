@@ -5399,50 +5399,53 @@ InitTabs.Search = function()
 	local CurrentFilter = "All"
 	local CachedScripts = {}
 	local isUpdating = false
-	local lastEndpoint = "" 
 	
-	-- 🔴 DETECT CURRENT GAME (IMPROVED + CLEANER)
-	local currentGameName = nil
-	local currentGameId = game.PlaceId
+	-- 🔴 SERVICES
 	local HttpService = game:GetService("HttpService")
+	local MarketplaceService = game:GetService("MarketplaceService")
 	
+	-- 🔴 HELPER: CLEAN GAME NAME
+	-- Removes junk like [UPD] or (v1) to make the search work better
 	local function cleanGameName(name)
-		-- Remove text inside brackets/parentheses like [UPD 20] or (Testing)
-		name = string.gsub(name, "%[.-%]", "")
-		name = string.gsub(name, "%(.-%)", "")
-		name = string.gsub(name, "{.-}", "")
-		-- Remove version numbers like v1.2
-		name = string.gsub(name, "v%d+%.?%d*", "")
-		-- Trim whitespace
+		name = string.gsub(name, "%[.-%]", "") -- Remove [Text]
+		name = string.gsub(name, "%(.-%)", "") -- Remove (Text)
+		name = string.gsub(name, "{.-}", "")   -- Remove {Text}
+		name = string.gsub(name, "v%d+%.?%d*", "") -- Remove v1.0
+		-- Remove special chars but keep spaces
+		name = string.gsub(name, "[^%w%s]", "") 
+		-- Trim leading/trailing spaces
 		name = string.gsub(name, "^%s*(.-)%s*$", "%1")
 		return name
 	end
 	
+	-- 🔴 DETECT CURRENT GAME
+	local currentGameName = nil
+	local currentGameId = game.PlaceId
+	
 	local function detectGame()
-		-- Method 1: MarketplaceService
+		-- Method 1: MarketplaceService (Best)
 		local success, gameInfo = pcall(function()
-			return game:GetService("MarketplaceService"):GetProductInfo(currentGameId)
+			return MarketplaceService:GetProductInfo(currentGameId)
 		end)
 		
 		if success and gameInfo and gameInfo.Name then
 			currentGameName = cleanGameName(gameInfo.Name)
 			print("✅ Detected Game:", currentGameName)
-			return currentGameName
+			return
 		end
 		
 		-- Method 2: Game Name
-		if game.Name and game.Name ~= "" and game.Name ~= "Game" and game.Name ~= "Place1" then
+		if game.Name and game.Name ~= "Game" and game.Name ~= "Place1" then
 			currentGameName = cleanGameName(game.Name)
-			return currentGameName
+			return
 		end
 		
 		currentGameName = nil
-		return nil
 	end
 	
 	detectGame()
 	
-	-- 🔴 UI SETUP (YOUR ORIGINAL DESIGN)
+	-- 🔴 UI SETUP (YOUR ORIGINAL DESIGN PRESERVED)
 	local FilterBar = Instance.new("Frame", Search)
 	FilterBar.Name = "FilterBar"
 	FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
@@ -5509,7 +5512,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 FILTER LOGIC
+	-- 🔴 LOCAL FILTERING (Runs AFTER we fetch the game scripts)
 	local function filterScripts(scriptList)
 		local filtered = {}
 		
@@ -5523,7 +5526,7 @@ InitTabs.Search = function()
 			elseif CurrentFilter == "KeyRequired" then
 				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
 			elseif CurrentFilter == "Trending" then
-				passes = true -- Sorted by views later
+				passes = true -- We sort by views later
 			elseif CurrentFilter == "All" then
 				passes = true
 			end
@@ -5532,7 +5535,6 @@ InitTabs.Search = function()
 				table.insert(filtered, scriptData)
 			end
 		end
-		
 		return filtered
 	end
 	
@@ -5545,6 +5547,7 @@ InitTabs.Search = function()
 		return scriptList
 	end
 	
+	-- 🔴 RENDER
 	local function renderScripts(scriptList)
 		for _, v in pairs(Scripts:GetChildren()) do
 			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
@@ -5553,7 +5556,7 @@ InitTabs.Search = function()
 		if not scriptList or #scriptList == 0 then
 			local noResults = Instance.new("TextLabel", Scripts)
 			noResults.Name = "ErrorMessage"
-			noResults.Text = "No scripts found for " .. (currentGameName or "Universal")
+			noResults.Text = "No scripts found."
 			noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
 			noResults.BackgroundTransparency = 1
 			noResults.Size = UDim2.new(1, 0, 0, 50)
@@ -5587,85 +5590,90 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE FUNCTION (FIXED LOGIC)
+	-- 🔴 MAIN DATA FETCH (THE FIX)
 	local function Update(query, forceRefresh)
 		if isUpdating then return end
 		isUpdating = true
 		
 		query = query or ""
-		local isSearchMode = #(string.gsub(query, "[%s]", "")) > 0
+		local isUserSearching = #(string.gsub(query, "[%s]", "")) > 0
 		
 		local endpoint = ""
-		local usedFallback = false
+		local isUniversalFallback = false
 		
-		-- 🟢 STEP 1: Determine Endpoint
-		if isSearchMode then
-			-- USER SEARCH: Priority 1
-			local encodedQuery = HttpService:UrlEncode(query)
-			endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=50&mode=free"
-			print("🔎 Searching for:", query)
+		-- 🟢 LOGIC FLOW
+		-- 1. If User Typed -> Search API
+		-- 2. If Game Detected -> Search API (using game name)
+		-- 3. If No Game & No Type -> Fetch API (Universal)
+		
+		if isUserSearching then
+			local encoded = HttpService:UrlEncode(query)
+			endpoint = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free"
+			print("🔎 Searching User Query:", query)
 			
 		elseif currentGameName then
-			-- GAME DETECTED: Use it for ALL filters (including "All")
-			local encodedGame = HttpService:UrlEncode(currentGameName)
-			endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedGame .. "&max=50&mode=free"
-			print("🎮 Game Mode:", currentGameName)
+			local encoded = HttpService:UrlEncode(currentGameName)
+			endpoint = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free"
+			print("🎮 Searching Game:", currentGameName)
 			
 		else
-			-- NO GAME DETECTED: Universal
+			-- No game, no search -> Universal
 			endpoint = "https://scriptblox.com/api/script/fetch?page=1&max=50"
-			print("🌐 Universal Mode (No game detected)")
-			usedFallback = true
+			print("🌐 Universal (No Game Detected)")
+			isUniversalFallback = true
 		end
 		
-		-- 🟢 STEP 2: Fetch
-		local function fetch(url)
+		-- 🟢 FETCH
+		local function performFetch(url)
 			local s, r = pcall(function() return game:HttpGet(url) end)
 			if s then
 				local s2, d = pcall(function() return HttpService:JSONDecode(r) end)
-				if s2 and d.result and d.result.scripts then return d.result.scripts end
+				if s2 and d.result and d.result.scripts then
+					return d.result.scripts
+				end
 			end
-			return nil
+			return {}
 		end
 		
-		local fetchedScripts = fetch(endpoint)
+		local fetchedScripts = performFetch(endpoint)
 		
-		-- 🟢 STEP 3: Auto-Fallback if Game Search found nothing
-		if (not fetchedScripts or #fetchedScripts == 0) and not isSearchMode and not usedFallback then
-			print("⚠️ No scripts found for game, falling back to Universal")
-			endpoint = "https://scriptblox.com/api/script/fetch?page=1&max=50"
-			fetchedScripts = fetch(endpoint)
+		-- 🟢 FALLBACK CHECK
+		-- If we tried to search for the Game Name but got 0 results, 
+		-- fallback to Universal so the user doesn't see a blank screen.
+		if #fetchedScripts == 0 and not isUserSearching and not isUniversalFallback then
+			print("⚠️ No scripts found for game. Switching to Universal.")
+			fetchedScripts = performFetch("https://scriptblox.com/api/script/fetch?page=1&max=50")
 		end
 		
-		CachedScripts = fetchedScripts or {}
+		CachedScripts = fetchedScripts
 		
-		-- 🟢 STEP 4: Filter & Render
+		-- 🟢 LOCAL FILTER & RENDER
 		local finalScripts = filterScripts(CachedScripts)
 		finalScripts = sortScripts(finalScripts)
-		
 		renderScripts(finalScripts)
+		
 		isUpdating = false
 	end
 	
-	-- 🔴 BUTTON EVENTS
-	local function onFilterClick(filterName)
-		CurrentFilter = filterName
+	-- 🔴 BUTTON HANDLERS
+	local function onFilter(name)
+		CurrentFilter = name
 		SearchBox.Text = ""
 		updateUI()
 		Update("", true)
 	end
 	
-	RecommendedBtn.MouseButton1Click:Connect(function() onFilterClick("Recommended") end)
-	AllBtn.MouseButton1Click:Connect(function() onFilterClick("All") end)
-	NoKeyBtn.MouseButton1Click:Connect(function() onFilterClick("NoKey") end)
-	KeyBtn.MouseButton1Click:Connect(function() onFilterClick("KeyRequired") end)
-	TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
+	RecommendedBtn.MouseButton1Click:Connect(function() onFilter("Recommended") end)
+	AllBtn.MouseButton1Click:Connect(function() onFilter("All") end)
+	NoKeyBtn.MouseButton1Click:Connect(function() onFilter("NoKey") end)
+	KeyBtn.MouseButton1Click:Connect(function() onFilter("KeyRequired") end)
+	TrendingBtn.MouseButton1Click:Connect(function() onFilter("Trending") end)
 	
 	SearchBox.FocusLost:Connect(function()
 		Update(SearchBox.Text, true)
 	end)
 	
-	-- 🔴 INITIAL LOAD
+	-- 🔴 INIT
 	updateUI()
 	Update("", true)
 end
