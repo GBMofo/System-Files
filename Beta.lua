@@ -5313,417 +5313,139 @@ if v.Name == "Popups" then v.Visible = false return end
 		end)
 	end;
 
-	-- ============================================
--- CORRECTED SECTION: InitTabs.Editor → InitTabs.Search → InitTabs.Nav
--- REPLACE from "InitTabs.Editor = function()" 
--- to "InitTabs.Nav = function()" with this code
--- ============================================
-
-InitTabs.Editor = function()
-	local Editor = Pages:WaitForChild("Editor");
-	local Panel = Editor:WaitForChild("Panel");
-	local EditorFrame = Editor:WaitForChild("Editor");
-	local Method = "Activated";
-	
-	Panel.Execute[Method]:Connect(function()
-		UIEvents.Executor.RunCode(EditorFrame.Input.Text)();
-	end);
-	
-	Panel.Paste[Method]:Connect(function()
-		EditorFrame.Input.Text = (getclipboard and getclipboard()) or "";
-	end);
-	
-	Panel.ExecuteClipboard[Method]:Connect(function()
-		UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
-	end);
-	
-	Panel.Delete[Method]:Connect(function()
-		EditorFrame.Input.Text = "";
-	end);
-	
-	Panel.Save[Method]:Connect(function()
-		UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, true); 
-	end);
-	
-	Panel.Rename[Method]:Connect(function()
-		script.Parent.Popups.Visible = true;
-		script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-	end);
-	
-	if not highlighter then
-		highlighter = load_highlighter();
-		print("int");
-	end
-	
-	EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+	InitTabs.Editor = function()
+		local Editor = Pages:WaitForChild("Editor");
+		local Panel = Editor:WaitForChild("Panel");
+		local EditorFrame = Editor:WaitForChild("Editor");
+		local Method = "Activated";
+		
+		Panel.Execute[Method]:Connect(function()
+			UIEvents.Executor.RunCode(EditorFrame.Input.Text)();
+		end);
+		
+		Panel.Paste[Method]:Connect(function()
+			EditorFrame.Input.Text = (getclipboard and getclipboard()) or "";
+		end);
+		
+		Panel.ExecuteClipboard[Method]:Connect(function()
+			UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
+		end);
+		
+		Panel.Delete[Method]:Connect(function()
+			EditorFrame.Input.Text = "";
+		end);
+		
+		Panel.Save[Method]:Connect(function()
+			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, true); 
+		end);
+		
+		Panel.Rename[Method]:Connect(function()
+			script.Parent.Popups.Visible = true;
+			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+		end);
+		
+		if not highlighter then
+			highlighter = load_highlighter();
+			print("int");
+		end
+		
+		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+			update_lines(EditorFrame.Input, EditorFrame.Lines);
+			if not Data.Editor.EditingSavedFile then
+				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
+			end
+		end);
+		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
-		if not Data.Editor.EditingSavedFile then
-			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
-		end
-	end);
-	
-	update_lines(EditorFrame.Input, EditorFrame.Lines);
-	highlighter.highlight({ textObject = EditorFrame.Input });
-	
-	local pos = EditorFrame.Position;
-	local size = EditorFrame.Size;
-	EditorFrame.Input.Focused:Connect(function()
-		EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
-		EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
-	end);
-	
-	EditorFrame.Input.FocusLost:Connect(function()
-		EditorFrame.Position = pos;
-		EditorFrame.Size = size;
-	end);
-	
-	Editor.Tabs.Create.Activated:Connect(function()
-		UIEvents.EditorTabs.createTab("Script", "");
-	end);
-	
-	local Buttons = script.Parent.Popups.Main.Button
-	Buttons["Confirm"][Method]:Connect(function()
-		local newName = script.Parent.Popups.Main.Input.Text;
-		local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
-		if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
+		highlighter.highlight({ textObject = EditorFrame.Input });
 		
-		UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
-		script.Parent.Popups.Visible = false;
-	end)
-	
-	Buttons["Cancel"][Method]:Connect(function()
-		script.Parent.Popups.Visible = false;
-	end)
-end;
-
-InitTabs.Search = function()
-	local Search = Pages:WaitForChild("Search");
-	local Scripts = Search.Scripts;
-	local SearchBox = Search.TextBox;
-	
-	-- 🔴 STATE
-	local CurrentFilter = "All"
-	local CachedScripts = {}
-	local isUpdating = false
-	
-	-- 🔴 DETECT CURRENT GAME
-	local currentGameName = "Universal"
-	local currentGameId = game.PlaceId
-	
-	local success, gameInfo = pcall(function()
-		return game:GetService("MarketplaceService"):GetProductInfo(currentGameId)
-	end)
-	
-	if success and gameInfo and gameInfo.Name then
-		currentGameName = gameInfo.Name
-		print("[Search] Detected game:", currentGameName)
-	else
-		warn("[Search] Failed to detect game, using Universal")
-	end
-	
-	-- 🔴 CREATE FILTER BAR
-	local FilterBar = Instance.new("Frame", Search)
-	FilterBar.Name = "FilterBar"
-	FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-	FilterBar.BorderSizePixel = 0
-	FilterBar.Size = UDim2.new(1, 0, 0, 50)
-	FilterBar.LayoutOrder = -2
-	
-	local FilterBarCorner = Instance.new("UICorner", FilterBar)
-	FilterBarCorner.CornerRadius = UDim.new(0, 12)
-	
-	local FilterBarStroke = Instance.new("UIStroke", FilterBar)
-	FilterBarStroke.Transparency = 0.8
-	FilterBarStroke.Color = Color3.fromRGB(160, 85, 255)
-	
-	local FilterLayout = Instance.new("UIListLayout", FilterBar)
-	FilterLayout.FillDirection = Enum.FillDirection.Horizontal
-	FilterLayout.Padding = UDim.new(0, 8)
-	FilterLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-	FilterLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	
-	local FilterPadding = Instance.new("UIPadding", FilterBar)
-	FilterPadding.PaddingLeft = UDim.new(0, 12)
-	FilterPadding.PaddingRight = UDim.new(0, 12)
-	
-	-- 🔴 HELPER: CREATE BUTTON
-	local function createButton(name, displayText)
-		local btn = Instance.new("TextButton", FilterBar)
-		btn.Name = name
-		btn.Text = displayText
-		btn.AutoButtonColor = false
-		btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-		btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-		btn.BorderSizePixel = 0
-		btn.Font = Enum.Font.GothamBold
-		btn.TextSize = 12
-		btn.Size = UDim2.new(0, 0, 0.7, 0)
-		btn.AutomaticSize = Enum.AutomaticSize.X
+		local pos = EditorFrame.Position;
+		local size = EditorFrame.Size;
+		EditorFrame.Input.Focused:Connect(function()
+			EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
+			EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
+		end);
 		
-		local btnCorner = Instance.new("UICorner", btn)
-		btnCorner.CornerRadius = UDim.new(0, 8)
+		EditorFrame.Input.FocusLost:Connect(function()
+			EditorFrame.Position = pos;
+			EditorFrame.Size = size;
+		end);
 		
-		local btnPadding = Instance.new("UIPadding", btn)
-		btnPadding.PaddingLeft = UDim.new(0, 12)
-		btnPadding.PaddingRight = UDim.new(0, 12)
+		Editor.Tabs.Create.Activated:Connect(function()
+			UIEvents.EditorTabs.createTab("Script", "");
+		end);
 		
-		return btn
-	end
-	
-	-- 🔴 CREATE FILTER BUTTONS
-	local RecommendedBtn = createButton("Recommended", "⭐ Recommended")
-	local AllBtn = createButton("All", "All")
-	local NoKeyBtn = createButton("NoKey", "No Key")
-	local KeyBtn = createButton("KeyRequired", "Key Required")
-	local TrendingBtn = createButton("Trending", "🔥 Trending")
-	
-	-- 🔴 UPDATE ACTIVE BUTTONS
-	local function updateUI()
-		for _, btn in pairs(FilterBar:GetChildren()) do
-			if btn:IsA("TextButton") then
-				if btn.Name == CurrentFilter then
-					btn.BackgroundColor3 = Color3.fromRGB(160, 85, 255)
-					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-				else
-					btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-					btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-				end
-			end
-		end
-	end
-	
-	-- 🔴 FILTER LOGIC
-	local function filterScripts(scriptList)
-		local filtered = {}
-		
-		for _, scriptData in pairs(scriptList) do
-			local passes = true
+		local Buttons = script.Parent.Popups.Main.Button
+		Buttons["Confirm"][Method]:Connect(function()
+			local newName = script.Parent.Popups.Main.Input.Text;
+			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
+			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
 			
-			if CurrentFilter == "Recommended" then
-				passes = (scriptData.verified == true)
-					and ((tonumber(scriptData.views) or 0) >= 3000)
-					
-			elseif CurrentFilter == "NoKey" then
-				passes = (scriptData.key == false or scriptData.key == nil)
-					and (scriptData.verified == true)
-					
-			elseif CurrentFilter == "KeyRequired" then
-				passes = (scriptData.key == true) or (scriptData.scriptType == "paid")
-					
-			elseif CurrentFilter == "Trending" then
-				passes = ((tonumber(scriptData.views) or 0) >= 1000)
-			end
-			
-			if passes then
-				table.insert(filtered, scriptData)
-			end
-		end
-		
-		return filtered
-	end
-	
-	-- 🔴 SORT LOGIC
-	local function sortScripts(scriptList)
-		table.sort(scriptList, function(a, b)
-			local viewsA = tonumber(a.views) or 0
-			local viewsB = tonumber(b.views) or 0
-			return viewsA > viewsB
+			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
+			script.Parent.Popups.Visible = false;
 		end)
 		
-		return scriptList
-	end
-	
-	-- 🔴 RENDER SCRIPTS
-	local function renderScripts(scriptList)
-		for _, v in pairs(Scripts:GetChildren()) do
-			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then 
-				v:Destroy() 
+		Buttons["Cancel"][Method]:Connect(function()
+			script.Parent.Popups.Visible = false;
+		end)
+	end;
+
+	InitTabs.Search = function()
+		local Search = Pages:WaitForChild("Search");
+		local TagsValid = {
+			Key = function(sData) return sData.key; end,
+			Universal = function(sData) return sData.isUniversal; end,
+			Patched = function(sData) return sData.isPatched; end,
+			Paid = function(sData) return sData.scriptType == "paid"; end
+		};
+		local verifyicon = utf8.char(57344);
+		local Trending = game:HttpGet("https://scriptblox.com/api/script/fetch");
+		
+		local function Update()
+			for _, v in pairs(Search.Scripts:GetChildren()) do
+				if v:IsA("CanvasGroup") then v:Destroy(); end
 			end
-		end
-		
-		if not scriptList or #scriptList == 0 then
-			local noResults = Instance.new("TextLabel", Scripts)
-			noResults.Name = "ErrorMessage"
-			noResults.Text = "No scripts found"
-			noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
-			noResults.BackgroundTransparency = 1
-			noResults.Size = UDim2.new(1, 0, 0, 50)
-			noResults.Font = Enum.Font.GothamBold
-			noResults.TextSize = 16
+			local text = Search.TextBox.Text;
+			local isEmpty = # (string.gsub(text, "[%s]", "")) <= 0;
+			local search = game.HttpService:UrlEncode(text);
+			local scriptJson;
 			
-			task.delay(2, function()
-				if noResults and noResults.Parent then
-					noResults:Destroy()
-				end
-			end)
-			return
-		end
-		
-		local verifyicon = utf8.char(57344)
-		
-		for i, scriptData in pairs(scriptList) do
-			task.spawn(function()
-				local new = script.SearchTemplate:Clone()
-				new.Parent = Scripts
-				new.Name = scriptData.title
-				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
-				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
-				
-				new.Tags.Key.Visible = scriptData.key or false
-				new.Tags.Universal.Visible = scriptData.isUniversal or false
-				new.Tags.Patched.Visible = scriptData.isPatched or false
-				new.Tags.Paid.Visible = scriptData.scriptType == "paid"
-				
-				new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
-					UIEvents.Executor.RunCode(scriptData.script)()
-				end)
-				
-				new.Misc.Panel.Save.MouseButton1Click:Connect(function()
-					UIEvents.Saved.SaveFile(scriptData.title, scriptData.script)
-				end)
-			end)
-		end
-	end
-	
-	-- 🔴 MAIN UPDATE FUNCTION
-	local function Update(query)
-		if isUpdating then return end
-		isUpdating = true
-		
-		query = query or ""
-		local isEmpty = #(string.gsub(query, "[%s]", "")) <= 0
-		
-		local endpoint
-		local useCurrentGame = false
-		
-		if not isEmpty then
-			local encodedQuery = game:GetService("HttpService"):UrlEncode(query)
-			endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=50"
-			print("[Search] Searching for:", query)
-		else
-			if CurrentFilter == "All" then
-				endpoint = "https://scriptblox.com/api/script/fetch?max=30"
-				print("[Search] Fetching universal scripts (All filter)")
+			if isEmpty then
+				scriptJson = Trending;
 			else
-				if currentGameName ~= "Universal" then
-					local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
-					endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
-					useCurrentGame = true
-					print("[Search] Fetching scripts for current game:", currentGameName)
-				else
-					endpoint = "https://scriptblox.com/api/script/fetch?max=30"
-					print("[Search] Game unknown, using universal")
-				end
+				scriptJson = game:HttpGet("https://scriptblox.com/api/script/search?strict=true&q=" .. search .. "&max=20");
+			end
+			
+			local success, scripts = pcall(function()
+				return game:GetService("HttpService"):JSONDecode(scriptJson);
+			end);
+			if (not success or not scripts.result or (# scripts.result.scripts <= 0)) then
+				Search.TextBox.Text = "No results found.";
+				return;
+			end
+			for i, scriptData in pairs(scripts.result.scripts) do
+				task.spawn(function()
+					local new = script.SearchTemplate:Clone();
+					new.Parent = Search.Scripts;
+					new.Name = scriptData.title;
+					new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "");
+					new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884";
+					for _, tag in pairs(new.Tags:GetChildren()) do
+						if tag:IsA("TextLabel") then
+							tag.Visible = (TagsValid[tag.Name] and TagsValid[tag.Name](scriptData)) or false;
+						end
+					end
+					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
+						UIEvents.Executor.RunCode(scriptData.script)();
+					end);
+					new.Misc.Panel.Save.MouseButton1Click:Connect(function()
+						UIEvents.Saved.SaveFile(scriptData.title, scriptData.script);
+					end);
+				end);
 			end
 		end
-		
-		local success, scriptJson = pcall(function()
-			return game:HttpGet(endpoint)
-		end)
-		
-		if not success then
-			warn("[Search] HTTP request failed")
-			isUpdating = false
-			renderScripts({})
-			return
-		end
-		
-		local success2, scripts = pcall(function()
-			return game:GetService("HttpService"):JSONDecode(scriptJson)
-		end)
-		
-		if not success2 or not scripts.result or not scripts.result.scripts then
-			warn("[Search] Invalid JSON response")
-			isUpdating = false
-			renderScripts({})
-			return
-		end
-		
-		CachedScripts = scripts.result.scripts
-		print("[Search] Fetched", #CachedScripts, "scripts")
-		
-		if useCurrentGame and isEmpty and CurrentFilter ~= "All" and (#CachedScripts == 0 or #CachedScripts < 3) then
-			print("[Search] No scripts for current game, trying universal...")
-			
-			local fallbackSuccess, fallbackJson = pcall(function()
-				return game:HttpGet("https://scriptblox.com/api/script/fetch?max=30")
-			end)
-			
-			if fallbackSuccess then
-				local fallbackSuccess2, fallbackScripts = pcall(function()
-					return game:GetService("HttpService"):JSONDecode(fallbackJson)
-				end)
-				
-				if fallbackSuccess2 and fallbackScripts.result and fallbackScripts.result.scripts then
-					CachedScripts = fallbackScripts.result.scripts
-					print("[Search] Fallback: Fetched", #CachedScripts, "universal scripts")
-				end
-			end
-		end
-		
-		local finalScripts
-		if isEmpty then
-			finalScripts = filterScripts(CachedScripts)
-			finalScripts = sortScripts(finalScripts)
-			print("[Search] After", CurrentFilter, "filter:", #finalScripts, "scripts")
-		else
-			finalScripts = sortScripts(CachedScripts)
-		end
-		
-		renderScripts(finalScripts)
-		
-		task.wait(0.3)
-		isUpdating = false
-	end
-	
-	-- 🔴 FILTER EVENTS
-	RecommendedBtn.MouseButton1Click:Connect(function()
-		CurrentFilter = "Recommended"
-		SearchBox.Text = ""
-		updateUI()
-		Update("")
-	end)
-	
-	AllBtn.MouseButton1Click:Connect(function()
-		CurrentFilter = "All"
-		SearchBox.Text = ""
-		updateUI()
-		Update("")
-	end)
-	
-	NoKeyBtn.MouseButton1Click:Connect(function()
-		CurrentFilter = "NoKey"
-		SearchBox.Text = ""
-		updateUI()
-		Update("")
-	end)
-	
-	KeyBtn.MouseButton1Click:Connect(function()
-		CurrentFilter = "KeyRequired"
-		SearchBox.Text = ""
-		updateUI()
-		Update("")
-	end)
-	
-	TrendingBtn.MouseButton1Click:Connect(function()
-		CurrentFilter = "Trending"
-		SearchBox.Text = ""
-		updateUI()
-		Update("")
-	end)
-	
-	-- 🔴 SEARCH BOX EVENT
-	SearchBox.FocusLost:Connect(function()
-		Update(SearchBox.Text)
-	end)
-	
-	-- 🔴 INITIAL LOAD
-	updateUI()
-	Update("")
-end;
-
-InitTabs.Nav = function()
-	
+		Search.TextBox.FocusLost:Connect(function() Update(); end);
+	end;
 
 	InitTabs.Nav = function()
     local isInstantNext = false;
