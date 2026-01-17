@@ -4903,7 +4903,10 @@ if v.Name == "Popups" then v.Visible = false return end
 				for _, frame in ipairs(Nav:GetChildren()) do
 					if frame:IsA("Frame") then
 						for _, btn in ipairs(frame:GetChildren()) do
-							if btn.Name == Name then Button = btn break end
+							if btn.Name == Name then 
+    Button = btn 
+    break 
+end
 						end
 					end
 				end
