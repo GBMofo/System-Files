@@ -5397,7 +5397,6 @@ if v.Name == "Popups" then v.Visible = false return end
     
     -- 🔴 STATE
     local CurrentFilter = "Recommended"  -- Start with recommended
-    local CurrentGameMode = "Current"  -- Current game or All games
     local CachedScripts = {}
     local isUpdating = false  -- Debounce flag
     
@@ -5406,31 +5405,6 @@ if v.Name == "Popups" then v.Visible = false return end
     pcall(function()
         currentGameName = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name
     end)
-    
-    -- 🔴 CREATE GAME TOGGLE BAR
-    local GameToggleBar = Instance.new("Frame", Search)
-    GameToggleBar.Name = "GameToggleBar"
-    GameToggleBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    GameToggleBar.BorderSizePixel = 0
-    GameToggleBar.Size = UDim2.new(1, 0, 0, 45)
-    GameToggleBar.LayoutOrder = -3  -- Above filter bar
-    
-    local GameToggleCorner = Instance.new("UICorner", GameToggleBar)
-    GameToggleCorner.CornerRadius = UDim.new(0, 12)
-    
-    local GameToggleStroke = Instance.new("UIStroke", GameToggleBar)
-    GameToggleStroke.Transparency = 0.8
-    GameToggleStroke.Color = Color3.fromRGB(160, 85, 255)
-    
-    local GameToggleLayout = Instance.new("UIListLayout", GameToggleBar)
-    GameToggleLayout.FillDirection = Enum.FillDirection.Horizontal
-    GameToggleLayout.Padding = UDim.new(0, 8)
-    GameToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    GameToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    
-    local GameTogglePadding = Instance.new("UIPadding", GameToggleBar)
-    GameTogglePadding.PaddingLeft = UDim.new(0, 12)
-    GameTogglePadding.PaddingRight = UDim.new(0, 12)
     
     -- 🔴 CREATE FILTER BAR
     local FilterBar = Instance.new("Frame", Search)
@@ -5458,8 +5432,8 @@ if v.Name == "Popups" then v.Visible = false return end
     FilterPadding.PaddingRight = UDim.new(0, 12)
     
     -- 🔴 HELPER: CREATE BUTTON
-    local function createButton(parent, name, displayText)
-        local btn = Instance.new("TextButton", parent)
+    local function createButton(name, displayText)
+        local btn = Instance.new("TextButton", FilterBar)
         btn.Name = name
         btn.Text = displayText
         btn.AutoButtonColor = false
@@ -5481,27 +5455,15 @@ if v.Name == "Popups" then v.Visible = false return end
         return btn
     end
     
-    -- 🔴 CREATE GAME TOGGLE BUTTONS
-    local CurrentGameBtn = createButton(GameToggleBar, "Current", "📍 " .. currentGameName)
-    local AllGamesBtn = createButton(GameToggleBar, "AllGames", "🌐 All Games")
-    
     -- 🔴 CREATE FILTER BUTTONS
-    local RecommendedBtn = createButton(FilterBar, "Recommended", "⭐ Recommended")
-    local AllBtn = createButton(FilterBar, "All", "All")
-    local NoKeyBtn = createButton(FilterBar, "NoKey", "No Key")
-    local KeyBtn = createButton(FilterBar, "KeyRequired", "Key Required")
-    local TrendingBtn = createButton(FilterBar, "Trending", "🔥 Trending")
+    local RecommendedBtn = createButton("Recommended", "⭐ Recommended")
+    local AllBtn = createButton("All", "All")
+    local NoKeyBtn = createButton("NoKey", "No Key")
+    local KeyBtn = createButton("KeyRequired", "Key Required")
+    local TrendingBtn = createButton("Trending", "🔥 Trending")
     
     -- 🔴 UPDATE ACTIVE BUTTONS
     local function updateUI()
-        -- Update game toggle
-        CurrentGameBtn.BackgroundColor3 = (CurrentGameMode == "Current") and Color3.fromRGB(160, 85, 255) or Color3.fromRGB(30, 30, 40)
-        CurrentGameBtn.TextColor3 = (CurrentGameMode == "Current") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-        
-        AllGamesBtn.BackgroundColor3 = (CurrentGameMode == "All") and Color3.fromRGB(160, 85, 255) or Color3.fromRGB(30, 30, 40)
-        AllGamesBtn.TextColor3 = (CurrentGameMode == "All") and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(200, 200, 200)
-        
-        -- Update filters
         for _, btn in pairs(FilterBar:GetChildren()) do
             if btn:IsA("TextButton") then
                 if btn.Name == CurrentFilter then
@@ -5559,7 +5521,7 @@ if v.Name == "Popups" then v.Visible = false return end
         table.sort(scriptList, function(a, b)
             local viewsA = tonumber(a.views) or 0
             local viewsB = tonumber(b.views) or 0
-            return viewsA > viewsB  -- Always descending
+            return viewsA > viewsB
         end)
         
         return scriptList
@@ -5633,17 +5595,20 @@ if v.Name == "Popups" then v.Visible = false return end
         
         local endpoint
         
-        -- Determine endpoint
-        if isEmpty then
-            if CurrentGameMode == "Current" then
+        -- 🟢 NEW LOGIC: User typed search = fetch ALL (40-50 scripts, no filter)
+        if not isEmpty then
+            local encodedQuery = game:GetService("HttpService"):UrlEncode(query)
+            endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=50"
+        else
+            -- Empty search = use filters
+            if CurrentFilter == "All" then
+                -- Universal scripts
+                endpoint = "https://scriptblox.com/api/script/fetch?max=30"
+            else
+                -- Current game filtered
                 local encodedGame = game:GetService("HttpService"):UrlEncode(currentGameName)
                 endpoint = "https://scriptblox.com/api/script/fetch?game=" .. encodedGame .. "&max=30"
-            else
-                endpoint = "https://scriptblox.com/api/script/fetch?max=30"
             end
-        else
-            local encodedQuery = game:GetService("HttpService"):UrlEncode(query)
-            endpoint = "https://scriptblox.com/api/script/search?q=" .. encodedQuery .. "&max=30"
         end
         
         -- Fetch
@@ -5669,65 +5634,58 @@ if v.Name == "Popups" then v.Visible = false return end
         
         CachedScripts = scripts.result.scripts
         
-        -- Apply filters and sorting
-        local filtered = filterScripts(CachedScripts)
-        local sorted = sortScripts(filtered)
+        -- 🟢 NEW: Only filter if search is empty
+        local finalScripts
+        if isEmpty then
+            local filtered = filterScripts(CachedScripts)
+            finalScripts = sortScripts(filtered)
+        else
+            -- Search query entered = show ALL results (no filter)
+            finalScripts = sortScripts(CachedScripts)
+        end
         
         -- Render
-        renderScripts(sorted)
+        renderScripts(finalScripts)
         
         -- Cooldown (0.3s)
         task.wait(0.3)
         isUpdating = false
     end
     
-    -- 🔴 GAME TOGGLE EVENTS
-    CurrentGameBtn.MouseButton1Click:Connect(function()
-        CurrentGameMode = "Current"
-        updateUI()
-        Update(SearchBox.Text)
-    end)
-    
-    AllGamesBtn.MouseButton1Click:Connect(function()
-        CurrentGameMode = "All"
-        updateUI()
-        Update(SearchBox.Text)
-    end)
-    
     -- 🔴 FILTER EVENTS
     RecommendedBtn.MouseButton1Click:Connect(function()
         CurrentFilter = "Recommended"
-        CurrentGameMode = "Current"  -- Force current game
+        SearchBox.Text = ""  -- Clear search when clicking filter
         updateUI()
-        Update(SearchBox.Text)
+        Update("")
     end)
     
     AllBtn.MouseButton1Click:Connect(function()
         CurrentFilter = "All"
-        CurrentGameMode = "All"  -- Force all games
+        SearchBox.Text = ""  -- Clear search when clicking filter
         updateUI()
-        Update(SearchBox.Text)
+        Update("")
     end)
     
     NoKeyBtn.MouseButton1Click:Connect(function()
         CurrentFilter = "NoKey"
-        CurrentGameMode = "Current"  -- Force current game
+        SearchBox.Text = ""  -- Clear search when clicking filter
         updateUI()
-        Update(SearchBox.Text)
+        Update("")
     end)
     
     KeyBtn.MouseButton1Click:Connect(function()
         CurrentFilter = "KeyRequired"
-        CurrentGameMode = "Current"  -- Force current game
+        SearchBox.Text = ""  -- Clear search when clicking filter
         updateUI()
-        Update(SearchBox.Text)
+        Update("")
     end)
     
     TrendingBtn.MouseButton1Click:Connect(function()
         CurrentFilter = "Trending"
-        CurrentGameMode = "Current"  -- Force current game
+        SearchBox.Text = ""  -- Clear search when clicking filter
         updateUI()
-        Update(SearchBox.Text)
+        Update("")
     end)
     
     -- 🔴 SEARCH BOX EVENT
