@@ -1672,7 +1672,7 @@ G2L["9e"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["9e"]["Position"] = UDim2.new(0.00157, 0, 0.08058, 0);
 G2L["9e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["9e"]["ScrollBarThickness"] = 1;
-
+G2L["9e"]["BackgroundTransparency"] = 0.6;
 
 -- StarterGui.ScreenGui.Main.Pages.Search.Scripts.UICorner1
 G2L["9f"] = Instance.new("UICorner", G2L["9e"]);
