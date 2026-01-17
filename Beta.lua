@@ -5547,6 +5547,13 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		
 		print("[Filter] ✅ After filtering:", #filtered, "scripts match", CurrentFilter)
+		
+		-- Debug: Show first script's data if available
+		if #filtered > 0 then
+			local first = filtered[1]
+			print("[Filter] First script:", first.title, "| Views:", first.views, "| Verified:", first.verified, "| Key:", first.key)
+		end
+		
 		return filtered
 	end
 	
@@ -5792,7 +5799,7 @@ if v.Name == "Popups" then v.Visible = false return end
 	
 	-- 🔴 INITIAL LOAD
 	updateUI()
-	Update("")
+	Update("", true) -- Force fresh fetch on initial load
 	
 	-- 🔴 DEBUG: Show detected game in UI
 	task.spawn(function()
