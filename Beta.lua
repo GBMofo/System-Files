@@ -5444,6 +5444,7 @@ InitTabs.Search = function()
 			detected = cleanGameName(game.Name)
 		end
 		
+		-- DEBUG LABEL
 		local GameLabel = Search:FindFirstChild("GameLabel")
 		if not GameLabel then
 			GameLabel = Instance.new("TextLabel", Search)
@@ -5535,7 +5536,7 @@ InitTabs.Search = function()
 		end
 	end
 	
-	-- 🔴 FILTER & SORT
+	-- 🔴 FILTER LOGIC (Applied AFTER fetch)
 	local function filterScripts(scriptList)
 		local filtered = {}
 		for _, scriptData in pairs(scriptList) do
@@ -5544,6 +5545,7 @@ InitTabs.Search = function()
 			if CurrentFilter == "Recommended" then
 				passes = (scriptData.verified == true)
 			elseif CurrentFilter == "NoKey" then
+				-- Must be FREE and NO KEY
 				local isPaid = (scriptData.scriptType == "paid")
 				local hasKey = (scriptData.key == true)
 				passes = (not isPaid) and (not hasKey)
@@ -5562,7 +5564,6 @@ InitTabs.Search = function()
 		return filtered
 	end
 	
-	-- LOCAL SORT: Only used when Browsing (not searching)
 	local function sortScripts(scriptList)
 		table.sort(scriptList, function(a, b)
 			local viewsA = tonumber(a.views) or 0
@@ -5663,77 +5664,61 @@ InitTabs.Search = function()
 			SearchBox.Text = ""
 		end
 		
-		local function fetchScripts(url)
-			local success, response = pcall(function() return game:HttpGet(url) end)
-			if success then
-				local s2, data = pcall(function() return HttpService:JSONDecode(response) end)
-				if s2 and data.result and data.result.scripts then
-					return data.result.scripts
-				end
+		-- Helper fetcher
+		local function fetch(url)
+			local s, r = pcall(function() return game:HttpGet(url) end)
+			if s then
+				local s2, d = pcall(function() return HttpService:JSONDecode(r) end)
+				if s2 and d.result and d.result.scripts then return d.result.scripts end
 			end
 			return {}
-		end
-		
-		-- 🟢 FETCH HELPER
-		-- 'useSort': If TRUE, we sort by Views (Good for browsing)
-		-- 'useSort': If FALSE, we rely on Relevance (Good for searching "Infinite Yield")
-		local function fetchBothModes(query, useSort)
-			local encoded = HttpService:UrlEncode(query)
-			local results = {}
-			local sortParam = ""
-			
-			if useSort then
-				sortParam = "&sortBy=views"
-			end
-			-- If useSort is false, sortParam is empty, so it defaults to Relevance
-			
-			-- 1. Free
-			local urlFree = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50&mode=free&strict=false"..sortParam
-			local listFree = fetchScripts(urlFree)
-			for _, v in pairs(listFree) do table.insert(results, v) end
-			
-			-- 2. Paid
-			local urlPaid = "https://scriptblox.com/api/script/search?q="..encoded.."&max=20&mode=paid&strict=false"..sortParam
-			local listPaid = fetchScripts(urlPaid)
-			for _, v in pairs(listPaid) do table.insert(results, v) end
-			
-			return results
 		end
 		
 		local MasterList = {}
 		local GameLabel = Search:FindFirstChild("GameLabel")
 		
+		-- 🟢 LOGIC: SEARCH VS BROWSING
+		
 		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-			-- 1. USER SEARCHING MANUALLY
-			-- ⚠️ CRITICAL: Pass 'false' for useSort.
-			-- This tells API: "Give me relevant scripts matching this name, don't just sort by views."
+			-- 1️⃣ SEARCH MODE (Mimics your OLD code)
+			-- Logic: No "sortBy=views", No "mode=free". Just simple relevance search.
 			if GameLabel then GameLabel.Text = "Custom: " .. currentQuery end
-			MasterList = fetchBothModes(currentQuery, false)
+			
+			local encoded = HttpService:UrlEncode(currentQuery)
+			-- Using max=60 to get a few more results than old code (which was 20)
+			-- Removing 'strict=true' but also NOT sorting by views allows "Relevance" to work.
+			local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=60"
+			
+			MasterList = fetch(url)
 			
 		elseif OriginalGameName then
-			-- 2. BROWSING GAME SCRIPTS
-			-- ⚠️ CRITICAL: Pass 'true' for useSort.
-			-- This tells API: "Show me the most popular scripts for this game."
+			-- 2️⃣ BROWSING GAME MODE (Dual Fetch)
+			-- Logic: Sort by views so we see Popular stuff.
 			if GameLabel then GameLabel.Text = "Game: " .. OriginalGameName end
 			
-			local listGame = fetchBothModes(OriginalGameName, true)
-			local listUni = fetchBothModes("Universal", true)
+			local encodedGame = HttpService:UrlEncode(OriginalGameName)
+			-- Sort by views for the game
+			local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame.."&max=50&sortBy=views"
+			local listGame = fetch(urlGame)
+			
+			-- Sort by views for Universal
+			local urlUni = "https://scriptblox.com/api/script/search?q=Universal&max=50&sortBy=views"
+			local listUni = fetch(urlUni)
 			
 			for _, v in pairs(listGame) do table.insert(MasterList, v) end
 			for _, v in pairs(listUni) do table.insert(MasterList, v) end
 			
 		else
-			-- 3. BROWSING UNIVERSAL
+			-- 3️⃣ UNIVERSAL MODE
 			if GameLabel then GameLabel.Text = "Mode: Universal" end
-			MasterList = fetchBothModes("Universal", true)
+			local url = "https://scriptblox.com/api/script/fetch?page=1&max=50"
+			MasterList = fetch(url)
 		end
 		
 		CachedScripts = MasterList
 		local finalScripts = filterScripts(CachedScripts)
 		
-		-- 🟢 FINAL SORTING DECISION
-		-- If user SEARCHED, we respect the API's relevance order (don't re-sort by views locally).
-		-- If user is BROWSING, we re-sort by views locally so the list looks clean.
+		-- We sort by views locally for consistency, unless we just searched (keep relevance)
 		if not (currentQuery and currentQuery ~= "") then
 			finalScripts = sortScripts(finalScripts)
 		end
