@@ -649,11 +649,39 @@ G2L["3f"] = Instance.new("Frame", G2L["1"]);
 G2L["3f"]["Visible"] = false;
 G2L["3f"]["Active"] = true;
 G2L["3f"]["BorderSizePixel"] = 0;
-G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(15, 15, 20); -- Main Background Dark Blue/Black
+G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(10, 10, 15); -- Darker background
 G2L["3f"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["3f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3f"]["Name"] = [[Main]];
-G2L["3f"]["BackgroundTransparency"] = 0; -- Opaque background
+G2L["3f"]["BackgroundTransparency"] = 0.3; -- Semi-transparent (adjust 0.2-0.5)
+
+-- Add ImageLabel for blur effect
+local blurBG = Instance.new("ImageLabel", G2L["3f"]);
+blurBG.Name = "BlurEffect";
+blurBG.Size = UDim2.new(1, 0, 1, 0);
+blurBG.Position = UDim2.new(0, 0, 0, 0);
+blurBG.BackgroundTransparency = 1;
+blurBG.Image = "rbxassetid://8992230677"; -- Noise texture for grain
+blurBG.ImageColor3 = Color3.fromRGB(15, 15, 20);
+blurBG.ImageTransparency = 0.7;
+blurBG.ScaleType = Enum.ScaleType.Tile;
+blurBG.TileSize = UDim2.new(0, 100, 0, 100);
+blurBG.ZIndex = 0;
+
+-- Add vignette effect (darker edges)
+local vignette = Instance.new("ImageLabel", G2L["3f"]);
+vignette.Name = "Vignette";
+vignette.Size = UDim2.new(1, 0, 1, 0);
+vignette.Position = UDim2.new(0, 0, 0, 0);
+vignette.BackgroundTransparency = 1;
+vignette.Image = "rbxassetid://5250216449"; -- Radial gradient
+vignette.ImageColor3 = Color3.fromRGB(0, 0, 0);
+vignette.ImageTransparency = 0.4; -- Adjust darkness (0.3-0.6)
+vignette.ZIndex = 1;
+
+-- Optional: Add UICorner for rounded edges
+local corner = Instance.new("UICorner", G2L["3f"]);
+corner.CornerRadius = UDim.new(0, 16);
 
 
 -- StarterGui.ScreenGui.Main.Title
