@@ -4959,7 +4959,7 @@ end
 				
 				if Button then
 					EnableFrame.Visible = true;
-					Pages.Visible = true; 
+				
 					local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
 					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
 					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y);
@@ -5467,7 +5467,7 @@ end
 			local Button = findButton(Name);
 			if not Button then return; end
 			
-			Pages.Visible = true;
+		
 			EnableFrame.Visible = true;
 			local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y);
 			local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition;
