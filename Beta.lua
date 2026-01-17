@@ -5250,33 +5250,31 @@ end
 			end
 			
 			-- ========================================
-			-- 11. UPDATE BACKGROUND GRADIENTS
-			-- ========================================
-			for _, obj in pairs(script.Parent:GetDescendants()) do
-				if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
-					-- Update main background gradient colors
-					local newColorSeq = ColorSequence.new{
-						ColorSequenceKeypoint.new(0, Color3.fromRGB(
-							math.floor(color.R * 255 * 0.8),
-							math.floor(color.G * 255 * 0.5),
-							math.floor(color.B * 255 * 1.2)
-						)),
-						ColorSequenceKeypoint.new(1, Color3.fromRGB(
-							math.floor(color.R * 255 * 0.4),
-							math.floor(color.G * 255 * 0.25),
-							math.floor(color.B * 255 * 0.7)
-						))
-					}
-					obj.Color = newColorSeq
-				end
-			end
+-- 11. UPDATE BACKGROUND GRADIENTS
+-- ========================================
+for _, obj in pairs(script.Parent:GetDescendants()) do
+    if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
+        -- Clamp RGB values to 0-255 range
+        local r1 = math.clamp(math.floor(color.R * 255 * 0.8), 0, 255)
+        local g1 = math.clamp(math.floor(color.G * 255 * 0.5), 0, 255)
+        local b1 = math.clamp(math.floor(color.B * 255 * 1.2), 0, 255)
+        
+        local r2 = math.clamp(math.floor(color.R * 255 * 0.4), 0, 255)
+        local g2 = math.clamp(math.floor(color.G * 255 * 0.25), 0, 255)
+        local b2 = math.clamp(math.floor(color.B * 255 * 0.7), 0, 255)
+        
+        local newColorSeq = ColorSequence.new{
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(r1, g1, b1)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(r2, g2, b2))
+        }
+        obj.Color = newColorSeq
+    end
+end
 			
 			createNotification("Theme Applied!", "Success", 3)
 		end
 		
 		LoadTheme()
-task.wait(0.1) -- Let UI finish building
-ApplyTheme(CurrentTheme) -- Apply saved theme IMMEDIATELY
 
 		
 		local function createSectionHeader(text, order)
@@ -5640,10 +5638,22 @@ ApplyTheme(CurrentTheme) -- Apply saved theme IMMEDIATELY
 				end
 			else
 				createNotification("Not supported.", "Error", 5)
-			end
-		end)
-		
-	end;
+    end
+end)
+
+-- ========================================
+-- AUTO-APPLY SAVED THEME ON STARTUP
+-- ========================================
+task.defer(function()
+    task.wait(0.5) -- Wait for ALL UI to build first
+    if getgenv().CurrentTheme then
+        ApplyTheme(getgenv().CurrentTheme)
+        print("[PUNK X] Theme auto-applied:", getgenv().CurrentTheme)
+    end
+end)
+
+end;
+
 
 	InitTabs.TabsData = function()
 		if not CLONED_Detectedly.isfolder("scripts") then
