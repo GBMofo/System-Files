@@ -5564,7 +5564,7 @@ InitTabs.Search = function()
 		return scriptList
 	end
 	
-	-- 🔴 RENDER (FIXED OVERLAY ISSUE)
+	-- 🔴 RENDER (FIXED: Small Pill, Curved, Bottom-Right Placement)
 	local function renderScripts(scriptList)
 		for _, v in pairs(Scripts:GetChildren()) do
 			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
@@ -5593,50 +5593,49 @@ InitTabs.Search = function()
 				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
 				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
 				
-				-- 🟢 FIX 1: Make sure buttons are ON TOP
-				if new.Misc:FindFirstChild("Panel") then
-					new.Misc.Panel.ZIndex = 10
-					for _, btn in pairs(new.Misc.Panel:GetChildren()) do
-						if btn:IsA("GuiObject") then btn.ZIndex = 10 end
-					end
-				end
+				-- 🟢 CONTAINER FOR STATS (The "Pill")
+				local StatsPill = Instance.new("Frame", new.Misc)
+				StatsPill.Name = "StatsPill"
+				StatsPill.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+				StatsPill.BackgroundTransparency = 0.6 -- Semi-transparent dark
+				StatsPill.Size = UDim2.new(0, 0, 0, 22) -- Height 22, Width Auto
+				StatsPill.AutomaticSize = Enum.AutomaticSize.X -- Auto-width
 				
-				-- 🟢 FIX 2: Better Stats Label position
-				local StatsLabel = Instance.new("TextLabel", new.Misc)
-				StatsLabel.Name = "Stats"
-				StatsLabel.BackgroundTransparency = 1
-				StatsLabel.Size = UDim2.new(0.6, 0, 0, 20) -- Only take up 60% of width
-				StatsLabel.Position = UDim2.new(0, 5, 1, -25)
-				StatsLabel.Font = Enum.Font.GothamBold
-				StatsLabel.TextSize = 11
-				StatsLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-				StatsLabel.TextXAlignment = Enum.TextXAlignment.Left -- Align left
-				StatsLabel.ZIndex = 3
+				-- 🟢 POSITION: Bottom Right (Left of the buttons)
+				-- We anchor it to the Bottom Right (1, 1) and offset it by -100px to avoid buttons
+				StatsPill.AnchorPoint = Vector2.new(1, 1) 
+				StatsPill.Position = UDim2.new(1, -95, 1, -8)
+				StatsPill.BorderSizePixel = 0
+				StatsPill.ZIndex = 5
 				
-				local statsText = "👁️ " .. formatNumber(scriptData.views or 0)
+				-- 🟢 CURVED EDGES
+				local PillCorner = Instance.new("UICorner", StatsPill)
+				PillCorner.CornerRadius = UDim.new(0, 6)
+				
+				-- 🟢 PADDING (Space inside the pill)
+				local PillPadding = Instance.new("UIPadding", StatsPill)
+				PillPadding.PaddingLeft = UDim.new(0, 8)
+				PillPadding.PaddingRight = UDim.new(0, 8)
+				
+				-- 🟢 TEXT LABEL
+				local StatsText = Instance.new("TextLabel", StatsPill)
+				StatsText.BackgroundTransparency = 1
+				StatsText.Size = UDim2.new(0, 0, 1, 0)
+				StatsText.AutomaticSize = Enum.AutomaticSize.X
+				StatsText.Font = Enum.Font.GothamBold
+				StatsText.TextSize = 11
+				StatsText.TextColor3 = Color3.fromRGB(220, 220, 220)
+				StatsText.TextXAlignment = Enum.TextXAlignment.Center
+				StatsText.ZIndex = 6
+				
+				local displayViews = formatNumber(scriptData.views or 0)
+				local textContent = "👁️ " .. displayViews
 				if scriptData.likeCount then
-					statsText = statsText .. "   👍 " .. formatNumber(scriptData.likeCount)
+					textContent = textContent .. "  |  👍 " .. formatNumber(scriptData.likeCount)
 				end
-				StatsLabel.Text = statsText
+				StatsText.Text = textContent
 				
-				-- 🟢 FIX 3: Shadow is now smaller and behind buttons
-				local GradientFrame = Instance.new("Frame", new.Misc)
-				GradientFrame.Size = UDim2.new(0.7, 0, 0, 40) -- Shorter width (0.7) so it avoids buttons
-				GradientFrame.Position = UDim2.new(0, 0, 1, -40)
-				GradientFrame.BorderSizePixel = 0
-				GradientFrame.BackgroundColor3 = Color3.new(0,0,0)
-				GradientFrame.BackgroundTransparency = 0.3
-				GradientFrame.ZIndex = 2 -- Low ZIndex to stay behind buttons
-				GradientFrame.Active = false -- Can click through it
-				
-				local UiGrad = Instance.new("UIGradient", GradientFrame)
-				UiGrad.Rotation = -90
-				UiGrad.Transparency = NumberSequence.new({
-					NumberSequenceKeypoint.new(0, 1), 
-					NumberSequenceKeypoint.new(0.5, 0.2),
-					NumberSequenceKeypoint.new(1, 0)
-				})
-				
+				-- Tags
 				new.Tags.Key.Visible = scriptData.key or false
 				new.Tags.Universal.Visible = scriptData.isUniversal or false
 				new.Tags.Patched.Visible = scriptData.isPatched or false
