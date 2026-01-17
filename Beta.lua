@@ -5732,15 +5732,6 @@ if v.Name == "Popups" then v.Visible = false return end
     updateUI()
     Update("")
 end;
-    -- 🔴 SEARCH BOX EVENT
-    SearchBox.FocusLost:Connect(function()
-        Update(SearchBox.Text)
-    end)
-    
-    -- 🔴 INITIAL LOAD (Recommended for current game)
-    updateUI()
-    Update("")
-end;
 
 	InitTabs.Nav = function()
     local isInstantNext = false;
