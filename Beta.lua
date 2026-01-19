@@ -5825,51 +5825,50 @@ end;
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
 
--- [[ NUCLEAR FIX: RAW MODE ]] --
+-- [[ ULTIMATE EDITOR FIX ]] --
 		
-		EditorFrame.Input.Focused:Connect(function()
-			-- 1. RESIZE (Shrink Height Only, Keep Full Width)
-			EditorFrame.Size = UDim2.new(size.X.Scale, size.X.Offset, 0.45, 0); 
-			EditorFrame.Position = UDim2.fromScale(pos.X.Scale, 0); 
-			EditorFrame.ClipsDescendants = true; 
+		-- 1. Capture Original Size (Hardcoded to prevent shrinking bugs)
+		local defaultSize = UDim2.new(1, 0, 0.85, 0)
+		local defaultPos = UDim2.new(0, 0, 0.15, 0)
 
-			-- 2. RAW TEXT MODE (This Fixes the Glitch)
-			-- We force the text to be white and visible.
-			-- We HIDE the highlighter folder so it can't pile up.
+		EditorFrame.Input.Focused:Connect(function()
+			-- 2. RESIZE: Only change Height (Y). Keep Width (X) at 100%.
+			-- This fixes the "Compact Box" issue.
+			EditorFrame.Size = UDim2.new(1, 0, 0.45, 0); 
+			EditorFrame.Position = UDim2.new(0, 0, 0, 0); 
+			
+			-- 3. CLIPPING: Cut off text that goes outside the box
+			EditorFrame.ClipsDescendants = true;
+
+			-- 4. RAW MODE: Turn ON White Text, Turn OFF Colors
+			-- This fixes the "Glitchy/Piled Up" text and the "Cursor" issue.
 			EditorFrame.Input.TextTransparency = 0; 
 			EditorFrame.Input.TextColor3 = Color3.fromRGB(255, 255, 255);
-			EditorFrame.Input.TextSize = 12;
 			
-			-- 3. SCROLLING (Left/Right + Up/Down)
-			EditorFrame.Input.TextWrapped = false;       -- OFF = Horizontal Scroll
-			EditorFrame.Input.ClearTextOnFocus = false; 
+			-- 5. SCROLLING: Disable wrapping so you can scroll Left/Right
+			EditorFrame.Input.TextWrapped = false;
+			EditorFrame.Input.ClearTextOnFocus = false;
 
-			-- 4. KILL THE HIGHLIGHTER (Temporary)
-			-- This loops through the textbox and hides the folder containing the colored text.
-			for _, child in pairs(EditorFrame.Input:GetChildren()) do
-				if child:IsA("Folder") then child.Visible = false end
-			end
-			
-			-- 5. UPDATE LINE NUMBERS
-			update_lines(EditorFrame.Input, EditorFrame.Lines);
+			-- 6. HIDE HIGHLIGHTER FOLDER
+			-- This is the most important part. It hides the colored text layer completely.
+			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
+			if hlFolder then hlFolder.Visible = false; end
 		end);
 		
 		EditorFrame.Input.FocusLost:Connect(function()
-			-- 1. RESTORE SIZE
-			EditorFrame.Size = size;
-			EditorFrame.Position = pos;
+			-- 1. RESTORE UI
+			EditorFrame.Size = defaultSize;
+			EditorFrame.Position = defaultPos;
 			
-			-- 2. RESTORE HIGHLIGHTER MODE
-			EditorFrame.Input.TextTransparency = 1;      -- Hide raw text (Ghosting Fix)
-			EditorFrame.Input.TextWrapped = false;       -- Keep horizontal scroll
+			-- 2. RESTORE HIGHLIGHTER
+			EditorFrame.Input.TextTransparency = 1; -- Hide raw text
+			EditorFrame.Input.TextWrapped = false;  -- Keep layout consistent
 			
-			-- 3. BRING BACK COLORS
-			for _, child in pairs(EditorFrame.Input:GetChildren()) do
-				if child:IsA("Folder") then child.Visible = true end
-			end
+			-- 3. SHOW COLORS AGAIN
+			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
+			if hlFolder then hlFolder.Visible = true; end
 			
-			-- 4. REFRESH EVERYTHING
-			update_lines(EditorFrame.Input, EditorFrame.Lines);
+			-- 4. REFRESH DATA
 			if highlighter and highlighter.refresh then 
 				highlighter.refresh() 
 			end
