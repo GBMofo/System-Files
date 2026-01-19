@@ -5824,19 +5824,42 @@ end;
 		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
+		-- [[ FIXED EDITOR LOGIC ]] --
 		EditorFrame.Input.Focused:Connect(function()
+			-- 1. Compact Mode (Resize Window)
 			EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
 			EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
-				-- [[ PASTE THIS FIX CODE HERE ]] --
-            EditorFrame.ClipsDescendants = true; -- This cuts off the overflowing text
-            if highlighter and highlighter.refresh then
-                 highlighter.refresh() -- Forces text to re-wrap to the new smaller size
-            end
+			EditorFrame.ClipsDescendants = true;
+
+			-- 2. TYPING MODE (User Request: Wrap Text & Smaller Size)
+			EditorFrame.Input.TextWrapped = true;        -- Make text continue down
+			EditorFrame.Input.TextSize = 11;             -- Make text smaller
+			EditorFrame.Input.TextTransparency = 0;      -- Make text Visible (White)
+			EditorFrame.Input.TextColor3 = Color3.fromRGB(235, 235, 235); 
+
+			-- 3. Hide Colors temporarily (Prevents the "Piled Up" Glitch)
+			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
+			if hlFolder then hlFolder.Visible = false; end
 		end);
 		
 		EditorFrame.Input.FocusLost:Connect(function()
+			-- 1. Restore Window Size
 			EditorFrame.Position = pos;
 			EditorFrame.Size = size;
+			
+			-- 2. READING MODE (Restore Colors)
+			EditorFrame.Input.TextWrapped = false;       -- Unwrap for proper highlighting
+			EditorFrame.Input.TextTransparency = 1;      -- Make text Invisible (Ghosting fix)
+			EditorFrame.Input.TextSize = 11;             -- Keep size small
+
+			-- 3. Show Colors Again
+			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
+			if hlFolder then hlFolder.Visible = true; end
+			
+			-- 4. Refresh Syntax Highlighting
+			if highlighter and highlighter.refresh then 
+				highlighter.refresh() 
+			end
 		end);
 		
 		Editor.Tabs.Create.Activated:Connect(function()
