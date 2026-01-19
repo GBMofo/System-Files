@@ -5824,39 +5824,43 @@ end;
 		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
-		-- [[ FIXED EDITOR LOGIC ]] --
+
+-- [[ FINAL EDITOR FIX ]] --
 		EditorFrame.Input.Focused:Connect(function()
-			-- 1. Compact Mode (Resize Window)
-			EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
-			EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
+			-- 1. RESIZE LOGIC (Keep Width Full, Shrink Height Only)
+			-- We use 'size.X.Scale' to keep the original width (Solving the "Compact" issue)
+			-- We only shrink the Y axis (Height) to make room for the keyboard
+			EditorFrame.Size = UDim2.new(size.X.Scale, size.X.Offset, 0.45, 0); 
+			EditorFrame.Position = UDim2.fromScale(pos.X.Scale, 0); -- Move to top
 			EditorFrame.ClipsDescendants = true;
 
-			-- 2. TYPING MODE (User Request: Wrap Text & Smaller Size)
-			EditorFrame.Input.TextWrapped = true;        -- Make text continue down
-			EditorFrame.Input.TextSize = 11;             -- Make text smaller
-			EditorFrame.Input.TextTransparency = 0;      -- Make text Visible (White)
-			EditorFrame.Input.TextColor3 = Color3.fromRGB(235, 235, 235); 
+			-- 2. VISUALS (Raw Text Mode - No Glitches)
+			EditorFrame.Input.TextTransparency = 0;      -- Show raw text
+			EditorFrame.Input.TextColor3 = Color3.fromRGB(255, 255, 255);
+			
+			-- 3. SCROLLING (Enable Left-Right Scroll)
+			EditorFrame.Input.TextWrapped = false;       -- This allows text to go off-screen (Scrollable)
+			EditorFrame.Input.TextSize = 12;             -- Comfortable typing size
 
-			-- 3. Hide Colors temporarily (Prevents the "Piled Up" Glitch)
+			-- 4. HIDE HIGHLIGHTER (Prevents "Piling Up" and Lag)
 			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
 			if hlFolder then hlFolder.Visible = false; end
 		end);
 		
 		EditorFrame.Input.FocusLost:Connect(function()
-			-- 1. Restore Window Size
-			EditorFrame.Position = pos;
+			-- 1. RESTORE SIZE
 			EditorFrame.Size = size;
+			EditorFrame.Position = pos;
 			
-			-- 2. READING MODE (Restore Colors)
-			EditorFrame.Input.TextWrapped = false;       -- Unwrap for proper highlighting
-			EditorFrame.Input.TextTransparency = 1;      -- Make text Invisible (Ghosting fix)
-			EditorFrame.Input.TextSize = 11;             -- Keep size small
-
-			-- 3. Show Colors Again
+			-- 2. RESTORE HIGHLIGHTER VISUALS
+			EditorFrame.Input.TextTransparency = 1;      -- Hide raw text (Ghosting Fix)
+			EditorFrame.Input.TextWrapped = false;       -- Keep standard formatting
+			
+			-- 3. SHOW HIGHLIGHTER AGAIN
 			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
 			if hlFolder then hlFolder.Visible = true; end
 			
-			-- 4. Refresh Syntax Highlighting
+			-- 4. REFRESH COLORS
 			if highlighter and highlighter.refresh then 
 				highlighter.refresh() 
 			end
