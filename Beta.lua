@@ -4452,7 +4452,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			textObject.TextYAlignment = Enum.TextYAlignment.Top;
 			textObject.BackgroundColor3 = theme.getColor("background");
 			textObject.TextColor3 = theme.getColor("iden");
-			textObject.TextTransparency = 0.5;
+			textObject.TextTransparency = 1;
 			local lineFolder = textObject:FindFirstChildWhichIsA("Folder");
 			if (lineFolder == nil) then
 				local newLineFolder = Instance.new("Folder");
@@ -5820,6 +5820,11 @@ end;
 		EditorFrame.Input.Focused:Connect(function()
 			EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
 			EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
+				-- [[ PASTE THIS FIX CODE HERE ]] --
+            EditorFrame.ClipsDescendants = true; -- This cuts off the overflowing text
+            if highlighter and highlighter.refresh then
+                 highlighter.refresh() -- Forces text to re-wrap to the new smaller size
+            end
 		end);
 		
 		EditorFrame.Input.FocusLost:Connect(function()
