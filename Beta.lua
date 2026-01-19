@@ -4501,7 +4501,12 @@ if v.Name == "Popups" then v.Visible = false return end
 				Highlighter._alignLabels(textObject);
 			end);
 			connections['Focused'] = textObject.Focused:Connect(function()
-				highlight_enabled = false;
+			   -- [[ FIX 1: KEEP HIGHLIGHTER ON ]] --
+                highlight_enabled = true; -- (This was false before. Change it to true!)
+	           -- [[ FIX 2: PREVENT OVERFLOW ]] --
+                if textObject.Parent then
+                    textObject.Parent.ClipsDescendants = true;
+                end
 				Highlighter._populateLabels(props);
 				Highlighter._alignLabels(textObject);
 			end);
