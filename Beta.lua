@@ -5825,50 +5825,57 @@ end;
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
 
--- [[ ULTIMATE EDITOR FIX ]] --
+-- [[ FORCE RAW MODE FIX ]] --
 		
-		-- 1. Capture Original Size (Hardcoded to prevent shrinking bugs)
-		local defaultSize = UDim2.new(1, 0, 0.85, 0)
-		local defaultPos = UDim2.new(0, 0, 0.15, 0)
-
 		EditorFrame.Input.Focused:Connect(function()
-			-- 2. RESIZE: Only change Height (Y). Keep Width (X) at 100%.
-			-- This fixes the "Compact Box" issue.
+			-- 1. LAYOUT: Full Width, Half Height, Clip Overflow
 			EditorFrame.Size = UDim2.new(1, 0, 0.45, 0); 
 			EditorFrame.Position = UDim2.new(0, 0, 0, 0); 
-			
-			-- 3. CLIPPING: Cut off text that goes outside the box
 			EditorFrame.ClipsDescendants = true;
 
-			-- 4. RAW MODE: Turn ON White Text, Turn OFF Colors
-			-- This fixes the "Glitchy/Piled Up" text and the "Cursor" issue.
+			-- 2. VISUALS: Force White Text (So you can see what you click)
 			EditorFrame.Input.TextTransparency = 0; 
 			EditorFrame.Input.TextColor3 = Color3.fromRGB(255, 255, 255);
 			
-			-- 5. SCROLLING: Disable wrapping so you can scroll Left/Right
+			-- 3. SCROLLING: Horizontal Scroll Enabled
 			EditorFrame.Input.TextWrapped = false;
 			EditorFrame.Input.ClearTextOnFocus = false;
 
-			-- 6. HIDE HIGHLIGHTER FOLDER
-			-- This is the most important part. It hides the colored text layer completely.
+			-- 4. OVERRIDE LOOP: This prevents the "Pile Up" Glitch
+			-- The Highlighter tries to show colors when you type. We force them OFF immediately.
 			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
 			if hlFolder then hlFolder.Visible = false; end
+
+			-- This connection fights the highlighter every time you type a letter
+			getgenv().TypingConnection = EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+				task.defer(function() -- Wait for highlighter to finish, then undo it
+					local f = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
+					if f then f.Visible = false; end
+					EditorFrame.Input.TextTransparency = 0; -- Keep text visible
+				end)
+			end)
 		end);
 		
 		EditorFrame.Input.FocusLost:Connect(function()
-			-- 1. RESTORE UI
-			EditorFrame.Size = defaultSize;
-			EditorFrame.Position = defaultPos;
+			-- 1. CLEANUP: Stop the Override Loop
+			if getgenv().TypingConnection then 
+				getgenv().TypingConnection:Disconnect()
+				getgenv().TypingConnection = nil
+			end
+
+			-- 2. RESTORE UI SIZE
+			EditorFrame.Size = size; -- Uses the original size variable
+			EditorFrame.Position = pos; -- Uses the original pos variable
 			
-			-- 2. RESTORE HIGHLIGHTER
-			EditorFrame.Input.TextTransparency = 1; -- Hide raw text
-			EditorFrame.Input.TextWrapped = false;  -- Keep layout consistent
+			-- 3. RESTORE HIGHLIGHTER MODE
+			EditorFrame.Input.TextTransparency = 1;      -- Hide raw text (Ghosting Fix)
+			EditorFrame.Input.TextWrapped = false;       -- Keep horizontal scroll
 			
-			-- 3. SHOW COLORS AGAIN
+			-- 4. SHOW COLORS AGAIN
 			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
 			if hlFolder then hlFolder.Visible = true; end
 			
-			-- 4. REFRESH DATA
+			-- 5. REFRESH HIGHLIGHTER DATA
 			if highlighter and highlighter.refresh then 
 				highlighter.refresh() 
 			end
