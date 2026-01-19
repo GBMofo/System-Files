@@ -5825,27 +5825,33 @@ end;
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
 
--- [[ FINAL "NO GLITCH" EDITOR FIX ]] --
+-- [[ NUCLEAR FIX: RAW MODE ]] --
 		
 		EditorFrame.Input.Focused:Connect(function()
-			-- 1. RESIZE (Keep Full Width, Shrink Height Only)
+			-- 1. RESIZE (Shrink Height Only, Keep Full Width)
 			EditorFrame.Size = UDim2.new(size.X.Scale, size.X.Offset, 0.45, 0); 
-			EditorFrame.Position = UDim2.fromScale(pos.X.Scale, 0); -- Move to top
-			EditorFrame.ClipsDescendants = true; -- Cut off overflow
+			EditorFrame.Position = UDim2.fromScale(pos.X.Scale, 0); 
+			EditorFrame.ClipsDescendants = true; 
 
-			-- 2. RAW TEXT MODE (No Glitches)
-			EditorFrame.Input.TextTransparency = 0;      -- Show white text
+			-- 2. RAW TEXT MODE (This Fixes the Glitch)
+			-- We force the text to be white and visible.
+			-- We HIDE the highlighter folder so it can't pile up.
+			EditorFrame.Input.TextTransparency = 0; 
 			EditorFrame.Input.TextColor3 = Color3.fromRGB(255, 255, 255);
-			EditorFrame.Input.TextSize = 12;             -- Readable size
+			EditorFrame.Input.TextSize = 12;
 			
-			-- 3. SCROLLING (Left to Right)
-			EditorFrame.Input.TextWrapped = false;       -- OFF = Scroll sideways
-			EditorFrame.Input.ClearTextOnFocus = false;  -- Don't delete text
+			-- 3. SCROLLING (Left/Right + Up/Down)
+			EditorFrame.Input.TextWrapped = false;       -- OFF = Horizontal Scroll
+			EditorFrame.Input.ClearTextOnFocus = false; 
 
-			-- 4. HIDE HIGHLIGHTER (Fixes the "Pile Up")
+			-- 4. KILL THE HIGHLIGHTER (Temporary)
+			-- This loops through the textbox and hides the folder containing the colored text.
 			for _, child in pairs(EditorFrame.Input:GetChildren()) do
 				if child:IsA("Folder") then child.Visible = false end
 			end
+			
+			-- 5. UPDATE LINE NUMBERS
+			update_lines(EditorFrame.Input, EditorFrame.Lines);
 		end);
 		
 		EditorFrame.Input.FocusLost:Connect(function()
@@ -5854,15 +5860,16 @@ end;
 			EditorFrame.Position = pos;
 			
 			-- 2. RESTORE HIGHLIGHTER MODE
-			EditorFrame.Input.TextTransparency = 1;      -- Hide white text
-			EditorFrame.Input.TextWrapped = false;       -- Keep scrolling
+			EditorFrame.Input.TextTransparency = 1;      -- Hide raw text (Ghosting Fix)
+			EditorFrame.Input.TextWrapped = false;       -- Keep horizontal scroll
 			
-			-- 3. SHOW HIGHLIGHTER COLORS
+			-- 3. BRING BACK COLORS
 			for _, child in pairs(EditorFrame.Input:GetChildren()) do
 				if child:IsA("Folder") then child.Visible = true end
 			end
 			
-			-- 4. REFRESH
+			-- 4. REFRESH EVERYTHING
+			update_lines(EditorFrame.Input, EditorFrame.Lines);
 			if highlighter and highlighter.refresh then 
 				highlighter.refresh() 
 			end
