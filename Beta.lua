@@ -4507,6 +4507,8 @@ if v.Name == "Popups" then v.Visible = false return end
                 if textObject.Parent then
                     textObject.Parent.ClipsDescendants = true;
                 end
+	          -- [[ FIX 3: WAIT FOR RESIZE (The "Pile Up" Fix) ]] --
+                task.wait(0.05) -- Gives the UI time to resize before drawing text
 				Highlighter._populateLabels(props);
 				Highlighter._alignLabels(textObject);
 			end);
