@@ -5825,26 +5825,27 @@ end;
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
 
--- [[ FINAL EDITOR FIX ]] --
+-- [[ FINAL "NO GLITCH" EDITOR FIX ]] --
+		
 		EditorFrame.Input.Focused:Connect(function()
-			-- 1. RESIZE LOGIC (Keep Width Full, Shrink Height Only)
-			-- We use 'size.X.Scale' to keep the original width (Solving the "Compact" issue)
-			-- We only shrink the Y axis (Height) to make room for the keyboard
+			-- 1. RESIZE (Keep Full Width, Shrink Height Only)
 			EditorFrame.Size = UDim2.new(size.X.Scale, size.X.Offset, 0.45, 0); 
 			EditorFrame.Position = UDim2.fromScale(pos.X.Scale, 0); -- Move to top
-			EditorFrame.ClipsDescendants = true;
+			EditorFrame.ClipsDescendants = true; -- Cut off overflow
 
-			-- 2. VISUALS (Raw Text Mode - No Glitches)
-			EditorFrame.Input.TextTransparency = 0;      -- Show raw text
+			-- 2. RAW TEXT MODE (No Glitches)
+			EditorFrame.Input.TextTransparency = 0;      -- Show white text
 			EditorFrame.Input.TextColor3 = Color3.fromRGB(255, 255, 255);
+			EditorFrame.Input.TextSize = 12;             -- Readable size
 			
-			-- 3. SCROLLING (Enable Left-Right Scroll)
-			EditorFrame.Input.TextWrapped = false;       -- This allows text to go off-screen (Scrollable)
-			EditorFrame.Input.TextSize = 12;             -- Comfortable typing size
+			-- 3. SCROLLING (Left to Right)
+			EditorFrame.Input.TextWrapped = false;       -- OFF = Scroll sideways
+			EditorFrame.Input.ClearTextOnFocus = false;  -- Don't delete text
 
-			-- 4. HIDE HIGHLIGHTER (Prevents "Piling Up" and Lag)
-			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
-			if hlFolder then hlFolder.Visible = false; end
+			-- 4. HIDE HIGHLIGHTER (Fixes the "Pile Up")
+			for _, child in pairs(EditorFrame.Input:GetChildren()) do
+				if child:IsA("Folder") then child.Visible = false end
+			end
 		end);
 		
 		EditorFrame.Input.FocusLost:Connect(function()
@@ -5852,15 +5853,16 @@ end;
 			EditorFrame.Size = size;
 			EditorFrame.Position = pos;
 			
-			-- 2. RESTORE HIGHLIGHTER VISUALS
-			EditorFrame.Input.TextTransparency = 1;      -- Hide raw text (Ghosting Fix)
-			EditorFrame.Input.TextWrapped = false;       -- Keep standard formatting
+			-- 2. RESTORE HIGHLIGHTER MODE
+			EditorFrame.Input.TextTransparency = 1;      -- Hide white text
+			EditorFrame.Input.TextWrapped = false;       -- Keep scrolling
 			
-			-- 3. SHOW HIGHLIGHTER AGAIN
-			local hlFolder = EditorFrame.Input:FindFirstChildWhichIsA("Folder");
-			if hlFolder then hlFolder.Visible = true; end
+			-- 3. SHOW HIGHLIGHTER COLORS
+			for _, child in pairs(EditorFrame.Input:GetChildren()) do
+				if child:IsA("Folder") then child.Visible = true end
+			end
 			
-			-- 4. REFRESH COLORS
+			-- 4. REFRESH
 			if highlighter and highlighter.refresh then 
 				highlighter.refresh() 
 			end
