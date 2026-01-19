@@ -21,187 +21,6 @@ end
 -- // 🛡️ SECURITY: RANDOM NAME //
 local randomName = game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
 
--- ============================================
--- 🔧 EDITOR BEHAVIOR MODULES (FIX SYSTEM)
--- ============================================
-
--- Module: EditorBehaviorManager
-local EditorBehaviorManager = {
-	State = {
-		isEditing = false,
-		savedCursorPosition = -1,
-		savedScrollPosition = 0,
-		isHighlighterActive = true
-	},
-	Connections = {
-		Focused = nil,
-		FocusLost = nil,
-		TextChanged = nil,
-		Scroll = nil
-	}
-}
-
-function EditorBehaviorManager:Init(editorFrame)
-	self.EditorFrame = editorFrame
-	self.Input = editorFrame.Input
-	self.LinesLabel = editorFrame.Lines
-	
-	-- Cleanup old connections
-	self:Cleanup()
-	
-	-- Setup new connections
-	self:SetupConnections()
-end
-
-function EditorBehaviorManager:Cleanup()
-	for name, conn in pairs(self.Connections) do
-		if conn then 
-			conn:Disconnect() 
-		end
-		self.Connections[name] = nil
-	end
-end
-
-function EditorBehaviorManager:SetupConnections()
-	-- Will be populated by modules
-end
-
--- Module: CursorModule
-local CursorModule = {}
-
-function CursorModule.SavePosition(input)
-	local success, position = pcall(function()
-		return input.CursorPosition
-	end)
-	
-	if success and position >= 0 then
-		EditorBehaviorManager.State.savedCursorPosition = position
-		print("[CursorModule] Saved position:", position)
-		return position
-	end
-	
-	return -1
-end
-
-function CursorModule.RestorePosition(input)
-	local savedPos = EditorBehaviorManager.State.savedCursorPosition
-	
-	if savedPos < 0 then 
-		print("[CursorModule] No saved position")
-		return 
-	end
-	
-	-- Double-restore technique (handles UI layout delays)
-	local function attemptRestore()
-		local success = pcall(function()
-			local textLength = #input.Text
-			local clampedPos = math.clamp(savedPos, 0, textLength)
-			input.CursorPosition = clampedPos
-			print("[CursorModule] Restored to:", clampedPos)
-		end)
-		
-		if not success then
-			warn("[CursorModule] Restore failed, using fallback")
-			pcall(function()
-				input.CursorPosition = #input.Text -- Fallback: end of text
-			end)
-		end
-	end
-	
-	-- Immediate attempt
-	attemptRestore()
-	
-	-- Delayed attempt (catches layout failures)
-	task.delay(0.1, attemptRestore)
-end
-
--- Module: DisplayModule
-local DisplayModule = {}
-
-function DisplayModule.EnterEditMode(input)
-	print("[DisplayModule] Entering edit mode")
-	
-	-- CRITICAL: Set these SYNCHRONOUSLY (no task.defer!)
-	input.TextTransparency = 0
-	input.TextColor3 = Color3.fromRGB(255, 255, 255)
-	
-	-- Hide highlighter folder immediately
-	local folder = input:FindFirstChildWhichIsA("Folder")
-	if folder then
-		folder.Visible = false
-	end
-	
-	EditorBehaviorManager.State.isHighlighterActive = false
-end
-
-function DisplayModule.ExitEditMode(input)
-	print("[DisplayModule] Exiting edit mode")
-	
-	-- Restore highlighter
-	input.TextTransparency = 1
-	
-	local folder = input:FindFirstChildWhichIsA("Folder")
-	if folder then
-		folder.Visible = true
-	end
-	
-	EditorBehaviorManager.State.isHighlighterActive = true
-end
-
-function DisplayModule.SetupAntiPileup(input)
-	-- Disconnect old override connection if exists
-	if EditorBehaviorManager.Connections.TextChanged then
-		EditorBehaviorManager.Connections.TextChanged:Disconnect()
-	end
-	
-	-- Override loop: Prevents highlighter from showing during edit
-	EditorBehaviorManager.Connections.TextChanged = input:GetPropertyChangedSignal("Text"):Connect(function()
-		if not EditorBehaviorManager.State.isEditing then return end
-		
-		-- Force hide highlighter colors while typing
-		local f = input:FindFirstChildWhichIsA("Folder")
-		if f then f.Visible = false end
-		input.TextTransparency = 0
-	end)
-end
-
--- Module: ScrollModule
-local ScrollModule = {}
-
-function ScrollModule.SyncLineNumbers(scrollFrame, linesLabel)
-	if not scrollFrame or not linesLabel then 
-		warn("[ScrollModule] Missing components")
-		return 
-	end
-	
-	-- Disconnect old scroll connection
-	if EditorBehaviorManager.Connections.Scroll then
-		EditorBehaviorManager.Connections.Scroll:Disconnect()
-	end
-	
-	local function updateLinePosition()
-		local success = pcall(function()
-			local scrollY = scrollFrame.CanvasPosition.Y
-			linesLabel.Position = UDim2.new(0, 0, 0, -scrollY)
-		end)
-		
-		if not success then
-			warn("[ScrollModule] Failed to sync lines")
-		end
-	end
-	
-	-- Initial sync
-	updateLinePosition()
-	
-	-- Connect to scroll events
-	EditorBehaviorManager.Connections.Scroll = scrollFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(updateLinePosition)
-	
-	print("[ScrollModule] Line sync initialized")
-end
-
--- ============================================
--- END OF MODULES
--- ============================================
 -- // CREATE UI //
 G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
 G2L["1"].Name = randomName
@@ -4633,7 +4452,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			textObject.TextYAlignment = Enum.TextYAlignment.Top;
 			textObject.BackgroundColor3 = theme.getColor("background");
 			textObject.TextColor3 = theme.getColor("iden");
-			textObject.TextTransparency = 1;
+			textObject.TextTransparency = 0.5;
 			local lineFolder = textObject:FindFirstChildWhichIsA("Folder");
 			if (lineFolder == nil) then
 				local newLineFolder = Instance.new("Folder");
@@ -4682,14 +4501,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				Highlighter._alignLabels(textObject);
 			end);
 			connections['Focused'] = textObject.Focused:Connect(function()
-			   -- [[ FIX 1: KEEP HIGHLIGHTER ON ]] --
-                highlight_enabled = true; -- (This was false before. Change it to true!)
-	           -- [[ FIX 2: PREVENT OVERFLOW ]] --
-                if textObject.Parent then
-                    textObject.Parent.ClipsDescendants = true;
-                end
-	          -- [[ FIX 3: WAIT FOR RESIZE (The "Pile Up" Fix) ]] --
-                task.wait(0.05) -- Gives the UI time to resize before drawing text
+				highlight_enabled = false;
 				Highlighter._populateLabels(props);
 				Highlighter._alignLabels(textObject);
 			end);
@@ -4808,6 +4620,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					};
 				end
 				UIEvents.EditorTabs.switchTab(TabName);
+				UIEvents.EditorTabs.updateUI();
 			end,
 			saveTab = function(tabName, Content, isExplicitSave)
 				tabName = tabName or Data.Editor.CurrentTab;
@@ -4880,31 +4693,14 @@ if v.Name == "Popups" then v.Visible = false return end
 						local CurrentContent = EditorFrame.Text;
 						UIEvents.EditorTabs.saveTab(OldTab, CurrentContent, false);
 					end
-					-- Cleanup editor connections before switching
-if EditorBehaviorManager and EditorBehaviorManager.Cleanup then
-	EditorBehaviorManager:Cleanup()
-end
+					
 					Data.Editor.CurrentTab = ToTab;
 					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
 					EditorFrame.Text = TabContent;
 					Data.Editor.IsSwitching = false;
 					UIEvents.EditorTabs.updateUI();
-				-- Reinitialize modules for new tab
-                    if Pages and Pages:FindFirstChild("Editor") then
-                        local EditorPage = Pages.Editor
-                        local EditorFrame = EditorPage:FindFirstChild("Editor")
-                        if EditorFrame then
-                            task.defer(function()
-                                EditorBehaviorManager:Init(EditorFrame)
-                                DisplayModule.SetupAntiPileup(EditorFrame.Input)
-                                ScrollModule.SyncLineNumbers(EditorFrame, EditorFrame.Lines)
-                            end)
-                        end
-                    end
-                end  -- ← Closes the if (Data.Editor.Tabs[ToTab]...) 
-            end  -- ← Closes the if (not Data.Editor.EditingSavedFile...) if it exists
-        end,  -- ← Closes switchTab function
-
+				end
+			end,
 			delTab = function(Name)
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
@@ -5918,78 +5714,60 @@ end;
 	end;
 
 	InitTabs.Saved = function()
-    -- Create folders if they don't exist
-    if not CLONED_Detectedly.isfolder("saves") then
-        CLONED_Detectedly.makedir("saves");
-    end
-    if not CLONED_Detectedly.isfolder("autoexec") then
-        CLONED_Detectedly.makedir("autoexec");
-    end
-    
-    -- List files
-    local saves = CLONED_Detectedly.listfiles("saves") or {};
-    
-    for index, Nextpath in ipairs(saves) do
-        -- Extract filename (compatible with both / and \ paths)
-        local filename = Nextpath:match("([^/\\]+)$");
-        
-        -- Only process .lua files
-        if filename and filename:match("%.lua$") then
-            
-            -- ✅ IMPROVED ERROR HANDLING
-            local success, result = pcall(function()
-                local content = CLONED_Detectedly.readfile("saves/" .. filename)
-                
-                -- Check if file is empty
-                if not content or content == "" then
-                    error("Empty file")
-                end
-                
-                -- Detect if it's Lua code instead of JSON
-                if content:match("^%s*function") or content:match("^%s*local") or content:match("^%s*--") then
-                    error("File contains Lua code, not JSON")
-                end
-                
-                -- Try to decode JSON
-                return game.HttpService:JSONDecode(content)
-            end)
-            
-            -- Only add to table if everything is valid
-            if success and result and result.Name and result.Content then
-                Data.Saves.Scripts[result.Name] = result.Content;
-            else
-                -- Show detailed error message
-                warn("[PunkX] ⚠️ Skipped invalid file: " .. filename)
-                if not success then
-                    warn("[PunkX] Reason: " .. tostring(result))
-                end
-                
-                -- Optional: Auto-delete corrupted files (UNCOMMENT IF YOU WANT)
-                -- CLONED_Detectedly.delfile("saves/" .. filename)
-            end
-        end
-    end
-    
-    -- Update the UI now that the table is filled
-    UIEvents.Saved.UpdateUI();
-    
-    -- Search bar logic
-    Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
-        local hi = Pages.Saved.TextBox.Text
-        local isEmpty = #hi:gsub("[%s]","") <= 0
-        if isEmpty then
-            for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-                if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
-            end
-            return
-        end
-        for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-            if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
-                v.Visible = v.Title.Text:lower():match("^" .. hi:lower()) ~= nil;
-            end
-        end
-    end)
-end;
+		-- Create folders if they don't exist
+		if not CLONED_Detectedly.isfolder("saves") then
+			CLONED_Detectedly.makedir("saves");
+		end
+		if not CLONED_Detectedly.isfolder("autoexec") then
+			CLONED_Detectedly.makedir("autoexec");
+		end
+		
+		-- List files
+		local saves = CLONED_Detectedly.listfiles("saves") or {};
+		
+		for index, Nextpath in ipairs(saves) do
+			-- Extract filename (compatible with both / and \ paths)
+			local filename = Nextpath:match("([^/\\]+)$");
+			
+			-- Only process .lua files
+			if filename and filename:match("%.lua$") then
+				
+				-- [[ FIX START: Wrapped in pcall to stop crashes ]] --
+				local success, Loadedscript = pcall(function()
+					local content = CLONED_Detectedly.readfile("saves/" .. filename)
+					return game.HttpService:JSONDecode(content)
+				end)
+
+				-- Only add to table if JSON was valid
+				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
+					Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
+				else
+					warn("[PunkX] Skipped corrupted file: " .. filename)
+				end
+				-- [[ FIX END ]] --
+			end
+		end
+		
+		-- Update the UI now that the table is filled
+		UIEvents.Saved.UpdateUI();
+		
+		-- Search bar logic
+		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+			local hi = Pages.Saved.TextBox.Text
+			local isEmpty = #hi:gsub("[%s]","") <= 0
+			if isEmpty then
+				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+					if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
+				end
+				return
+			end
+			for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+				if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
+					v.Visible = v.Title.Text:lower():match("^" .. hi:lower()) ~= nil;
+				end
+			end
+		end)
+	end;
 
 	InitTabs.Editor = function()
 		local Editor = Pages:WaitForChild("Editor");
@@ -6039,74 +5817,15 @@ end;
 		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
-
--- ============================================
--- 🔧 NEW: Modular Focus Management System
--- ============================================
-
--- Store original sizes
-local originalPos = EditorFrame.Position
-local originalSize = EditorFrame.Size
-
--- Initialize the behavior manager
-EditorBehaviorManager:Init(EditorFrame)
-
--- Setup anti-pileup system
-DisplayModule.SetupAntiPileup(EditorFrame.Input)
-
--- Setup line number scrolling
-ScrollModule.SyncLineNumbers(EditorFrame, EditorFrame.Lines)
-
--- FOCUSED: Enter compact edit mode
-EditorBehaviorManager.Connections.Focused = EditorFrame.Input.Focused:Connect(function()
-	print("[Editor] Focus gained - entering compact mode")
-	
-	-- Save state BEFORE any changes
-	CursorModule.SavePosition(EditorFrame.Input)
-	EditorBehaviorManager.State.isEditing = true
-	
-	-- Enter edit mode (hide highlighter)
-	DisplayModule.EnterEditMode(EditorFrame.Input)
-	
-	-- Layout changes
-	EditorFrame.Size = UDim2.new(1, 0, 0.45, 0)
-	EditorFrame.Position = UDim2.new(0, 0, 0, 0)
-	EditorFrame.ClipsDescendants = true
-	
-	-- Text settings
-	EditorFrame.Input.TextWrapped = false
-	EditorFrame.Input.ClearTextOnFocus = false
-	
-	-- Restore cursor position (after layout settles)
-	task.wait(0.05)
-	CursorModule.RestorePosition(EditorFrame.Input)
-end)
-
--- FOCUS LOST: Return to preview mode
-EditorBehaviorManager.Connections.FocusLost = EditorFrame.Input.FocusLost:Connect(function()
-	print("[Editor] Focus lost - returning to preview mode")
-	
-	-- Mark as not editing
-	EditorBehaviorManager.State.isEditing = false
-	
-	-- Restore original layout
-	EditorFrame.Size = originalSize
-	EditorFrame.Position = originalPos
-	
-	-- Exit edit mode (show highlighter)
-	DisplayModule.ExitEditMode(EditorFrame.Input)
-	
-	EditorFrame.Input.TextWrapped = false
-	
-	-- Refresh highlighter
-	if highlighter and highlighter.refresh then
-		task.defer(function()
-			highlighter.refresh()
-		end)
-	end
-end)
-
-print("[Editor] ✅ Modular focus system initialized")
+		EditorFrame.Input.Focused:Connect(function()
+			EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
+			EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
+		end);
+		
+		EditorFrame.Input.FocusLost:Connect(function()
+			EditorFrame.Position = pos;
+			EditorFrame.Size = size;
+		end);
 		
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
@@ -6644,9 +6363,6 @@ end;
 	end
 	local function openUI()
 		hideUI(true);
--- Cleanup editor modules
-    if EditorBehaviorManager and EditorBehaviorManager.Cleanup then
-        EditorBehaviorManager:Cleanup()
 		Main.EnableFrame.Visible = true;
 	end
 	Leftside.Close.MouseButton1Click:Connect(closeUI);
