@@ -1332,18 +1332,19 @@ G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
-G2L["82"]["Selectable"] = false;
-G2L["82"]["ZIndex"] = 1;
+G2L["82"]["Selectable"] = false; -- Fixes click-through
+G2L["82"]["ZIndex"] = 1; -- Low ZIndex so buttons sit on top
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
-G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
+G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); -- Controlled by script
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- MANUAL MODE
 G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true;
+G2L["82"]["ClipsDescendants"] = true; -- Fixes text bleeding
 
 -- [[ 2. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
@@ -1358,14 +1359,14 @@ G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], 
 G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
 G2L["87"]["BackgroundTransparency"] = 0.6; 
 G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
-G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); 
+G2L["87"]["Size"] = UDim2.new(0, 50, 0, 1000); 
 G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
+G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
 
--- [[ 3. INPUT BOX (SINGLE LAYER) ]] --
+-- [[ 3. INPUT BOX (VISIBLE & STABLE) ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
-G2L["83"]["RichText"] = true; -- 🔴 CRITICAL: Allows colors!
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["83"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
@@ -1373,30 +1374,31 @@ G2L["83"]["ZIndex"] = 2;
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
-G2L["83"]["TextTransparency"] = 0; -- 🔴 VISIBLE
+G2L["83"]["TextTransparency"] = 0; -- VISIBLE
 G2L["83"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
 G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false; -- No wrapping for code
+G2L["83"]["TextWrapped"] = false; -- Fixes scrolling desync
 G2L["83"]["TextEditable"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(0, 1000, 1, 0); 
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; -- 🔴 Let it grow naturally
+G2L["83"]["Size"] = UDim2.new(0, 1000, 0, 1000); 
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None;
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
 
--- [[ 4. UICORNER & STROKE ]] --
+-- [[ 4. UICORNER ]] --
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
 G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
+-- [[ RESTORED DESIGN: PURPLE BORDER ]] --
 G2L["88"] = Instance.new("UIStroke", G2L["82"]);
 G2L["88"]["Transparency"] = 0.8;
 G2L["88"]["Thickness"] = 1;
-G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255);
+G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
@@ -5829,118 +5831,73 @@ end;
 	InitTabs.Editor = function()
 		local Editor = Pages:WaitForChild("Editor");
 		local Panel = Editor:WaitForChild("Panel");
-		local EditorFrame = Editor:WaitForChild("Editor"); -- No mask needed
-		local Input = EditorFrame:WaitForChild("Input");
-		local Lines = EditorFrame:WaitForChild("Lines");
+local EditorFrame = Editor:WaitForChild("Editor");
 		local Method = "Activated";
 		
-		-- [[ 1. BUTTON CONNECTIONS ]] --
 		Panel.Execute[Method]:Connect(function()
-			-- We must remove formatting before executing!
-			local rawCode = Input.Text:gsub("<[^>]+>", "") 
-			UIEvents.Executor.RunCode(rawCode)();
+			UIEvents.Executor.RunCode(EditorFrame.Input.Text)();
 		end);
 		
 		Panel.Paste[Method]:Connect(function()
-			Input.Text = safeGetClipboard();
-		end);
+    EditorFrame.Input.Text = safeGetClipboard();
+end);
 		
 		Panel.ExecuteClipboard[Method]:Connect(function()
-			UIEvents.Executor.RunCode(safeGetClipboard())();
-		end);
+    UIEvents.Executor.RunCode(safeGetClipboard())();
+end);
 		
 		Panel.Delete[Method]:Connect(function()
-			Input.Text = "";
+			EditorFrame.Input.Text = "";
 		end);
 		
 		Panel.Save[Method]:Connect(function()
-			local rawCode = Input.Text:gsub("<[^>]+>", "")
-			UIEvents.EditorTabs.saveTab(nil, rawCode, true); 
+			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, true); 
 		end);
 		
 		Panel.Rename[Method]:Connect(function()
 			script.Parent.Popups.Visible = true;
 			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
 		end);
+		
+		-- HIGHLIGHTER DISABLED (Prevents text glitching)
+		-- if not highlighter then
+		-- 	highlighter = load_highlighter();
+		-- 	print("int");
+		-- end
+		
+-- Highlighter disabled (prevents text glitching)
+		
+EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+    update_lines(EditorFrame.Input, EditorFrame.Lines);
+    
+    if not Data.Editor.EditingSavedFile then
+        UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
+    end
+end);
 
-		Editor.Tabs.Create[Method]:Connect(function()
+-- Update line numbers when scrolling
+EditorFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+    update_lines(EditorFrame.Input, EditorFrame.Lines);
+end);
+		
+		update_lines(EditorFrame.Input, EditorFrame.Lines);
+-- Highlighter disabled
+
+-- Sync canvas size when text bounds change
+EditorFrame.Input:GetPropertyChangedSignal("TextBounds"):Connect(function()
+    update_lines(EditorFrame.Input, EditorFrame.Lines);
+end);
+
+Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
-
-		-- [[ 2. SYNTAX HIGHLIGHTING (RoniX Style) ]] --
-		local Colors = {
-			["local"] = "rgb(255, 100, 100)", -- Red
-			["function"] = "rgb(100, 150, 255)", -- Blue
-			["end"] = "rgb(255, 100, 100)",
-			["if"] = "rgb(255, 100, 100)",
-			["then"] = "rgb(255, 100, 100)",
-			["else"] = "rgb(255, 100, 100)",
-			["elseif"] = "rgb(255, 100, 100)",
-			["print"] = "rgb(100, 255, 255)", -- Cyan
-			["return"] = "rgb(255, 100, 100)",
-			["true"] = "rgb(100, 255, 100)", -- Green
-			["false"] = "rgb(100, 255, 100)",
-			['"[^"]*"'] = "rgb(150, 255, 150)", -- Strings (Green)
-			["'[^']*'"] = "rgb(150, 255, 150)",
-			["%-%-.*"] = "rgb(100, 100, 100)", -- Comments (Grey)
-		}
-
-		local function Highlight(text)
-			-- Replace keywords with colored versions
-			for pattern, color in pairs(Colors) do
-				text = text:gsub(pattern, '<font color="' .. color .. '">%0</font>')
-			end
-			return text
-		end
-
-		local function Clean(text)
-			return text:gsub("<[^>]+>", "") -- Remove all XML tags (Clean text)
-		end
-
-		-- [[ 3. MODE SWITCHING (The Stability Fix) ]] --
 		
-		Input.Focused:Connect(function()
-			-- When typing: REMOVE COLORS (Make it stable plain text)
-			Input.Text = Clean(Input.Text)
-			Input.TextColor3 = Color3.fromRGB(235, 235, 235)
-		end)
-
-		Input.FocusLost:Connect(function()
-			-- When finished: ADD COLORS (Make it look pretty)
-			local raw = Clean(Input.Text)
-			-- Save raw code first
-			if not Data.Editor.EditingSavedFile then
-				UIEvents.EditorTabs.saveTab(nil, raw, false);
-			end
-			-- Then highlight
-			Input.Text = Highlight(raw)
-		end)
-
-		-- [[ 4. LINE NUMBERS & SCROLLING ]] --
-		Input:GetPropertyChangedSignal("Text"):Connect(function()
-			-- Update Line Numbers
-			local raw = Clean(Input.Text)
-			local count = #raw:split("\n")
-			if count == 0 then count = 1 end
-			
-			local nums = ""
-			for i = 1, count do nums = nums .. i .. "\n" end
-			Lines.Text = nums
-			
-			-- Expand Scrolling Canvas
-			local textHeight = Input.TextBounds.Y
-			local newHeight = math.max(600, textHeight + 500)
-			
-			Input.Size = UDim2.new(0, 1000, 0, newHeight)
-			Lines.Size = UDim2.new(0, 50, 0, newHeight)
-			EditorFrame.CanvasSize = UDim2.new(0, 1000, 0, newHeight)
-		end)
-
-		-- [[ 5. POPUPS ]] --
 		local Buttons = script.Parent.Popups.Main.Button
 		Buttons["Confirm"][Method]:Connect(function()
 			local newName = script.Parent.Popups.Main.Input.Text;
-			if (newName == "" or newName == Data.Editor.CurrentTab) then return; end
+			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
+			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
+			
 			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
 			script.Parent.Popups.Visible = false;
 		end)
@@ -5948,7 +5905,8 @@ end;
 		Buttons["Cancel"][Method]:Connect(function()
 			script.Parent.Popups.Visible = false;
 		end)
-	end;
+
+    end; -- This ends InitTabs.Editor
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
