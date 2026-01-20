@@ -1328,48 +1328,51 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor (FIXED)
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor (COMPLETE FIX)
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Active"] = true;
+G2L["82"]["Selectable"] = true;
 G2L["82"]["ZIndex"] = 2;
-G2L["82"]["ScrollingEnabled"] = true; -- ADD THIS
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["BackgroundTransparency"] = 0.6;
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y; -- CHANGED: Only Y, not XY
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.Y;
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
 G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["ScrollBarThickness"] = 5;
+G2L["82"]["ClipsDescendants"] = false; -- IMPORTANT: Don't clip line numbers
 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Lines (FIXED - POSITIONED FIRST)
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Lines (LOCKED - ALWAYS VISIBLE)
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
 G2L["87"]["Name"] = [[Lines]];
-G2L["87"]["ZIndex"] = 2;
+G2L["87"]["ZIndex"] = 10; -- SUPER HIGH: Always on top
 G2L["87"]["BorderSizePixel"] = 0;
 G2L["87"]["TextSize"] = 14;
 G2L["87"]["TextXAlignment"] = Enum.TextXAlignment.Right;
 G2L["87"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["87"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["87"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); -- Match editor background
 G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.SemiBold, Enum.FontStyle.Normal);
 G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
-G2L["87"]["BackgroundTransparency"] = 1;
-G2L["87"]["Position"] = UDim2.new(0, 12, 0, 10); -- FIXED: Manual position (left side)
-G2L["87"]["Size"] = UDim2.new(0, 40, 1, 0); -- FIXED: Fixed width 40px, full height
+G2L["87"]["BackgroundTransparency"] = 0.6; -- Slight transparency
+G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); -- Top-left corner
+G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); -- Fixed 50px width, full height
 G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
-G2L["87"]["TextWrapped"] = true; -- ADDED: Word wrap for line numbers
+G2L["87"]["TextWrapped"] = false;
+G2L["87"]["Visible"] = true;
+G2L["87"]["Active"] = false; -- Don't capture events
 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input (FIXED - POSITIONED SECOND)
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input (LOCKED - STABLE POSITIONING)
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
-G2L["83"]["ZIndex"] = 3; -- CHANGED: Was 2, now 3 (input above lines)
+G2L["83"]["ZIndex"] = 5; -- Above editor, below lines
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
@@ -1378,21 +1381,32 @@ G2L["83"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = true; -- ADDED: Word wrap enabled!
+G2L["83"]["TextWrapped"] = true;
+G2L["83"]["TextEditable"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X by Punk Team
 -- Join Discord: discord.gg/JxEjAtdgWD
 -- Paste your code here or browse in search page]];
-G2L["83"]["Position"] = UDim2.new(0, 64, 0, 10); -- FIXED: Manual position (after line numbers)
-G2L["83"]["Size"] = UDim2.new(1, -76, 1, -20); -- FIXED: Fills remaining space
+G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); -- After line numbers (60px from left)
+G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); -- Fill remaining space
+G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
 G2L["83"]["BackgroundTransparency"] = 1;
+G2L["83"]["Active"] = false; -- CRITICAL: Let scroll events pass through
 
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.UICorner
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
 G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
+-- Add padding to line numbers
+local linesPadding = Instance.new("UIPadding", G2L["87"]);
+linesPadding.PaddingRight = UDim.new(0, 10);
+linesPadding.PaddingTop = UDim.new(0, 5);
+linesPadding.PaddingBottom = UDim.new(0, 5);
+
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor.UIStroke
+G2L["88"] = Instance.new("UIStroke", G2L["82"]);
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.UIStroke
 G2L["88"] = Instance.new("UIStroke", G2L["82"]);
