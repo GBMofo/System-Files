@@ -1328,11 +1328,11 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor (FIXED)
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor (MANUAL FIX)
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
-G2L["82"]["Selectable"] = false; -- Keeps clicks from getting stuck on the frame
+G2L["82"]["Selectable"] = false;
 G2L["82"]["ZIndex"] = 2;
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
@@ -1340,9 +1340,9 @@ G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
-G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0);
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; -- Allows scrolling
-G2L["82"]["ScrollBarThickness"] = 5;
+G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- DISABLED: We will handle this in script
+G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
 G2L["82"]["ClipsDescendants"] = true; 
 
@@ -1359,11 +1359,11 @@ G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], 
 G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
 G2L["87"]["BackgroundTransparency"] = 0.6; 
 G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
-G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); 
+G2L["87"]["Size"] = UDim2.new(0, 50, 0, 800); -- Default large size
 G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 G2L["87"]["TextWrapped"] = false; 
-G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.Y; 
+G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; -- DISABLED
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
@@ -1375,7 +1375,7 @@ G2L["83"]["ZIndex"] = 20;
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
-G2L["83"]["TextTransparency"] = 0; -- FIXED: Set to 0 so you can see the text!
+G2L["83"]["TextTransparency"] = 0; -- VISIBLE
 G2L["83"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
@@ -1384,8 +1384,8 @@ G2L["83"]["TextWrapped"] = false;
 G2L["83"]["TextEditable"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(1, -70, 0, 0); 
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
+G2L["83"]["Size"] = UDim2.new(1, -70, 0, 800); -- Default large size
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None; -- DISABLED
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
@@ -4622,22 +4622,30 @@ end
 local update_lines = function(editor, linesFrame)
     local lines = editor.Text:split("\n");
     local lineCount = #lines;
+    if lineCount == 0 then lineCount = 1 end
     
-    -- If empty, show at least line 1
-    if lineCount == 0 or (lineCount == 1 and lines[1] == "") then
-        linesFrame.Text = "1";
-        return;
-    end
-    
-    -- Generate line numbers
+    -- 1. Update Line Numbers
     local lineText = "";
     for i = 1, lineCount do
         lineText = lineText .. i .. "\n";
     end
     linesFrame.Text = lineText;
     
-    -- Sync line label height with input height
-    linesFrame.Size = UDim2.new(0, 40, 0, editor.TextBounds.Y);
+    -- 2. Calculate New Height (Text Height + Buffer)
+    -- We force a minimum height of 600 so the box is always big enough to click
+    local textHeight = editor.TextBounds.Y;
+    local minHeight = 600; 
+    local newHeight = math.max(minHeight, textHeight + 200);
+    
+    -- 3. Force Resize Input and Lines
+    editor.Size = UDim2.new(1, -70, 0, newHeight);
+    linesFrame.Size = UDim2.new(0, 50, 0, newHeight);
+    
+    -- 4. Force Resize Scrolling Canvas (This makes the scrollbar work)
+    local scrollingFrame = editor.Parent;
+    if scrollingFrame and scrollingFrame:IsA("ScrollingFrame") then
+        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, newHeight);
+    end
 end;
 
 	local Data = {
