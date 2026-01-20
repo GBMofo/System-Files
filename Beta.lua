@@ -6491,65 +6491,82 @@ end;
 	end
 	Leftside.Close.MouseButton1Click:Connect(closeUI);
 	script.Parent.Open.Activated:Connect(openUI);
-	local function dragify(Frame)
-    local dragToggle = nil;
-    local dragSpeed = nil;
-    local dragInput = nil;
-    local dragStart = nil;
-    local dragPos = nil;
-    local startPos = nil;
+	-- 🔴 STABLE DRAG FUNCTION (Fixes Top-Left Snap)
+local function dragify(Frame)
+    local dragging = false
+    local dragInput = nil
+    local dragStart = nil
+    local startPos = nil
     
-    local function updateInput(input)
-        local Delta = input.Position - dragStart;
-        local newPos = UDim2.new(
+    -- We add a threshold so "Clicks" don't turn into "Drags"
+    local DRAG_THRESHOLD = 5 
+    local hasMoved = false
+
+    local function update(input)
+        local delta = input.Position - dragStart
+        
+        -- Check if we have moved enough to consider it a drag
+        if not hasMoved and delta.Magnitude < DRAG_THRESHOLD then
+            return -- Ignore micro-movements (fixes the click issue)
+        end
+        hasMoved = true -- Now we are officially dragging
+
+        local newPosition = UDim2.new(
             startPos.X.Scale, 
-            startPos.X.Offset + Delta.X, 
+            startPos.X.Offset + delta.X, 
             startPos.Y.Scale, 
-            startPos.Y.Offset + Delta.Y
-        );
+            startPos.Y.Offset + delta.Y
+        )
         
-        -- 🔴 CLAMP TO SCREEN BOUNDS
-        local viewport = workspace.CurrentCamera.ViewportSize;
-        local frameSize = Frame.AbsoluteSize;
+        -- Clamp to screen (Keep inside view)
+        local viewport = workspace.CurrentCamera.ViewportSize
+        local size = Frame.AbsoluteSize
         
-        local minX = 0;
-        local maxX = viewport.X - frameSize.X;
-        local minY = 0;
-        local maxY = viewport.Y - frameSize.Y;
+        -- Convert to absolute offset for clamping
+        local absX = (viewport.X * newPosition.X.Scale) + newPosition.X.Offset
+        local absY = (viewport.Y * newPosition.Y.Scale) + newPosition.Y.Offset
         
-        local clampedX = math.clamp(newPos.X.Offset, minX, maxX);
-        local clampedY = math.clamp(newPos.Y.Offset, minY, maxY);
+        -- Simple clamp logic
+        -- (Adjusted for AnchorPoint 0.5, 0.5)
+        local clampedX = math.clamp(absX, size.X/2, viewport.X - size.X/2)
+        local clampedY = math.clamp(absY, size.Y/2, viewport.Y - size.Y/2)
         
-        local Position = UDim2.new(0, clampedX, 0, clampedY);
+        -- Convert back to UDim2 with 0 Scale to prevent snapping
+        local finalPos = UDim2.new(0, clampedX, 0, clampedY)
         
-        game:GetService("TweenService"):Create(Frame, TweenInfo.new(0.125), {
-            Position = Position
-        }):Play();
+        game:GetService("TweenService"):Create(Frame, TweenInfo.new(0.05), {
+            Position = finalPos
+        }):Play()
     end
-		Frame.InputBegan:Connect(function(input)
-			if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then
-				dragToggle = true;
-				dragStart = input.Position;
-				startPos = Frame.Position;
-				input.Changed:Connect(function()
-					if (input.UserInputState == Enum.UserInputState.End) then
-						dragToggle = false;
-					end
-				end);
-			end
-		end);
-		Frame.InputChanged:Connect(function(input)
-			if ((input.UserInputType == Enum.UserInputType.MouseMovement) or (input.UserInputType == Enum.UserInputType.Touch)) then
-				dragInput = input;
-			end
-		end);
-		game:GetService("UserInputService").InputChanged:Connect(function(input)
-			if ((input == dragInput) and dragToggle) then
-				updateInput(input);
-			end
-		end);
-	end
-	dragify(script.Parent.Open);
+
+    Frame.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            hasMoved = false -- Reset movement check
+            dragStart = input.Position
+            startPos = Frame.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                end
+            end)
+        end
+    end)
+
+    Frame.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+
+    game:GetService("UserInputService").InputChanged:Connect(function(input)
+        if dragging and input == dragInput then
+            update(input)
+        end
+    end)
+end
+dragify(script.Parent.Open);
 	
 	-- [PART 1: UI SETUP AFTER LOAD]
 	task.spawn(function()
