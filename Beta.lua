@@ -5689,29 +5689,37 @@ end)
 end;
 
 	InitTabs.TabsData = function()
-		if not CLONED_Detectedly.isfolder("scripts") then
-			CLONED_Detectedly.makedir("scripts")
-		end
+    if not CLONED_Detectedly.isfolder("scripts") then
+        CLONED_Detectedly.makedir("scripts")
+    end
 
-		local scripts = CLONED_Detectedly.listfiles("scripts") or {};
-		for index, Nextpath in ipairs(scripts) do
-			if (Nextpath == "/recently.data") then continue; end
-			local success, Loadedscript = pcall(function() 
-				return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("scripts" .. Nextpath)); 
-			end)
-			
-			if success and Loadedscript and Loadedscript.Name then
-				Data.Editor.Tabs[Loadedscript.Name] = {
-					Loadedscript.Content,
-					Loadedscript.Order
-				};
-			end
-		end
-		if (# scripts == 0) then
-			UIEvents.EditorTabs.createTab("Script", "");
-		end
-		UIEvents.EditorTabs.updateUI();
-	end;
+    local scripts = CLONED_Detectedly.listfiles("scripts") or {};
+    for index, Nextpath in ipairs(scripts) do
+        if (Nextpath == "/recently.data") then continue; end
+        
+        -- 🔴 FIX: Wrap entire read+decode in pcall
+        local success, Loadedscript = pcall(function()
+            local content = CLONED_Detectedly.readfile("scripts" .. Nextpath)
+            return game.HttpService:JSONDecode(content)
+        end)
+        
+        -- 🔴 FIX: Validate ALL required fields exist
+        if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
+            Data.Editor.Tabs[Loadedscript.Name] = {
+                Loadedscript.Content,
+                Loadedscript.Order
+            };
+        else
+            -- 🔴 FIX: Log which file failed (helps debugging)
+            warn("[PunkX] Skipped corrupted tab file: " .. tostring(Nextpath))
+        end
+    end
+    
+    if (# scripts == 0) then
+        UIEvents.EditorTabs.createTab("Script", "");
+    end
+    UIEvents.EditorTabs.updateUI();
+end;
 
 	InitTabs.Saved = function()
 		-- Create folders if they don't exist
