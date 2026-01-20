@@ -5938,23 +5938,22 @@ Editor.Tabs.Create.Activated:Connect(function()
             script.Parent.Popups.Visible = false;
         end)
 
-        -- [[ PASTE THE MOBILE LIFT CODE HERE ]] --
-        local MainFrame = script.Parent:WaitForChild("Main")
-        local lastPosition = MainFrame.Position
-        
-        EditorFrame.Input.Focused:Connect(function()
-            lastPosition = MainFrame.Position
-            game:GetService("TweenService"):Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Position = UDim2.new(lastPosition.X.Scale, lastPosition.X.Offset, 0.05, 0)
-            }):Play()
-        end)
-        
-        EditorFrame.Input.FocusLost:Connect(function()
-            game:GetService("TweenService"):Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                Position = lastPosition
-            }):Play()
-        end)
+      -- [[ 📱 SAFE KEYBOARD FIX (RESIZE ONLY) ]] --
+		-- This shrinks the editor height when you type, so you can see text above the keyboard
+		-- It does NOT move the window, which prevents the "shaking" glitch.
+		
+		local EditorScroll = Pages:WaitForChild("Editor"):WaitForChild("Editor") -- The scrolling frame
+		local originalSize = UDim2.new(1, 0, 0.85, 0) -- The normal size defined in G2L["82"]
 
+		EditorFrame.Input.Focused:Connect(function()
+			-- Shrink to 45% height immediately (No animation to prevent glitches)
+			EditorScroll.Size = UDim2.new(1, 0, 0.45, 0)
+		end)
+
+		EditorFrame.Input.FocusLost:Connect(function()
+			-- Restore full size
+			EditorScroll.Size = originalSize
+		end)
     end; -- This ends InitTabs.Editor
 
 InitTabs.Search = function()
