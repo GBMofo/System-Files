@@ -4729,7 +4729,7 @@ end;
     local EditorFrame = Editor:WaitForChild("Editor");
     local Method = "Activated";
     
-    -- 🟢 BUTTON CONNECTIONS (RESTORE THESE IF MISSING)
+    -- 🟢 PANEL BUTTON CONNECTIONS
     Panel.Execute[Method]:Connect(function()
         local cleanCode = StripSyntax(EditorFrame.Input.Text)
         UIEvents.Executor.RunCode(cleanCode)();
@@ -4786,7 +4786,7 @@ end;
     if EditorFrame.Input.Text ~= "" then
         EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
     end
-
+    
     -- 🟢 TAB CREATION BUTTON
     Editor.Tabs.Create.Activated:Connect(function()
         UIEvents.EditorTabs.createTab("Script", "");
@@ -4808,31 +4808,6 @@ end;
     end)
 
 end; -- This ends InitTabs.Editor
-    
-    -- Initial setup
-    UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
-    if EditorFrame.Input.Text ~= "" then
-        EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
-    end
-Editor.Tabs.Create.Activated:Connect(function()
-			UIEvents.EditorTabs.createTab("Script", "");
-		end);
-		
-		local Buttons = script.Parent.Popups.Main.Button
-		Buttons["Confirm"][Method]:Connect(function()
-			local newName = script.Parent.Popups.Main.Input.Text;
-			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
-			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
-			
-			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
-			script.Parent.Popups.Visible = false;
-		end)
-		
-		Buttons["Cancel"][Method]:Connect(function()
-			script.Parent.Popups.Visible = false;
-		end)
-
-    end; -- This ends InitTabs.Editor
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
