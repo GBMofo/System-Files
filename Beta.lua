@@ -5872,7 +5872,23 @@ end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
 		highlighter.highlight({ textObject = EditorFrame.Input });
-		
+
+-- Scroll to cursor position
+EditorFrame.Input:GetPropertyChangedSignal("CursorPosition"):Connect(function()
+    local cursorPos = EditorFrame.Input.CursorPosition
+    if cursorPos < 0 then return end
+    
+    local text = EditorFrame.Input.Text:sub(1, cursorPos)
+    local lineNumber = select(2, text:gsub("\n", "")) + 1
+    
+    local lineHeight = EditorFrame.Input.TextSize * 1.2
+    local targetY = (lineNumber - 1) * lineHeight
+    local viewportHeight = EditorFrame.AbsoluteSize.Y
+    
+    -- Center the line in viewport
+    local newY = math.max(0, targetY - (viewportHeight / 2))
+    EditorFrame.CanvasPosition = Vector2.new(0, newY)
+end)
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
