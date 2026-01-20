@@ -1332,6 +1332,7 @@ G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Active"] = true;
 G2L["82"]["ZIndex"] = 2;
+G2L["82"]["ScrollingEnabled"] = true; -- ADD THIS
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0);
 G2L["82"]["Name"] = [[Editor]];
@@ -1368,7 +1369,7 @@ G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
-G2L["83"]["ZIndex"] = 2;
+G2L["83"]["ZIndex"] = 3; -- CHANGED: Was 2, now 3 (input above lines)
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
@@ -4609,13 +4610,25 @@ end
 	end;
 	
 local update_lines = function(editor, linesFrame)
-		local lines = editor.Text:split("\n");
-		local lineText = "";
-		for i = 1, #lines do
-			lineText = lineText .. i .. "\n";
-		end
-		linesFrame.Text = lineText;
-	end;
+    local lines = editor.Text:split("\n");
+    local lineCount = #lines;
+    
+    -- If empty, show at least line 1
+    if lineCount == 0 or (lineCount == 1 and lines[1] == "") then
+        linesFrame.Text = "1";
+        return;
+    end
+    
+    -- Generate line numbers
+    local lineText = "";
+    for i = 1, lineCount do
+        lineText = lineText .. i .. "\n";
+    end
+    linesFrame.Text = lineText;
+    
+    -- Sync line label height with input height
+    linesFrame.Size = UDim2.new(0, 40, 0, editor.TextBounds.Y);
+end;
 
 	local Data = {
 		Editor = {
@@ -5886,11 +5899,21 @@ EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
         UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
     end
 end);
+
+-- Update line numbers when scrolling
+EditorFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+    update_lines(EditorFrame.Input, EditorFrame.Lines);
+end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
-		-- Highlighter disabled
-	
-		Editor.Tabs.Create.Activated:Connect(function()
+-- Highlighter disabled
+
+-- Sync canvas size when text bounds change
+EditorFrame.Input:GetPropertyChangedSignal("TextBounds"):Connect(function()
+    update_lines(EditorFrame.Input, EditorFrame.Lines);
+end);
+
+Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
 		
