@@ -5883,24 +5883,14 @@ end);
 			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
 		end);
 		
-		if not highlighter then
-			highlighter = load_highlighter();
-			print("int");
-		end
+		-- HIGHLIGHTER DISABLED (Prevents text glitching)
+		-- if not highlighter then
+		-- 	highlighter = load_highlighter();
+		-- 	print("int");
+		-- end
 		
-		local debounceTimer = nil
 EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
     update_lines(EditorFrame.Input, EditorFrame.Lines);
-    
-    -- Debounce highlighter (300ms delay)
-    if debounceTimer then
-        task.cancel(debounceTimer)
-    end
-    debounceTimer = task.delay(0.3, function()
-        if highlighter then
-            highlighter.highlight({textObject = EditorFrame.Input})
-        end
-    end)
     
     if not Data.Editor.EditingSavedFile then
         UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
@@ -5908,16 +5898,7 @@ EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
 end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
-		highlighter.highlight({ textObject = EditorFrame.Input });
--- Re-render on scroll
-EditorFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-    if highlighter and EditorFrame.Input.Text ~= "" then
-        highlighter.highlight({ 
-            textObject = EditorFrame.Input,
-            forceUpdate = true 
-        })
-    end
-end)
+		-- Highlighter disabled
 	
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
