@@ -3137,18 +3137,20 @@ local script = G2L["2"];
 		return copy;
 	end
 	local Services = setmetatable({}, {
-		__index = function(self, name)
-			local success, cache = pcall(function()
-				return cloneref(game:GetService(name))
-			end)
-			if success then
-				rawset(self, name, cache)
-				return cache
-			else
-				error("Invalid Service: " .. tostring(name))
-			end
-		end
-	})
+    __index = function(self, name)
+        local service
+        if cloneref then
+            local success, result = pcall(function()
+                return cloneref(game:GetService(name))
+            end)
+            service = success and result or game:GetService(name)
+        else
+            service = game:GetService(name)
+        end
+        rawset(self, name, service)
+        return service
+    end
+})
 	local clonefunction = clonefunction or function(func)
 		return func
 	end
