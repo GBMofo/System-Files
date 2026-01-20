@@ -1328,7 +1328,7 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor (MOBILE SYNC FIX)
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor (MOBILE FIXED)
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
@@ -1341,10 +1341,10 @@ G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- Manual control prevents desync
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- DISABLED TO FIX POPPING
 G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; 
+G2L["82"]["ClipsDescendants"] = true; -- Fixes floating text overlap
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Lines
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
@@ -1359,11 +1359,11 @@ G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], 
 G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
 G2L["87"]["BackgroundTransparency"] = 0.6; 
 G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
-G2L["87"]["Size"] = UDim2.new(0, 50, 0, 1000); -- Starts large
+G2L["87"]["Size"] = UDim2.new(0, 50, 0, 1000); -- Placeholder Size
 G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 G2L["87"]["TextWrapped"] = false; 
-G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
+G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; -- DISABLED
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
@@ -1375,17 +1375,17 @@ G2L["83"]["ZIndex"] = 20;
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
-G2L["83"]["TextTransparency"] = 0; -- VISIBLE
+G2L["83"]["TextTransparency"] = 0; -- Visible Text
 G2L["83"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false; -- Keeps text aligned with line numbers
+G2L["83"]["TextWrapped"] = false; 
 G2L["83"]["TextEditable"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(1, -70, 0, 1000); -- Starts large
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None;
+G2L["83"]["Size"] = UDim2.new(1, -70, 0, 1000); -- Placeholder Size
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None; -- DISABLED
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
@@ -4624,26 +4624,24 @@ local update_lines = function(editor, linesFrame)
     local lineCount = #lines;
     if lineCount == 0 then lineCount = 1 end
     
-    -- 1. Update Line Numbers
+    -- 1. Update Line Numbers Text
     local lineText = "";
     for i = 1, lineCount do
         lineText = lineText .. i .. "\n";
     end
     linesFrame.Text = lineText;
     
-    -- 2. Calculate New Height
-    -- CRITICAL FIX: We add a huge buffer (1000px) so the TextBox is ALWAYS 
-    -- bigger than the screen. This prevents the "mini-scroll" glitch on mobile.
+    -- 2. Calculate Exact Text Height
+    -- We add 500px padding at the bottom so you can easily type at the end of the file
     local textHeight = editor.TextBounds.Y;
-    local viewportHeight = workspace.CurrentCamera.ViewportSize.Y
-    local newHeight = math.max(viewportHeight * 1.5, textHeight + 500);
+    local newHeight = math.max(600, textHeight + 500); 
     
-    -- 3. Force Resize Input and Lines to be Identical
-    -- We use UDim2.fromOffset for Y to ensure exact pixel matching
+    -- 3. RESIZE EVERYTHING MANUALLY
+    -- This prevents the "Pop" effect because we aren't using AutomaticSize
     editor.Size = UDim2.new(1, -70, 0, newHeight);
     linesFrame.Size = UDim2.new(0, 50, 0, newHeight);
     
-    -- 4. Resize the Parent ScrollingFrame
+    -- 4. Update Scrolling Canvas
     local scrollingFrame = editor.Parent;
     if scrollingFrame and scrollingFrame:IsA("ScrollingFrame") then
         scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, newHeight);
