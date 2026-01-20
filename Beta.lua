@@ -1394,6 +1394,13 @@ G2L["83"]["Text"] = [[]];
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
 G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
+-- [[ RESTORED DESIGN: PURPLE BORDER ]] --
+G2L["88"] = Instance.new("UIStroke", G2L["82"]);
+G2L["88"]["Transparency"] = 0.8;
+G2L["88"]["Thickness"] = 1;
+G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
+G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
+
 -- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
 G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
