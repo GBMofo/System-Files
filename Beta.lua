@@ -1362,10 +1362,10 @@ G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0);
 G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 
--- [[ 3. INPUT BOX (SINGLE LAYER) ]] --
+-- [[ 3. INPUT BOX (CRASH FIX) ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
-G2L["83"]["RichText"] = true; -- 🔴 CRITICAL: Allows colors!
+G2L["83"]["RichText"] = true;
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["83"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
@@ -1373,18 +1373,18 @@ G2L["83"]["ZIndex"] = 2;
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
-G2L["83"]["TextTransparency"] = 0; -- 🔴 VISIBLE
+G2L["83"]["TextTransparency"] = 0;
 G2L["83"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
 G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false; -- No wrapping for code
+G2L["83"]["TextWrapped"] = false; 
 G2L["83"]["TextEditable"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(0, 1000, 1, 0); 
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; -- 🔴 Let it grow naturally
+G2L["83"]["Size"] = UDim2.new(0, 1000, 0, 1000); -- Large default size
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None; -- 🔴 FIX: Disabled to stop crash
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
@@ -5897,23 +5897,32 @@ end;
 			return text:gsub("<[^>]+>", "") -- Remove all XML tags (Clean text)
 		end
 
-		-- [[ 3. MODE SWITCHING (The Stability Fix) ]] --
+		-- [[ 3. MODE SWITCHING (Safe Version) ]] --
 		
 		Input.Focused:Connect(function()
-			-- When typing: REMOVE COLORS (Make it stable plain text)
-			Input.Text = Clean(Input.Text)
+			-- When typing: Turn into plain text so mobile keyboard works perfectly
+			local plain = Input.Text:gsub("<[^>]+>", "") -- Remove color tags
+			if Input.Text ~= plain then
+				Input.Text = plain
+			end
 			Input.TextColor3 = Color3.fromRGB(235, 235, 235)
 		end)
 
 		Input.FocusLost:Connect(function()
-			-- When finished: ADD COLORS (Make it look pretty)
-			local raw = Clean(Input.Text)
-			-- Save raw code first
+			-- When done: Add colors back
+			local raw = Input.Text:gsub("<[^>]+>", "")
+			
+			-- Save safely
 			if not Data.Editor.EditingSavedFile then
-				UIEvents.EditorTabs.saveTab(nil, raw, false);
+				task.spawn(function() 
+					UIEvents.EditorTabs.saveTab(nil, raw, false)
+				end)
 			end
-			-- Then highlight
-			Input.Text = Highlight(raw)
+			
+			-- Highlight (Task.spawn prevents UI freeze on large scripts)
+			task.spawn(function()
+				Input.Text = Highlight(raw)
+			end)
 		end)
 
 		-- [[ 4. LINE NUMBERS & SCROLLING ]] --
