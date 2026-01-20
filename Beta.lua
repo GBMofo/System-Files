@@ -5873,18 +5873,6 @@ end);
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
 		highlighter.highlight({ textObject = EditorFrame.Input });
 		
-		local pos = EditorFrame.Position;
-		local size = EditorFrame.Size;
-		EditorFrame.Input.Focused:Connect(function()
-			EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
-			EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
-		end);
-		
-		EditorFrame.Input.FocusLost:Connect(function()
-			EditorFrame.Position = pos;
-			EditorFrame.Size = size;
-		end);
-		
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
