@@ -4372,7 +4372,7 @@ if v.Name == "Popups" then v.Visible = false return end
     end
     
     -- 🔴 VIRTUALIZATION: Calculate visible range
-    local scrollFrame = textObject.Parent
+    local scrollFrame = textObject.Parent.Parent -- The actual ScrollingFrame
     local viewportStart = scrollFrame.CanvasPosition.Y
     local viewportEnd = viewportStart + scrollFrame.AbsoluteSize.Y
     local labelingInfo = Highlighter._getLabelingInfo(textObject);
@@ -5872,26 +5872,7 @@ end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
 		highlighter.highlight({ textObject = EditorFrame.Input });
-
--- Scroll to cursor position
-EditorFrame.Input:GetPropertyChangedSignal("CursorPosition"):Connect(function()
-    local cursorPos = EditorFrame.Input.CursorPosition
-    if cursorPos < 0 then return end
-    
-    local text = EditorFrame.Input.Text:sub(1, cursorPos)
-    local lineNumber = select(2, text:gsub("\n", "")) + 1
-    
-    local lineHeight = EditorFrame.Input.TextSize * 1.2
-    local targetY = (lineNumber - 1) * lineHeight
-    local viewportHeight = EditorFrame.AbsoluteSize.Y
-    
-    -- Center the line in viewport
-    local newY = math.max(0, targetY - (viewportHeight / 2))
-    local scrollFrame = EditorFrame.Parent
-if scrollFrame and scrollFrame:IsA("ScrollingFrame") then
-    scrollFrame.CanvasPosition = Vector2.new(0, newY)
-end
-end)
+	
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
