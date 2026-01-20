@@ -4371,75 +4371,11 @@ if v.Name == "Popups" then v.Visible = false return end
         return;
     end
     
-    local idenColor = theme.getColor("iden");
+    -- 🔴 VIRTUALIZATION: Calculate visible range
+    local scrollFrame = textObject.Parent.Parent -- The actual ScrollingFrame
+    local viewportStart = scrollFrame.CanvasPosition.Y
+    local viewportEnd = viewportStart + scrollFrame.AbsoluteSize.Y
     local labelingInfo = Highlighter._getLabelingInfo(textObject);
-    local richTextBuffer, bufferIndex, lineNumber = table.create(5), 0, 1;
-    
-    for token, content in lexer.scan(src) do
-        local Color = (function()
-            if (customLang and customLang[content]) then
-                return theme.getColor("custom");
-            else
-                return theme.getColor(token) or idenColor;
-            end
-        end)();
-        
-        local tokenLines = string.split(utility.sanitizeRichText(content), "\n");
-        
-        for l, tokenLine in tokenLines do
-            local lineLabel = lineLabels[lineNumber];
-            if not lineLabel then
-                local newLabel = Instance.new("TextLabel");
-                newLabel.AutoLocalize = false;
-                newLabel.RichText = true;
-                newLabel.BackgroundTransparency = 1;
-                newLabel.Text = "";
-                newLabel.TextXAlignment = Enum.TextXAlignment.Left;
-                newLabel.TextYAlignment = Enum.TextYAlignment.Top;
-                newLabel.TextColor3 = labelingInfo.textColor;
-                newLabel.FontFace = labelingInfo.textFont;
-                newLabel.TextSize = labelingInfo.textSize;
-                newLabel.Size = labelingInfo.labelSize;
-                newLabel.ZIndex = 3;
-                newLabel.TextWrapped = false;
-                newLabel.TextTruncate = Enum.TextTruncate.None;
-                newLabel.AutomaticSize = Enum.AutomaticSize.None;
-                newLabel.ClipsDescendants = false;
-                newLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
-                newLabel.Parent = textObject:FindFirstChildWhichIsA("Folder");
-                lineLabels[lineNumber] = newLabel;
-                lineLabel = newLabel;
-            end
-            
-            if (l > 1) then
-                if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-                    lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-                end
-                lineNumber += 1
-                bufferIndex = 0;
-                table.clear(richTextBuffer);
-            end
-            
-            if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-                bufferIndex += 1
-                if ((Color ~= idenColor) and string.find(tokenLine, "[%S%C]")) then
-                    richTextBuffer[bufferIndex] = theme.getColoredRichText(Color, tokenLine);
-                else
-                    richTextBuffer[bufferIndex] = tokenLine;
-                end
-            end
-        end
-    end
-    
-    if (richTextBuffer[1] and lineLabels[lineNumber]) then
-        lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-    end
-    
-    for l = lineNumber + 1, #lineLabels do
-        if (lineLabels[l].Text == "") then continue; end
-        lineLabels[l].Text = "";
-    end
-end;
     if not labelingInfo then return end
     
     local lineHeight = labelingInfo.textHeight
@@ -5936,7 +5872,15 @@ end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
 		highlighter.highlight({ textObject = EditorFrame.Input });
-
+-- Re-render on scroll
+EditorFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+    if highlighter and EditorFrame.Input.Text ~= "" then
+        highlighter.highlight({ 
+            textObject = EditorFrame.Input,
+            forceUpdate = true 
+        })
+    end
+end)
 	
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
