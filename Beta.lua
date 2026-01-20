@@ -4587,6 +4587,13 @@ if v.Name == "Popups" then v.Visible = false return end
 	};
 	
 	local InitTabs = {};
+local function sanitizeFilename(name)
+    name = string.gsub(name, '[<>:"/\\|?*]', "")
+    name = string.gsub(name, "^%.+", "")
+    name = string.gsub(name, "%.+$", "")
+    if name == "" then name = "Script" end
+    return name
+end
 	-- [[ UPDATED UI EVENTS & LOGIC ]]
 	local UIEvents = {};
 	UIEvents = {
@@ -4605,7 +4612,8 @@ if v.Name == "Popups" then v.Visible = false return end
 				Content = Content or "";
 				
 				if not isTemp then
-					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
+					TabName = sanitizeFilename(TabName)
+TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
 						Name = TabName,
 						Content = Content,
@@ -4821,10 +4829,11 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		},
 		Saved = {
-			SaveFile = function(Name, Content, Overwrite)
-				if not Overwrite then
-					Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
-				end
+    SaveFile = function(Name, Content, Overwrite)
+        Name = sanitizeFilename(Name)
+        if not Overwrite then
+            Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
+        end
 				
 				CLONED_Detectedly.writefile("saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
 					Name = Name,
