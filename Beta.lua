@@ -1365,7 +1365,7 @@ G2L["87"]["Text"] = [[1]];
 G2L["87"]["TextWrapped"] = false; 
 G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; -- DISABLED
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input (STABLE VISIBLE MODE)
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
@@ -1374,22 +1374,22 @@ G2L["83"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
 G2L["83"]["ZIndex"] = 20; 
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
-G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
-G2L["83"]["TextTransparency"] = 0; -- VISIBLE (Fixes invisible text)
-G2L["83"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235); -- Nice bright white/grey
+G2L["83"]["TextTransparency"] = 0; -- 🔴 VISIBLE: This makes it stable!
+G2L["83"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); -- Match background color
+G2L["83"]["BackgroundTransparency"] = 0; -- 🔴 OPAQUE: Hides the glitchy highlighter behind it
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false; -- Fixes Line Desync
+G2L["83"]["TextWrapped"] = false; -- Keep false for code editors
 G2L["83"]["TextEditable"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(1, -70, 0, 1000); -- Manual Size
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None; -- DISABLED
+G2L["83"]["Size"] = UDim2.new(1, -70, 0, 1000); -- Keep the large size fix for scrolling
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None;
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
-G2L["83"]["BackgroundTransparency"] = 1;
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.UICorner
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
