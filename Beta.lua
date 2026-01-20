@@ -5558,6 +5558,7 @@ dragify(script.Parent.Open);
 			end
 		end
 	end
+end
 	
 	-- [PART 3: UI SCALING]
 	task.defer(function()
