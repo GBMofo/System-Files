@@ -5582,5 +5582,4 @@ dragify(script.Parent.Open);
 		UpdateSize();
 		print("✅ UI Scaled")
 	end);
-end;
 C_2()
