@@ -5872,6 +5872,15 @@ end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
 		highlighter.highlight({ textObject = EditorFrame.Input });
+-- Re-render on scroll
+EditorFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
+    if highlighter and EditorFrame.Input.Text ~= "" then
+        highlighter.highlight({ 
+            textObject = EditorFrame.Input,
+            forceUpdate = true 
+        })
+    end
+end)
 	
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
