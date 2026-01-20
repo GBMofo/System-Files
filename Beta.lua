@@ -1341,7 +1341,7 @@ G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); -- Controlled by script
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- MANUAL MODE
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; -- 🟢 AUTO MODE
 G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
 G2L["82"]["ClipsDescendants"] = true; -- Fixes text bleeding
@@ -1364,7 +1364,7 @@ G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
 
--- [[ 3. INPUT BOX (VISIBLE & STABLE) ]] --
+-- [[ 3. INPUT BOX (RICHTEXT ENABLED) ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
@@ -1374,18 +1374,18 @@ G2L["83"]["ZIndex"] = 2;
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
-G2L["83"]["TextTransparency"] = 0; -- VISIBLE
 G2L["83"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
 G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false; -- Fixes scrolling desync
+G2L["83"]["TextWrapped"] = false;
 G2L["83"]["TextEditable"] = true;
+G2L["83"]["RichText"] = true; -- 🟢 NEW: ENABLE RICHTEXT
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
 G2L["83"]["Size"] = UDim2.new(0, 1000, 0, 1000); 
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None;
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; -- 🟢 CHANGED: Auto-sizing
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
@@ -3147,7 +3147,6 @@ local function deepCopy(tbl)
 	local EnableFrame = Main:WaitForChild("EnableFrame");
 	local Player = Players.LocalPlayer;
 	local KeyVailded = false;
-	local highlighter = nil;
 	local function hideUI(bool, forKey)
 		if (not bool and InvisTriggerOpen) then
 			script.Parent.Enabled = false;
@@ -3411,1144 +3410,67 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		task.spawn(C_6);
 	end
-	local load_highlighter = function()
-		local alignmentDebounce = {};
-		local utility = {};
-		utility.sanitizeRichText = function(s)
-			return string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(s, "&", "&amp;"), "<", "&lt;"), ">", "&gt;"), '"', "&quot;"), "'", "&apos;");
-		end;
-		utility.convertTabsToSpaces = function(s)
-			return string.gsub(s, "\t", "    ");
-		end;
-		utility.removeControlChars = function(s)
-			return string.gsub(s, "[\0\1\2\3\4\5\6\7\8\11\12\13\14\15\16\17\18\19\20\21\22\23\24\25\26\27\28\29\30\31]+", "");
-		end;
-		utility.getInnerAbsoluteSize = function(textObject)
-			local fullSize = textObject.AbsoluteSize;
-			local padding = textObject:FindFirstChildWhichIsA("UIPadding");
-			if padding then
-				local offsetX = padding.PaddingLeft.Offset + padding.PaddingRight.Offset;
-				local scaleX = (fullSize.X * padding.PaddingLeft.Scale) + (fullSize.X * padding.PaddingRight.Scale);
-				local offsetY = padding.PaddingTop.Offset + padding.PaddingBottom.Offset;
-				local scaleY = (fullSize.Y * padding.PaddingTop.Scale) + (fullSize.Y * padding.PaddingBottom.Scale);
-				return Vector2.new(fullSize.X - (scaleX + offsetX), fullSize.Y - (scaleY + offsetY));
-			else
-				return fullSize;
-			end
-		end;
-		utility.getTextBounds = function(textObject)
-			if (textObject.ContentText == "") then
-				return Vector2.zero;
-			end
-			local textBounds = textObject.TextBounds;
-			local attempts = 0;
-			while (textBounds.Y ~= textBounds.Y) or (textBounds.Y < 1) do
-				if (attempts > 10) then
-					local lines = # string.split(textObject.Text, "\n");
-					return Vector2.new(textObject.AbsoluteSize.X, textObject.TextSize * lines * 1.2);
-				end
-				attempts += 1
-				task.wait();
-				textBounds = textObject.TextBounds;
-			end
-			return textBounds;
-		end;
-		local DEFAULT_TOKEN_COLORS = {
-			background = Color3.fromRGB(47, 47, 47),
-			iden = Color3.fromRGB(234, 234, 234),
-			keyword = Color3.fromRGB(215, 174, 255),
-			builtin = Color3.fromRGB(131, 206, 255),
-			string = Color3.fromRGB(196, 255, 193),
-			number = Color3.fromRGB(255, 125, 125),
-			comment = Color3.fromRGB(140, 140, 155),
-			operator = Color3.fromRGB(255, 239, 148),
-			custom = Color3.fromRGB(119, 122, 255),
-			boolean = Color3.fromRGB(255, 250, 200),
-			function_name = Color3.fromRGB(250, 239, 148),
-			["OPERATORS/BRACKETS-Color"] = Color3.fromRGB(127, 148, 154)
-		};
-		DEFAULT_TOKEN_COLORS["nil"] = DEFAULT_TOKEN_COLORS['boolean'];
-		local theme = {
-			tokenColors = {},
-			tokenRichTextFormatter = {}
-		};
-		theme.setColors = function(tokenColors)
-			assert(type(tokenColors) == "table", "Theme.updateColors expects a table");
-			for tokenName, color in tokenColors do
-				theme.tokenColors[tokenName] = color;
-			end
-		end;
-		theme.getColoredRichText = function(color, text)
-			return '<font color="#' .. color:ToHex() .. '">' .. text .. "</font>";
-		end;
-		theme.getColor = function(tokenName)
-			return theme.tokenColors[tokenName];
-		end;
-		theme.matchStudioSettings = function(refreshCallback)
-			local success = pcall(function()
-				local studio = settings().Studio;
-				local studioTheme = studio.Theme;
-				local function getTokens()
-					return {
-						background = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBackground),
-						iden = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptText),
-						keyword = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptKeyword),
-						builtin = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBuiltInFunction),
-						string = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptString),
-						number = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptNumber),
-						comment = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptComment),
-						operator = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptOperator),
-						custom = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBool)
-					};
-				end
-				theme.setColors(getTokens());
-				studio.ThemeChanged:Connect(function()
-					studioTheme = studio.Theme;
-					theme.setColors(getTokens());
-					refreshCallback();
-				end);
-			end);
-			return success;
-		end;
-		theme.setColors(DEFAULT_TOKEN_COLORS);
-		local language = {
-			keyword = {
-				["and"] = "keyword",
-				["break"] = "keyword",
-				["continue"] = "keyword",
-				["do"] = "keyword",
-				["else"] = "keyword",
-				["elseif"] = "keyword",
-				["end"] = "keyword",
-				export = "keyword",
-				["false"] = "boolean",
-				["for"] = "keyword",
-				["function"] = "keyword",
-				["if"] = "keyword",
-				["in"] = "keyword",
-				["local"] = "keyword",
-				["nil"] = "boolean",
-				["not"] = "keyword",
-				["or"] = "keyword",
-				["repeat"] = "keyword",
-				["return"] = "keyword",
-				self = "keyword",
-				["then"] = "keyword",
-				["true"] = "boolean",
-				type = "keyword",
-				typeof = "keyword",
-				["until"] = "keyword",
-				["while"] = "keyword"
-			},
-			builtin = {
-				assert = "function",
-				error = "function",
-				getfenv = "function",
-				getmetatable = "function",
-				ipairs = "function",
-				loadstring = "function",
-				newproxy = "function",
-				next = "function",
-				pairs = "function",
-				pcall = "function",
-				print = "function",
-				rawequal = "function",
-				rawget = "function",
-				rawlen = "function",
-				rawset = "function",
-				select = "function",
-				setfenv = "function",
-				setmetatable = "function",
-				tonumber = "function",
-				tostring = "function",
-				unpack = "function",
-				xpcall = "function",
-				collectgarbage = "function",
-				_G = "table",
-				_VERSION = "string",
-				bit32 = "table",
-				coroutine = "table",
-				debug = "table",
-				math = "table",
-				os = "table",
-				string = "table",
-				table = "table",
-				utf8 = "table",
-				DebuggerManager = "function",
-				delay = "function",
-				gcinfo = "function",
-				PluginManager = "function",
-				require = "function",
-				settings = "function",
-				spawn = "function",
-				tick = "function",
-				time = "function",
-				UserSettings = "function",
-				wait = "function",
-				warn = "function",
-				Delay = "function",
-				ElapsedTime = "function",
-				elapsedTime = "function",
-				printidentity = "function",
-				Spawn = "function",
-				Stats = "function",
-				stats = "function",
-				Version = "function",
-				version = "function",
-				Wait = "function",
-				ypcall = "function",
-				game = "Instance",
-				plugin = "Instance",
-				script = "Instance",
-				shared = "Instance",
-				workspace = "Instance",
-				Game = "Instance",
-				Workspace = "Instance",
-				Axes = "table",
-				BrickColor = "table",
-				CatalogSearchParams = "table",
-				CFrame = "table",
-				Color3 = "table",
-				ColorSequence = "table",
-				ColorSequenceKeypoint = "table",
-				DateTime = "table",
-				DockWidgetPluginGuiInfo = "table",
-				Enum = "table",
-				Faces = "table",
-				FloatCurveKey = "table",
-				Font = "table",
-				Instance = "table",
-				NumberRange = "table",
-				NumberSequence = "table",
-				NumberSequenceKeypoint = "table",
-				OverlapParams = "table",
-				PathWaypoint = "table",
-				PhysicalProperties = "table",
-				Random = "table",
-				Ray = "table",
-				RaycastParams = "table",
-				Rect = "table",
-				Region3 = "table",
-				Region3int16 = "table",
-				RotationCurveKey = "table",
-				SharedTable = "table",
-				task = "table",
-				TweenInfo = "table",
-				UDim = "table",
-				UDim2 = "table",
-				Vector2 = "table",
-				Vector2int16 = "table",
-				Vector3 = "table",
-				Vector3int16 = "table"
-			},
-			libraries = {
-				_G = {},
-				bit32 = {
-					arshift = "function",
-					band = "function",
-					bnot = "function",
-					bor = "function",
-					btest = "function",
-					bxor = "function",
-					countlz = "function",
-					countrz = "function",
-					extract = "function",
-					lrotate = "function",
-					lshift = "function",
-					replace = "function",
-					rrotate = "function",
-					rshift = "function"
-				},
-				coroutine = {
-					close = "function",
-					create = "function",
-					isyieldable = "function",
-					resume = "function",
-					running = "function",
-					status = "function",
-					wrap = "function",
-					yield = "function"
-				},
-				debug = {
-					dumpheap = "function",
-					getmemorycategory = "function",
-					info = "function",
-					loadmodule = "function",
-					profilebegin = "function",
-					profileend = "function",
-					resetmemorycategory = "function",
-					setmemorycategory = "function",
-					traceback = "function"
-				},
-				math = {
-					abs = "function",
-					acos = "function",
-					asin = "function",
-					atan2 = "function",
-					atan = "function",
-					ceil = "function",
-					clamp = "function",
-					cos = "function",
-					cosh = "function",
-					deg = "function",
-					exp = "function",
-					floor = "function",
-					fmod = "function",
-					frexp = "function",
-					ldexp = "function",
-					log10 = "function",
-					log = "function",
-					max = "function",
-					min = "function",
-					modf = "function",
-					noise = "function",
-					pow = "function",
-					rad = "function",
-					random = "function",
-					randomseed = "function",
-					round = "function",
-					sign = "function",
-					sin = "function",
-					sinh = "function",
-					sqrt = "function",
-					tan = "function",
-					tanh = "function",
-					huge = "number",
-					pi = "number"
-				},
-				os = {
-					clock = "function",
-					date = "function",
-					difftime = "function",
-					time = "function"
-				},
-				string = {
-					byte = "function",
-					char = "function",
-					find = "function",
-					format = "function",
-					gmatch = "function",
-					gsub = "function",
-					len = "function",
-					lower = "function",
-					match = "function",
-					pack = "function",
-					packsize = "function",
-					rep = "function",
-					reverse = "function",
-					split = "function",
-					sub = "function",
-					unpack = "function",
-					upper = "function"
-				},
-				table = {
-					clear = "function",
-					clone = "function",
-					concat = "function",
-					create = "function",
-					find = "function",
-					foreach = "function",
-					foreachi = "function",
-					freeze = "function",
-					getn = "function",
-					insert = "function",
-					isfrozen = "function",
-					maxn = "function",
-					move = "function",
-					pack = "function",
-					remove = "function",
-					sort = "function",
-					unpack = "function"
-				},
-				utf8 = {
-					char = "function",
-					codepoint = "function",
-					codes = "function",
-					graphemes = "function",
-					len = "function",
-					nfcnormalize = "function",
-					nfdnormalize = "function",
-					offset = "function",
-					charpattern = "string"
-				},
-				Axes = {
-					new = "function"
-				},
-				BrickColor = {
-					Black = "function",
-					Blue = "function",
-					DarkGray = "function",
-					Gray = "function",
-					Green = "function",
-					new = "function",
-					New = "function",
-					palette = "function",
-					Random = "function",
-					random = "function",
-					Red = "function",
-					White = "function",
-					Yellow = "function"
-				},
-				CatalogSearchParams = {
-					new = "function"
-				},
-				CFrame = {
-					Angles = "function",
-					fromAxisAngle = "function",
-					fromEulerAngles = "function",
-					fromEulerAnglesXYZ = "function",
-					fromEulerAnglesYXZ = "function",
-					fromMatrix = "function",
-					fromOrientation = "function",
-					lookAt = "function",
-					new = "function",
-					identity = "CFrame"
-				},
-				Color3 = {
-					fromHex = "function",
-					fromHSV = "function",
-					fromRGB = "function",
-					new = "function",
-					toHSV = "function"
-				},
-				ColorSequence = {
-					new = "function"
-				},
-				ColorSequenceKeypoint = {
-					new = "function"
-				},
-				DateTime = {
-					fromIsoDate = "function",
-					fromLocalTime = "function",
-					fromUniversalTime = "function",
-					fromUnixTimestamp = "function",
-					fromUnixTimestampMillis = "function",
-					now = "function"
-				},
-				DockWidgetPluginGuiInfo = {
-					new = "function"
-				},
-				Enum = {},
-				Faces = {
-					new = "function"
-				},
-				FloatCurveKey = {
-					new = "function"
-				},
-				Font = {
-					fromEnum = "function",
-					fromId = "function",
-					fromName = "function",
-					new = "function"
-				},
-				Instance = {
-					new = "function"
-				},
-				NumberRange = {
-					new = "function"
-				},
-				NumberSequence = {
-					new = "function"
-				},
-				NumberSequenceKeypoint = {
-					new = "function"
-				},
-				OverlapParams = {
-					new = "function"
-				},
-				PathWaypoint = {
-					new = "function"
-				},
-				PhysicalProperties = {
-					new = "function"
-				},
-				Random = {
-					new = "function"
-				},
-				Ray = {
-					new = "function"
-				},
-				RaycastParams = {
-					new = "function"
-				},
-				Rect = {
-					new = "function"
-				},
-				Region3 = {
-					new = "function"
-				},
-				Region3int16 = {
-					new = "function"
-				},
-				RotationCurveKey = {
-					new = "function"
-				},
-				SharedTable = {
-					clear = "function",
-					clone = "function",
-					cloneAndFreeze = "function",
-					increment = "function",
-					isFrozen = "function",
-					new = "function",
-					size = "function",
-					update = "function"
-				},
-				task = {
-					cancel = "function",
-					defer = "function",
-					delay = "function",
-					desynchronize = "function",
-					spawn = "function",
-					synchronize = "function",
-					wait = "function"
-				},
-				TweenInfo = {
-					new = "function"
-				},
-				UDim = {
-					new = "function"
-				},
-				UDim2 = {
-					fromOffset = "function",
-					fromScale = "function",
-					new = "function"
-				},
-				Vector2 = {
-					new = "function",
-					one = "Vector2",
-					xAxis = "Vector2",
-					yAxis = "Vector2",
-					zero = "Vector2"
-				},
-				Vector2int16 = {
-					new = "function"
-				},
-				Vector3 = {
-					fromAxis = "function",
-					FromAxis = "function",
-					fromNormalId = "function",
-					FromNormalId = "function",
-					new = "function",
-					one = "Vector3",
-					xAxis = "Vector3",
-					yAxis = "Vector3",
-					zAxis = "Vector3",
-					zero = "Vector3"
-				},
-				Vector3int16 = {
-					new = "function"
-				}
-			}
+-- 🟢 SIMPLE RICHTEXT SYNTAX HIGHLIGHTER
+local SyntaxColors = {
+    -- Keywords
+    ["local"] = "rgb(173, 216, 230)",
+    ["function"] = "rgb(70, 130, 180)",
+    ["end"] = "rgb(70, 130, 180)",
+    ["if"] = "rgb(100, 149, 237)",
+    ["then"] = "rgb(100, 149, 237)",
+    ["else"] = "rgb(100, 149, 237)",
+    ["elseif"] = "rgb(100, 149, 237)",
+    ["return"] = "rgb(65, 105, 225)",
+    ["while"] = "rgb(70, 130, 180)",
+    ["for"] = "rgb(70, 130, 180)",
+    ["do"] = "rgb(70, 130, 180)",
+    ["break"] = "rgb(65, 105, 225)",
+    ["continue"] = "rgb(65, 105, 225)",
+    ["and"] = "rgb(70, 130, 180)",
+    ["or"] = "rgb(70, 130, 180)",
+    ["not"] = "rgb(70, 130, 180)",
+    ["repeat"] = "rgb(135, 206, 235)",
+    ["until"] = "rgb(135, 206, 235)",
+    
+    -- Globals
+    ["game"] = "rgb(0, 191, 255)",
+    ["workspace"] = "rgb(0, 191, 255)",
+    ["script"] = "rgb(0, 191, 255)",
+    ["print"] = "rgb(0, 191, 255)",
+    ["wait"] = "rgb(0, 191, 255)",
+    ["task"] = "rgb(0, 191, 255)",
+    ["pairs"] = "rgb(0, 191, 255)",
+    ["ipairs"] = "rgb(0, 191, 255)",
+    ["loadstring"] = "rgb(0, 0, 139)",
 }
-		local enumLibraryTable = language.libraries.Enum;
-		for _, enum in ipairs(Enum:GetEnums()) do
-			enumLibraryTable[tostring(enum)] = "Enum";
-		end
-		local function TableToLib(tablev)
-			local result = {};
-			for n, t in tablev do
-				if (type(t) == "table") then
-					result[tostring(n)] = TableToLib(t);
-				else
-					result[tostring(n)] = tostring(typeof(t));
-				end
-			end
-			return result;
-		end
-		local function UpdateGlobalTypes()
-			for _, typer in {
-				_G,
-				((getgenv and getgenv()) or {})
-				} do
-				for name, value in typer do
-					if (type(value) == "table") then
-						local convet = TableToLib(value);
-						if (typer == "_G") then
-							language.libraries['_G'][tostring(name)] = convet;
-						else
-							language.libraries[tostring(name)] = convet;
-							language.builtin[tostring(name)] = "builtin";
-						end
-					else
-						language.keyword[tostring(name)] = tostring(typeof(value));
-					end
-				end
-			end
-		end
-		UpdateGlobalTypes();
-		local lexer = {};
-		local Prefix, Suffix, Cleaner = "^[%c%s]*", "[%c%s]*", "[%c%s]+";
-		local UNICODE = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]+";
-		local NUMBER_A = "0[xX][%da-fA-F_]+";
-		local NUMBER_B = "0[bB][01_]+";
-		local NUMBER_C = "%d+%.?%d*[eE][%+%-]?%d+";
-		local NUMBER_D = "%d+[%._]?[%d_eE]*";
-		local OPERATORS = "[:;<>/~%*%(%)%-={},%.#%^%+%%]+";
-		local BRACKETS = "[%[%]]+";
-		local IDEN = "[%a_][%w_]*";
-		local STRING_EMPTY = '([\'\"])%1';
-		local STRING_PLAIN = '([\'\"])[^\n]-([^\\]%1)';
-		local STRING_INTER = "`[^\n]-`";
-		local STRING_INCOMP_A = '([\'\"]).-\n';
-		local STRING_INCOMP_B = '([\'\"])[^\n]*';
-		local STRING_MULTI = "%[(=*)%[.-%]%1%]";
-		local STRING_MULTI_INCOMP = "%[=*%[.-.*";
-		local COMMENT_MULTI = "%-%-%[(=*)%[.-%]%1%]";
-		local COMMENT_MULTI_INCOMP = "%-%-%[=*%[.-.*";
-		local COMMENT_PLAIN = "%-%-.-\n";
-		local COMMENT_INCOMP = "%-%-.*";
-		local FUNCTION_NAME = "function%s+([%a_][%w_%.]*)";
-		local lang = language;
-		local lua_keyword = lang.keyword;
-		local lua_builtin = lang.builtin;
-		local lua_libraries = lang.libraries;
-		lexer.language = lang;
-		local lua_matches = {
-			{
-				(Prefix .. IDEN .. Suffix),
-				"var"
-			},
-			{
-				(Prefix .. NUMBER_A .. Suffix),
-				"number"
-			},
-			{
-				(Prefix .. NUMBER_B .. Suffix),
-				"number"
-			},
-			{
-				(Prefix .. NUMBER_C .. Suffix),
-				"number"
-			},
-			{
-				(Prefix .. NUMBER_D .. Suffix),
-				"number"
-			},
-			{
-				(Prefix .. STRING_EMPTY .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_PLAIN .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_INCOMP_A .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_INCOMP_B .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_MULTI .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_MULTI_INCOMP .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_INTER .. Suffix),
-				"string_inter"
-			},
-			{
-				(Prefix .. COMMENT_MULTI .. Suffix),
-				"comment"
-			},
-			{
-				(Prefix .. COMMENT_MULTI_INCOMP .. Suffix),
-				"comment"
-			},
-			{
-				(Prefix .. COMMENT_PLAIN .. Suffix),
-				"comment"
-			},
-			{
-				(Prefix .. COMMENT_INCOMP .. Suffix),
-				"comment"
-			},
-			{
-				(Prefix .. OPERATORS .. Suffix),
-				"OPERATORS/BRACKETS-Color"
-			},
-			{
-				(Prefix .. BRACKETS .. Suffix),
-				"OPERATORS/BRACKETS-Color"
-			},
-			{
-				(Prefix .. UNICODE .. Suffix),
-				"iden"
-			},
-			{
-				"^.",
-				"iden"
-			}
-		};
-		local PATTERNS, TOKENS = {}, {};
-		for i, m in lua_matches do
-			PATTERNS[i] = m[1];
-			TOKENS[i] = m[2];
-		end
-		lexer.scan = function(s)
-			UpdateGlobalTypes();
-			local index = 1;
-			local size = # s;
-			local previousContent1, previousContent2, previousContent3, previousToken = "", "", "", "";
-			local thread = coroutine.create(function()
-				while index <= size do
-					local matched = false;
-					for tokenType, pattern in ipairs(PATTERNS) do
-						local start, finish = string.find(s, pattern, index);
-						if (start == nil) then
-							continue;
-						end
-						index = finish + 1;
-						matched = true;
-						local content = string.sub(s, start, finish);
-						local rawToken = TOKENS[tokenType];
-						local processedToken = rawToken;
-						if (rawToken == "var") then
-							local cleanContent = string.gsub(content, Cleaner, "");
-							if lua_keyword[cleanContent] then
-								processedToken = (theme.getColor(lua_keyword[cleanContent]) and lua_keyword[cleanContent]) or "keyword";
-							elseif lua_builtin[cleanContent] then
-								processedToken = "builtin";
-							elseif ((previousToken == "keyword") and string.match(previousContent1, "function")) then
-								processedToken = "function_name";
-							elseif (string.find(previousContent1, "%.[%s%c]*$") and (previousToken ~= "comment")) then
-								local parent = string.gsub(previousContent2, Cleaner, "");
-								local lib = lua_libraries[parent];
-								if (lib and lib[cleanContent] and not string.find(previousContent3, "%.[%s%c]*$")) then
-									processedToken = "builtin";
-								else
-									processedToken = "iden";
-								end
-							else
-								processedToken = "iden";
-							end
-						elseif (rawToken == "string_inter") then
-							if not string.find(content, "[^\\]{") then
-								processedToken = "string";
-							else
-								processedToken = nil;
-								local isString = true;
-								local subIndex = 1;
-								local subSize = # content;
-								while subIndex <= subSize do
-									local subStart, subFinish = string.find(content, "^.-[^\\][{}]", subIndex);
-									if (subStart == nil) then
-										coroutine.yield("string", string.sub(content, subIndex));
-										break;
-									end
-									if isString then
-										subIndex = subFinish + 1;
-										coroutine.yield("string", string.sub(content, subStart, subFinish));
-										isString = false;
-									else
-										subIndex = subFinish;
-										local subContent = string.sub(content, subStart, subFinish - 1);
-										for innerToken, innerContent in lexer.scan(subContent) do
-											coroutine.yield(innerToken, innerContent);
-										end
-										isString = true;
-									end
-								end
-							end
-						end
-						previousContent3 = previousContent2;
-						previousContent2 = previousContent1;
-						previousContent1 = content;
-						previousToken = processedToken or rawToken;
-						if processedToken then
-							coroutine.yield(processedToken, content);
-						end
-						break;
-					end
-					if not matched then
-						return;
-					end
-				end
-				return;
-			end);
-			return function()
-				if (coroutine.status(thread) == "dead") then
-					return;
-				end
-				local success, token, content = coroutine.resume(thread);
-				if (success and token) then
-					return token, content;
-				end
-				return;
-			end;
-		end;
-		lexer.navigator = function()
-			local nav = {
-				Source = "",
-				TokenCache = table.create(50),
-				_RealIndex = 0,
-				_UserIndex = 0,
-				_ScanThread = nil
-			};
-			nav.Destroy = function(self)
-				self.Source = nil;
-				self._RealIndex = nil;
-				self._UserIndex = nil;
-				self.TokenCache = nil;
-				self._ScanThread = nil;
-			end;
-			nav.SetSource = function(self, SourceString)
-				self.Source = SourceString;
-				self._RealIndex = 0;
-				self._UserIndex = 0;
-				table.clear(self.TokenCache);
-				self._ScanThread = coroutine.create(function()
-					for Token, Src in lexer.scan(self.Source) do
-						self._RealIndex += 1
-						self.TokenCache[self._RealIndex] = {
-							Token,
-							Src
-						};
-						coroutine.yield(Token, Src);
-					end
-				end);
-			end;
-			nav.Next = function()
-				nav._UserIndex += 1
-				if (nav._RealIndex >= nav._UserIndex) then
-					return table.unpack(nav.TokenCache[nav._UserIndex]);
-				elseif (coroutine.status(nav._ScanThread) == "dead") then
-					return;
-				else
-					local success, token, src = coroutine.resume(nav._ScanThread);
-					if (success and token) then
-						return token, src;
-					else
-						return;
-					end
-				end
-			end;
-			nav.Peek = function(PeekAmount)
-				local GoalIndex = nav._UserIndex + PeekAmount;
-				if (nav._RealIndex >= GoalIndex) then
-					if (GoalIndex > 0) then
-						return table.unpack(nav.TokenCache[GoalIndex]);
-					else
-						return;
-					end
-				elseif (coroutine.status(nav._ScanThread) == "dead") then
-					return;
-				else
-					local IterationsAway = GoalIndex - nav._RealIndex;
-					local success, token, src = nil, nil, nil;
-					for _ = 1, IterationsAway do
-						success, token, src = coroutine.resume(nav._ScanThread);
-						if not (success or token) then
-							break;
-						end
-					end
-					return token, src;
-				end
-			end;
-			return nav;
-		end;
-		local highlight_enabled = true;
-		local Highlighter = {
-			defaultLexer = lexer,
-			_textObjectData = {},
-			_cleanups = {}
-		};
-		Highlighter._getLabelingInfo = function(textObject)
-			local data = Highlighter._textObjectData[textObject];
-			if not data then
-				return;
-			end
-			local src = utility.convertTabsToSpaces(utility.removeControlChars(textObject.Text));
-			local numLines = # string.split(src, "\n");
-			if (numLines == 0) then
-				return;
-			end
-			local textHeight;
-			if ((textObject.TextBounds.Y > 0) and (numLines > 0)) then
-				textHeight = textObject.TextBounds.Y / numLines;
-			else
-				textHeight = textObject.TextSize * 1.2;
-			end
-			return {
-				data = data,
-				numLines = numLines,
-				textBounds = Vector2.new(textObject.AbsoluteSize.X, textHeight * numLines),
-				textHeight = textHeight,
-				innerAbsoluteSize = utility.getInnerAbsoluteSize(textObject),
-				textColor = theme.getColor("iden"),
-				textFont = textObject.FontFace,
-				textSize = textObject.TextSize,
-				labelSize = UDim2.new(0, 2000, 0, math.ceil(textHeight))
-			};
-		end;
-		Highlighter._alignLabels = function(textObject)
-			if alignmentDebounce[textObject] then
-				task.cancel(alignmentDebounce[textObject]);
-			end
-			alignmentDebounce[textObject] = task.defer(function()
-				alignmentDebounce[textObject] = nil;
-				local labelingInfo = Highlighter._getLabelingInfo(textObject);
-				if not labelingInfo then
-					return;
-				end
-				for lineNumber, lineLabel in labelingInfo.data.Labels do
-					lineLabel.TextColor3 = labelingInfo.textColor;
-					lineLabel.FontFace = labelingInfo.textFont;
-					lineLabel.TextSize = labelingInfo.textSize;
-					lineLabel.ZIndex = 3;
-					lineLabel.Size = labelingInfo.labelSize;
-					lineLabel.TextWrapped = false;
-					lineLabel.TextTruncate = Enum.TextTruncate.None;
-					lineLabel.AutomaticSize = Enum.AutomaticSize.None;
-					lineLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
-				end
-			end);
-		end;
-		Highlighter._populateLabels = function(props)
-    local textObject = props.textObject;
-    local src = (highlight_enabled and utility.convertTabsToSpaces(utility.removeControlChars(props.src or textObject.Text))) or "";
-    local lexer = props.lexer or Highlighter.defaultLexer;
-    local customLang = props.customLang;
-    local forceUpdate = props.forceUpdate;
+
+local function ApplySyntax(text)
+    -- Remove existing tags first
+    text = text:gsub("<[^>]+>", "")
     
-    local data = Highlighter._textObjectData[textObject];
-    if ((data == nil) or (data.Text == src)) then
-        if (forceUpdate ~= true) then return; end
+    -- Apply keyword colors
+    for keyword, color in pairs(SyntaxColors) do
+        text = text:gsub("(%f[%a]" .. keyword .. "%f[%A])", 
+            '<font color="' .. color .. '">%1</font>')
     end
     
-    if highlight_enabled then textObject.Text = src; end
+    -- Apply number colors
+    text = text:gsub("(%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
     
-    local lineLabels = data.Labels;
-    local previousLines = data.Lines;
-    local lines = string.split(src, "\n");
-    data.Lines = lines;
-    data.Text = src;
-    data.Lexer = lexer;
-    data.CustomLang = customLang;
+    -- Apply string colors
+    text = text:gsub('(".-")', '<font color="rgb(176, 224, 230)">%1</font>')
+    text = text:gsub("('.-')", '<font color="rgb(176, 224, 230)">%1</font>')
     
-   if (src == "") then
-        for l = 1, #lineLabels do
-            if (lineLabels[l].Text == "") then continue; end
-            lineLabels[l].Text = "";
-        end
-        return;
-    end
+    -- Apply operator colors
+    text = text:gsub("([%+%-%*/%%%^#=<>~%(%)%[%]{}])", '<font color="rgb(70, 130, 180)">%1</font>')
+    text = text:gsub("([%.:])", '<font color="rgb(30, 144, 255)">%1</font>')
     
-    -- 🔴 VIRTUALIZATION: Calculate visible range (FIXED)
-    local scrollFrame = textObject.Parent
-    while scrollFrame and not scrollFrame:IsA("ScrollingFrame") do
-        scrollFrame = scrollFrame.Parent
-    end
-    
-    local viewportStart = (scrollFrame and scrollFrame.CanvasPosition.Y) or 0
-    local viewportEnd = viewportStart + ((scrollFrame and scrollFrame.AbsoluteSize.Y) or 500)
-    local labelingInfo = Highlighter._getLabelingInfo(textObject);
-    if not labelingInfo then return end
-    
-    local lineHeight = labelingInfo.textHeight
-    local startLine = math.max(1, math.floor(viewportStart / lineHeight) - 20)
-    local endLine = math.min(#lines, math.ceil(viewportEnd / lineHeight) + 20)
-    
-    -- Hide labels outside viewport
-    for i = 1, #lineLabels do
-        if i < startLine or i > endLine then
-            if lineLabels[i] and lineLabels[i].Text ~= "" then
-                lineLabels[i].Text = ""
-            end
-        end
-    end
-    
-    local idenColor = theme.getColor("iden");
-    local richTextBuffer, bufferIndex, lineNumber = table.create(5), 0, 1;
-    
-    for token, content in lexer.scan(src) do
-        local Color = (function()
-            if (customLang and customLang[content]) then
-                return theme.getColor("custom");
-            else
-                return theme.getColor(token) or idenColor;
-            end
-        end)();
-        
-        local tokenLines = string.split(utility.sanitizeRichText(content), "\n");
-        
-        for l, tokenLine in tokenLines do
-            -- 🔴 SKIP LINES OUTSIDE VIEWPORT
-            if lineNumber >= startLine and lineNumber <= endLine then
-                local lineLabel = lineLabels[lineNumber];
-                if not lineLabel then
-                    local newLabel = Instance.new("TextLabel");
-                    newLabel.AutoLocalize = false;
-                    newLabel.RichText = true;
-                    newLabel.BackgroundTransparency = 1;
-                    newLabel.Text = "";
-                    newLabel.TextXAlignment = Enum.TextXAlignment.Left;
-                    newLabel.TextYAlignment = Enum.TextYAlignment.Top;
-                    newLabel.TextColor3 = labelingInfo.textColor;
-                    newLabel.FontFace = labelingInfo.textFont;
-                    newLabel.TextSize = labelingInfo.textSize;
-                    newLabel.Size = labelingInfo.labelSize;
-                    newLabel.ZIndex = 3;
-                    newLabel.TextWrapped = false;
-                    newLabel.TextTruncate = Enum.TextTruncate.None;
-                    newLabel.AutomaticSize = Enum.AutomaticSize.None;
-                    newLabel.ClipsDescendants = false;
-                    newLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
-                    newLabel.Parent = textObject:FindFirstChildWhichIsA("Folder");
-                    lineLabels[lineNumber] = newLabel;
-                    lineLabel = newLabel;
-                end
-                
-                if (l > 1) then
-                    if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-                        lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-                    end
-                    lineNumber += 1
-                    bufferIndex = 0;
-                    table.clear(richTextBuffer);
-                end
-                
-                if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-                    bufferIndex += 1
-                    if ((Color ~= idenColor) and string.find(tokenLine, "[%S%C]")) then
-                        richTextBuffer[bufferIndex] = theme.getColoredRichText(Color, tokenLine);
-                    else
-                        richTextBuffer[bufferIndex] = tokenLine;
-                    end
-                end
-            else
-                if (l > 1) then
-                    lineNumber += 1
-                    bufferIndex = 0;
-                    table.clear(richTextBuffer);
-                end
-            end
-        end
-    end
-    
-    if (richTextBuffer[1] and lineLabels[lineNumber]) then
-        lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-    end
-end;
-		Highlighter.highlight = function(props)
-			local textObject = props.textObject;
-			local src = utility.convertTabsToSpaces(utility.removeControlChars(props.src or textObject.Text));
-			local lexer = props.lexer or Highlighter.defaultLexer;
-			local customLang = props.customLang;
-			if Highlighter._cleanups[textObject] then
-				Highlighter._populateLabels(props);
-				Highlighter._alignLabels(textObject);
-				return Highlighter._cleanups[textObject];
-			end
-			textObject.RichText = false;
-			if highlight_enabled then
-				textObject.Text = src;
-			end
-			textObject.TextXAlignment = Enum.TextXAlignment.Left;
-			textObject.TextYAlignment = Enum.TextYAlignment.Top;
-			textObject.BackgroundColor3 = theme.getColor("background");
-			textObject.TextColor3 = theme.getColor("iden");
-			textObject.TextTransparency = 0.5;
-			local lineFolder = textObject:FindFirstChildWhichIsA("Folder");
-			if (lineFolder == nil) then
-				local newLineFolder = Instance.new("Folder");
-				newLineFolder.Parent = textObject;
-				lineFolder = newLineFolder;
-			end
-			local data = {
-				Text = "",
-				Labels = {},
-				Lines = {},
-				Lexer = lexer,
-				CustomLang = customLang
-			};
-			Highlighter._textObjectData[textObject] = data;
-			local connections = {};
-			local function cleanup()
-    -- 🔴 FIX #4: PROPER CLEANUP
-    lineFolder:Destroy();
-    Highlighter._textObjectData[textObject] = nil;
-    Highlighter._cleanups[textObject] = nil;
-    if alignmentDebounce[textObject] then
-        task.cancel(alignmentDebounce[textObject]);
-        alignmentDebounce[textObject] = nil;
-    end
-    for _key, connection in connections do
-        if connection and connection.Disconnect then
-            connection:Disconnect();
-        end
-    end
-    table.clear(connections);
-    table.clear(data.Labels);
-    table.clear(data.Lines);
+    return text
 end
-			Highlighter._cleanups[textObject] = cleanup;
-			connections['AncestryChanged'] = textObject.AncestryChanged:Connect(function()
-				if textObject.Parent then
-					return;
-				end
-				cleanup();
-			end);
-			connections['TextChanged'] = textObject:GetPropertyChangedSignal("Text"):Connect(function()
-				Highlighter._populateLabels(props);
-			end);
-			connections['TextBoundsChanged'] = textObject:GetPropertyChangedSignal("TextBounds"):Connect(function()
-				Highlighter._alignLabels(textObject);
-			end);
-			connections['AbsoluteSizeChanged'] = textObject:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-				Highlighter._alignLabels(textObject);
-			end);
-			connections['FontFaceChanged'] = textObject:GetPropertyChangedSignal("FontFace"):Connect(function()
-				Highlighter._alignLabels(textObject);
-			end);
-			connections['Focused'] = textObject.Focused:Connect(function()
-				highlight_enabled = false;
-				Highlighter._populateLabels(props);
-				Highlighter._alignLabels(textObject);
-			end);
-			connections['FocusLost'] = textObject.FocusLost:Connect(function()
-				highlight_enabled = true;
-				Highlighter._populateLabels(props);
-				Highlighter._alignLabels(textObject);
-			end);
-			Highlighter._populateLabels(props);
-			Highlighter._alignLabels(textObject);
-			return cleanup;
-		end;
-		Highlighter.refresh = function()
-			for textObject, data in Highlighter._textObjectData do
-				for _, lineLabel in data.Labels do
-					lineLabel.TextColor3 = theme.getColor("iden");
-				end
-				Highlighter.highlight({
-					textObject = textObject,
-					forceUpdate = true,
-					src = data.Text,
-					lexer = data.Lexer,
-					customLang = data.CustomLang
-				});
-			end
-		end;
-		Highlighter.setTokenColors = function(colors)
-			theme.setColors(colors);
-			Highlighter.refresh();
-		end;
-		Highlighter.getTokenColor = function(tokenName)
-			return theme.getColor(tokenName);
-		end;
-		Highlighter.matchStudioSettings = function()
-			local applied = theme.matchStudioSettings(Highlighter.refresh);
-			if applied then
-				Highlighter.refresh();
-			end
-		end;
-		return Highlighter;
-	end;
+
+local function StripSyntax(text)
+    return text:gsub("<[^>]+>", "")
+end
 	local function getDuplicatedName(baseName, existingNames)
 		if not existingNames[baseName] then
 			return baseName;
@@ -4574,47 +3496,28 @@ end
 		return hash
 	end;
 	
-local update_lines = function(editor, linesFrame)
-    local lines = editor.Text:split("\n");
-    local lineCount = #lines;
-    if lineCount == 0 then lineCount = 1 end
+local function UpdateLineNumbers(editor, linesFrame)
+    local lines = #editor.Text:split("\n")
+    local lineText = ""
     
-    -- 1. Update Line Numbers
-    local lineText = "";
-    for i = 1, lineCount do
-        lineText = lineText .. i .. "\n";
+    for i = 1, lines do
+        lineText = lineText .. i .. "\n"
     end
-    linesFrame.Text = lineText;
     
-    -- 2. Measure Text
-    local bounds = editor.TextBounds;
-    local parentWidth = editor.Parent.AbsoluteSize.X
-    
-    -- 3. Resize Logic (Manual)
-    -- We add buffers to Width and Height to allow smooth scrolling
-    local newWidth = math.max(parentWidth, bounds.X + 200)
-    local newHeight = math.max(600, bounds.Y + 500)
-    
-    -- 4. Apply Sizes
-    editor.Size = UDim2.new(0, newWidth, 0, newHeight)
-    linesFrame.Size = UDim2.new(0, 50, 0, newHeight)
-    
-    -- 5. Update Scrolling
-    if editor.Parent and editor.Parent:IsA("ScrollingFrame") then
-        editor.Parent.CanvasSize = UDim2.new(0, newWidth, 0, newHeight)
-    end
-end;
+    linesFrame.Text = lineText
+end
 
-	local Data = {
-		Editor = {
-			CurrentTab = nil,
-			CurrentOrder = 0,
-			Tabs = {}
-		},
-		Saves = {
-			Scripts = {}
-		}
-	};
+local Data = {
+    Editor = {
+        CurrentTab = nil,
+        CurrentOrder = 0,
+        Tabs = {}
+        -- IsSwitching removed
+    },
+    Saves = {
+        Scripts = {}
+    }
+};
 	
 	local InitTabs = {};
 local function sanitizeFilename(name)
@@ -4661,96 +3564,88 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 				UIEvents.EditorTabs.updateUI();
 			end,
 			saveTab = function(tabName, Content, isExplicitSave)
-				tabName = tabName or Data.Editor.CurrentTab;
-				if not tabName then return end
-
-				-- [[ MODE 1: EDITING SAVED FILE ]]
-				if Data.Editor.EditingSavedFile == tabName then
-					if isExplicitSave then
-						UIEvents.Saved.SaveFile(tabName, Content, true) 
-						createNotification("Saved File Overwritten", "Success", 3)
-						
-						CLONED_Detectedly.delfile("scripts/" .. tabName .. ".lua")
-						Data.Editor.Tabs[tabName] = nil
-						Data.Editor.EditingSavedFile = nil
-						Data.Editor.CurrentTab = nil
-						
-						UIEvents.EditorTabs.updateUI()
-						UIEvents.Nav.goTo("Saved")
-					else
-						local TabData = Data.Editor.Tabs[tabName];
-						if TabData then
-							CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-								Name = tabName,
-								Content = Content,
-								Order = TabData[2]
-							}));
-							Data.Editor.Tabs[tabName] = { Content, TabData[2] };
-						end
-					end
-					return
-				end
-
-				-- [[ MODE 2: NORMAL EDITOR ]]
-				if isExplicitSave then
-					UIEvents.Saved.SaveFile(tabName, Content, false)
-				else
-					local TabData = Data.Editor.Tabs[tabName];
-					if (TabData) then
-						CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-							Name = tabName,
-							Content = Content,
-							Order = TabData[2]
-						}));
-						Data.Editor.Tabs[tabName] = {
-							Content,
-							TabData[2]
-						};
-					end
-				end
-			end,
-			switchTab = function(ToTab)
-    -- 🔴 FIX #5: TAB RACE CONDITION
-    if Data.Editor.IsSwitching then 
-        warn("[PunkX] Tab switch blocked - already switching")
-        return 
-    end
+    tabName = tabName or Data.Editor.CurrentTab;
+    if not tabName then return end
     
+    -- 🟢 ALWAYS STRIP TAGS BEFORE SAVING
+    Content = StripSyntax(Content or "")
+
+    -- [[ MODE 1: EDITING SAVED FILE ]]
+    if Data.Editor.EditingSavedFile == tabName then
+        if isExplicitSave then
+            UIEvents.Saved.SaveFile(tabName, Content, true) 
+            createNotification("Saved File Overwritten", "Success", 3)
+            
+            CLONED_Detectedly.delfile("scripts/" .. tabName .. ".lua")
+            Data.Editor.Tabs[tabName] = nil
+            Data.Editor.EditingSavedFile = nil
+            Data.Editor.CurrentTab = nil
+            
+            UIEvents.EditorTabs.updateUI()
+            UIEvents.Nav.goTo("Saved")
+        else
+            local TabData = Data.Editor.Tabs[tabName];
+            if TabData then
+                CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+                    Name = tabName,
+                    Content = Content, -- Already stripped
+                    Order = TabData[2]
+                }));
+                Data.Editor.Tabs[tabName] = { Content, TabData[2] };
+            end
+        end
+        return
+    end
+
+    -- [[ MODE 2: NORMAL EDITOR ]]
+    if isExplicitSave then
+        UIEvents.Saved.SaveFile(tabName, Content, false)
+    else
+        local TabData = Data.Editor.Tabs[tabName];
+        if (TabData) then
+            CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+                Name = tabName,
+                Content = Content, -- Already stripped
+                Order = TabData[2]
+            }));
+            Data.Editor.Tabs[tabName] = {
+                Content,
+                TabData[2]
+            };
+        end
+    end
+end,
+	switchTab = function(ToTab)
     -- [[ CANCELLATION LOGIC ]]
     if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
-					local editingName = Data.Editor.EditingSavedFile
-					
-					createNotification("Editing Cancelled", "Warn", 3)
-					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
-					Data.Editor.Tabs[editingName] = nil;
-					Data.Editor.EditingSavedFile = nil
-					UIEvents.EditorTabs.updateUI()
-				end
+        local editingName = Data.Editor.EditingSavedFile
+        
+        createNotification("Editing Cancelled", "Warn", 3)
+        CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
+        Data.Editor.Tabs[editingName] = nil;
+        Data.Editor.EditingSavedFile = nil
+        UIEvents.EditorTabs.updateUI()
+    end
 
-				if (Data.Editor.Tabs[ToTab] and not Data.Editor.IsSwitching) then
-					Data.Editor.IsSwitching = true;
-					local Editor = Pages:WaitForChild("Editor");
-					local EditorFrame = Editor:WaitForChild("Editor").Input;
-					local OldTab = Data.Editor.CurrentTab;
-					
-					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
-						local CurrentContent = EditorFrame.Text;
-						UIEvents.EditorTabs.saveTab(OldTab, CurrentContent, false);
-					end
-					
-					Data.Editor.CurrentTab = ToTab;
-            local TabContent = Data.Editor.Tabs[ToTab][1] or "";
-            EditorFrame.Text = TabContent;
-            
-            -- 🔴 FIX #5: SAFE UNLOCK (FIXED)
-            task.spawn(function()
-                task.wait(0.1)
-                Data.Editor.IsSwitching = false;
-            end)
-            
-            UIEvents.EditorTabs.updateUI();
+    if Data.Editor.Tabs[ToTab] then
+        local Editor = Pages:WaitForChild("Editor");
+        local EditorFrame = Editor:WaitForChild("Editor").Input;
+        local OldTab = Data.Editor.CurrentTab;
+        
+        -- Save current tab (strip tags first)
+        if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
+            local cleanContent = StripSyntax(EditorFrame.Text);
+            UIEvents.EditorTabs.saveTab(OldTab, cleanContent, false);
         end
-    end,
+        
+        -- Load new tab
+        Data.Editor.CurrentTab = ToTab;
+        local TabContent = Data.Editor.Tabs[ToTab][1] or "";
+        EditorFrame.Text = ApplySyntax(TabContent); -- 🟢 Apply colors
+        
+        UIEvents.EditorTabs.updateUI();
+    end
+end,
 			delTab = function(Name)
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
@@ -4904,10 +3799,10 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					new.Name = i;
 					new.Title.Text = i;
 					
-					-- [[ FIX: REFERENCES TO MATCH G2L NAMES ]] --
-					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
-						UIEvents.Executor.RunCode(v)();
-					end);
+				Panel.Execute[Method]:Connect(function()
+    local cleanCode = StripSyntax(EditorFrame.Input.Text)
+    UIEvents.Executor.RunCode(cleanCode)();
+end);
 					
 					new.Misc.Panel.Delete.MouseButton1Click:Connect(function()
 						UIEvents.Saved.DelFile(i);
@@ -5829,65 +4724,96 @@ end;
 	end;
 
 	InitTabs.Editor = function()
-		local Editor = Pages:WaitForChild("Editor");
-		local Panel = Editor:WaitForChild("Panel");
-local EditorFrame = Editor:WaitForChild("Editor");
-		local Method = "Activated";
-		
-		Panel.Execute[Method]:Connect(function()
-			UIEvents.Executor.RunCode(EditorFrame.Input.Text)();
-		end);
-		
-		Panel.Paste[Method]:Connect(function()
-    EditorFrame.Input.Text = safeGetClipboard();
-end);
-		
-		Panel.ExecuteClipboard[Method]:Connect(function()
-    UIEvents.Executor.RunCode(safeGetClipboard())();
-end);
-		
-		Panel.Delete[Method]:Connect(function()
-			EditorFrame.Input.Text = "";
-		end);
-		
-		Panel.Save[Method]:Connect(function()
-			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, true); 
-		end);
-		
-		Panel.Rename[Method]:Connect(function()
-			script.Parent.Popups.Visible = true;
-			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-		end);
-		
-		-- HIGHLIGHTER DISABLED (Prevents text glitching)
-		-- if not highlighter then
-		-- 	highlighter = load_highlighter();
-		-- 	print("int");
-		-- end
-		
--- Highlighter disabled (prevents text glitching)
-		
-EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
-    update_lines(EditorFrame.Input, EditorFrame.Lines);
+    local Editor = Pages:WaitForChild("Editor");
+    local Panel = Editor:WaitForChild("Panel");
+    local EditorFrame = Editor:WaitForChild("Editor");
+    local Method = "Activated";
     
-    if not Data.Editor.EditingSavedFile then
-        UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
+    -- 🟢 BUTTON CONNECTIONS (RESTORE THESE IF MISSING)
+    Panel.Execute[Method]:Connect(function()
+        local cleanCode = StripSyntax(EditorFrame.Input.Text)
+        UIEvents.Executor.RunCode(cleanCode)();
+    end);
+    
+    Panel.Paste[Method]:Connect(function()
+        local pastedText = safeGetClipboard();
+        EditorFrame.Input.Text = ApplySyntax(pastedText);
+    end);
+    
+    Panel.ExecuteClipboard[Method]:Connect(function()
+        local clipCode = StripSyntax(safeGetClipboard())
+        UIEvents.Executor.RunCode(clipCode)();
+    end);
+    
+    Panel.Delete[Method]:Connect(function()
+        EditorFrame.Input.Text = "";
+    end);
+    
+    Panel.Save[Method]:Connect(function()
+        local cleanText = StripSyntax(EditorFrame.Input.Text)
+        UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
+    end);
+    
+    Panel.Rename[Method]:Connect(function()
+        script.Parent.Popups.Visible = true;
+        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+    end);
+    
+    -- 🟢 RICHTEXT SYNTAX SYSTEM
+    
+    -- Focus: Strip tags when typing
+    EditorFrame.Input.Focused:Connect(function()
+        EditorFrame.Input.Text = StripSyntax(EditorFrame.Input.Text)
+    end)
+    
+    -- FocusLost: Reapply syntax colors
+    EditorFrame.Input.FocusLost:Connect(function()
+        EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
+    end)
+    
+    -- Text Changed: Update line numbers only
+    EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+        UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+        
+        if not Data.Editor.EditingSavedFile then
+            local cleanText = StripSyntax(EditorFrame.Input.Text)
+            UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+        end
+    end)
+    
+    -- Initial setup
+    UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+    if EditorFrame.Input.Text ~= "" then
+        EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
     end
-end);
 
--- Update line numbers when scrolling
-EditorFrame:GetPropertyChangedSignal("CanvasPosition"):Connect(function()
-    update_lines(EditorFrame.Input, EditorFrame.Lines);
-end);
-		
-		update_lines(EditorFrame.Input, EditorFrame.Lines);
--- Highlighter disabled
+    -- 🟢 TAB CREATION BUTTON
+    Editor.Tabs.Create.Activated:Connect(function()
+        UIEvents.EditorTabs.createTab("Script", "");
+    end);
+    
+    -- 🟢 POPUP BUTTONS
+    local Buttons = script.Parent.Popups.Main.Button
+    Buttons["Confirm"][Method]:Connect(function()
+        local newName = script.Parent.Popups.Main.Input.Text;
+        local isEmpty = #(string.gsub(newName, "[%s]", "")) <= 0;
+        if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
+        
+        UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
+        script.Parent.Popups.Visible = false;
+    end)
+    
+    Buttons["Cancel"][Method]:Connect(function()
+        script.Parent.Popups.Visible = false;
+    end)
 
--- Sync canvas size when text bounds change
-EditorFrame.Input:GetPropertyChangedSignal("TextBounds"):Connect(function()
-    update_lines(EditorFrame.Input, EditorFrame.Lines);
-end);
-
+end; -- This ends InitTabs.Editor
+    
+    -- Initial setup
+    UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+    if EditorFrame.Input.Text ~= "" then
+        EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
+    end
 Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
