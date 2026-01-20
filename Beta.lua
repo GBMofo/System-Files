@@ -4729,7 +4729,7 @@ end;
     local EditorFrame = Editor:WaitForChild("Editor");
     local Method = "Activated";
     
-    -- 🟢 BUTTON CONNECTIONS (RESTORE THESE IF MISSING)
+    -- 🟢 BUTTON CONNECTIONS
     Panel.Execute[Method]:Connect(function()
         local cleanCode = StripSyntax(EditorFrame.Input.Text)
         UIEvents.Executor.RunCode(cleanCode)();
@@ -4760,18 +4760,14 @@ end;
     end);
     
     -- 🟢 RICHTEXT SYNTAX SYSTEM
-    
-    -- Focus: Strip tags when typing
     EditorFrame.Input.Focused:Connect(function()
         EditorFrame.Input.Text = StripSyntax(EditorFrame.Input.Text)
     end)
     
-    -- FocusLost: Reapply syntax colors
     EditorFrame.Input.FocusLost:Connect(function()
         EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
     end)
     
-    -- Text Changed: Update line numbers only
     EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
         
@@ -4807,7 +4803,7 @@ end;
         script.Parent.Popups.Visible = false;
     end)
 
-end; -- This ends InitTabs.Editor
+end; -- ✅ SINGLE END STATEMENT
     
     -- Initial setup
     UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
