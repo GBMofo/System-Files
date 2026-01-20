@@ -5770,100 +5770,122 @@ end;
 	end;
 
 	InitTabs.Editor = function()
-    local Editor = Pages:WaitForChild("Editor");
-    local Panel = Editor:WaitForChild("Panel");
-    local EditorFrame = Editor:WaitForChild("Editor");
-    local InputBox = EditorFrame:WaitForChild("Input");
-    local LinesBox = EditorFrame:WaitForChild("Lines");
-    local Method = "Activated";
+		local Editor = Pages:WaitForChild("Editor");
+		local Panel = Editor:WaitForChild("Panel");
+		
+		-- [[ LAYOUT FIX: Main Scrolling Frame ]]
+		local EditorFrame = Editor:WaitForChild("Editor"); -- This is the ScrollingFrame
+		EditorFrame.CanvasSize = UDim2.new(0, 0, 0, 0);
+		EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.XY; -- Enable scrolling right/down
+		EditorFrame.ScrollingDirection = Enum.ScrollingDirection.XY;
+		EditorFrame.ScrollBarThickness = 4;
+		
+		-- [[ LAYOUT FIX: Input Box ]]
+		local InputBox = EditorFrame:WaitForChild("Input");
+		InputBox.AutomaticSize = Enum.AutomaticSize.None; -- We handle size manually in highlighter
+		InputBox.Size = UDim2.new(1, 0, 1, 0); 
+		InputBox.Position = UDim2.new(0, 40, 0, 0); -- Offset for line numbers
+		InputBox.TextWrapped = false; -- Critical for side scrolling
+		InputBox.TextXAlignment = Enum.TextXAlignment.Left;
+		InputBox.TextYAlignment = Enum.TextYAlignment.Top;
+		InputBox.MultiLine = true;
+		InputBox.ClearTextOnFocus = false;
+		
+		-- [[ LAYOUT FIX: Line Numbers ]]
+		local LinesBox = EditorFrame:WaitForChild("Lines");
+		LinesBox.Size = UDim2.new(0, 35, 1, 0);
+		LinesBox.Position = UDim2.new(0, 0, 0, 0);
+		LinesBox.BackgroundTransparency = 1;
+		LinesBox.TextYAlignment = Enum.TextYAlignment.Top;
+		LinesBox.TextXAlignment = Enum.TextXAlignment.Right;
+		LinesBox.AutomaticSize = Enum.AutomaticSize.Y;
+		
+		-- Ensure fonts match exactly to prevent misalignment
+		LinesBox.FontFace = InputBox.FontFace;
+		LinesBox.TextSize = InputBox.TextSize;
+		
+		local Method = "Activated";
+		
+		-- [[ Button Connections ]]
+		Panel.Execute[Method]:Connect(function()
+			UIEvents.Executor.RunCode(InputBox.Text)();
+		end);
+		
+		Panel.Paste[Method]:Connect(function()
+			InputBox.Text = (getclipboard and getclipboard()) or "";
+		end);
+		
+		Panel.ExecuteClipboard[Method]:Connect(function()
+			UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
+		end);
+		
+		Panel.Delete[Method]:Connect(function()
+			InputBox.Text = "";
+		end);
+		
+		Panel.Save[Method]:Connect(function()
+			UIEvents.EditorTabs.saveTab(nil, InputBox.Text, true); 
+		end);
+		
+		Panel.Rename[Method]:Connect(function()
+			script.Parent.Popups.Visible = true;
+			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+		end);
+		
+		-- [[ Init Highlighter ]]
+		if not highlighter then
+			highlighter = load_highlighter();
+		end
+		
+		-- [[ Line Number Logic ]]
+		local function update_lines_visual()
+			local text = InputBox.Text;
+			local _, count = string.gsub(text, "\n", "");
+			count = count + 1; -- Lines count
+			
+			local linesStr = "";
+			for i = 1, count do
+				linesStr = linesStr .. i .. "\n";
+			end
+			LinesBox.Text = linesStr;
+			
+			-- Sync size to prevent cutting off
+			local lineHeight = InputBox.TextSize;
+			LinesBox.Size = UDim2.new(0, 35, 0, count * lineHeight);
+		end
 
-    -- [[ FIX: BUTTON CONNECTIONS ]]
-    Panel.Execute[Method]:Connect(function()
-        UIEvents.Executor.RunCode(InputBox.Text)();
-    end);
-    
-    Panel.Paste[Method]:Connect(function()
-        InputBox.Text = (getclipboard and getclipboard()) or "";
-    end);
-    
-    Panel.ExecuteClipboard[Method]:Connect(function()
-        UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
-    end);
-    
-    Panel.Delete[Method]:Connect(function()
-        InputBox.Text = "";
-    end);
-    
-    Panel.Save[Method]:Connect(function()
-        UIEvents.EditorTabs.saveTab(nil, InputBox.Text, true); 
-    end);
-    
-    Panel.Rename[Method]:Connect(function()
-        script.Parent.Popups.Visible = true;
-        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-    end);
+		InputBox:GetPropertyChangedSignal("Text"):Connect(function()
+			update_lines_visual();
+			if not Data.Editor.EditingSavedFile then
+				UIEvents.EditorTabs.saveTab(nil, InputBox.Text, false);
+			end
+		end);
+		
+		-- Initial Setup
+		update_lines_visual();
+		highlighter.highlight({ textObject = InputBox });
+		
+		-- [[ Removed the Focused Event that caused shrinking ]]
+		-- The input box now stays static, preventing cursor jumps.
 
-    -- [[ FIX: SETUP HIGHLIGHTER ]]
-    if not highlighter then
-        highlighter = load_highlighter();
-    end
-    
-    -- [[ FIX: SCROLLING & WRAPPING SETTINGS ]]
-    -- 1. Setup the Scrolling Frame (Parent)
-    EditorFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-    EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.XY -- Scroll both ways
-    EditorFrame.ScrollBarThickness = 4
-    EditorFrame.ScrollingDirection = Enum.ScrollingDirection.XY
-
-    -- 2. Setup the Input Box (Text)
-    InputBox.TextWrapped = false -- Disable wrapping so it goes to the right
-    InputBox.ClearTextOnFocus = false
-    InputBox.MultiLine = true
-    InputBox.AutomaticSize = Enum.AutomaticSize.XY -- Grow with text
-    InputBox.Size = UDim2.new(1, 0, 1, 0) -- Fill container
-    InputBox.Position = UDim2.new(0, 30, 0, 0) -- Offset for line numbers
-
-    -- 3. Setup Line Numbers
-    LinesBox.AutomaticSize = Enum.AutomaticSize.Y
-    LinesBox.Size = UDim2.new(0, 25, 1, 0)
-    LinesBox.Position = UDim2.new(0, 0, 0, 0)
-    LinesBox.TextYAlignment = Enum.TextYAlignment.Top
-
-    -- [[ FIX: TEXT UPDATER ]]
-    InputBox:GetPropertyChangedSignal("Text"):Connect(function()
-        update_lines(InputBox, LinesBox);
-        if not Data.Editor.EditingSavedFile then
-            UIEvents.EditorTabs.saveTab(nil, InputBox.Text, false);
-        end
-    end);
-    
-    update_lines(InputBox, LinesBox);
-    highlighter.highlight({ textObject = InputBox });
-    
-    -- [[ REMOVED: The code that shrank the UI on focus ]]
-    -- The cursor jumping was caused by the .Focused event changing the size.
-    -- I have deleted it completely.
-
-    -- [[ TAB BUTTON LOGIC ]]
-    Editor.Tabs.Create.Activated:Connect(function()
-        UIEvents.EditorTabs.createTab("Script", "");
-    end);
-    
-    -- [[ POPUP LOGIC ]]
-    local Buttons = script.Parent.Popups.Main.Button
-    Buttons["Confirm"][Method]:Connect(function()
-        local newName = script.Parent.Popups.Main.Input.Text;
-        local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
-        if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
-        
-        UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
-        script.Parent.Popups.Visible = false;
-    end)
-    
-    Buttons["Cancel"][Method]:Connect(function()
-        script.Parent.Popups.Visible = false;
-    end)
-end;
+		Editor.Tabs.Create.Activated:Connect(function()
+			UIEvents.EditorTabs.createTab("Script", "");
+		end);
+		
+		local Buttons = script.Parent.Popups.Main.Button
+		Buttons["Confirm"][Method]:Connect(function()
+			local newName = script.Parent.Popups.Main.Input.Text;
+			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
+			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
+			
+			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
+			script.Parent.Popups.Visible = false;
+		end)
+		
+		Buttons["Cancel"][Method]:Connect(function()
+			script.Parent.Popups.Visible = false;
+		end)
+	end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
