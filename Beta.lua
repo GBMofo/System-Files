@@ -3123,10 +3123,26 @@ local script = G2L["2"];
 	if not game:IsLoaded() then game.Loaded:Wait() end
 	
 	local ps = pcall(function()
-		script.Parent.Parent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-	end)
-	
-	local function deepCopy(tbl)
+    script.Parent.Parent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+end)
+
+-- 🔴 FIX #17: CLIPBOARD PROTECTION
+local safeGetClipboard = function()
+    local success, result = pcall(function()
+        return (getclipboard and getclipboard()) or ""
+    end)
+    return success and result or ""
+end
+
+local safeSetClipboard = function(text)
+    pcall(function()
+        if setclipboard then
+            setclipboard(text)
+        end
+    end)
+end
+
+local function deepCopy(tbl)
 		if (type(tbl) ~= "table") then
 			return tbl;
 		end
@@ -4498,18 +4514,23 @@ end;
 			Highlighter._textObjectData[textObject] = data;
 			local connections = {};
 			local function cleanup()
-				lineFolder:Destroy();
-				Highlighter._textObjectData[textObject] = nil;
-				Highlighter._cleanups[textObject] = nil;
-				if alignmentDebounce[textObject] then
-					task.cancel(alignmentDebounce[textObject]);
-					alignmentDebounce[textObject] = nil;
-				end
-				for _key, connection in connections do
-					connection:Disconnect();
-				end
-				table.clear(connections);
-			end
+    -- 🔴 FIX #4: PROPER CLEANUP
+    lineFolder:Destroy();
+    Highlighter._textObjectData[textObject] = nil;
+    Highlighter._cleanups[textObject] = nil;
+    if alignmentDebounce[textObject] then
+        task.cancel(alignmentDebounce[textObject]);
+        alignmentDebounce[textObject] = nil;
+    end
+    for _key, connection in connections do
+        if connection and connection.Disconnect then
+            connection:Disconnect();
+        end
+    end
+    table.clear(connections);
+    table.clear(data.Labels);
+    table.clear(data.Lines);
+end
 			Highlighter._cleanups[textObject] = cleanup;
 			connections['AncestryChanged'] = textObject.AncestryChanged:Connect(function()
 				if textObject.Parent then
@@ -4709,8 +4730,14 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 				end
 			end,
 			switchTab = function(ToTab)
-				-- [[ CANCELLATION LOGIC ]]
-				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
+    -- 🔴 FIX #5: TAB RACE CONDITION
+    if Data.Editor.IsSwitching then 
+        warn("[PunkX] Tab switch blocked - already switching")
+        return 
+    end
+    
+    -- [[ CANCELLATION LOGIC ]]
+    if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 					local editingName = Data.Editor.EditingSavedFile
 					
 					createNotification("Editing Cancelled", "Warn", 3)
@@ -4732,12 +4759,18 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					end
 					
 					Data.Editor.CurrentTab = ToTab;
-					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
-					EditorFrame.Text = TabContent;
-					Data.Editor.IsSwitching = false;
-					UIEvents.EditorTabs.updateUI();
-				end
-			end,
+            local TabContent = Data.Editor.Tabs[ToTab][1] or "";
+            EditorFrame.Text = TabContent;
+            
+            -- 🔴 FIX #5: SAFE UNLOCK
+            task.defer(function()
+                task.wait(0.1)
+                Data.Editor.IsSwitching = false;
+            end)
+            
+            UIEvents.EditorTabs.updateUI();
+        end
+    end,
 			delTab = function(Name)
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
@@ -5826,12 +5859,12 @@ end;
 		end);
 		
 		Panel.Paste[Method]:Connect(function()
-			EditorFrame.Input.Text = (getclipboard and getclipboard()) or "";
-		end);
+    EditorFrame.Input.Text = safeGetClipboard();
+end);
 		
 		Panel.ExecuteClipboard[Method]:Connect(function()
-			UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
-		end);
+    UIEvents.Executor.RunCode(safeGetClipboard())();
+end);
 		
 		Panel.Delete[Method]:Connect(function()
 			EditorFrame.Input.Text = "";
@@ -5907,17 +5940,41 @@ InitTabs.Search = function()
 	local SearchBox = Search.TextBox;
 	
 	-- 🔴 STATE
-	local CurrentFilter = "All"
-	local OriginalGameName = nil 
-	local CachedScripts = {}
-	local isUpdating = false
+local CurrentFilter = "All"
+local OriginalGameName = nil 
+local CachedScripts = {}
+local isUpdating = false
+local searchDebounce = nil -- 🔴 FIX #8: SEARCH DEBOUNCING
 	
 	-- 🔴 SETTINGS
-	local SEARCH_PAGES = 3 -- How many pages to fetch when searching (3 pages = ~90-150 scripts)
-	local BROWSE_PAGES = 2 -- How many pages to fetch per category when browsing (Game + Universal)
-	
-	-- 🔴 SERVICES
-	local HttpService = game:GetService("HttpService")
+local SEARCH_PAGES = 3
+local BROWSE_PAGES = 2
+
+-- 🔴 FIX #14: API RATE LIMITING
+local API_RETRY_LIMIT = 3
+local API_BASE_DELAY = 0.5
+
+local function fetchWithRetry(url, retries)
+    retries = retries or 0
+    local success, response = pcall(function() 
+        return game:HttpGet(url) 
+    end)
+    
+    if success then
+        return response
+    elseif retries < API_RETRY_LIMIT then
+        local delay = API_BASE_DELAY * (2 ^ retries) -- Exponential backoff
+        warn("[PunkX] API retry " .. (retries + 1) .. "/" .. API_RETRY_LIMIT .. " in " .. delay .. "s")
+        task.wait(delay)
+        return fetchWithRetry(url, retries + 1)
+    else
+        warn("[PunkX] API request failed after " .. API_RETRY_LIMIT .. " retries")
+        return nil
+    end
+end
+
+-- 🔴 SERVICES
+local HttpService = game:GetService("HttpService")
 	local MarketplaceService = game:GetService("MarketplaceService")
 	
 	-- 🔴 HELPER: FORMAT NUMBERS
@@ -6168,25 +6225,31 @@ FilterBarStroke.Name = "FilterBarStroke" -- Give it a name so we can find it
 	end
 	
 	-- 🔴 MAIN UPDATE (MULTI-PAGE FETCH)
-	local function Update()
-		if isUpdating then return end
-		isUpdating = true
-		
-		local currentQuery = SearchBox.Text
+local function Update()
+    -- 🔴 FIX #8: DEBOUNCE SEARCH
+    if searchDebounce then
+        task.cancel(searchDebounce)
+    end
+    
+    searchDebounce = task.delay(0.5, function()
+        if isUpdating then return end
+        isUpdating = true
+        
+        local currentQuery = SearchBox.Text
 		if currentQuery == "*" then
 			currentQuery = ""
 			SearchBox.Text = ""
 		end
 		
 		-- 🟢 SINGLE PAGE FETCH
-		local function fetchOnePage(url)
-			local s, r = pcall(function() return game:HttpGet(url) end)
-			if s then
-				local s2, d = pcall(function() return HttpService:JSONDecode(r) end)
-				if s2 and d.result and d.result.scripts then return d.result.scripts end
-			end
-			return {}
-		end
+        local function fetchOnePage(url)
+            local response = fetchWithRetry(url) -- 🔴 USE RETRY LOGIC
+            if response then
+                local s2, d = pcall(function() return HttpService:JSONDecode(response) end)
+                if s2 and d.result and d.result.scripts then return d.result.scripts end
+            end
+            return {}
+        end
 		
 		-- 🟢 MULTI-PAGE FETCHER
 		local function fetchPages(baseUrl, numPages)
@@ -6249,10 +6312,11 @@ FilterBarStroke.Name = "FilterBarStroke" -- Give it a name so we can find it
 		end
 		
 		renderScripts(finalScripts)
-		
-		isUpdating = false
-	end
-	
+        
+        isUpdating = false
+        searchDebounce = nil -- 🔴 CLEAR DEBOUNCE
+    end) -- 🔴 END OF DEBOUNCE DELAY
+end
 	-- 🔴 EVENTS
 	local function onFilterClick(filterName)
 		CurrentFilter = filterName
@@ -6423,19 +6487,40 @@ end;
 	Leftside.Close.MouseButton1Click:Connect(closeUI);
 	script.Parent.Open.Activated:Connect(openUI);
 	local function dragify(Frame)
-		local dragToggle = nil;
-		local dragSpeed = nil;
-		local dragInput = nil;
-		local dragStart = nil;
-		local dragPos = nil;
-		local startPos = nil;
-		local function updateInput(input)
-			local Delta = input.Position - dragStart;
-			local Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + Delta.X, startPos.Y.Scale, startPos.Y.Offset + Delta.Y);
-			game:GetService("TweenService"):Create(Frame, TweenInfo.new(0.125), {
-				Position = Position
-			}):Play();
-		end
+    local dragToggle = nil;
+    local dragSpeed = nil;
+    local dragInput = nil;
+    local dragStart = nil;
+    local dragPos = nil;
+    local startPos = nil;
+    
+    local function updateInput(input)
+        local Delta = input.Position - dragStart;
+        local newPos = UDim2.new(
+            startPos.X.Scale, 
+            startPos.X.Offset + Delta.X, 
+            startPos.Y.Scale, 
+            startPos.Y.Offset + Delta.Y
+        );
+        
+        -- 🔴 CLAMP TO SCREEN BOUNDS
+        local viewport = workspace.CurrentCamera.ViewportSize;
+        local frameSize = Frame.AbsoluteSize;
+        
+        local minX = 0;
+        local maxX = viewport.X - frameSize.X;
+        local minY = 0;
+        local maxY = viewport.Y - frameSize.Y;
+        
+        local clampedX = math.clamp(newPos.X.Offset, minX, maxX);
+        local clampedY = math.clamp(newPos.Y.Offset, minY, maxY);
+        
+        local Position = UDim2.new(0, clampedX, 0, clampedY);
+        
+        game:GetService("TweenService"):Create(Frame, TweenInfo.new(0.125), {
+            Position = Position
+        }):Play();
+    end
 		Frame.InputBegan:Connect(function(input)
 			if ((input.UserInputType == Enum.UserInputType.MouseButton1) or (input.UserInputType == Enum.UserInputType.Touch)) then
 				dragToggle = true;
