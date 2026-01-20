@@ -1328,7 +1328,7 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor (MOBILE FIXED)
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor (FINAL XY FIX)
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
@@ -1341,10 +1341,10 @@ G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- DISABLED: Fixes "Popping"
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- MANUAL CONTROL ONLY
 G2L["82"]["ScrollBarThickness"] = 6;
-G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; -- Fixes text floating over other UI
+G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY; -- Enable Left/Right
+G2L["82"]["ClipsDescendants"] = true; 
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Lines
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
@@ -1359,13 +1359,13 @@ G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], 
 G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
 G2L["87"]["BackgroundTransparency"] = 0.6; 
 G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
-G2L["87"]["Size"] = UDim2.new(0, 50, 0, 1000); -- Manual Size
+G2L["87"]["Size"] = UDim2.new(0, 50, 0, 1000); 
 G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 G2L["87"]["TextWrapped"] = false; 
-G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; -- DISABLED
+G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input (STABLE VISIBLE MODE)
+-- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
@@ -1374,18 +1374,18 @@ G2L["83"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
 G2L["83"]["ZIndex"] = 20; 
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
-G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235); -- Nice bright white/grey
-G2L["83"]["TextTransparency"] = 0; -- 🔴 VISIBLE: This makes it stable!
-G2L["83"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); -- Match background color
-G2L["83"]["BackgroundTransparency"] = 0; -- 🔴 OPAQUE: Hides the glitchy highlighter behind it
+G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
+G2L["83"]["TextTransparency"] = 0; 
+G2L["83"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
+G2L["83"]["BackgroundTransparency"] = 0;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false; -- Keep false for code editors
+G2L["83"]["TextWrapped"] = false; -- MUST BE FALSE FOR HORIZONTAL SCROLL
 G2L["83"]["TextEditable"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(1, -70, 0, 1000); -- Keep the large size fix for scrolling
+G2L["83"]["Size"] = UDim2.new(0, 2000, 0, 1000); -- Start Huge to prevent pop
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None;
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
@@ -4606,27 +4606,34 @@ local update_lines = function(editor, linesFrame)
     local lineCount = #lines;
     if lineCount == 0 then lineCount = 1 end
     
-    -- 1. Update Line Numbers Text
+    -- 1. Update Line Numbers
     local lineText = "";
     for i = 1, lineCount do
         lineText = lineText .. i .. "\n";
     end
     linesFrame.Text = lineText;
     
-    -- 2. Calculate Exact Text Height + Buffer
-    -- We force the box to be much larger than the text. This prevents
-    -- the mobile keyboard from causing the text to "scroll internally" inside the box.
-    local textHeight = editor.TextBounds.Y;
-    local newHeight = math.max(600, textHeight + 500); 
+    -- 2. Measure Text Size (Width AND Height)
+    local bounds = editor.TextBounds;
+    local textWidth = bounds.X;
+    local textHeight = bounds.Y;
     
-    -- 3. RESIZE EVERYTHING MANUALLY
-    editor.Size = UDim2.new(1, -70, 0, newHeight);
+    -- 3. Calculate Target Sizes (With Buffer)
+    -- We force height to be at least 600px so it's always clickable
+    -- We force width to be at least the screen width so it fills the box
+    local minWidth = editor.Parent.AbsoluteSize.X - 70;
+    local newWidth = math.max(minWidth, textWidth + 100); -- Add horizontal buffer
+    local newHeight = math.max(600, textHeight + 500);    -- Add vertical buffer
+    
+    -- 4. Apply Sizes Manually
+    -- Using Offset (Pixels) instead of Scale prevents the "Pop" effect
+    editor.Size = UDim2.new(0, newWidth, 0, newHeight);
     linesFrame.Size = UDim2.new(0, 50, 0, newHeight);
     
-    -- 4. Update Scrolling Canvas
+    -- 5. Update Scrolling Canvas (Enables Left/Right + Up/Down)
     local scrollingFrame = editor.Parent;
     if scrollingFrame and scrollingFrame:IsA("ScrollingFrame") then
-        scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, newHeight);
+        scrollingFrame.CanvasSize = UDim2.new(0, newWidth + 70, 0, newHeight);
     end
 end;
 
