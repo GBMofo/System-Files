@@ -3441,8 +3441,8 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		task.spawn(C_6);
 	end
-	local load_highlighter = function()
-		local alignmentDebounce = {};
+
+local load_highlighter = function()
 		local utility = {};
 		utility.sanitizeRichText = function(s)
 			return string.gsub(string.gsub(string.gsub(string.gsub(string.gsub(s, "&", "&amp;"), "<", "&lt;"), ">", "&gt;"), '"', "&quot;"), "'", "&apos;");
@@ -3453,36 +3453,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		utility.removeControlChars = function(s)
 			return string.gsub(s, "[\0\1\2\3\4\5\6\7\8\11\12\13\14\15\16\17\18\19\20\21\22\23\24\25\26\27\28\29\30\31]+", "");
 		end;
-		utility.getInnerAbsoluteSize = function(textObject)
-			local fullSize = textObject.AbsoluteSize;
-			local padding = textObject:FindFirstChildWhichIsA("UIPadding");
-			if padding then
-				local offsetX = padding.PaddingLeft.Offset + padding.PaddingRight.Offset;
-				local scaleX = (fullSize.X * padding.PaddingLeft.Scale) + (fullSize.X * padding.PaddingRight.Scale);
-				local offsetY = padding.PaddingTop.Offset + padding.PaddingBottom.Offset;
-				local scaleY = (fullSize.Y * padding.PaddingTop.Scale) + (fullSize.Y * padding.PaddingBottom.Scale);
-				return Vector2.new(fullSize.X - (scaleX + offsetX), fullSize.Y - (scaleY + offsetY));
-			else
-				return fullSize;
-			end
-		end;
-		utility.getTextBounds = function(textObject)
-			if (textObject.ContentText == "") then
-				return Vector2.zero;
-			end
-			local textBounds = textObject.TextBounds;
-			local attempts = 0;
-			while (textBounds.Y ~= textBounds.Y) or (textBounds.Y < 1) do
-				if (attempts > 10) then
-					local lines = # string.split(textObject.Text, "\n");
-					return Vector2.new(textObject.AbsoluteSize.X, textObject.TextSize * lines * 1.2);
-				end
-				attempts += 1
-				task.wait();
-				textBounds = textObject.TextBounds;
-			end
-			return textBounds;
-		end;
+
 		local DEFAULT_TOKEN_COLORS = {
 			background = Color3.fromRGB(47, 47, 47),
 			iden = Color3.fromRGB(234, 234, 234),
@@ -3498,13 +3469,10 @@ if v.Name == "Popups" then v.Visible = false return end
 			["OPERATORS/BRACKETS-Color"] = Color3.fromRGB(127, 148, 154)
 		};
 		DEFAULT_TOKEN_COLORS["nil"] = DEFAULT_TOKEN_COLORS['boolean'];
-		local theme = {
-			tokenColors = {},
-			tokenRichTextFormatter = {}
-		};
+
+		local theme = { tokenColors = {} };
 		theme.setColors = function(tokenColors)
-			assert(type(tokenColors) == "table", "Theme.updateColors expects a table");
-			for tokenName, color in tokenColors do
+			for tokenName, color in pairs(tokenColors) do
 				theme.tokenColors[tokenName] = color;
 			end
 		end;
@@ -3514,1035 +3482,130 @@ if v.Name == "Popups" then v.Visible = false return end
 		theme.getColor = function(tokenName)
 			return theme.tokenColors[tokenName];
 		end;
-		theme.matchStudioSettings = function(refreshCallback)
-			local success = pcall(function()
-				local studio = settings().Studio;
-				local studioTheme = studio.Theme;
-				local function getTokens()
-					return {
-						background = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBackground),
-						iden = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptText),
-						keyword = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptKeyword),
-						builtin = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBuiltInFunction),
-						string = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptString),
-						number = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptNumber),
-						comment = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptComment),
-						operator = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptOperator),
-						custom = studioTheme:GetColor(Enum.StudioStyleGuideColor.ScriptBool)
-					};
-				end
-				theme.setColors(getTokens());
-				studio.ThemeChanged:Connect(function()
-					studioTheme = studio.Theme;
-					theme.setColors(getTokens());
-					refreshCallback();
-				end);
-			end);
-			return success;
-		end;
 		theme.setColors(DEFAULT_TOKEN_COLORS);
+
 		local language = {
-			keyword = {
-				["and"] = "keyword",
-				["break"] = "keyword",
-				["continue"] = "keyword",
-				["do"] = "keyword",
-				["else"] = "keyword",
-				["elseif"] = "keyword",
-				["end"] = "keyword",
-				export = "keyword",
-				["false"] = "boolean",
-				["for"] = "keyword",
-				["function"] = "keyword",
-				["if"] = "keyword",
-				["in"] = "keyword",
-				["local"] = "keyword",
-				["nil"] = "boolean",
-				["not"] = "keyword",
-				["or"] = "keyword",
-				["repeat"] = "keyword",
-				["return"] = "keyword",
-				self = "keyword",
-				["then"] = "keyword",
-				["true"] = "boolean",
-				type = "keyword",
-				typeof = "keyword",
-				["until"] = "keyword",
-				["while"] = "keyword"
-			},
-			builtin = {
-				assert = "function",
-				error = "function",
-				getfenv = "function",
-				getmetatable = "function",
-				ipairs = "function",
-				loadstring = "function",
-				newproxy = "function",
-				next = "function",
-				pairs = "function",
-				pcall = "function",
-				print = "function",
-				rawequal = "function",
-				rawget = "function",
-				rawlen = "function",
-				rawset = "function",
-				select = "function",
-				setfenv = "function",
-				setmetatable = "function",
-				tonumber = "function",
-				tostring = "function",
-				unpack = "function",
-				xpcall = "function",
-				collectgarbage = "function",
-				_G = "table",
-				_VERSION = "string",
-				bit32 = "table",
-				coroutine = "table",
-				debug = "table",
-				math = "table",
-				os = "table",
-				string = "table",
-				table = "table",
-				utf8 = "table",
-				DebuggerManager = "function",
-				delay = "function",
-				gcinfo = "function",
-				PluginManager = "function",
-				require = "function",
-				settings = "function",
-				spawn = "function",
-				tick = "function",
-				time = "function",
-				UserSettings = "function",
-				wait = "function",
-				warn = "function",
-				Delay = "function",
-				ElapsedTime = "function",
-				elapsedTime = "function",
-				printidentity = "function",
-				Spawn = "function",
-				Stats = "function",
-				stats = "function",
-				Version = "function",
-				version = "function",
-				Wait = "function",
-				ypcall = "function",
-				game = "Instance",
-				plugin = "Instance",
-				script = "Instance",
-				shared = "Instance",
-				workspace = "Instance",
-				Game = "Instance",
-				Workspace = "Instance",
-				Axes = "table",
-				BrickColor = "table",
-				CatalogSearchParams = "table",
-				CFrame = "table",
-				Color3 = "table",
-				ColorSequence = "table",
-				ColorSequenceKeypoint = "table",
-				DateTime = "table",
-				DockWidgetPluginGuiInfo = "table",
-				Enum = "table",
-				Faces = "table",
-				FloatCurveKey = "table",
-				Font = "table",
-				Instance = "table",
-				NumberRange = "table",
-				NumberSequence = "table",
-				NumberSequenceKeypoint = "table",
-				OverlapParams = "table",
-				PathWaypoint = "table",
-				PhysicalProperties = "table",
-				Random = "table",
-				Ray = "table",
-				RaycastParams = "table",
-				Rect = "table",
-				Region3 = "table",
-				Region3int16 = "table",
-				RotationCurveKey = "table",
-				SharedTable = "table",
-				task = "table",
-				TweenInfo = "table",
-				UDim = "table",
-				UDim2 = "table",
-				Vector2 = "table",
-				Vector2int16 = "table",
-				Vector3 = "table",
-				Vector3int16 = "table"
-			},
-			libraries = {
-				_G = {},
-				bit32 = {
-					arshift = "function",
-					band = "function",
-					bnot = "function",
-					bor = "function",
-					btest = "function",
-					bxor = "function",
-					countlz = "function",
-					countrz = "function",
-					extract = "function",
-					lrotate = "function",
-					lshift = "function",
-					replace = "function",
-					rrotate = "function",
-					rshift = "function"
-				},
-				coroutine = {
-					close = "function",
-					create = "function",
-					isyieldable = "function",
-					resume = "function",
-					running = "function",
-					status = "function",
-					wrap = "function",
-					yield = "function"
-				},
-				debug = {
-					dumpheap = "function",
-					getmemorycategory = "function",
-					info = "function",
-					loadmodule = "function",
-					profilebegin = "function",
-					profileend = "function",
-					resetmemorycategory = "function",
-					setmemorycategory = "function",
-					traceback = "function"
-				},
-				math = {
-					abs = "function",
-					acos = "function",
-					asin = "function",
-					atan2 = "function",
-					atan = "function",
-					ceil = "function",
-					clamp = "function",
-					cos = "function",
-					cosh = "function",
-					deg = "function",
-					exp = "function",
-					floor = "function",
-					fmod = "function",
-					frexp = "function",
-					ldexp = "function",
-					log10 = "function",
-					log = "function",
-					max = "function",
-					min = "function",
-					modf = "function",
-					noise = "function",
-					pow = "function",
-					rad = "function",
-					random = "function",
-					randomseed = "function",
-					round = "function",
-					sign = "function",
-					sin = "function",
-					sinh = "function",
-					sqrt = "function",
-					tan = "function",
-					tanh = "function",
-					huge = "number",
-					pi = "number"
-				},
-				os = {
-					clock = "function",
-					date = "function",
-					difftime = "function",
-					time = "function"
-				},
-				string = {
-					byte = "function",
-					char = "function",
-					find = "function",
-					format = "function",
-					gmatch = "function",
-					gsub = "function",
-					len = "function",
-					lower = "function",
-					match = "function",
-					pack = "function",
-					packsize = "function",
-					rep = "function",
-					reverse = "function",
-					split = "function",
-					sub = "function",
-					unpack = "function",
-					upper = "function"
-				},
-				table = {
-					clear = "function",
-					clone = "function",
-					concat = "function",
-					create = "function",
-					find = "function",
-					foreach = "function",
-					foreachi = "function",
-					freeze = "function",
-					getn = "function",
-					insert = "function",
-					isfrozen = "function",
-					maxn = "function",
-					move = "function",
-					pack = "function",
-					remove = "function",
-					sort = "function",
-					unpack = "function"
-				},
-				utf8 = {
-					char = "function",
-					codepoint = "function",
-					codes = "function",
-					graphemes = "function",
-					len = "function",
-					nfcnormalize = "function",
-					nfdnormalize = "function",
-					offset = "function",
-					charpattern = "string"
-				},
-				Axes = {
-					new = "function"
-				},
-				BrickColor = {
-					Black = "function",
-					Blue = "function",
-					DarkGray = "function",
-					Gray = "function",
-					Green = "function",
-					new = "function",
-					New = "function",
-					palette = "function",
-					Random = "function",
-					random = "function",
-					Red = "function",
-					White = "function",
-					Yellow = "function"
-				},
-				CatalogSearchParams = {
-					new = "function"
-				},
-				CFrame = {
-					Angles = "function",
-					fromAxisAngle = "function",
-					fromEulerAngles = "function",
-					fromEulerAnglesXYZ = "function",
-					fromEulerAnglesYXZ = "function",
-					fromMatrix = "function",
-					fromOrientation = "function",
-					lookAt = "function",
-					new = "function",
-					identity = "CFrame"
-				},
-				Color3 = {
-					fromHex = "function",
-					fromHSV = "function",
-					fromRGB = "function",
-					new = "function",
-					toHSV = "function"
-				},
-				ColorSequence = {
-					new = "function"
-				},
-				ColorSequenceKeypoint = {
-					new = "function"
-				},
-				DateTime = {
-					fromIsoDate = "function",
-					fromLocalTime = "function",
-					fromUniversalTime = "function",
-					fromUnixTimestamp = "function",
-					fromUnixTimestampMillis = "function",
-					now = "function"
-				},
-				DockWidgetPluginGuiInfo = {
-					new = "function"
-				},
-				Enum = {},
-				Faces = {
-					new = "function"
-				},
-				FloatCurveKey = {
-					new = "function"
-				},
-				Font = {
-					fromEnum = "function",
-					fromId = "function",
-					fromName = "function",
-					new = "function"
-				},
-				Instance = {
-					new = "function"
-				},
-				NumberRange = {
-					new = "function"
-				},
-				NumberSequence = {
-					new = "function"
-				},
-				NumberSequenceKeypoint = {
-					new = "function"
-				},
-				OverlapParams = {
-					new = "function"
-				},
-				PathWaypoint = {
-					new = "function"
-				},
-				PhysicalProperties = {
-					new = "function"
-				},
-				Random = {
-					new = "function"
-				},
-				Ray = {
-					new = "function"
-				},
-				RaycastParams = {
-					new = "function"
-				},
-				Rect = {
-					new = "function"
-				},
-				Region3 = {
-					new = "function"
-				},
-				Region3int16 = {
-					new = "function"
-				},
-				RotationCurveKey = {
-					new = "function"
-				},
-				SharedTable = {
-					clear = "function",
-					clone = "function",
-					cloneAndFreeze = "function",
-					increment = "function",
-					isFrozen = "function",
-					new = "function",
-					size = "function",
-					update = "function"
-				},
-				task = {
-					cancel = "function",
-					defer = "function",
-					delay = "function",
-					desynchronize = "function",
-					spawn = "function",
-					synchronize = "function",
-					wait = "function"
-				},
-				TweenInfo = {
-					new = "function"
-				},
-				UDim = {
-					new = "function"
-				},
-				UDim2 = {
-					fromOffset = "function",
-					fromScale = "function",
-					new = "function"
-				},
-				Vector2 = {
-					new = "function",
-					one = "Vector2",
-					xAxis = "Vector2",
-					yAxis = "Vector2",
-					zero = "Vector2"
-				},
-				Vector2int16 = {
-					new = "function"
-				},
-				Vector3 = {
-					fromAxis = "function",
-					FromAxis = "function",
-					fromNormalId = "function",
-					FromNormalId = "function",
-					new = "function",
-					one = "Vector3",
-					xAxis = "Vector3",
-					yAxis = "Vector3",
-					zAxis = "Vector3",
-					zero = "Vector3"
-				},
-				Vector3int16 = {
-					new = "function"
-				}
-			}
-}
-		local enumLibraryTable = language.libraries.Enum;
-		for _, enum in ipairs(Enum:GetEnums()) do
-			enumLibraryTable[tostring(enum)] = "Enum";
-		end
-		local function TableToLib(tablev)
-			local result = {};
-			for n, t in tablev do
-				if (type(t) == "table") then
-					result[tostring(n)] = TableToLib(t);
-				else
-					result[tostring(n)] = tostring(typeof(t));
-				end
-			end
-			return result;
-		end
-		local function UpdateGlobalTypes()
-			for _, typer in {
-				_G,
-				((getgenv and getgenv()) or {})
-				} do
-				for name, value in typer do
-					if (type(value) == "table") then
-						local convet = TableToLib(value);
-						if (typer == "_G") then
-							language.libraries['_G'][tostring(name)] = convet;
-						else
-							language.libraries[tostring(name)] = convet;
-							language.builtin[tostring(name)] = "builtin";
-						end
-					else
-						language.keyword[tostring(name)] = tostring(typeof(value));
-					end
-				end
-			end
-		end
-		UpdateGlobalTypes();
+			keyword = { ["and"] = "keyword", ["break"] = "keyword", ["do"] = "keyword", ["else"] = "keyword", ["elseif"] = "keyword", ["end"] = "keyword", ["false"] = "boolean", ["for"] = "keyword", ["function"] = "keyword", ["if"] = "keyword", ["in"] = "keyword", ["local"] = "keyword", ["nil"] = "boolean", ["not"] = "keyword", ["or"] = "keyword", ["repeat"] = "keyword", ["return"] = "keyword", ["then"] = "keyword", ["true"] = "boolean", ["until"] = "keyword", ["while"] = "keyword" },
+			builtin = { print = "function", warn = "function", error = "function", assert = "function", collectgarbage = "function", require = "function", game = "Instance", workspace = "Instance", script = "Instance", math = "table", string = "table", table = "table", task = "table", checkcaller = "function", getgenv = "function", getrenv = "function" }
+		};
+
 		local lexer = {};
 		local Prefix, Suffix, Cleaner = "^[%c%s]*", "[%c%s]*", "[%c%s]+";
-		local UNICODE = "[%z\x01-\x7F\xC2-\xF4][\x80-\xBF]+";
-		local NUMBER_A = "0[xX][%da-fA-F_]+";
-		local NUMBER_B = "0[bB][01_]+";
-		local NUMBER_C = "%d+%.?%d*[eE][%+%-]?%d+";
-		local NUMBER_D = "%d+[%._]?[%d_eE]*";
-		local OPERATORS = "[:;<>/~%*%(%)%-={},%.#%^%+%%]+";
-		local BRACKETS = "[%[%]]+";
 		local IDEN = "[%a_][%w_]*";
-		local STRING_EMPTY = '([\'\"])%1';
-		local STRING_PLAIN = '([\'\"])[^\n]-([^\\]%1)';
-		local STRING_INTER = "`[^\n]-`";
-		local STRING_INCOMP_A = '([\'\"]).-\n';
-		local STRING_INCOMP_B = '([\'\"])[^\n]*';
-		local STRING_MULTI = "%[(=*)%[.-%]%1%]";
-		local STRING_MULTI_INCOMP = "%[=*%[.-.*";
-		local COMMENT_MULTI = "%-%-%[(=*)%[.-%]%1%]";
-		local COMMENT_MULTI_INCOMP = "%-%-%[=*%[.-.*";
-		local COMMENT_PLAIN = "%-%-.-\n";
-		local COMMENT_INCOMP = "%-%-.*";
-		local FUNCTION_NAME = "function%s+([%a_][%w_%.]*)";
-		local lang = language;
-		local lua_keyword = lang.keyword;
-		local lua_builtin = lang.builtin;
-		local lua_libraries = lang.libraries;
-		lexer.language = lang;
+		local NUMBER = "0[xX][%da-fA-F_]+|%d+%.?%d*[eE][%+%-]?%d+|%d+[%._]?[%d_eE]*";
+		local STRING = "(['\"])[^\n]-([^\\]%1)|%[(=*)%[.-%]%2%]|`[^\n]-`";
+		local COMMENT = "%-%-%[(=*)%[.-%]%1%]|%-%-.-\n|%-%-.*";
+		local OPERATORS = "[:;<>/~%*%(%)%-={},%.#%^%+%%]+|[%[%]]+";
+
 		local lua_matches = {
-			{
-				(Prefix .. IDEN .. Suffix),
-				"var"
-			},
-			{
-				(Prefix .. NUMBER_A .. Suffix),
-				"number"
-			},
-			{
-				(Prefix .. NUMBER_B .. Suffix),
-				"number"
-			},
-			{
-				(Prefix .. NUMBER_C .. Suffix),
-				"number"
-			},
-			{
-				(Prefix .. NUMBER_D .. Suffix),
-				"number"
-			},
-			{
-				(Prefix .. STRING_EMPTY .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_PLAIN .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_INCOMP_A .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_INCOMP_B .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_MULTI .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_MULTI_INCOMP .. Suffix),
-				"string"
-			},
-			{
-				(Prefix .. STRING_INTER .. Suffix),
-				"string_inter"
-			},
-			{
-				(Prefix .. COMMENT_MULTI .. Suffix),
-				"comment"
-			},
-			{
-				(Prefix .. COMMENT_MULTI_INCOMP .. Suffix),
-				"comment"
-			},
-			{
-				(Prefix .. COMMENT_PLAIN .. Suffix),
-				"comment"
-			},
-			{
-				(Prefix .. COMMENT_INCOMP .. Suffix),
-				"comment"
-			},
-			{
-				(Prefix .. OPERATORS .. Suffix),
-				"OPERATORS/BRACKETS-Color"
-			},
-			{
-				(Prefix .. BRACKETS .. Suffix),
-				"OPERATORS/BRACKETS-Color"
-			},
-			{
-				(Prefix .. UNICODE .. Suffix),
-				"iden"
-			},
-			{
-				"^.",
-				"iden"
-			}
+			{ Prefix .. IDEN .. Suffix, "var" },
+			{ Prefix .. NUMBER .. Suffix, "number" },
+			{ Prefix .. STRING .. Suffix, "string" },
+			{ Prefix .. COMMENT .. Suffix, "comment" },
+			{ Prefix .. OPERATORS .. Suffix, "OPERATORS/BRACKETS-Color" },
+			{ "^.", "iden" }
 		};
-		local PATTERNS, TOKENS = {}, {};
-		for i, m in lua_matches do
-			PATTERNS[i] = m[1];
-			TOKENS[i] = m[2];
-		end
+
 		lexer.scan = function(s)
-			UpdateGlobalTypes();
 			local index = 1;
-			local size = # s;
-			local previousContent1, previousContent2, previousContent3, previousToken = "", "", "", "";
-			local thread = coroutine.create(function()
-				while index <= size do
-					local matched = false;
-					for tokenType, pattern in ipairs(PATTERNS) do
-						local start, finish = string.find(s, pattern, index);
-						if (start == nil) then
-							continue;
-						end
-						index = finish + 1;
-						matched = true;
-						local content = string.sub(s, start, finish);
-						local rawToken = TOKENS[tokenType];
-						local processedToken = rawToken;
-						if (rawToken == "var") then
-							local cleanContent = string.gsub(content, Cleaner, "");
-							if lua_keyword[cleanContent] then
-								processedToken = (theme.getColor(lua_keyword[cleanContent]) and lua_keyword[cleanContent]) or "keyword";
-							elseif lua_builtin[cleanContent] then
-								processedToken = "builtin";
-							elseif ((previousToken == "keyword") and string.match(previousContent1, "function")) then
-								processedToken = "function_name";
-							elseif (string.find(previousContent1, "%.[%s%c]*$") and (previousToken ~= "comment")) then
-								local parent = string.gsub(previousContent2, Cleaner, "");
-								local lib = lua_libraries[parent];
-								if (lib and lib[cleanContent] and not string.find(previousContent3, "%.[%s%c]*$")) then
-									processedToken = "builtin";
-								else
-									processedToken = "iden";
-								end
-							else
-								processedToken = "iden";
-							end
-						elseif (rawToken == "string_inter") then
-							if not string.find(content, "[^\\]{") then
-								processedToken = "string";
-							else
-								processedToken = nil;
-								local isString = true;
-								local subIndex = 1;
-								local subSize = # content;
-								while subIndex <= subSize do
-									local subStart, subFinish = string.find(content, "^.-[^\\][{}]", subIndex);
-									if (subStart == nil) then
-										coroutine.yield("string", string.sub(content, subIndex));
-										break;
-									end
-									if isString then
-										subIndex = subFinish + 1;
-										coroutine.yield("string", string.sub(content, subStart, subFinish));
-										isString = false;
-									else
-										subIndex = subFinish;
-										local subContent = string.sub(content, subStart, subFinish - 1);
-										for innerToken, innerContent in lexer.scan(subContent) do
-											coroutine.yield(innerToken, innerContent);
-										end
-										isString = true;
-									end
-								end
-							end
-						end
-						previousContent3 = previousContent2;
-						previousContent2 = previousContent1;
-						previousContent1 = content;
-						previousToken = processedToken or rawToken;
-						if processedToken then
-							coroutine.yield(processedToken, content);
-						end
-						break;
-					end
-					if not matched then
-						return;
-					end
-				end
-				return;
-			end);
+			local size = #s;
 			return function()
-				if (coroutine.status(thread) == "dead") then
-					return;
-				end
-				local success, token, content = coroutine.resume(thread);
-				if (success and token) then
-					return token, content;
-				end
-				return;
-			end;
-		end;
-		lexer.navigator = function()
-			local nav = {
-				Source = "",
-				TokenCache = table.create(50),
-				_RealIndex = 0,
-				_UserIndex = 0,
-				_ScanThread = nil
-			};
-			nav.Destroy = function(self)
-				self.Source = nil;
-				self._RealIndex = nil;
-				self._UserIndex = nil;
-				self.TokenCache = nil;
-				self._ScanThread = nil;
-			end;
-			nav.SetSource = function(self, SourceString)
-				self.Source = SourceString;
-				self._RealIndex = 0;
-				self._UserIndex = 0;
-				table.clear(self.TokenCache);
-				self._ScanThread = coroutine.create(function()
-					for Token, Src in lexer.scan(self.Source) do
-						self._RealIndex += 1
-						self.TokenCache[self._RealIndex] = {
-							Token,
-							Src
-						};
-						coroutine.yield(Token, Src);
-					end
-				end);
-			end;
-			nav.Next = function()
-				nav._UserIndex += 1
-				if (nav._RealIndex >= nav._UserIndex) then
-					return table.unpack(nav.TokenCache[nav._UserIndex]);
-				elseif (coroutine.status(nav._ScanThread) == "dead") then
-					return;
-				else
-					local success, token, src = coroutine.resume(nav._ScanThread);
-					if (success and token) then
-						return token, src;
-					else
-						return;
-					end
-				end
-			end;
-			nav.Peek = function(PeekAmount)
-				local GoalIndex = nav._UserIndex + PeekAmount;
-				if (nav._RealIndex >= GoalIndex) then
-					if (GoalIndex > 0) then
-						return table.unpack(nav.TokenCache[GoalIndex]);
-					else
-						return;
-					end
-				elseif (coroutine.status(nav._ScanThread) == "dead") then
-					return;
-				else
-					local IterationsAway = GoalIndex - nav._RealIndex;
-					local success, token, src = nil, nil, nil;
-					for _ = 1, IterationsAway do
-						success, token, src = coroutine.resume(nav._ScanThread);
-						if not (success or token) then
-							break;
+				if index > size then return end
+				for _, m in ipairs(lua_matches) do
+					local start, finish = string.find(s, m[1], index);
+					if start then
+						local content = string.sub(s, start, finish);
+						local token = m[2];
+						index = finish + 1;
+						if token == "var" then
+							local clean = string.gsub(content, Cleaner, "");
+							if language.keyword[clean] then token = language.keyword[clean]
+							elseif language.builtin[clean] then token = "builtin"
+							else token = "iden" end
 						end
-					end
-					return token, src;
-				end
-			end;
-			return nav;
-		end;
-		local highlight_enabled = true;
-		local Highlighter = {
-			defaultLexer = lexer,
-			_textObjectData = {},
-			_cleanups = {}
-		};
-		Highlighter._getLabelingInfo = function(textObject)
-			local data = Highlighter._textObjectData[textObject];
-			if not data then
-				return;
-			end
-			local src = utility.convertTabsToSpaces(utility.removeControlChars(textObject.Text));
-			local numLines = # string.split(src, "\n");
-			if (numLines == 0) then
-				return;
-			end
-			local textHeight;
-			if ((textObject.TextBounds.Y > 0) and (numLines > 0)) then
-				textHeight = textObject.TextBounds.Y / numLines;
-			else
-				textHeight = textObject.TextSize * 1.2;
-			end
-			return {
-				data = data,
-				numLines = numLines,
-				textBounds = Vector2.new(textObject.AbsoluteSize.X, textHeight * numLines),
-				textHeight = textHeight,
-				innerAbsoluteSize = utility.getInnerAbsoluteSize(textObject),
-				textColor = theme.getColor("iden"),
-				textFont = textObject.FontFace,
-				textSize = textObject.TextSize,
-				labelSize = UDim2.new(0, 2000, 0, math.ceil(textHeight))
-			};
-		end;
-		Highlighter._alignLabels = function(textObject)
-			if alignmentDebounce[textObject] then
-				task.cancel(alignmentDebounce[textObject]);
-			end
-			alignmentDebounce[textObject] = task.defer(function()
-				alignmentDebounce[textObject] = nil;
-				local labelingInfo = Highlighter._getLabelingInfo(textObject);
-				if not labelingInfo then
-					return;
-				end
-				for lineNumber, lineLabel in labelingInfo.data.Labels do
-					lineLabel.TextColor3 = labelingInfo.textColor;
-					lineLabel.FontFace = labelingInfo.textFont;
-					lineLabel.TextSize = labelingInfo.textSize;
-					lineLabel.ZIndex = 3;
-					lineLabel.Size = labelingInfo.labelSize;
-					lineLabel.TextWrapped = false;
-					lineLabel.TextTruncate = Enum.TextTruncate.None;
-					lineLabel.AutomaticSize = Enum.AutomaticSize.None;
-					lineLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
-				end
-			end);
-		end;
-		Highlighter._populateLabels = function(props)
-			local textObject = props.textObject;
-			local src = (highlight_enabled and utility.convertTabsToSpaces(utility.removeControlChars(props.src or textObject.Text))) or "";
-			local lexer = props.lexer or Highlighter.defaultLexer;
-			local customLang = props.customLang;
-			local forceUpdate = props.forceUpdate;
-			local data = Highlighter._textObjectData[textObject];
-			if ((data == nil) or (data.Text == src)) then
-				if (forceUpdate ~= true) then
-					return;
-				end
-			end
-			if highlight_enabled then
-				textObject.Text = src;
-			end
-			local lineLabels = data.Labels;
-			local previousLines = data.Lines;
-			local lines = string.split(src, "\n");
-			data.Lines = lines;
-			data.Text = src;
-			data.Lexer = lexer;
-			data.CustomLang = customLang;
-			if (src == "") then
-				for l = 1, # lineLabels do
-					if (lineLabels[l].Text == "") then
-						continue;
-					end
-					lineLabels[l].Text = "";
-				end
-				return;
-			end
-			local idenColor = theme.getColor("iden");
-			local labelingInfo = Highlighter._getLabelingInfo(textObject);
-			local richTextBuffer, bufferIndex, lineNumber = table.create(5), 0, 1;
-			for token, content in lexer.scan(src) do
-				local Color = (function()
-					if (customLang and customLang[content]) then
-						return theme.getColor("custom");
-					else
-						return theme.getColor(token) or idenColor;
-					end
-				end)();
-				local tokenLines = string.split(utility.sanitizeRichText(content), "\n");
-				for l, tokenLine in tokenLines do
-					local lineLabel = lineLabels[lineNumber];
-					if not lineLabel then
-						local newLabel = Instance.new("TextLabel");
-						newLabel.AutoLocalize = false;
-						newLabel.RichText = true;
-						newLabel.BackgroundTransparency = 1;
-						newLabel.Text = "";
-						newLabel.TextXAlignment = Enum.TextXAlignment.Left;
-						newLabel.TextYAlignment = Enum.TextYAlignment.Top;
-						newLabel.TextColor3 = labelingInfo.textColor;
-						newLabel.FontFace = labelingInfo.textFont;
-						newLabel.TextSize = labelingInfo.textSize;
-						newLabel.Size = labelingInfo.labelSize;
-						newLabel.ZIndex = 3;
-						newLabel.TextWrapped = false;
-						newLabel.TextTruncate = Enum.TextTruncate.None;
-						newLabel.AutomaticSize = Enum.AutomaticSize.None;
-						newLabel.ClipsDescendants = false;
-						newLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
-						newLabel.Parent = textObject:FindFirstChildWhichIsA("Folder");
-						lineLabels[lineNumber] = newLabel;
-						lineLabel = newLabel;
-					end
-					if (l > 1) then
-						if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-							lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-						end
-						lineNumber += 1
-						bufferIndex = 0;
-						table.clear(richTextBuffer);
-					end
-					if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-						bufferIndex += 1
-						if ((Color ~= idenColor) and string.find(tokenLine, "[%S%C]")) then
-							richTextBuffer[bufferIndex] = theme.getColoredRichText(Color, tokenLine);
-						else
-							richTextBuffer[bufferIndex] = tokenLine;
-						end
+						return token, content;
 					end
 				end
+				index = index + 1
 			end
-			if (richTextBuffer[1] and lineLabels[lineNumber]) then
-				lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-			end
-			for l = lineNumber + 1, # lineLabels do
-				if (lineLabels[l].Text == "") then
-					continue;
-				end
-				lineLabels[l].Text = "";
-			end
-		end;
+		end
+
+		local Highlighter = { _textObjectData = {} };
+
 		Highlighter.highlight = function(props)
 			local textObject = props.textObject;
-			local src = utility.convertTabsToSpaces(utility.removeControlChars(props.src or textObject.Text));
-			local lexer = props.lexer or Highlighter.defaultLexer;
-			local customLang = props.customLang;
-			if Highlighter._cleanups[textObject] then
-				Highlighter._populateLabels(props);
-				Highlighter._alignLabels(textObject);
-				return Highlighter._cleanups[textObject];
-			end
+			if Highlighter._textObjectData[textObject] then return end
+
+			-- [[ CRITICAL FIX: Z-Index and Transparency ]]
 			textObject.RichText = false;
-			if highlight_enabled then
-				textObject.Text = src;
-			end
+			textObject.TextTransparency = 1; -- MAKES RAW TEXT INVISIBLE (Fixes Double Blur)
+			textObject.TextColor3 = Color3.new(1, 1, 1); -- Keeps cursor white
 			textObject.TextXAlignment = Enum.TextXAlignment.Left;
 			textObject.TextYAlignment = Enum.TextYAlignment.Top;
-			textObject.BackgroundColor3 = theme.getColor("background");
-			textObject.TextColor3 = theme.getColor("iden");
-			textObject.TextTransparency = 0.5;
-			local lineFolder = textObject:FindFirstChildWhichIsA("Folder");
-			if (lineFolder == nil) then
-				local newLineFolder = Instance.new("Folder");
-				newLineFolder.Parent = textObject;
-				lineFolder = newLineFolder;
-			end
-			local data = {
-				Text = "",
-				Labels = {},
-				Lines = {},
-				Lexer = lexer,
-				CustomLang = customLang
-			};
+			textObject.TextWrapped = false; -- FIXES CURSOR JUMPING
+			textObject.ZIndex = 5; -- Input on top (invisible) so you can click it
+
+			local lineFolder = textObject:FindFirstChild("SyntaxHighlights") or Instance.new("Folder");
+			lineFolder.Name = "SyntaxHighlights";
+			lineFolder.Parent = textObject;
+
+			local data = { Labels = {}, Lines = {} };
 			Highlighter._textObjectData[textObject] = data;
-			local connections = {};
-			local function cleanup()
-				lineFolder:Destroy();
-				Highlighter._textObjectData[textObject] = nil;
-				Highlighter._cleanups[textObject] = nil;
-				if alignmentDebounce[textObject] then
-					task.cancel(alignmentDebounce[textObject]);
-					alignmentDebounce[textObject] = nil;
+
+			local function Update()
+				local src = utility.convertTabsToSpaces(textObject.Text);
+				if data.LastText == src then return end
+				data.LastText = src
+
+				-- Clear labels
+				for _, label in pairs(data.Labels) do label:Destroy() end
+				table.clear(data.Labels)
+
+				local richBuffer = {}
+				local lineNum = 1
+				
+				for token, content in lexer.scan(src) do
+					local color = theme.getColor(token) or theme.getColor("iden");
+					local lines = string.split(content, "\n");
+					for i, linePart in ipairs(lines) do
+						if i > 1 then 
+							lineNum = lineNum + 1 
+							richBuffer[lineNum] = ""
+						end
+						richBuffer[lineNum] = (richBuffer[lineNum] or "") .. theme.getColoredRichText(color, utility.sanitizeRichText(linePart))
+					end
 				end
-				for _key, connection in connections do
-					connection:Disconnect();
+
+				-- Create Labels (Behind the invisible input box)
+				local lineHeight = textObject.TextSize; 
+				for i, richText in ipairs(richBuffer) do
+					local lbl = Instance.new("TextLabel");
+					lbl.Name = "Line_" .. i;
+					lbl.RichText = true;
+					lbl.BackgroundTransparency = 1;
+					lbl.Text = richText;
+					lbl.TextXAlignment = Enum.TextXAlignment.Left;
+					lbl.TextYAlignment = Enum.TextYAlignment.Top;
+					lbl.Font = textObject.FontFace.Family;
+					lbl.TextSize = textObject.TextSize;
+					lbl.Size = UDim2.new(1, 0, 0, lineHeight);
+					lbl.Position = UDim2.new(0, 0, 0, lineHeight * (i - 1));
+					lbl.ZIndex = 4; -- VISIBLE TEXT BEHIND INPUT
+					lbl.Parent = lineFolder;
+					table.insert(data.Labels, lbl);
 				end
-				table.clear(connections);
+				
+				-- Ensure container fits text
+				textObject.Size = UDim2.new(0, 10000, 0, math.max(200, lineHeight * lineNum)); 
 			end
-			Highlighter._cleanups[textObject] = cleanup;
-			connections['AncestryChanged'] = textObject.AncestryChanged:Connect(function()
-				if textObject.Parent then
-					return;
-				end
-				cleanup();
-			end);
-			connections['TextChanged'] = textObject:GetPropertyChangedSignal("Text"):Connect(function()
-				Highlighter._populateLabels(props);
-			end);
-			connections['TextBoundsChanged'] = textObject:GetPropertyChangedSignal("TextBounds"):Connect(function()
-				Highlighter._alignLabels(textObject);
-			end);
-			connections['AbsoluteSizeChanged'] = textObject:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
-				Highlighter._alignLabels(textObject);
-			end);
-			connections['FontFaceChanged'] = textObject:GetPropertyChangedSignal("FontFace"):Connect(function()
-				Highlighter._alignLabels(textObject);
-			end);
-			connections['Focused'] = textObject.Focused:Connect(function()
-				highlight_enabled = false;
-				Highlighter._populateLabels(props);
-				Highlighter._alignLabels(textObject);
-			end);
-			connections['FocusLost'] = textObject.FocusLost:Connect(function()
-				highlight_enabled = true;
-				Highlighter._populateLabels(props);
-				Highlighter._alignLabels(textObject);
-			end);
-			Highlighter._populateLabels(props);
-			Highlighter._alignLabels(textObject);
-			return cleanup;
-		end;
-		Highlighter.refresh = function()
-			for textObject, data in Highlighter._textObjectData do
-				for _, lineLabel in data.Labels do
-					lineLabel.TextColor3 = theme.getColor("iden");
-				end
-				Highlighter.highlight({
-					textObject = textObject,
-					forceUpdate = true,
-					src = data.Text,
-					lexer = data.Lexer,
-					customLang = data.CustomLang
-				});
-			end
-		end;
-		Highlighter.setTokenColors = function(colors)
-			theme.setColors(colors);
-			Highlighter.refresh();
-		end;
-		Highlighter.getTokenColor = function(tokenName)
-			return theme.getColor(tokenName);
-		end;
-		Highlighter.matchStudioSettings = function()
-			local applied = theme.matchStudioSettings(Highlighter.refresh);
-			if applied then
-				Highlighter.refresh();
-			end
-		end;
+
+			textObject:GetPropertyChangedSignal("Text"):Connect(Update);
+			Update();
+		end
+
 		return Highlighter;
 	end;
+
 	local function getDuplicatedName(baseName, existingNames)
 		if not existingNames[baseName] then
 			return baseName;
@@ -5773,23 +4836,25 @@ end;
 		local Editor = Pages:WaitForChild("Editor");
 		local Panel = Editor:WaitForChild("Panel");
 		
-		-- [[ LAYOUT FIX: Main Scrolling Frame ]]
-		local EditorFrame = Editor:WaitForChild("Editor"); -- This is the ScrollingFrame
+		-- [[ LAYOUT FIX: Scrolling ]]
+		local EditorFrame = Editor:WaitForChild("Editor"); 
 		EditorFrame.CanvasSize = UDim2.new(0, 0, 0, 0);
-		EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.XY; -- Enable scrolling right/down
+		EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.XY; -- Allow scrolling Right/Down
 		EditorFrame.ScrollingDirection = Enum.ScrollingDirection.XY;
 		EditorFrame.ScrollBarThickness = 4;
 		
 		-- [[ LAYOUT FIX: Input Box ]]
 		local InputBox = EditorFrame:WaitForChild("Input");
-		InputBox.AutomaticSize = Enum.AutomaticSize.None; -- We handle size manually in highlighter
+		InputBox.AutomaticSize = Enum.AutomaticSize.None; 
 		InputBox.Size = UDim2.new(1, 0, 1, 0); 
-		InputBox.Position = UDim2.new(0, 40, 0, 0); -- Offset for line numbers
-		InputBox.TextWrapped = false; -- Critical for side scrolling
+		InputBox.Position = UDim2.new(0, 40, 0, 0); -- Space for line numbers
+		InputBox.TextWrapped = false; -- DISABLES WRAPPING (Fixes cursor glitch)
 		InputBox.TextXAlignment = Enum.TextXAlignment.Left;
 		InputBox.TextYAlignment = Enum.TextYAlignment.Top;
 		InputBox.MultiLine = true;
 		InputBox.ClearTextOnFocus = false;
+		InputBox.TextTransparency = 1; -- Force invisible again to be safe
+		InputBox.ZIndex = 5; -- Top layer for clicking
 		
 		-- [[ LAYOUT FIX: Line Numbers ]]
 		local LinesBox = EditorFrame:WaitForChild("Lines");
@@ -5798,50 +4863,32 @@ end;
 		LinesBox.BackgroundTransparency = 1;
 		LinesBox.TextYAlignment = Enum.TextYAlignment.Top;
 		LinesBox.TextXAlignment = Enum.TextXAlignment.Right;
-		LinesBox.AutomaticSize = Enum.AutomaticSize.Y;
+		LinesBox.AutomaticSize = Enum.AutomaticSize.None; -- We control size manually
 		
-		-- Ensure fonts match exactly to prevent misalignment
+		-- Sync Font settings to ensure alignment
 		LinesBox.FontFace = InputBox.FontFace;
 		LinesBox.TextSize = InputBox.TextSize;
 		
 		local Method = "Activated";
 		
-		-- [[ Button Connections ]]
-		Panel.Execute[Method]:Connect(function()
-			UIEvents.Executor.RunCode(InputBox.Text)();
-		end);
-		
-		Panel.Paste[Method]:Connect(function()
-			InputBox.Text = (getclipboard and getclipboard()) or "";
-		end);
-		
-		Panel.ExecuteClipboard[Method]:Connect(function()
-			UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
-		end);
-		
-		Panel.Delete[Method]:Connect(function()
-			InputBox.Text = "";
-		end);
-		
-		Panel.Save[Method]:Connect(function()
-			UIEvents.EditorTabs.saveTab(nil, InputBox.Text, true); 
-		end);
-		
+		-- [[ Buttons ]]
+		Panel.Execute[Method]:Connect(function() UIEvents.Executor.RunCode(InputBox.Text)(); end);
+		Panel.Paste[Method]:Connect(function() InputBox.Text = (getclipboard and getclipboard()) or ""; end);
+		Panel.ExecuteClipboard[Method]:Connect(function() UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")(); end);
+		Panel.Delete[Method]:Connect(function() InputBox.Text = ""; end);
+		Panel.Save[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, InputBox.Text, true); end);
 		Panel.Rename[Method]:Connect(function()
 			script.Parent.Popups.Visible = true;
 			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
 		end);
 		
-		-- [[ Init Highlighter ]]
-		if not highlighter then
-			highlighter = load_highlighter();
-		end
+		if not highlighter then highlighter = load_highlighter(); end
 		
-		-- [[ Line Number Logic ]]
+		-- [[ Sync Line Numbers with Text ]]
 		local function update_lines_visual()
 			local text = InputBox.Text;
 			local _, count = string.gsub(text, "\n", "");
-			count = count + 1; -- Lines count
+			count = count + 1;
 			
 			local linesStr = "";
 			for i = 1, count do
@@ -5849,9 +4896,9 @@ end;
 			end
 			LinesBox.Text = linesStr;
 			
-			-- Sync size to prevent cutting off
+			-- Match height exactly to InputBox height logic
 			local lineHeight = InputBox.TextSize;
-			LinesBox.Size = UDim2.new(0, 35, 0, count * lineHeight);
+			LinesBox.Size = UDim2.new(0, 35, 0, math.max(200, count * lineHeight));
 		end
 
 		InputBox:GetPropertyChangedSignal("Text"):Connect(function()
@@ -5861,30 +4908,23 @@ end;
 			end
 		end);
 		
-		-- Initial Setup
 		update_lines_visual();
 		highlighter.highlight({ textObject = InputBox });
 		
-		-- [[ Removed the Focused Event that caused shrinking ]]
-		-- The input box now stays static, preventing cursor jumps.
-
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
 		
+		-- Popups
 		local Buttons = script.Parent.Popups.Main.Button
 		Buttons["Confirm"][Method]:Connect(function()
 			local newName = script.Parent.Popups.Main.Input.Text;
 			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
 			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
-			
 			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
 			script.Parent.Popups.Visible = false;
 		end)
-		
-		Buttons["Cancel"][Method]:Connect(function()
-			script.Parent.Popups.Visible = false;
-		end)
+		Buttons["Cancel"][Method]:Connect(function() script.Parent.Popups.Visible = false; end)
 	end;
 
 InitTabs.Search = function()
