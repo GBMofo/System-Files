@@ -1328,28 +1328,36 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor (FINAL XY FIX)
-G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
-G2L["82"]["Name"] = [[Editor]];
+-- [[ EDITOR CONTAINER (The Mask) ]]
+-- This CanvasGroup forces the text to be cut off at the edges (Fixes bleeding)
+G2L["82"] = Instance.new("CanvasGroup", G2L["7a"]);
+G2L["82"]["Name"] = [[EditorMask]]; 
 G2L["82"]["Active"] = true;
-G2L["82"]["Selectable"] = false;
 G2L["82"]["ZIndex"] = 2;
 G2L["82"]["BorderSizePixel"] = 0;
-G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
+G2L["82"]["BackgroundTransparency"] = 0.6;
+G2L["82"]["AnchorPoint"] = Vector2.new(0, 0);
+G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); -- Keeps strictly to 85% height
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
-G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- MANUAL CONTROL ONLY
-G2L["82"]["ScrollBarThickness"] = 6;
-G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY; -- Enable Left/Right
-G2L["82"]["ClipsDescendants"] = true; 
+G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Lines
-G2L["87"] = Instance.new("TextLabel", G2L["82"]);
+-- [[ SCROLLING FRAME (The Mover) ]]
+G2L["Scroll"] = Instance.new("ScrollingFrame", G2L["82"]);
+G2L["Scroll"]["Name"] = [[Editor]];
+G2L["Scroll"]["Active"] = true;
+G2L["Scroll"]["BackgroundTransparency"] = 1; -- Transparent so Mask color shows
+G2L["Scroll"]["Size"] = UDim2.new(1, 0, 1, 0); -- Fills the Mask
+G2L["Scroll"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); -- Controlled by script
+G2L["Scroll"]["ScrollBarThickness"] = 6;
+G2L["Scroll"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
+G2L["Scroll"]["AutomaticCanvasSize"] = Enum.AutomaticSize.None; -- DISABLED
+G2L["Scroll"]["ZIndex"] = 3;
+
+-- [[ LINE NUMBERS ]]
+G2L["87"] = Instance.new("TextLabel", G2L["Scroll"]);
 G2L["87"]["Name"] = [[Lines]];
-G2L["87"]["ZIndex"] = 10; 
+G2L["87"]["ZIndex"] = 4;
 G2L["87"]["BorderSizePixel"] = 0;
 G2L["87"]["TextSize"] = 14;
 G2L["87"]["TextXAlignment"] = Enum.TextXAlignment.Right;
@@ -1365,33 +1373,34 @@ G2L["87"]["Text"] = [[1]];
 G2L["87"]["TextWrapped"] = false; 
 G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input
-G2L["83"] = Instance.new("TextBox", G2L["82"]);
+-- [[ INPUT BOX ]]
+-- ZIndex is LOW (4) inside the CanvasGroup to force "View B" rendering
+G2L["83"] = Instance.new("TextBox", G2L["Scroll"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["83"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
-G2L["83"]["ZIndex"] = 20; 
+G2L["83"]["ZIndex"] = 4; 
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
 G2L["83"]["TextTransparency"] = 0; 
 G2L["83"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
-G2L["83"]["BackgroundTransparency"] = 0;
+G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false; -- MUST BE FALSE FOR HORIZONTAL SCROLL
+G2L["83"]["TextWrapped"] = false; 
 G2L["83"]["TextEditable"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(0, 2000, 0, 1000); -- Start Huge to prevent pop
+G2L["83"]["Size"] = UDim2.new(0, 2000, 0, 1000); 
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None;
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
 
--- StarterGui.ScreenGui.Main.Pages.Editor.Editor.UICorner
+-- [[ UICORNER (Applied to the Mask) ]]
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
 G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
@@ -4762,7 +4771,7 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 				if (Data.Editor.Tabs[ToTab] and not Data.Editor.IsSwitching) then
 					Data.Editor.IsSwitching = true;
 					local Editor = Pages:WaitForChild("Editor");
-					local EditorFrame = Editor:WaitForChild("Editor").Input;
+					local EditorFrame = Editor:WaitForChild("EditorMask"):WaitForChild("Editor").Input;
 					local OldTab = Data.Editor.CurrentTab;
 					
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
@@ -4832,29 +4841,29 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
 					-- 3. HIDE OTHER TABS if in Edit Mode
-					if Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile then
-						continue
-					end
-					
-					total = total + 1;
-					local new = script.Yo:Clone();
-					new.Parent = Pages.Editor.Tabs;
-					new.Title.Text = i;
-					new.Name = i;
-					new.MouseButton1Click:Connect(function()
-						UIEvents.EditorTabs.switchTab(i);
-					end);
-					new.Delete.MouseButton1Click:Connect(function()
-						UIEvents.EditorTabs.delTab(i);
-					end);
-					new.LayoutOrder = v[2];
-					if (Data.Editor.CurrentTab == i) then
-	                new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
-                 end
+				if Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile then
+					continue
 				end
-				local Editor = Pages:WaitForChild("Editor");
-				local Panel = Editor:WaitForChild("Panel");
-				local EditorFrame = Editor:WaitForChild("Editor");
+				
+				total = total + 1;
+				local new = script.Yo:Clone();
+				new.Parent = Pages.Editor.Tabs;
+				new.Title.Text = i;
+				new.Name = i;
+				new.MouseButton1Click:Connect(function()
+					UIEvents.EditorTabs.switchTab(i);
+				end);
+				new.Delete.MouseButton1Click:Connect(function()
+					UIEvents.EditorTabs.delTab(i);
+				end);
+				new.LayoutOrder = v[2];
+				if (Data.Editor.CurrentTab == i) then
+                new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
+             end
+			end
+			local Editor = Pages:WaitForChild("Editor");
+			local Panel = Editor:WaitForChild("Panel");
+				local EditorFrame = Editor:WaitForChild("EditorMask");
 				
 				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
 					EditorFrame.Visible = false;
@@ -5863,7 +5872,8 @@ end;
 	InitTabs.Editor = function()
 		local Editor = Pages:WaitForChild("Editor");
 		local Panel = Editor:WaitForChild("Panel");
-		local EditorFrame = Editor:WaitForChild("Editor");
+		-- We now look for the Mask first, then the Editor inside it
+local EditorFrame = Editor:WaitForChild("EditorMask"):WaitForChild("Editor");
 		local Method = "Activated";
 		
 		Panel.Execute[Method]:Connect(function()
@@ -5935,25 +5945,24 @@ Editor.Tabs.Create.Activated:Connect(function()
 		end)
 		
 		Buttons["Cancel"][Method]:Connect(function()
-            script.Parent.Popups.Visible = false;
+			script.Parent.Popups.Visible = false;
+		end)
+
+        -- [[ PASTE HERE ]] --
+        -- [[ 📱 SAFE KEYBOARD FIX (RESIZE ONLY) ]] --
+        local EditorMask = Pages:WaitForChild("Editor"):WaitForChild("EditorMask")
+        local originalSize = UDim2.new(1, 0, 0.85, 0)
+        
+        EditorFrame.Input.Focused:Connect(function()
+            -- Shrink the MASK height to 45% so it fits above the keyboard
+            EditorMask.Size = UDim2.new(1, 0, 0.45, 0)
+        end)
+        
+        EditorFrame.Input.FocusLost:Connect(function()
+            -- Restore MASK height
+            EditorMask.Size = originalSize
         end)
 
-      -- [[ 📱 SAFE KEYBOARD FIX (RESIZE ONLY) ]] --
-		-- This shrinks the editor height when you type, so you can see text above the keyboard
-		-- It does NOT move the window, which prevents the "shaking" glitch.
-		
-		local EditorScroll = Pages:WaitForChild("Editor"):WaitForChild("Editor") -- The scrolling frame
-		local originalSize = UDim2.new(1, 0, 0.85, 0) -- The normal size defined in G2L["82"]
-
-		EditorFrame.Input.Focused:Connect(function()
-			-- Shrink to 45% height immediately (No animation to prevent glitches)
-			EditorScroll.Size = UDim2.new(1, 0, 0.45, 0)
-		end)
-
-		EditorFrame.Input.FocusLost:Connect(function()
-			-- Restore full size
-			EditorScroll.Size = originalSize
-		end)
     end; -- This ends InitTabs.Editor
 
 InitTabs.Search = function()
