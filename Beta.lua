@@ -1364,8 +1364,7 @@ G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 G2L["87"]["TextWrapped"] = false;
 G2L["87"]["Visible"] = true;
-G2L["87"]["Active"] = false; -- Don't capture events
-
+G2L["87"]["Active"] = false; -- This is OK - line numbers don't need to be active
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.Input (LOCKED - STABLE POSITIONING)
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
@@ -1392,7 +1391,7 @@ G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
 G2L["83"]["BackgroundTransparency"] = 1;
-G2L["83"]["Active"] = false; -- CRITICAL: Let scroll events pass through
+-- Active removed - TextBox needs to be interactive!
 
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Editor.UICorner
