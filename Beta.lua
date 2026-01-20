@@ -4379,7 +4379,7 @@ if v.Name == "Popups" then v.Visible = false return end
     data.Lexer = lexer;
     data.CustomLang = customLang;
     
-    if (src == "") then
+   if (src == "") then
         for l = 1, #lineLabels do
             if (lineLabels[l].Text == "") then continue; end
             lineLabels[l].Text = "";
@@ -4387,10 +4387,14 @@ if v.Name == "Popups" then v.Visible = false return end
         return;
     end
     
-    -- 🔴 VIRTUALIZATION: Calculate visible range
-    local scrollFrame = textObject.Parent.Parent -- The actual ScrollingFrame
-    local viewportStart = scrollFrame.CanvasPosition.Y
-    local viewportEnd = viewportStart + scrollFrame.AbsoluteSize.Y
+    -- 🔴 VIRTUALIZATION: Calculate visible range (FIXED)
+    local scrollFrame = textObject.Parent
+    while scrollFrame and not scrollFrame:IsA("ScrollingFrame") do
+        scrollFrame = scrollFrame.Parent
+    end
+    
+    local viewportStart = (scrollFrame and scrollFrame.CanvasPosition.Y) or 0
+    local viewportEnd = viewportStart + ((scrollFrame and scrollFrame.AbsoluteSize.Y) or 500)
     local labelingInfo = Highlighter._getLabelingInfo(textObject);
     if not labelingInfo then return end
     
@@ -4762,8 +4766,8 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
             local TabContent = Data.Editor.Tabs[ToTab][1] or "";
             EditorFrame.Text = TabContent;
             
-            -- 🔴 FIX #5: SAFE UNLOCK
-            task.defer(function()
+            -- 🔴 FIX #5: SAFE UNLOCK (FIXED)
+            task.spawn(function()
                 task.wait(0.1)
                 Data.Editor.IsSwitching = false;
             end)
@@ -6231,7 +6235,7 @@ local function Update()
         task.cancel(searchDebounce)
     end
     
-    searchDebounce = task.delay(0.5, function()
+  searchDebounce = task.delay(0.15, function()
         if isUpdating then return end
         isUpdating = true
         
