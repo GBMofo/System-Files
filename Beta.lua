@@ -5887,7 +5887,10 @@ EditorFrame.Input:GetPropertyChangedSignal("CursorPosition"):Connect(function()
     
     -- Center the line in viewport
     local newY = math.max(0, targetY - (viewportHeight / 2))
-    EditorFrame.CanvasPosition = Vector2.new(0, newY)
+    local scrollFrame = EditorFrame.Parent
+if scrollFrame and scrollFrame:IsA("ScrollingFrame") then
+    scrollFrame.CanvasPosition = Vector2.new(0, newY)
+end
 end)
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
