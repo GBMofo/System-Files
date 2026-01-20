@@ -5851,12 +5851,24 @@ end;
 			print("int");
 		end
 		
-		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
-			update_lines(EditorFrame.Input, EditorFrame.Lines);
-			if not Data.Editor.EditingSavedFile then
-				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
-			end
-		end);
+		local debounceTimer = nil
+EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+    update_lines(EditorFrame.Input, EditorFrame.Lines);
+    
+    -- Debounce highlighter (300ms delay)
+    if debounceTimer then
+        task.cancel(debounceTimer)
+    end
+    debounceTimer = task.delay(0.3, function()
+        if highlighter then
+            highlighter.highlight({textObject = EditorFrame.Input})
+        end
+    end)
+    
+    if not Data.Editor.EditingSavedFile then
+        UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
+    end
+end);
 		
 		update_lines(EditorFrame.Input, EditorFrame.Lines);
 		highlighter.highlight({ textObject = EditorFrame.Input });
