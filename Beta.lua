@@ -5770,81 +5770,100 @@ end;
 	end;
 
 	InitTabs.Editor = function()
-		local Editor = Pages:WaitForChild("Editor");
-		local Panel = Editor:WaitForChild("Panel");
-		local EditorFrame = Editor:WaitForChild("Editor");
-		local Method = "Activated";
-		
-		Panel.Execute[Method]:Connect(function()
-			UIEvents.Executor.RunCode(EditorFrame.Input.Text)();
-		end);
-		
-		Panel.Paste[Method]:Connect(function()
-			EditorFrame.Input.Text = (getclipboard and getclipboard()) or "";
-		end);
-		
-		Panel.ExecuteClipboard[Method]:Connect(function()
-			UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
-		end);
-		
-		Panel.Delete[Method]:Connect(function()
-			EditorFrame.Input.Text = "";
-		end);
-		
-		Panel.Save[Method]:Connect(function()
-			UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, true); 
-		end);
-		
-		Panel.Rename[Method]:Connect(function()
-			script.Parent.Popups.Visible = true;
-			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-		end);
-		
-		if not highlighter then
-			highlighter = load_highlighter();
-			print("int");
-		end
-		
-		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
-			update_lines(EditorFrame.Input, EditorFrame.Lines);
-			if not Data.Editor.EditingSavedFile then
-				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
-			end
-		end);
-		
-		update_lines(EditorFrame.Input, EditorFrame.Lines);
-		highlighter.highlight({ textObject = EditorFrame.Input });
-		
-		local pos = EditorFrame.Position;
-		local size = EditorFrame.Size;
-		EditorFrame.Input.Focused:Connect(function()
-			EditorFrame.Size = UDim2.fromScale(EditorFrame.Size.X.Scale / 2, EditorFrame.Size.Y.Scale / 2);
-			EditorFrame.Position = UDim2.fromScale(EditorFrame.Position.X.Scale, 0.225);
-		end);
-		
-		EditorFrame.Input.FocusLost:Connect(function()
-			EditorFrame.Position = pos;
-			EditorFrame.Size = size;
-		end);
-		
-		Editor.Tabs.Create.Activated:Connect(function()
-			UIEvents.EditorTabs.createTab("Script", "");
-		end);
-		
-		local Buttons = script.Parent.Popups.Main.Button
-		Buttons["Confirm"][Method]:Connect(function()
-			local newName = script.Parent.Popups.Main.Input.Text;
-			local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
-			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
-			
-			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
-			script.Parent.Popups.Visible = false;
-		end)
-		
-		Buttons["Cancel"][Method]:Connect(function()
-			script.Parent.Popups.Visible = false;
-		end)
-	end;
+    local Editor = Pages:WaitForChild("Editor");
+    local Panel = Editor:WaitForChild("Panel");
+    local EditorFrame = Editor:WaitForChild("Editor");
+    local InputBox = EditorFrame:WaitForChild("Input");
+    local LinesBox = EditorFrame:WaitForChild("Lines");
+    local Method = "Activated";
+
+    -- [[ FIX: BUTTON CONNECTIONS ]]
+    Panel.Execute[Method]:Connect(function()
+        UIEvents.Executor.RunCode(InputBox.Text)();
+    end);
+    
+    Panel.Paste[Method]:Connect(function()
+        InputBox.Text = (getclipboard and getclipboard()) or "";
+    end);
+    
+    Panel.ExecuteClipboard[Method]:Connect(function()
+        UIEvents.Executor.RunCode((getclipboard and getclipboard()) or "")();
+    end);
+    
+    Panel.Delete[Method]:Connect(function()
+        InputBox.Text = "";
+    end);
+    
+    Panel.Save[Method]:Connect(function()
+        UIEvents.EditorTabs.saveTab(nil, InputBox.Text, true); 
+    end);
+    
+    Panel.Rename[Method]:Connect(function()
+        script.Parent.Popups.Visible = true;
+        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+    end);
+
+    -- [[ FIX: SETUP HIGHLIGHTER ]]
+    if not highlighter then
+        highlighter = load_highlighter();
+    end
+    
+    -- [[ FIX: SCROLLING & WRAPPING SETTINGS ]]
+    -- 1. Setup the Scrolling Frame (Parent)
+    EditorFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+    EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.XY -- Scroll both ways
+    EditorFrame.ScrollBarThickness = 4
+    EditorFrame.ScrollingDirection = Enum.ScrollingDirection.XY
+
+    -- 2. Setup the Input Box (Text)
+    InputBox.TextWrapped = false -- Disable wrapping so it goes to the right
+    InputBox.ClearTextOnFocus = false
+    InputBox.MultiLine = true
+    InputBox.AutomaticSize = Enum.AutomaticSize.XY -- Grow with text
+    InputBox.Size = UDim2.new(1, 0, 1, 0) -- Fill container
+    InputBox.Position = UDim2.new(0, 30, 0, 0) -- Offset for line numbers
+
+    -- 3. Setup Line Numbers
+    LinesBox.AutomaticSize = Enum.AutomaticSize.Y
+    LinesBox.Size = UDim2.new(0, 25, 1, 0)
+    LinesBox.Position = UDim2.new(0, 0, 0, 0)
+    LinesBox.TextYAlignment = Enum.TextYAlignment.Top
+
+    -- [[ FIX: TEXT UPDATER ]]
+    InputBox:GetPropertyChangedSignal("Text"):Connect(function()
+        update_lines(InputBox, LinesBox);
+        if not Data.Editor.EditingSavedFile then
+            UIEvents.EditorTabs.saveTab(nil, InputBox.Text, false);
+        end
+    end);
+    
+    update_lines(InputBox, LinesBox);
+    highlighter.highlight({ textObject = InputBox });
+    
+    -- [[ REMOVED: The code that shrank the UI on focus ]]
+    -- The cursor jumping was caused by the .Focused event changing the size.
+    -- I have deleted it completely.
+
+    -- [[ TAB BUTTON LOGIC ]]
+    Editor.Tabs.Create.Activated:Connect(function()
+        UIEvents.EditorTabs.createTab("Script", "");
+    end);
+    
+    -- [[ POPUP LOGIC ]]
+    local Buttons = script.Parent.Popups.Main.Button
+    Buttons["Confirm"][Method]:Connect(function()
+        local newName = script.Parent.Popups.Main.Input.Text;
+        local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
+        if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
+        
+        UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
+        script.Parent.Popups.Visible = false;
+    end)
+    
+    Buttons["Cancel"][Method]:Connect(function()
+        script.Parent.Popups.Visible = false;
+    end)
+end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
