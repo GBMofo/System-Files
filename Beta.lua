@@ -5935,9 +5935,27 @@ Editor.Tabs.Create.Activated:Connect(function()
 		end)
 		
 		Buttons["Cancel"][Method]:Connect(function()
-			script.Parent.Popups.Visible = false;
-		end)
-	end;
+            script.Parent.Popups.Visible = false;
+        end)
+
+        -- [[ PASTE THE MOBILE LIFT CODE HERE ]] --
+        local MainFrame = script.Parent:WaitForChild("Main")
+        local lastPosition = MainFrame.Position
+        
+        EditorFrame.Input.Focused:Connect(function()
+            lastPosition = MainFrame.Position
+            game:GetService("TweenService"):Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Position = UDim2.new(lastPosition.X.Scale, lastPosition.X.Offset, 0.05, 0)
+            }):Play()
+        end)
+        
+        EditorFrame.Input.FocusLost:Connect(function()
+            game:GetService("TweenService"):Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                Position = lastPosition
+            }):Play()
+        end)
+
+    end; -- This ends InitTabs.Editor
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
