@@ -4342,100 +4342,127 @@ if v.Name == "Popups" then v.Visible = false return end
 			end);
 		end;
 		Highlighter._populateLabels = function(props)
-			local textObject = props.textObject;
-			local src = (highlight_enabled and utility.convertTabsToSpaces(utility.removeControlChars(props.src or textObject.Text))) or "";
-			local lexer = props.lexer or Highlighter.defaultLexer;
-			local customLang = props.customLang;
-			local forceUpdate = props.forceUpdate;
-			local data = Highlighter._textObjectData[textObject];
-			if ((data == nil) or (data.Text == src)) then
-				if (forceUpdate ~= true) then
-					return;
-				end
-			end
-			if highlight_enabled then
-				textObject.Text = src;
-			end
-			local lineLabels = data.Labels;
-			local previousLines = data.Lines;
-			local lines = string.split(src, "\n");
-			data.Lines = lines;
-			data.Text = src;
-			data.Lexer = lexer;
-			data.CustomLang = customLang;
-			if (src == "") then
-				for l = 1, # lineLabels do
-					if (lineLabels[l].Text == "") then
-						continue;
-					end
-					lineLabels[l].Text = "";
-				end
-				return;
-			end
-			local idenColor = theme.getColor("iden");
-			local labelingInfo = Highlighter._getLabelingInfo(textObject);
-			local richTextBuffer, bufferIndex, lineNumber = table.create(5), 0, 1;
-			for token, content in lexer.scan(src) do
-				local Color = (function()
-					if (customLang and customLang[content]) then
-						return theme.getColor("custom");
-					else
-						return theme.getColor(token) or idenColor;
-					end
-				end)();
-				local tokenLines = string.split(utility.sanitizeRichText(content), "\n");
-				for l, tokenLine in tokenLines do
-					local lineLabel = lineLabels[lineNumber];
-					if not lineLabel then
-						local newLabel = Instance.new("TextLabel");
-						newLabel.AutoLocalize = false;
-						newLabel.RichText = true;
-						newLabel.BackgroundTransparency = 1;
-						newLabel.Text = "";
-						newLabel.TextXAlignment = Enum.TextXAlignment.Left;
-						newLabel.TextYAlignment = Enum.TextYAlignment.Top;
-						newLabel.TextColor3 = labelingInfo.textColor;
-						newLabel.FontFace = labelingInfo.textFont;
-						newLabel.TextSize = labelingInfo.textSize;
-						newLabel.Size = labelingInfo.labelSize;
-						newLabel.ZIndex = 3;
-						newLabel.TextWrapped = false;
-						newLabel.TextTruncate = Enum.TextTruncate.None;
-						newLabel.AutomaticSize = Enum.AutomaticSize.None;
-						newLabel.ClipsDescendants = false;
-						newLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
-						newLabel.Parent = textObject:FindFirstChildWhichIsA("Folder");
-						lineLabels[lineNumber] = newLabel;
-						lineLabel = newLabel;
-					end
-					if (l > 1) then
-						if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-							lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-						end
-						lineNumber += 1
-						bufferIndex = 0;
-						table.clear(richTextBuffer);
-					end
-					if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-						bufferIndex += 1
-						if ((Color ~= idenColor) and string.find(tokenLine, "[%S%C]")) then
-							richTextBuffer[bufferIndex] = theme.getColoredRichText(Color, tokenLine);
-						else
-							richTextBuffer[bufferIndex] = tokenLine;
-						end
-					end
-				end
-			end
-			if (richTextBuffer[1] and lineLabels[lineNumber]) then
-				lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-			end
-			for l = lineNumber + 1, # lineLabels do
-				if (lineLabels[l].Text == "") then
-					continue;
-				end
-				lineLabels[l].Text = "";
-			end
-		end;
+    local textObject = props.textObject;
+    local src = (highlight_enabled and utility.convertTabsToSpaces(utility.removeControlChars(props.src or textObject.Text))) or "";
+    local lexer = props.lexer or Highlighter.defaultLexer;
+    local customLang = props.customLang;
+    local forceUpdate = props.forceUpdate;
+    
+    local data = Highlighter._textObjectData[textObject];
+    if ((data == nil) or (data.Text == src)) then
+        if (forceUpdate ~= true) then return; end
+    end
+    
+    if highlight_enabled then textObject.Text = src; end
+    
+    local lineLabels = data.Labels;
+    local previousLines = data.Lines;
+    local lines = string.split(src, "\n");
+    data.Lines = lines;
+    data.Text = src;
+    data.Lexer = lexer;
+    data.CustomLang = customLang;
+    
+    if (src == "") then
+        for l = 1, #lineLabels do
+            if (lineLabels[l].Text == "") then continue; end
+            lineLabels[l].Text = "";
+        end
+        return;
+    end
+    
+    -- 🔴 VIRTUALIZATION: Calculate visible range
+    local scrollFrame = textObject.Parent
+    local viewportStart = scrollFrame.CanvasPosition.Y
+    local viewportEnd = viewportStart + scrollFrame.AbsoluteSize.Y
+    local labelingInfo = Highlighter._getLabelingInfo(textObject);
+    if not labelingInfo then return end
+    
+    local lineHeight = labelingInfo.textHeight
+    local startLine = math.max(1, math.floor(viewportStart / lineHeight) - 20)
+    local endLine = math.min(#lines, math.ceil(viewportEnd / lineHeight) + 20)
+    
+    -- Hide labels outside viewport
+    for i = 1, #lineLabels do
+        if i < startLine or i > endLine then
+            if lineLabels[i] and lineLabels[i].Text ~= "" then
+                lineLabels[i].Text = ""
+            end
+        end
+    end
+    
+    local idenColor = theme.getColor("iden");
+    local richTextBuffer, bufferIndex, lineNumber = table.create(5), 0, 1;
+    
+    for token, content in lexer.scan(src) do
+        local Color = (function()
+            if (customLang and customLang[content]) then
+                return theme.getColor("custom");
+            else
+                return theme.getColor(token) or idenColor;
+            end
+        end)();
+        
+        local tokenLines = string.split(utility.sanitizeRichText(content), "\n");
+        
+        for l, tokenLine in tokenLines do
+            -- 🔴 SKIP LINES OUTSIDE VIEWPORT
+            if lineNumber >= startLine and lineNumber <= endLine then
+                local lineLabel = lineLabels[lineNumber];
+                if not lineLabel then
+                    local newLabel = Instance.new("TextLabel");
+                    newLabel.AutoLocalize = false;
+                    newLabel.RichText = true;
+                    newLabel.BackgroundTransparency = 1;
+                    newLabel.Text = "";
+                    newLabel.TextXAlignment = Enum.TextXAlignment.Left;
+                    newLabel.TextYAlignment = Enum.TextYAlignment.Top;
+                    newLabel.TextColor3 = labelingInfo.textColor;
+                    newLabel.FontFace = labelingInfo.textFont;
+                    newLabel.TextSize = labelingInfo.textSize;
+                    newLabel.Size = labelingInfo.labelSize;
+                    newLabel.ZIndex = 3;
+                    newLabel.TextWrapped = false;
+                    newLabel.TextTruncate = Enum.TextTruncate.None;
+                    newLabel.AutomaticSize = Enum.AutomaticSize.None;
+                    newLabel.ClipsDescendants = false;
+                    newLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
+                    newLabel.Parent = textObject:FindFirstChildWhichIsA("Folder");
+                    lineLabels[lineNumber] = newLabel;
+                    lineLabel = newLabel;
+                end
+                
+                if (l > 1) then
+                    if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
+                        lineLabels[lineNumber].Text = table.concat(richTextBuffer);
+                    end
+                    lineNumber += 1
+                    bufferIndex = 0;
+                    table.clear(richTextBuffer);
+                end
+                
+                if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
+                    bufferIndex += 1
+                    if ((Color ~= idenColor) and string.find(tokenLine, "[%S%C]")) then
+                        richTextBuffer[bufferIndex] = theme.getColoredRichText(Color, tokenLine);
+                    else
+                        richTextBuffer[bufferIndex] = tokenLine;
+                    end
+                end
+            else
+                if (l > 1) then
+                    lineNumber += 1
+                    bufferIndex = 0;
+                    table.clear(richTextBuffer);
+                end
+            end
+        end
+    end
+    
+    if (richTextBuffer[1] and lineLabels[lineNumber]) then
+        lineLabels[lineNumber].Text = table.concat(richTextBuffer);
+    end
+end;
 		Highlighter.highlight = function(props)
 			local textObject = props.textObject;
 			local src = utility.convertTabsToSpaces(utility.removeControlChars(props.src or textObject.Text));
