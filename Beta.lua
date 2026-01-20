@@ -4371,27 +4371,8 @@ if v.Name == "Popups" then v.Visible = false return end
         return;
     end
     
-    -- 🔴 VIRTUALIZATION: Calculate visible range
-    local scrollFrame = textObject.Parent.Parent -- The actual ScrollingFrame
-    local viewportStart = scrollFrame.CanvasPosition.Y
-    local viewportEnd = viewportStart + scrollFrame.AbsoluteSize.Y
-    local labelingInfo = Highlighter._getLabelingInfo(textObject);
-    if not labelingInfo then return end
-    
-    local lineHeight = labelingInfo.textHeight
-    local startLine = math.max(1, math.floor(viewportStart / lineHeight) - 20)
-    local endLine = math.min(#lines, math.ceil(viewportEnd / lineHeight) + 20)
-    
-    -- Hide labels outside viewport
-    for i = 1, #lineLabels do
-        if i < startLine or i > endLine then
-            if lineLabels[i] and lineLabels[i].Text ~= "" then
-                lineLabels[i].Text = ""
-            end
-        end
-    end
-    
     local idenColor = theme.getColor("iden");
+    local labelingInfo = Highlighter._getLabelingInfo(textObject);
     local richTextBuffer, bufferIndex, lineNumber = table.create(5), 0, 1;
     
     for token, content in lexer.scan(src) do
@@ -4406,54 +4387,45 @@ if v.Name == "Popups" then v.Visible = false return end
         local tokenLines = string.split(utility.sanitizeRichText(content), "\n");
         
         for l, tokenLine in tokenLines do
-            -- 🔴 SKIP LINES OUTSIDE VIEWPORT
-            if lineNumber >= startLine and lineNumber <= endLine then
-                local lineLabel = lineLabels[lineNumber];
-                if not lineLabel then
-                    local newLabel = Instance.new("TextLabel");
-                    newLabel.AutoLocalize = false;
-                    newLabel.RichText = true;
-                    newLabel.BackgroundTransparency = 1;
-                    newLabel.Text = "";
-                    newLabel.TextXAlignment = Enum.TextXAlignment.Left;
-                    newLabel.TextYAlignment = Enum.TextYAlignment.Top;
-                    newLabel.TextColor3 = labelingInfo.textColor;
-                    newLabel.FontFace = labelingInfo.textFont;
-                    newLabel.TextSize = labelingInfo.textSize;
-                    newLabel.Size = labelingInfo.labelSize;
-                    newLabel.ZIndex = 3;
-                    newLabel.TextWrapped = false;
-                    newLabel.TextTruncate = Enum.TextTruncate.None;
-                    newLabel.AutomaticSize = Enum.AutomaticSize.None;
-                    newLabel.ClipsDescendants = false;
-                    newLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
-                    newLabel.Parent = textObject:FindFirstChildWhichIsA("Folder");
-                    lineLabels[lineNumber] = newLabel;
-                    lineLabel = newLabel;
-                end
-                
-                if (l > 1) then
-                    if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-                        lineLabels[lineNumber].Text = table.concat(richTextBuffer);
-                    end
-                    lineNumber += 1
-                    bufferIndex = 0;
-                    table.clear(richTextBuffer);
-                end
-                
+            local lineLabel = lineLabels[lineNumber];
+            if not lineLabel then
+                local newLabel = Instance.new("TextLabel");
+                newLabel.AutoLocalize = false;
+                newLabel.RichText = true;
+                newLabel.BackgroundTransparency = 1;
+                newLabel.Text = "";
+                newLabel.TextXAlignment = Enum.TextXAlignment.Left;
+                newLabel.TextYAlignment = Enum.TextYAlignment.Top;
+                newLabel.TextColor3 = labelingInfo.textColor;
+                newLabel.FontFace = labelingInfo.textFont;
+                newLabel.TextSize = labelingInfo.textSize;
+                newLabel.Size = labelingInfo.labelSize;
+                newLabel.ZIndex = 3;
+                newLabel.TextWrapped = false;
+                newLabel.TextTruncate = Enum.TextTruncate.None;
+                newLabel.AutomaticSize = Enum.AutomaticSize.None;
+                newLabel.ClipsDescendants = false;
+                newLabel.Position = UDim2.fromOffset(0, math.floor(labelingInfo.textHeight * (lineNumber - 1)));
+                newLabel.Parent = textObject:FindFirstChildWhichIsA("Folder");
+                lineLabels[lineNumber] = newLabel;
+                lineLabel = newLabel;
+            end
+            
+            if (l > 1) then
                 if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
-                    bufferIndex += 1
-                    if ((Color ~= idenColor) and string.find(tokenLine, "[%S%C]")) then
-                        richTextBuffer[bufferIndex] = theme.getColoredRichText(Color, tokenLine);
-                    else
-                        richTextBuffer[bufferIndex] = tokenLine;
-                    end
+                    lineLabels[lineNumber].Text = table.concat(richTextBuffer);
                 end
-            else
-                if (l > 1) then
-                    lineNumber += 1
-                    bufferIndex = 0;
-                    table.clear(richTextBuffer);
+                lineNumber += 1
+                bufferIndex = 0;
+                table.clear(richTextBuffer);
+            end
+            
+            if (forceUpdate or (lines[lineNumber] ~= previousLines[lineNumber])) then
+                bufferIndex += 1
+                if ((Color ~= idenColor) and string.find(tokenLine, "[%S%C]")) then
+                    richTextBuffer[bufferIndex] = theme.getColoredRichText(Color, tokenLine);
+                else
+                    richTextBuffer[bufferIndex] = tokenLine;
                 end
             end
         end
@@ -4461,6 +4433,11 @@ if v.Name == "Popups" then v.Visible = false return end
     
     if (richTextBuffer[1] and lineLabels[lineNumber]) then
         lineLabels[lineNumber].Text = table.concat(richTextBuffer);
+    end
+    
+    for l = lineNumber + 1, #lineLabels do
+        if (lineLabels[l].Text == "") then continue; end
+        lineLabels[l].Text = "";
     end
 end;
 		Highlighter.highlight = function(props)
