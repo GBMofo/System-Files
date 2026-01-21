@@ -3799,10 +3799,10 @@ end,
 					new.Name = i;
 					new.Title.Text = i;
 					
-				Panel.Execute[Method]:Connect(function()
-    local cleanCode = StripSyntax(EditorFrame.Input.Text)
-    UIEvents.Executor.RunCode(cleanCode)();
-end);
+			-- uses 'new' (the card), 'MouseButton1Click' (the method), and 'v' (the saved script content)
+new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
+    UIEvents.Executor.RunCode(v)(); 
+end)
 					
 					new.Misc.Panel.Delete.MouseButton1Click:Connect(function()
 						UIEvents.Saved.DelFile(i);
