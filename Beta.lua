@@ -4647,6 +4647,7 @@ end)
 end;
 
 	InitTabs.TabsData = function()
+		-- 🟢 FOLDER CHECK: Only create if missing (Won't delete existing files)
 		if not CLONED_Detectedly.isfolder("scripts") then
 			CLONED_Detectedly.makedir("scripts")
 		end
@@ -4660,10 +4661,10 @@ end;
 				return game.HttpService:JSONDecode(content)
 			end)
 
-			-- 🟢 FIX: Check valid JSON AND clean corrupted content immediately
+			-- Load valid scripts
 			if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
 				
-				-- Clean up corruption on load (Fixes Image 2)
+				-- Clean corruption if present
 				if string.find(Loadedscript.Content, "<font") then
 					Loadedscript.Content = StripSyntax(Loadedscript.Content)
 				end
@@ -4684,10 +4685,11 @@ end;
 	end;
 
 	InitTabs.Saved = function()
-		-- Create folders if they don't exist
+		-- 🟢 FOLDER CHECK: Create 'saves' if missing
 		if not CLONED_Detectedly.isfolder("saves") then
 			CLONED_Detectedly.makedir("saves");
 		end
+		-- 🟢 FOLDER CHECK: Create 'autoexec' if missing
 		if not CLONED_Detectedly.isfolder("autoexec") then
 			CLONED_Detectedly.makedir("autoexec");
 		end
@@ -4696,32 +4698,31 @@ end;
 		local saves = CLONED_Detectedly.listfiles("saves") or {};
 		
 		for index, Nextpath in ipairs(saves) do
-			-- Extract filename (compatible with both / and \ paths)
+			-- Extract filename
 			local filename = Nextpath:match("([^/\\]+)$");
 			
-			-- Only process .lua files
 			if filename and filename:match("%.lua$") then
-				
-				-- [[ FIX START: Wrapped in pcall to stop crashes ]] --
 				local success, Loadedscript = pcall(function()
 					local content = CLONED_Detectedly.readfile("saves/" .. filename)
 					return game.HttpService:JSONDecode(content)
 				end)
 
-				-- Only add to table if JSON was valid
 				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
+					-- Clean corruption if present
+					if string.find(Loadedscript.Content, "<font") then
+						Loadedscript.Content = StripSyntax(Loadedscript.Content)
+					end
 					Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
 				else
 					warn("[PunkX] Skipped corrupted file: " .. filename)
 				end
-				-- [[ FIX END ]] --
 			end
 		end
 		
-		-- Update the UI now that the table is filled
+		-- Update the UI
 		UIEvents.Saved.UpdateUI();
 		
-		-- Search bar logic
+		-- Search Logic
 		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 			local hi = Pages.Saved.TextBox.Text
 			local isEmpty = #hi:gsub("[%s]","") <= 0
