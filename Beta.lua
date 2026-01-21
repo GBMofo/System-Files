@@ -3876,13 +3876,79 @@ end
 		Executor = {
 			RunCode = function(content)
 				createNotification("Executed!", "Success", 5);
-				local func, x = loadstring(content);
+				
+				-- 1. Compile the script
+				local func, loadErr = loadstring(content);
 				if not func then
-					task.spawn(function() error(x) end);
-				else
-					return func;
+					task.spawn(function() error(loadErr) end);
+					return function() end;
 				end
-				return function() end;
+
+				-- 2. Create the Sandbox Environment
+				-- This inherits all global functions (print, game, etc.)
+				local env = setmetatable({}, { __index = getgenv() })
+
+				-- 3. HOOK FILE FUNCTIONS (Redirect to PunkX/workspace)
+				
+				-- Helper to enforce path
+				local function sandboxedPath(path)
+					-- Remove leading slash if present
+					if string.sub(path, 1, 1) == "/" then path = string.sub(path, 2) end
+					return "PunkX/workspace/" .. path
+				end
+
+				-- Override writefile
+				env.writefile = function(path, data)
+					return getgenv().writefile(sandboxedPath(path), data)
+				end
+
+				-- Override readfile
+				env.readfile = function(path)
+					return getgenv().readfile(sandboxedPath(path))
+				end
+
+				-- Override isfile
+				env.isfile = function(path)
+					return getgenv().isfile(sandboxedPath(path))
+				end
+
+				-- Override isfolder
+				env.isfolder = function(path)
+					return getgenv().isfolder(sandboxedPath(path))
+				end
+
+				-- Override makefolder
+				env.makefolder = function(path)
+					return getgenv().makefolder(sandboxedPath(path))
+				end
+				
+				-- Override delfile
+				env.delfile = function(path)
+					return getgenv().delfile(sandboxedPath(path))
+				end
+				
+				-- Override delfolder
+				env.delfolder = function(path)
+					return getgenv().delfolder(sandboxedPath(path))
+				end
+				
+				-- Override listfiles (Clean the return so scripts don't know they are sandboxed)
+				env.listfiles = function(path)
+					local realPath = sandboxedPath(path)
+					local files = getgenv().listfiles(realPath) or {}
+					local cleanFiles = {}
+					for _, file in pairs(files) do
+						-- Remove "PunkX/workspace/" from the path string
+						local clean = string.gsub(file, "PunkX/workspace/", "")
+						table.insert(cleanFiles, clean)
+					end
+					return cleanFiles
+				end
+
+				-- 4. Apply the Sandbox to the script
+				setfenv(func, env)
+
+				return func
 			end
 		},
 		Key = {
@@ -5329,36 +5395,30 @@ end
     goTo("Home", true);
 end;
 	InitTabs.Autoexecute = function()
-		local request = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request);
-		local UrI = game:HttpGet("https://pastefy.app/7YWsqemN/raw");
-		local decompileFunction = decompile;
-		local function isConnectSuccess()
-			local succ, response = pcall(function()
-				return request({
-					Url = UrI,
-					Method = "GET"
-				});
-			end);
-			if (succ and (response.StatusCode == 200)) then
-				return true;
-			else
-				return false;
+		-- 🟢 1. Keep Standard Decompiler Support (Optional, safe to keep)
+		local request = request or http_request or (syn and syn.request) or (http and http.request)
+		-- (You can keep your decompile logic here if you want, or leave it empty)
+		CLONED_Detectedly.pushautoexec();
+
+		-- 🟢 2. PUNK X AUTOEXEC RUNNER
+		-- This checks your custom folder and runs any scripts found there
+		if CLONED_Detectedly.isfolder("PunkX/autoexec") then
+			local files = CLONED_Detectedly.listfiles("PunkX/autoexec")
+			if files then
+				for _, path in pairs(files) do
+					if path:match("%.lua$") then
+						task.spawn(function()
+							local content = CLONED_Detectedly.readfile(path)
+							if content and #content > 0 then
+								-- Run it using the sandboxed executor so it respects PunkX folder
+								UIEvents.Executor.RunCode(content)()
+								print("[PunkX] Auto-Executed: " .. path)
+							end
+						end)
+					end
+				end
 			end
 		end
-		getgenv().decompile = function(script_instance)
-			local bytecode = getscriptbytecode(script_instance);
-			local encoded = crypt.base64encode(bytecode);
-			if not isConnectSuccess() then
-				return decompileFunction(script_instance);
-			end
-			return request({
-				Url = (UrI .. "/luau/decompile"),
-				Method = "POST",
-				Body = encoded
-			}).Body;
-		end;
-		task.wait();
-		CLONED_Detectedly.pushautoexec();
 	end;
 	local Loaded = false;
 	local function loadUI()
