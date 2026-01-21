@@ -3411,64 +3411,43 @@ if v.Name == "Popups" then v.Visible = false return end
 		task.spawn(C_6);
 	end
 
--- 🟢 DEFINE COLORS FIRST
+-- 🟢 DEFINE COLORS
 local SyntaxColors = {
-    ["local"] = "rgb(173, 216, 230)",
-    ["function"] = "rgb(70, 130, 180)",
-    ["end"] = "rgb(70, 130, 180)",
-    ["if"] = "rgb(100, 149, 237)",
-    ["then"] = "rgb(100, 149, 237)",
-    ["else"] = "rgb(100, 149, 237)",
-    ["elseif"] = "rgb(100, 149, 237)",
-    ["return"] = "rgb(65, 105, 225)",
-    ["while"] = "rgb(70, 130, 180)",
-    ["for"] = "rgb(70, 130, 180)",
-    ["do"] = "rgb(70, 130, 180)",
-    ["break"] = "rgb(65, 105, 225)",
-    ["continue"] = "rgb(65, 105, 225)",
-    ["and"] = "rgb(70, 130, 180)",
-    ["or"] = "rgb(70, 130, 180)",
-    ["not"] = "rgb(70, 130, 180)",
-    ["repeat"] = "rgb(135, 206, 235)",
-    ["until"] = "rgb(135, 206, 235)",
-    ["game"] = "rgb(0, 191, 255)",
-    ["workspace"] = "rgb(0, 191, 255)",
-    ["script"] = "rgb(0, 191, 255)",
-    ["print"] = "rgb(0, 191, 255)",
-    ["wait"] = "rgb(0, 191, 255)",
-    ["task"] = "rgb(0, 191, 255)",
-    ["pairs"] = "rgb(0, 191, 255)",
-    ["ipairs"] = "rgb(0, 191, 255)",
-    ["loadstring"] = "rgb(0, 0, 139)",
+    ["local"] = "rgb(173, 216, 230)", ["function"] = "rgb(70, 130, 180)", ["end"] = "rgb(70, 130, 180)",
+    ["if"] = "rgb(100, 149, 237)", ["then"] = "rgb(100, 149, 237)", ["else"] = "rgb(100, 149, 237)", 
+    ["elseif"] = "rgb(100, 149, 237)", ["return"] = "rgb(65, 105, 225)", ["while"] = "rgb(70, 130, 180)", 
+    ["for"] = "rgb(70, 130, 180)", ["do"] = "rgb(70, 130, 180)", ["break"] = "rgb(65, 105, 225)", 
+    ["continue"] = "rgb(65, 105, 225)", ["and"] = "rgb(70, 130, 180)", ["or"] = "rgb(70, 130, 180)", 
+    ["not"] = "rgb(70, 130, 180)", ["repeat"] = "rgb(135, 206, 235)", ["until"] = "rgb(135, 206, 235)",
+    ["game"] = "rgb(0, 191, 255)", ["workspace"] = "rgb(0, 191, 255)", ["script"] = "rgb(0, 191, 255)",
+    ["print"] = "rgb(0, 191, 255)", ["wait"] = "rgb(0, 191, 255)", ["task"] = "rgb(0, 191, 255)",
+    ["pairs"] = "rgb(0, 191, 255)", ["ipairs"] = "rgb(0, 191, 255)", ["loadstring"] = "rgb(0, 0, 139)",
 }
 
--- 🟢 SAFE STRIP FUNCTION
+-- 🟢 THE STRIPPER (Removes the messy tags)
 local function StripSyntax(text)
     return string.gsub(text, "<[^>]+>", "")
 end
 
--- 🟢 SAFE APPLY FUNCTION (Prevents the crash)
+-- 🟢 THE HIGHLIGHTER (Now Safe)
 local function ApplySyntax(text)
-    -- 1. Clean the text first so we don't highlight existing tags
+    -- 1. CLEAN THE TEXT FIRST (This fixes the recursive glitch)
     text = StripSyntax(text)
 
-    -- 2. Safety Check: If script is huge, don't highlight (prevents freeze)
-    if #text > 15000 then
-        return text
+    -- 2. Safety Brake (Prevents crash on massive scripts)
+    if #text > 20000 then 
+        return text 
     end
 
     -- 3. Apply Colors
     for keyword, color in pairs(SyntaxColors) do
         text = text:gsub("(%f[%a]" .. keyword .. "%f[%A])", '<font color="' .. color .. '">%1</font>')
     end
-
     -- Numbers
     text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
-    
     -- Strings
     text = text:gsub('(".-")', '<font color="rgb(176, 224, 230)">%1</font>')
     text = text:gsub("('.-')", '<font color="rgb(176, 224, 230)">%1</font>')
-    
     -- Operators
     text = text:gsub("([%+%-%*/%%%^#=<>~%(%)%[%]{}])", '<font color="rgb(70, 130, 180)">%1</font>')
 
@@ -3622,7 +3601,7 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 end,
 
 switchTab = function(ToTab)
-				-- Handle Cancellation of saved edits
+				-- Cancel saved edits if switching away
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 					local editingName = Data.Editor.EditingSavedFile
 					createNotification("Editing Cancelled", "Warn", 3)
@@ -3637,7 +3616,7 @@ switchTab = function(ToTab)
 					local EditorFrame = Editor:WaitForChild("Editor").Input;
 					local OldTab = Data.Editor.CurrentTab;
 
-					-- Save previous tab
+					-- Save previous tab safely
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						local cleanContent = StripSyntax(EditorFrame.Text);
 						UIEvents.EditorTabs.saveTab(OldTab, cleanContent, false);
@@ -3647,16 +3626,16 @@ switchTab = function(ToTab)
 					Data.Editor.CurrentTab = ToTab;
 					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
 					
-					-- 🟢 SAFETY FIX: Clean messy tags if they exist
+					-- 🟢 CLEAN CORRUPTION
 					if string.find(TabContent, "<font") then
 						TabContent = StripSyntax(TabContent)
 					end
 
-					-- 🟢 SAFETY FIX: Prevent Text Limit Crash (The fix for your error)
-					if #TabContent > 160000 then
-						EditorFrame.RichText = false -- Disable colors for massive scripts
+					-- 🟢 PREVENT CRASH (Max Length Check)
+					if #TabContent > 100000 then
+						-- If script is huge, disable colors so it doesn't crash Roblox
+						EditorFrame.RichText = false 
 						EditorFrame.Text = TabContent
-						createNotification("Script too large for highlighting", "Warn", 5)
 					else
 						EditorFrame.RichText = true
 						EditorFrame.Text = ApplySyntax(TabContent);
@@ -4751,10 +4730,11 @@ end;
 		local Editor = Pages:WaitForChild("Editor");
 		local Panel = Editor:WaitForChild("Panel");
 		local EditorFrame = Editor:WaitForChild("Editor");
-		local Method = "MouseButton1Click"; -- Standardizing the click method
+		local Method = "MouseButton1Click"; -- Standard click method
 
 		-- [[ EXECUTE ]]
 		Panel.Execute[Method]:Connect(function()
+			-- Always clean code before running so we don't run HTML tags
 			local cleanCode = StripSyntax(EditorFrame.Input.Text)
 			UIEvents.Executor.RunCode(cleanCode)();
 		end);
@@ -4762,7 +4742,7 @@ end;
 		-- [[ PASTE - FIXED ]]
 		Panel.Paste[Method]:Connect(function()
 			local pastedText = safeGetClipboard();
-			-- Strip first, then apply.
+			-- ApplySyntax now auto-cleans, so this is safe
 			EditorFrame.Input.Text = ApplySyntax(pastedText);
 		end);
 
@@ -4779,6 +4759,7 @@ end;
 
 		-- [[ SAVE ]]
 		Panel.Save[Method]:Connect(function()
+			-- ALWAYS strip tags before saving to file
 			local cleanText = StripSyntax(EditorFrame.Input.Text)
 			UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
 		end);
@@ -4789,25 +4770,26 @@ end;
 			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
 		end);
 
-		-- [[ RICHTEXT HANDLING ]]
-		-- When you click to type, remove colors so you can edit raw text
+		-- 🟢 RICHTEXT HANDLING (The Magic Fix) 🟢
+		
+		-- When you click to type: Remove colors (Raw Text)
 		EditorFrame.Input.Focused:Connect(function()
 			EditorFrame.Input.Text = StripSyntax(EditorFrame.Input.Text)
 		end)
 
-		-- When you click away, re-apply colors
+		-- When you stop typing: Add colors back
 		EditorFrame.Input.FocusLost:Connect(function()
 			EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
 		end)
 
-		-- [[ LINE NUMBERS & AUTO-SAVE ]]
+		-- [[ LINE NUMBERS ]]
 		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
 			UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
 			
-			-- Only auto-save if we are NOT editing a saved file (prevents overwrites)
+			-- Auto-save logic (Safe)
 			if not Data.Editor.EditingSavedFile then
 				local cleanText = StripSyntax(EditorFrame.Input.Text)
-				-- Only save if text isn't the messy HTML version
+				-- Only save if clean
 				if not string.find(cleanText, "font color") then
 					UIEvents.EditorTabs.saveTab(nil, cleanText, false)
 				end
@@ -4817,18 +4799,16 @@ end;
 		-- Initial Setup
 		UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
 
-		-- [[ TAB CREATE ]]
+		-- [[ TAB BUTTONS ]]
 		Editor.Tabs.Create.Activated:Connect(function()
 			UIEvents.EditorTabs.createTab("Script", "");
 		end);
 
-		-- [[ POPUPS ]]
 		local Buttons = script.Parent.Popups.Main.Button
 		Buttons["Confirm"][Method]:Connect(function()
 			local newName = script.Parent.Popups.Main.Input.Text;
 			local isEmpty = #(string.gsub(newName, "[%s]", "")) <= 0;
 			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
-
 			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
 			script.Parent.Popups.Visible = false;
 		end)
