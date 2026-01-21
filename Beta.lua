@@ -3410,9 +3410,9 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		task.spawn(C_6);
 	end
--- 🟢 SIMPLE RICHTEXT SYNTAX HIGHLIGHTER
+
+-- 🟢 DEFINE COLORS FIRST
 local SyntaxColors = {
-    -- Keywords
     ["local"] = "rgb(173, 216, 230)",
     ["function"] = "rgb(70, 130, 180)",
     ["end"] = "rgb(70, 130, 180)",
@@ -3431,8 +3431,6 @@ local SyntaxColors = {
     ["not"] = "rgb(70, 130, 180)",
     ["repeat"] = "rgb(135, 206, 235)",
     ["until"] = "rgb(135, 206, 235)",
-    
-    -- Globals
     ["game"] = "rgb(0, 191, 255)",
     ["workspace"] = "rgb(0, 191, 255)",
     ["script"] = "rgb(0, 191, 255)",
@@ -3444,45 +3442,52 @@ local SyntaxColors = {
     ["loadstring"] = "rgb(0, 0, 139)",
 }
 
+-- 🟢 SAFE STRIP FUNCTION
+local function StripSyntax(text)
+    return string.gsub(text, "<[^>]+>", "")
+end
+
+-- 🟢 SAFE APPLY FUNCTION (Prevents the crash)
 local function ApplySyntax(text)
-    -- Remove existing tags first
-    text = text:gsub("<[^>]+>", "")
-    
-    -- Apply keyword colors
-    for keyword, color in pairs(SyntaxColors) do
-        text = text:gsub("(%f[%a]" .. keyword .. "%f[%A])", 
-            '<font color="' .. color .. '">%1</font>')
+    -- 1. Clean the text first so we don't highlight existing tags
+    text = StripSyntax(text)
+
+    -- 2. Safety Check: If script is huge, don't highlight (prevents freeze)
+    if #text > 15000 then
+        return text
     end
+
+    -- 3. Apply Colors
+    for keyword, color in pairs(SyntaxColors) do
+        text = text:gsub("(%f[%a]" .. keyword .. "%f[%A])", '<font color="' .. color .. '">%1</font>')
+    end
+
+    -- Numbers
+    text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
     
-    -- Apply number colors
-    text = text:gsub("(%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
-    
-    -- Apply string colors
+    -- Strings
     text = text:gsub('(".-")', '<font color="rgb(176, 224, 230)">%1</font>')
     text = text:gsub("('.-')", '<font color="rgb(176, 224, 230)">%1</font>')
     
-    -- Apply operator colors
+    -- Operators
     text = text:gsub("([%+%-%*/%%%^#=<>~%(%)%[%]{}])", '<font color="rgb(70, 130, 180)">%1</font>')
-    text = text:gsub("([%.:])", '<font color="rgb(30, 144, 255)">%1</font>')
-    
+
     return text
 end
 
-local function StripSyntax(text)
-    return text:gsub("<[^>]+>", "")
+local function getDuplicatedName(baseName, existingNames)
+    if not existingNames[baseName] then
+        return baseName;
+    end
+    local counter = 1;
+    local newName;
+    repeat
+        newName = baseName .. " " .. counter;
+        counter = counter + 1;
+    until not existingNames[newName]
+    return newName;
 end
-	local function getDuplicatedName(baseName, existingNames)
-		if not existingNames[baseName] then
-			return baseName;
-		end
-		local counter = 1;
-		local newName;
-		repeat
-			newName = baseName .. " " .. counter;
-			counter = counter + 1;
-		until not existingNames[newName]
-		return newName;
-	end
+
 	local function hash(str: string): number
 		local hash = 2166136261
 	
@@ -3615,37 +3620,52 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
         end
     end
 end,
-	switchTab = function(ToTab)
-    -- [[ CANCELLATION LOGIC ]]
-    if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
-        local editingName = Data.Editor.EditingSavedFile
-        
-        createNotification("Editing Cancelled", "Warn", 3)
-        CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
-        Data.Editor.Tabs[editingName] = nil;
-        Data.Editor.EditingSavedFile = nil
-        UIEvents.EditorTabs.updateUI()
-    end
 
-    if Data.Editor.Tabs[ToTab] then
-        local Editor = Pages:WaitForChild("Editor");
-        local EditorFrame = Editor:WaitForChild("Editor").Input;
-        local OldTab = Data.Editor.CurrentTab;
-        
-        -- Save current tab (strip tags first)
-        if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
-            local cleanContent = StripSyntax(EditorFrame.Text);
-            UIEvents.EditorTabs.saveTab(OldTab, cleanContent, false);
-        end
-        
-        -- Load new tab
-        Data.Editor.CurrentTab = ToTab;
-        local TabContent = Data.Editor.Tabs[ToTab][1] or "";
-        EditorFrame.Text = ApplySyntax(TabContent); -- 🟢 Apply colors
-        
-        UIEvents.EditorTabs.updateUI();
-    end
-end,
+switchTab = function(ToTab)
+				-- Handle Cancellation of saved edits
+				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
+					local editingName = Data.Editor.EditingSavedFile
+					createNotification("Editing Cancelled", "Warn", 3)
+					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
+					Data.Editor.Tabs[editingName] = nil;
+					Data.Editor.EditingSavedFile = nil
+					UIEvents.EditorTabs.updateUI()
+				end
+
+				if Data.Editor.Tabs[ToTab] then
+					local Editor = Pages:WaitForChild("Editor");
+					local EditorFrame = Editor:WaitForChild("Editor").Input;
+					local OldTab = Data.Editor.CurrentTab;
+
+					-- Save previous tab
+					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
+						local cleanContent = StripSyntax(EditorFrame.Text);
+						UIEvents.EditorTabs.saveTab(OldTab, cleanContent, false);
+					end
+
+					-- Load New Tab
+					Data.Editor.CurrentTab = ToTab;
+					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
+					
+					-- 🟢 SAFETY FIX: Clean messy tags if they exist
+					if string.find(TabContent, "<font") then
+						TabContent = StripSyntax(TabContent)
+					end
+
+					-- 🟢 SAFETY FIX: Prevent Text Limit Crash (The fix for your error)
+					if #TabContent > 160000 then
+						EditorFrame.RichText = false -- Disable colors for massive scripts
+						EditorFrame.Text = TabContent
+						createNotification("Script too large for highlighting", "Warn", 5)
+					else
+						EditorFrame.RichText = true
+						EditorFrame.Text = ApplySyntax(TabContent);
+					end
+
+					UIEvents.EditorTabs.updateUI();
+				end
+			end,
+
 			delTab = function(Name)
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
@@ -4635,37 +4655,41 @@ end)
 end;
 
 	InitTabs.TabsData = function()
-    if not CLONED_Detectedly.isfolder("scripts") then
-        CLONED_Detectedly.makedir("scripts")
-    end
+		if not CLONED_Detectedly.isfolder("scripts") then
+			CLONED_Detectedly.makedir("scripts")
+		end
 
-    local scripts = CLONED_Detectedly.listfiles("scripts") or {};
-    for index, Nextpath in ipairs(scripts) do
-        if (Nextpath == "/recently.data") then continue; end
-        
-        -- 🔴 FIX: Wrap entire read+decode in pcall
-        local success, Loadedscript = pcall(function()
-            local content = CLONED_Detectedly.readfile("scripts" .. Nextpath)
-            return game.HttpService:JSONDecode(content)
-        end)
-        
-        -- 🔴 FIX: Validate ALL required fields exist
-        if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
-            Data.Editor.Tabs[Loadedscript.Name] = {
-                Loadedscript.Content,
-                Loadedscript.Order
-            };
-        else
-            -- 🔴 FIX: Log which file failed (helps debugging)
-            warn("[PunkX] Skipped corrupted tab file: " .. tostring(Nextpath))
-        end
-    end
-    
-    if (# scripts == 0) then
-        UIEvents.EditorTabs.createTab("Script", "");
-    end
-    UIEvents.EditorTabs.updateUI();
-end;
+		local scripts = CLONED_Detectedly.listfiles("scripts") or {};
+		for index, Nextpath in ipairs(scripts) do
+			if (Nextpath == "/recently.data") then continue; end
+
+			local success, Loadedscript = pcall(function()
+				local content = CLONED_Detectedly.readfile("scripts" .. Nextpath)
+				return game.HttpService:JSONDecode(content)
+			end)
+
+			-- 🟢 FIX: Check valid JSON AND clean corrupted content immediately
+			if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
+				
+				-- Clean up corruption on load (Fixes Image 2)
+				if string.find(Loadedscript.Content, "<font") then
+					Loadedscript.Content = StripSyntax(Loadedscript.Content)
+				end
+				
+				Data.Editor.Tabs[Loadedscript.Name] = {
+					Loadedscript.Content,
+					Loadedscript.Order
+				};
+			else
+				warn("[PunkX] Corrupted file skipped: " .. tostring(Nextpath))
+			end
+		end
+
+		if (#scripts == 0) then
+			UIEvents.EditorTabs.createTab("Script", "");
+		end
+		UIEvents.EditorTabs.updateUI();
+	end;
 
 	InitTabs.Saved = function()
 		-- Create folders if they don't exist
@@ -4724,90 +4748,95 @@ end;
 	end;
 
 	InitTabs.Editor = function()
-    local Editor = Pages:WaitForChild("Editor");
-    local Panel = Editor:WaitForChild("Panel");
-    local EditorFrame = Editor:WaitForChild("Editor");
-    local Method = "Activated";
-    
-    -- 🟢 PANEL BUTTON CONNECTIONS
-    Panel.Execute[Method]:Connect(function()
-        local cleanCode = StripSyntax(EditorFrame.Input.Text)
-        UIEvents.Executor.RunCode(cleanCode)();
-    end);
-    
-    Panel.Paste[Method]:Connect(function()
-        local pastedText = safeGetClipboard();
-        EditorFrame.Input.Text = ApplySyntax(pastedText);
-    end);
-    
-    Panel.ExecuteClipboard[Method]:Connect(function()
-        local clipCode = StripSyntax(safeGetClipboard())
-        UIEvents.Executor.RunCode(clipCode)();
-    end);
-    
-    Panel.Delete[Method]:Connect(function()
-        EditorFrame.Input.Text = "";
-    end);
-    
-    Panel.Save[Method]:Connect(function()
-        local cleanText = StripSyntax(EditorFrame.Input.Text)
-        UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
-    end);
-    
-    Panel.Rename[Method]:Connect(function()
-        script.Parent.Popups.Visible = true;
-        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-    end);
-    
-    -- 🟢 RICHTEXT SYNTAX SYSTEM
-    
-    -- Focus: Strip tags when typing
-    EditorFrame.Input.Focused:Connect(function()
-        EditorFrame.Input.Text = StripSyntax(EditorFrame.Input.Text)
-    end)
-    
-    -- FocusLost: Reapply syntax colors
-    EditorFrame.Input.FocusLost:Connect(function()
-        EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
-    end)
-    
-    -- Text Changed: Update line numbers only
-    EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
-        UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
-        
-        if not Data.Editor.EditingSavedFile then
-            local cleanText = StripSyntax(EditorFrame.Input.Text)
-            UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-        end
-    end)
-    
-    -- Initial setup
-    UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
-    if EditorFrame.Input.Text ~= "" then
-        EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
-    end
-    
-    -- 🟢 TAB CREATION BUTTON
-    Editor.Tabs.Create.Activated:Connect(function()
-        UIEvents.EditorTabs.createTab("Script", "");
-    end);
-    
-    -- 🟢 POPUP BUTTONS
-    local Buttons = script.Parent.Popups.Main.Button
-    Buttons["Confirm"][Method]:Connect(function()
-        local newName = script.Parent.Popups.Main.Input.Text;
-        local isEmpty = #(string.gsub(newName, "[%s]", "")) <= 0;
-        if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
-        
-        UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
-        script.Parent.Popups.Visible = false;
-    end)
-    
-    Buttons["Cancel"][Method]:Connect(function()
-        script.Parent.Popups.Visible = false;
-    end)
+		local Editor = Pages:WaitForChild("Editor");
+		local Panel = Editor:WaitForChild("Panel");
+		local EditorFrame = Editor:WaitForChild("Editor");
+		local Method = "MouseButton1Click"; -- Standardizing the click method
 
-end; -- This ends InitTabs.Editor
+		-- [[ EXECUTE ]]
+		Panel.Execute[Method]:Connect(function()
+			local cleanCode = StripSyntax(EditorFrame.Input.Text)
+			UIEvents.Executor.RunCode(cleanCode)();
+		end);
+
+		-- [[ PASTE - FIXED ]]
+		Panel.Paste[Method]:Connect(function()
+			local pastedText = safeGetClipboard();
+			-- Strip first, then apply.
+			EditorFrame.Input.Text = ApplySyntax(pastedText);
+		end);
+
+		-- [[ EXECUTE CLIPBOARD ]]
+		Panel.ExecuteClipboard[Method]:Connect(function()
+			local clipCode = safeGetClipboard()
+			UIEvents.Executor.RunCode(clipCode)();
+		end);
+
+		-- [[ CLEAR ]]
+		Panel.Delete[Method]:Connect(function()
+			EditorFrame.Input.Text = "";
+		end);
+
+		-- [[ SAVE ]]
+		Panel.Save[Method]:Connect(function()
+			local cleanText = StripSyntax(EditorFrame.Input.Text)
+			UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
+		end);
+
+		-- [[ RENAME ]]
+		Panel.Rename[Method]:Connect(function()
+			script.Parent.Popups.Visible = true;
+			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+		end);
+
+		-- [[ RICHTEXT HANDLING ]]
+		-- When you click to type, remove colors so you can edit raw text
+		EditorFrame.Input.Focused:Connect(function()
+			EditorFrame.Input.Text = StripSyntax(EditorFrame.Input.Text)
+		end)
+
+		-- When you click away, re-apply colors
+		EditorFrame.Input.FocusLost:Connect(function()
+			EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
+		end)
+
+		-- [[ LINE NUMBERS & AUTO-SAVE ]]
+		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+			UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+			
+			-- Only auto-save if we are NOT editing a saved file (prevents overwrites)
+			if not Data.Editor.EditingSavedFile then
+				local cleanText = StripSyntax(EditorFrame.Input.Text)
+				-- Only save if text isn't the messy HTML version
+				if not string.find(cleanText, "font color") then
+					UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+				end
+			end
+		end)
+
+		-- Initial Setup
+		UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+
+		-- [[ TAB CREATE ]]
+		Editor.Tabs.Create.Activated:Connect(function()
+			UIEvents.EditorTabs.createTab("Script", "");
+		end);
+
+		-- [[ POPUPS ]]
+		local Buttons = script.Parent.Popups.Main.Button
+		Buttons["Confirm"][Method]:Connect(function()
+			local newName = script.Parent.Popups.Main.Input.Text;
+			local isEmpty = #(string.gsub(newName, "[%s]", "")) <= 0;
+			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
+
+			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
+			script.Parent.Popups.Visible = false;
+		end)
+
+		Buttons["Cancel"][Method]:Connect(function()
+			script.Parent.Popups.Visible = false;
+		end)
+	end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
