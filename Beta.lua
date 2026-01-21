@@ -3569,8 +3569,8 @@ local UIEvents = {};
 				if not isTemp then
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
-					-- 🟢 PATH: scripts/ (Root)
-					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
+					-- 🟢 PATH: Punk-X-Files/scripts/
+					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
 						Name = TabName, Content = Content, Order = (HighestOrder + 1)
 					}));
 				end
@@ -3594,8 +3594,8 @@ local UIEvents = {};
 					else
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
-							-- 🟢 PATH: scripts/ (Root)
-							CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+							-- 🟢 PATH: Punk-X-Files/scripts/
+							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
 								Name = tabName, Content = Content, Order = TabData[2]
 							}));
 							Data.Editor.Tabs[tabName] = { Content, TabData[2] };
@@ -3610,8 +3610,8 @@ local UIEvents = {};
 				else
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
-						-- 🟢 PATH: scripts/ (Root)
-						CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+						-- 🟢 PATH: Punk-X-Files/scripts/
+						CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
 							Name = tabName, Content = Content, Order = TabData[2]
 						}));
 						Data.Editor.Tabs[tabName] = { Content, TabData[2] };
@@ -3623,8 +3623,8 @@ local UIEvents = {};
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 					local editingName = Data.Editor.EditingSavedFile
 					createNotification("Editing Cancelled", "Warn", 3)
-					-- 🟢 PATH: scripts/ (Root)
-					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
+					-- 🟢 PATH: Punk-X-Files/scripts/
+					CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. editingName .. ".lua");
 					Data.Editor.Tabs[editingName] = nil;
 					Data.Editor.EditingSavedFile = nil
 					UIEvents.EditorTabs.updateUI()
@@ -3674,8 +3674,8 @@ local UIEvents = {};
 					if (i ~= Name) then UIEvents.EditorTabs.switchTab(i); end
 				end
 				
-				-- 🟢 PATH: scripts/ (Root)
-				if not isEditing then CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua"); end
+				-- 🟢 PATH: Punk-X-Files/scripts/
+				if not isEditing then CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. Name .. ".lua"); end
 				Data.Editor.Tabs[Name] = nil;
 				
 				if isEditing then
@@ -3742,11 +3742,11 @@ local UIEvents = {};
 				NewName = UIEvents.EditorTabs.getDuplicatedName(NewName, Data.Editor.Tabs or {});
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab] end
-					-- 🟢 PATH: scripts/ (Root)
-					CLONED_Detectedly.writefile("scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
+					-- 🟢 PATH: Punk-X-Files/scripts/
+					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
 						Name = NewName, Content = Data.Editor.Tabs[TargetTab][1], Order = Data.Editor.Tabs[TargetTab][2]
 					}));
-					CLONED_Detectedly.delfile("scripts/" .. TargetTab .. ".lua");
+					CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. TargetTab .. ".lua");
 					Data.Editor.Tabs[TargetTab] = nil
 					Data.Editor.CurrentTab = NewName
 					UIEvents.EditorTabs.updateUI();
@@ -3760,8 +3760,8 @@ local UIEvents = {};
 				if not Overwrite then 
 					Name = UIEvents.EditorTabs.getDuplicatedName(Name, Data.Saves.Scripts or {}); 
 				end
-				-- 🟢 PATH: saves/ (Root)
-				CLONED_Detectedly.writefile("saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
+				-- 🟢 PATH: Punk-X-Files/saves/
+				CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
 					Name = Name, Content = Content
 				}));
 				Data.Saves.Scripts[Name] = Content;
@@ -3770,9 +3770,9 @@ local UIEvents = {};
 			end,
 
 			DelFile = function(Name)
-				-- 🟢 PATH: saves/ (Root)
-				if CLONED_Detectedly.isfile("saves/" .. Name .. ".lua") then
-					CLONED_Detectedly.delfile("saves/" .. Name .. ".lua");
+				-- 🟢 PATH: Punk-X-Files/saves/
+				if CLONED_Detectedly.isfile("Punk-X-Files/saves/" .. Name .. ".lua") then
+					CLONED_Detectedly.delfile("Punk-X-Files/saves/" .. Name .. ".lua");
 				end
 				Data.Saves.Scripts[Name] = nil;
 				UIEvents.Saved.UpdateUI();
@@ -3804,8 +3804,8 @@ local UIEvents = {};
 						end
 						if Data.Editor.EditingSavedFile then
 							local old = Data.Editor.EditingSavedFile
-							-- 🟢 PATH: scripts/ (Root)
-							CLONED_Detectedly.delfile("scripts/" .. old .. ".lua")
+							-- 🟢 PATH: Punk-X-Files/scripts/
+							CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. old .. ".lua")
 							Data.Editor.Tabs[old] = nil
 							Data.Editor.EditingSavedFile = nil
 						end
@@ -3815,8 +3815,8 @@ local UIEvents = {};
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
 
-					-- 🟢 PATH: autoexec/ (Root)
-					local autoExecPath = "autoexec/" .. i .. ".lua"
+					-- 🟢 PATH: Punk-X-Files/autoexec/
+					local autoExecPath = "Punk-X-Files/autoexec/" .. i .. ".lua"
 					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
 					
 					if isAutoOn then
@@ -3863,48 +3863,19 @@ local UIEvents = {};
 		Executor = {
 			RunCode = function(content)
 				createNotification("Executed!", "Success", 5);
-				
-				local func, loadErr = loadstring(content);
+				local func, x = loadstring(content);
 				if not func then
-					task.spawn(function() error(loadErr) end);
+					task.spawn(function() error(x) end);
 					return function() end;
 				end
-
-				-- 🟢 SANDBOX LOGIC: Redirects executed scripts to workspace/
-				local env = setmetatable({}, { __index = getgenv() })
-
-				local function sandboxedPath(path)
-					if string.sub(path, 1, 1) == "/" then path = string.sub(path, 2) end
-					-- 🟢 PATH: workspace/ (This is PunkX/workspace/ on your phone)
-					return "workspace/" .. path 
-				end
-
-				env.writefile = function(path, data) return getgenv().writefile(sandboxedPath(path), data) end
-				env.readfile = function(path) return getgenv().readfile(sandboxedPath(path)) end
-				env.isfile = function(path) return getgenv().isfile(sandboxedPath(path)) end
-				env.isfolder = function(path) return getgenv().isfolder(sandboxedPath(path)) end
-				env.makefolder = function(path) return getgenv().makefolder(sandboxedPath(path)) end
-				env.delfile = function(path) return getgenv().delfile(sandboxedPath(path)) end
-				env.delfolder = function(path) return getgenv().delfolder(sandboxedPath(path)) end
-				
-				env.listfiles = function(path)
-					local realPath = sandboxedPath(path)
-					local files = getgenv().listfiles(realPath) or {}
-					local cleanFiles = {}
-					for _, file in pairs(files) do
-						local clean = string.gsub(file, "workspace/", "")
-						table.insert(cleanFiles, clean)
-					end
-					return cleanFiles
-				end
-
-				setfenv(func, env)
+				-- 🟢 STANDARD EXECUTION (Executed scripts land in Workspace Root)
 				return func
 			end
 		},
 		Key = {
 			Save = function(Key)
-				CLONED_Detectedly.writefile("punk-x-key.txt", Key);
+				-- 🟢 PATH: Punk-X-Files/punk-x-key.txt
+				CLONED_Detectedly.writefile("Punk-X-Files/punk-x-key.txt", Key);
 			end
 		},
 		Nav = {
@@ -3980,11 +3951,11 @@ InitTabs.Settings = function()
 		getgenv().CurrentTheme = Color3.fromRGB(160, 85, 255)
 		local CurrentTheme = getgenv().CurrentTheme
 		
+	-- 🟢 PATH: Punk-X-Files/theme.json
 		local function LoadTheme()
-			-- 🟢 READ: theme.json (Root)
-			if CLONED_Detectedly.isfile("theme.json") then
+			if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
 				local success, data = pcall(function()
-					return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("theme.json"))
+					return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
 				end)
 				if success and data.r and data.g and data.b then
 					CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
@@ -3994,14 +3965,15 @@ InitTabs.Settings = function()
 		end
 		
 		local function SaveTheme(color)
-			-- 🟢 SAVE: theme.json (Root)
-			CLONED_Detectedly.writefile("theme.json", game.HttpService:JSONEncode({
+			-- Ensure folder exists
+			if not CLONED_Detectedly.isfolder("Punk-X-Files") then CLONED_Detectedly.makedir("Punk-X-Files") end
+			
+			CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
 				r = math.floor(color.R * 255),
 				g = math.floor(color.G * 255),
 				b = math.floor(color.B * 255)
 			}))
 		end
-		
 		local function ApplyTheme(color)
 			local oldTheme = CurrentTheme
 			getgenv().CurrentTheme = color
@@ -4520,21 +4492,25 @@ InitTabs.Settings = function()
         end)
 	end;
 
-	InitTabs.TabsData = function()
-		-- 🟢 PATH: scripts/ (Root)
-		if not CLONED_Detectedly.isfolder("scripts") then
-			CLONED_Detectedly.makedir("scripts")
+InitTabs.TabsData = function()
+		-- 🟢 CREATE FOLDER: Punk-X-Files
+		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
+			CLONED_Detectedly.makedir("Punk-X-Files")
+		end
+		-- 🟢 CREATE FOLDER: Punk-X-Files/scripts
+		if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
+			CLONED_Detectedly.makedir("Punk-X-Files/scripts")
 		end
 
-		local scripts = CLONED_Detectedly.listfiles("scripts") or {};
+		local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
 		for index, Nextpath in ipairs(scripts) do
 			if (Nextpath == "/recently.data") then continue; end
 
 			local success, Loadedscript = pcall(function()
 				-- Ensure correct path reading
 				local path = Nextpath
-				if not string.find(path, "scripts/") then
-					path = "scripts/" .. path
+				if not string.find(path, "Punk-X-Files/scripts") then
+					path = "Punk-X-Files/scripts/" .. path
 				end
 				local content = CLONED_Detectedly.readfile(path)
 				return game.HttpService:JSONDecode(content)
@@ -4556,13 +4532,18 @@ InitTabs.Settings = function()
 		end
 		UIEvents.EditorTabs.updateUI();
 	end;
-	InitTabs.Saved = function()
-		-- 🟢 CREATE ALL FOLDERS IN ROOT
+
+InitTabs.Saved = function()
+		-- 🟢 CREATE FOLDER STRUCTURE (Now includes 'scripts')
+		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
+			CLONED_Detectedly.makedir("Punk-X-Files")
+		end
+		
 		local folders = {
-			"saves",
-			"autoexec",
-			"workspace",
-			"rconsole"
+			"Punk-X-Files/saves",
+			"Punk-X-Files/autoexec",
+			"Punk-X-Files/rconsole",
+			"Punk-X-Files/scripts" -- 🟢 Added this back!
 		}
 
 		for _, folder in ipairs(folders) do
@@ -4571,8 +4552,8 @@ InitTabs.Settings = function()
 			end
 		end
 		
-		-- 🟢 PATH: saves/ (Root)
-		local saves = CLONED_Detectedly.listfiles("saves") or {};
+		-- 🟢 READ: Punk-X-Files/saves
+		local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
 		
 		for index, Nextpath in ipairs(saves) do
 			local filename = Nextpath:match("([^/\\]+)$");
@@ -4580,8 +4561,8 @@ InitTabs.Settings = function()
 			if filename and filename:match("%.lua$") then
 				local success, Loadedscript = pcall(function()
 					local path = Nextpath
-					if not string.find(path, "saves/") then
-						path = "saves/" .. path
+					if not string.find(path, "Punk-X-Files/saves") then
+						path = "Punk-X-Files/saves/" .. path
 					end
 					local content = CLONED_Detectedly.readfile(path)
 					return game.HttpService:JSONDecode(content)
@@ -5206,20 +5187,17 @@ end
     goTo("Home", true);
 end;
 	InitTabs.Autoexecute = function()
-		-- 🟢 1. Initialize Request (Standard)
 		local request = request or http_request or (syn and syn.request) or (http and http.request)
 		
-		-- 🟢 2. PUNK X AUTOEXEC RUNNER
-		-- This checks your custom folder and runs any scripts found there
-		if CLONED_Detectedly.isfolder("autoexec") then
-			local files = CLONED_Detectedly.listfiles("autoexec")
+		-- 🟢 PATH: Punk-X-Files/autoexec
+		if CLONED_Detectedly.isfolder("Punk-X-Files/autoexec") then
+			local files = CLONED_Detectedly.listfiles("Punk-X-Files/autoexec")
 			if files then
 				for _, path in pairs(files) do
 					if path:match("%.lua$") then
 						task.spawn(function()
 							local content = CLONED_Detectedly.readfile(path)
 							if content and #content > 0 then
-								-- Run it using the sandboxed executor
 								UIEvents.Executor.RunCode(content)()
 								print("[PunkX] Auto-Executed: " .. path)
 							end
