@@ -5206,10 +5206,11 @@ end
     goTo("Home", true);
 end;
 	InitTabs.Autoexecute = function()
+		-- 🟢 1. Initialize Request (Standard)
 		local request = request or http_request or (syn and syn.request) or (http and http.request)
-		CLONED_Detectedly.pushautoexec();
-
-		-- 🟢 PATH: autoexec/ (Root)
+		
+		-- 🟢 2. PUNK X AUTOEXEC RUNNER
+		-- This checks your custom folder and runs any scripts found there
 		if CLONED_Detectedly.isfolder("autoexec") then
 			local files = CLONED_Detectedly.listfiles("autoexec")
 			if files then
@@ -5218,6 +5219,7 @@ end;
 						task.spawn(function()
 							local content = CLONED_Detectedly.readfile(path)
 							if content and #content > 0 then
+								-- Run it using the sandboxed executor
 								UIEvents.Executor.RunCode(content)()
 								print("[PunkX] Auto-Executed: " .. path)
 							end
