@@ -3569,7 +3569,7 @@ local UIEvents = {};
 				if not isTemp then
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
-					-- 🟢 FIXED PATH: scripts/
+					-- 🟢 PATH: scripts/ (Root)
 					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
 						Name = TabName, Content = Content, Order = (HighestOrder + 1)
 					}));
@@ -3594,7 +3594,7 @@ local UIEvents = {};
 					else
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
-							-- 🟢 FIXED PATH: scripts/
+							-- 🟢 PATH: scripts/ (Root)
 							CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
 								Name = tabName, Content = Content, Order = TabData[2]
 							}));
@@ -3610,7 +3610,7 @@ local UIEvents = {};
 				else
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
-						-- 🟢 FIXED PATH: scripts/
+						-- 🟢 PATH: scripts/ (Root)
 						CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
 							Name = tabName, Content = Content, Order = TabData[2]
 						}));
@@ -3623,7 +3623,7 @@ local UIEvents = {};
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 					local editingName = Data.Editor.EditingSavedFile
 					createNotification("Editing Cancelled", "Warn", 3)
-					-- 🟢 FIXED PATH: scripts/
+					-- 🟢 PATH: scripts/ (Root)
 					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
 					Data.Editor.Tabs[editingName] = nil;
 					Data.Editor.EditingSavedFile = nil
@@ -3674,7 +3674,7 @@ local UIEvents = {};
 					if (i ~= Name) then UIEvents.EditorTabs.switchTab(i); end
 				end
 				
-				-- 🟢 FIXED PATH: scripts/
+				-- 🟢 PATH: scripts/ (Root)
 				if not isEditing then CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua"); end
 				Data.Editor.Tabs[Name] = nil;
 				
@@ -3742,7 +3742,7 @@ local UIEvents = {};
 				NewName = UIEvents.EditorTabs.getDuplicatedName(NewName, Data.Editor.Tabs or {});
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab] end
-					-- 🟢 FIXED PATH: scripts/
+					-- 🟢 PATH: scripts/ (Root)
 					CLONED_Detectedly.writefile("scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
 						Name = NewName, Content = Data.Editor.Tabs[TargetTab][1], Order = Data.Editor.Tabs[TargetTab][2]
 					}));
@@ -3760,7 +3760,7 @@ local UIEvents = {};
 				if not Overwrite then 
 					Name = UIEvents.EditorTabs.getDuplicatedName(Name, Data.Saves.Scripts or {}); 
 				end
-				-- 🟢 FIXED PATH: saves/
+				-- 🟢 PATH: saves/ (Root)
 				CLONED_Detectedly.writefile("saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
 					Name = Name, Content = Content
 				}));
@@ -3770,7 +3770,7 @@ local UIEvents = {};
 			end,
 
 			DelFile = function(Name)
-				-- 🟢 FIXED PATH: saves/
+				-- 🟢 PATH: saves/ (Root)
 				if CLONED_Detectedly.isfile("saves/" .. Name .. ".lua") then
 					CLONED_Detectedly.delfile("saves/" .. Name .. ".lua");
 				end
@@ -3804,7 +3804,7 @@ local UIEvents = {};
 						end
 						if Data.Editor.EditingSavedFile then
 							local old = Data.Editor.EditingSavedFile
-							-- 🟢 FIXED PATH: scripts/
+							-- 🟢 PATH: scripts/ (Root)
 							CLONED_Detectedly.delfile("scripts/" .. old .. ".lua")
 							Data.Editor.Tabs[old] = nil
 							Data.Editor.EditingSavedFile = nil
@@ -3815,7 +3815,7 @@ local UIEvents = {};
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
 
-					-- 🟢 FIXED PATH: autoexec/
+					-- 🟢 PATH: autoexec/ (Root)
 					local autoExecPath = "autoexec/" .. i .. ".lua"
 					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
 					
@@ -3863,19 +3863,48 @@ local UIEvents = {};
 		Executor = {
 			RunCode = function(content)
 				createNotification("Executed!", "Success", 5);
-				local func, x = loadstring(content);
+				
+				local func, loadErr = loadstring(content);
 				if not func then
-					task.spawn(function() error(x) end);
-				else
-					return func;
+					task.spawn(function() error(loadErr) end);
+					return function() end;
 				end
-				return function() end;
+
+				-- 🟢 SANDBOX LOGIC: Redirects executed scripts to workspace/
+				local env = setmetatable({}, { __index = getgenv() })
+
+				local function sandboxedPath(path)
+					if string.sub(path, 1, 1) == "/" then path = string.sub(path, 2) end
+					-- 🟢 PATH: workspace/ (This is PunkX/workspace/ on your phone)
+					return "workspace/" .. path 
+				end
+
+				env.writefile = function(path, data) return getgenv().writefile(sandboxedPath(path), data) end
+				env.readfile = function(path) return getgenv().readfile(sandboxedPath(path)) end
+				env.isfile = function(path) return getgenv().isfile(sandboxedPath(path)) end
+				env.isfolder = function(path) return getgenv().isfolder(sandboxedPath(path)) end
+				env.makefolder = function(path) return getgenv().makefolder(sandboxedPath(path)) end
+				env.delfile = function(path) return getgenv().delfile(sandboxedPath(path)) end
+				env.delfolder = function(path) return getgenv().delfolder(sandboxedPath(path)) end
+				
+				env.listfiles = function(path)
+					local realPath = sandboxedPath(path)
+					local files = getgenv().listfiles(realPath) or {}
+					local cleanFiles = {}
+					for _, file in pairs(files) do
+						local clean = string.gsub(file, "workspace/", "")
+						table.insert(cleanFiles, clean)
+					end
+					return cleanFiles
+				end
+
+				setfenv(func, env)
+				return func
 			end
 		},
 		Key = {
 			Save = function(Key)
-				-- 🟢 FIXED PATH: Key
-				CLONED_Detectedly.writefile("Key", Key);
+				CLONED_Detectedly.writefile("punk-x-key.txt", Key);
 			end
 		},
 		Nav = {
@@ -3918,25 +3947,25 @@ local UIEvents = {};
     Popups.Main.Active = true     -- Blocks clicks inside the box
     Popups.Main.Selectable = true
 
-	InitTabs.Settings = function()
--- 🔴 FORCE DELETE OLD THEME (ONE-TIME FIX)
+	
+
+InitTabs.Settings = function()
+		-- 🟢 1. CLEANUP (Root Path)
 		if CLONED_Detectedly.isfile("theme.json") then
 			CLONED_Detectedly.delfile("theme.json")
 		end
+		
 		local Settings = Pages:WaitForChild("Settings")
 		local Scripts = Settings.Scripts
 		
-		-- Clear old settings UI
+		-- Clear old UI
 		for _, child in pairs(Scripts:GetChildren()) do
 			if not child:IsA("UIListLayout") and not child:IsA("UIPadding") and not child:IsA("UICorner") and not child:IsA("UIStroke") then
 				child:Destroy()
 			end
 		end
 		
-		-- ========================================
-		-- THEME SYSTEM
-		-- ========================================
-		
+		-- 🟢 2. THEME SYSTEM (Root Path)
 		local Themes = {
 			{name = "Neon Purple", color = Color3.fromRGB(160, 85, 255)},
 			{name = "Neon Pink", color = Color3.fromRGB(255, 20, 147)},
@@ -3951,8 +3980,8 @@ local UIEvents = {};
 		getgenv().CurrentTheme = Color3.fromRGB(160, 85, 255)
 		local CurrentTheme = getgenv().CurrentTheme
 		
-	-- 🟢 FIXED PATH: theme.json (Root)
 		local function LoadTheme()
+			-- 🟢 READ: theme.json (Root)
 			if CLONED_Detectedly.isfile("theme.json") then
 				local success, data = pcall(function()
 					return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("theme.json"))
@@ -3965,6 +3994,7 @@ local UIEvents = {};
 		end
 		
 		local function SaveTheme(color)
+			-- 🟢 SAVE: theme.json (Root)
 			CLONED_Detectedly.writefile("theme.json", game.HttpService:JSONEncode({
 				r = math.floor(color.R * 255),
 				g = math.floor(color.G * 255),
@@ -3977,71 +4007,44 @@ local UIEvents = {};
 			getgenv().CurrentTheme = color
 			SaveTheme(color)
 			
-			-- ========================================
--- 1. UPDATE ALL UISTROKES (BORDERS/EDGES)
--- ========================================
-for _, obj in pairs(script.Parent:GetDescendants()) do
-    if obj:IsA("UIStroke") then
-        -- Skip black/white strokes (those are intentional)
-        local isThemeStroke = (
-            obj.Color == Color3.fromRGB(160, 85, 255) or 
-            obj.Color == oldTheme or
-            obj.Thickness <= 2 -- Most theme strokes are thin
-        )
-        if isThemeStroke then
-            obj.Color = color
-        end
-    end
-end
+			-- 1. UPDATE STROKES
+			for _, obj in pairs(script.Parent:GetDescendants()) do
+				if obj:IsA("UIStroke") then
+					local isThemeStroke = (
+						obj.Color == Color3.fromRGB(160, 85, 255) or 
+						obj.Color == oldTheme or
+						obj.Thickness <= 2
+					)
+					if isThemeStroke then obj.Color = color end
+				end
+			end
 			
-			-- ========================================
--- 2. UPDATE SETTINGS CARDS (Toggles + Borders)
--- ========================================
-if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
-    for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
-        if card:IsA("Frame") or card:IsA("CanvasGroup") then
-            -- Update card border
-            local stroke = card:FindFirstChild("UIStroke")
-            if stroke then
-                stroke.Color = color
-            end
-            
-            -- Update toggle if active
-            local toggleContainer = card:FindFirstChild("ToggleContainer")
-            if toggleContainer then
-                local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
-                if toggleBg and toggleBg:GetAttribute("IsToggleOn") then
-                    toggleBg.BackgroundColor3 = color
-                end
-            end
-        end
-    end
-end
-			-- ========================================
--- 2B. UPDATE THEME CHANGER CARD BORDER
--- ========================================
-if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
-    for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
-        if card.Name == "themeCard" or (card:IsA("Frame") and card:FindFirstChild("pillContainer")) then
-            local stroke = card:FindFirstChild("themeStroke") or card:FindFirstChild("UIStroke")
-            if stroke then
-                stroke.Color = color
-            end
-        end
-    end
-end
-			-- ========================================
-			-- 3. UPDATE SETTINGS SLIDERS
-			-- ========================================
+			-- 2. UPDATE TOGGLES/CARDS
+			if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
+				for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
+					if card:IsA("Frame") or card:IsA("CanvasGroup") then
+						local stroke = card:FindFirstChild("UIStroke")
+						if stroke then stroke.Color = color end
+						
+						local toggleContainer = card:FindFirstChild("ToggleContainer")
+						if toggleContainer then
+							local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
+							if toggleBg and toggleBg:GetAttribute("IsToggleOn") then
+								toggleBg.BackgroundColor3 = color
+							end
+						end
+					end
+				end
+			end
+
+			-- 3. UPDATE SLIDERS
 			for _, slider in pairs(Scripts:GetDescendants()) do
 				if slider.Name == "sliderFill" and slider:IsA("Frame") then
 					slider.BackgroundColor3 = color
 				end
 			end
 			
-			-- ========================================
-			-- 4. UPDATE ENABLEFRAME (NAV INDICATOR)
-			-- ========================================
+			-- 4. UPDATE ENABLEFRAME
 			if Main:FindFirstChild("EnableFrame") then
 				Main.EnableFrame.BackgroundColor3 = color
 				if Main.EnableFrame:FindFirstChild("Glow") then
@@ -4050,9 +4053,7 @@ end
 				end
 			end
 			
-			-- ========================================
-			-- 5. UPDATE ACTIVE EDITOR TAB
-			-- ========================================
+			-- 5. UPDATE EDITOR TABS
 			if Pages.Editor and Pages.Editor:FindFirstChild("Tabs") then
 				for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
 					if tab:IsA("TextButton") and tab.Name == Data.Editor.CurrentTab then
@@ -4061,123 +4062,48 @@ end
 				end
 			end
 			
-			-- ========================================
--- 6. UPDATE EDITOR PANEL ICONS
--- ========================================
-if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
-    local panel = Pages.Editor.Panel
-    
-    -- Execute button icon
-    if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-        panel.Execute.Icon.ImageColor3 = color
-    end
-    
-    -- Spacer lines
-    if panel:FindFirstChild("Spacer1") then
-        panel.Spacer1.BackgroundColor3 = color
-    end
-    if panel:FindFirstChild("Spacer2") then
-        panel.Spacer2.BackgroundColor3 = color
-    end
-end
+			-- 6. UPDATE ICONS
+			if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
+				local panel = Pages.Editor.Panel
+				if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+					panel.Execute.Icon.ImageColor3 = color
+				end
+				if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
+				if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
+			end
 
--- ========================================
--- 6B. UPDATE SEARCH SCRIPT CARDS (Execute/Save/Spacer)
--- ========================================
-if Pages.Search and Pages.Search:FindFirstChild("Scripts") then
-    for _, card in pairs(Pages.Search.Scripts:GetChildren()) do
-        if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
-            local panel = card.Misc:FindFirstChild("Panel")
-            if panel then
-                -- Execute button
-                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                    panel.Execute.Icon.ImageColor3 = color
-                end
-                -- Save button (keep grey)
-                -- Spacer line
-                if panel:FindFirstChild("Spacer1") then
-                    panel.Spacer1.BackgroundColor3 = color
-                end
-            end
-        end
-    end
-end
+			if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
+				for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
+					if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+						local panel = card.Misc:FindFirstChild("Panel")
+						if panel then
+							if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+								panel.Execute.Icon.ImageColor3 = color
+							end
+							if panel:FindFirstChild("Spacer") then panel.Spacer.BackgroundColor3 = color end
+						end
+					end
+				end
+			end
 			
-			-- ========================================
--- 7. UPDATE SEARCH FILTER PILLS (ALL BUTTONS)
--- ========================================
-if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") then
-            if btn.Name == CurrentFilter then
-                -- Active button = theme color
-                btn.BackgroundColor3 = color
-                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            else
-                -- Inactive buttons stay grey (don't change)
-                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-            end
-        end
-    end
-end
-
--- ========================================
--- 7B. UPDATE SAVED SCRIPT CARDS (Execute/AutoExec/Spacer)
--- ========================================
-if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
-    for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
-        if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
-            local panel = card.Misc:FindFirstChild("Panel")
-            if panel then
-                -- Execute button
-                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                    panel.Execute.Icon.ImageColor3 = color
-                end
-                -- Spacer line
-                if panel:FindFirstChild("Spacer") then
-                    panel.Spacer.BackgroundColor3 = color
-                end
-                -- AutoExec button (if active)
-                if panel:FindFirstChild("AutoExec") and panel.AutoExec:FindFirstChild("Icon") then
-                    local autoExecPath = "autoexec/" .. card.Name .. ".lua"
-                    if CLONED_Detectedly.isfile(autoExecPath) then
-                        -- If AutoExec is ON, update to green (don't change to theme color)
-                        -- Keep it green for visibility
-                    end
-                end
-            end
-        end
-    end
-end
-
--- ========================================
--- 7C. UPDATE FILTER BAR STROKE
--- ========================================
-if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
-    if stroke and stroke:IsA("UIStroke") then
-        stroke.Color = color
-    end
-end
+			-- 7. UPDATE SEARCH FILTER
+			if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+				for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+					if btn:IsA("TextButton") and btn.Name == CurrentFilter then
+						btn.BackgroundColor3 = color
+					end
+				end
+				local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+				if stroke then stroke.Color = color end
+			end
 			
-			-- ========================================
-			-- 8. UPDATE HOME PAGE KEY BOX
-			-- ========================================
+			-- 8. UPDATE HOME KEY
 			if Pages.Home and Pages.Home:FindFirstChild("Key") then
 				local keyBox = Pages.Home.Key
-				
-				-- Border
-				if keyBox:FindFirstChild("UIStroke") then
-					keyBox.UIStroke.Color = color
-				end
-				
-				-- Background glow
+				if keyBox:FindFirstChild("UIStroke") then keyBox.UIStroke.Color = color end
 				if keyBox.Folder and keyBox.Folder:FindFirstChild("Background") then
 					keyBox.Folder.Background.ImageColor3 = color
 				end
-				
-				-- Update "active" text color
 				if keyBox:FindFirstChild("KeyText") then
 					keyBox.KeyText.Text = string.gsub(
 						keyBox.KeyText.Text,
@@ -4187,16 +4113,12 @@ end
 				end
 			end
 			
-			-- ========================================
-			-- 9. UPDATE CLOSE BUTTON (X)
-			-- ========================================
+			-- 9. UPDATE CLOSE BTN
 			if Leftside and Leftside:FindFirstChild("Close") then
 				Leftside.Close.BackgroundColor3 = color
 			end
 			
-			-- ========================================
-			-- 10. UPDATE HOME ICON IN NAV (IF ACTIVE)
-			-- ========================================
+			-- 10. UPDATE NAV
 			if Nav and Nav:FindFirstChild("Page1") then
 				for _, btn in pairs(Nav.Page1:GetChildren()) do
 					if btn:IsA("TextButton") and btn.BackgroundColor3 == oldTheme then
@@ -4205,34 +4127,29 @@ end
 				end
 			end
 			
-			-- ========================================
--- 11. UPDATE BACKGROUND GRADIENTS
--- ========================================
-for _, obj in pairs(script.Parent:GetDescendants()) do
-    if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
-        -- Clamp RGB values to 0-255 range
-        local r1 = math.clamp(math.floor(color.R * 255 * 0.8), 0, 255)
-        local g1 = math.clamp(math.floor(color.G * 255 * 0.5), 0, 255)
-        local b1 = math.clamp(math.floor(color.B * 255 * 1.2), 0, 255)
-        
-        local r2 = math.clamp(math.floor(color.R * 255 * 0.4), 0, 255)
-        local g2 = math.clamp(math.floor(color.G * 255 * 0.25), 0, 255)
-        local b2 = math.clamp(math.floor(color.B * 255 * 0.7), 0, 255)
-        
-        local newColorSeq = ColorSequence.new{
-            ColorSequenceKeypoint.new(0, Color3.fromRGB(r1, g1, b1)),
-            ColorSequenceKeypoint.new(1, Color3.fromRGB(r2, g2, b2))
-        }
-        obj.Color = newColorSeq
-    end
-end
-			
-			
+			-- 11. UPDATE GRADIENT
+			for _, obj in pairs(script.Parent:GetDescendants()) do
+				if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
+					local r1 = math.clamp(math.floor(color.R * 255 * 0.8), 0, 255)
+					local g1 = math.clamp(math.floor(color.G * 255 * 0.5), 0, 255)
+					local b1 = math.clamp(math.floor(color.B * 255 * 1.2), 0, 255)
+					
+					local r2 = math.clamp(math.floor(color.R * 255 * 0.4), 0, 255)
+					local g2 = math.clamp(math.floor(color.G * 255 * 0.25), 0, 255)
+					local b2 = math.clamp(math.floor(color.B * 255 * 0.7), 0, 255)
+					
+					local newColorSeq = ColorSequence.new{
+						ColorSequenceKeypoint.new(0, Color3.fromRGB(r1, g1, b1)),
+						ColorSequenceKeypoint.new(1, Color3.fromRGB(r2, g2, b2))
+					}
+					obj.Color = newColorSeq
+				end
+			end
 		end
 		
 		LoadTheme()
 
-		
+		-- Helper Functions
 		local function createSectionHeader(text, order)
 			local header = Instance.new("TextLabel", Scripts)
 			header.BackgroundTransparency = 1
@@ -4274,7 +4191,6 @@ end
 			padding.PaddingLeft = UDim.new(0, 12)
 			padding.PaddingBottom = UDim.new(0, 8)
 			
-			-- Title
 			local titleLabel = Instance.new("TextLabel", card)
 			titleLabel.BackgroundTransparency = 1
 			titleLabel.Size = UDim2.new(0.7, 0, 0.5, 0)
@@ -4288,7 +4204,6 @@ end
 			titleLabel.TextScaled = true
 			titleLabel.LayoutOrder = -2
 			
-			-- Description
 			if description then
 				local descLabel = Instance.new("TextLabel", card)
 				descLabel.BackgroundTransparency = 1
@@ -4302,10 +4217,26 @@ end
 				descLabel.TextWrapped = true
 				descLabel.LayoutOrder = -1
 			end
-			
 			return card
 		end
 		
+		local function createButton(card, btnText, color, callback)
+			local btn = Instance.new("TextButton", card)
+			btn.BackgroundColor3 = color
+			btn.Size = UDim2.new(0.25, 0, 0.7, 0)
+			btn.Text = btnText
+			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			btn.Font = Enum.Font.GothamBold
+			btn.TextSize = 12
+			btn.BorderSizePixel = 0
+			
+			local btnCorner = Instance.new("UICorner", btn)
+			btnCorner.CornerRadius = UDim.new(0, 8)
+			
+			btn.MouseButton1Click:Connect(callback)
+			return btn
+		end
+
 		local function createToggle(card, callback)
 			local toggleContainer = Instance.new("CanvasGroup", card)
 			toggleContainer.BackgroundTransparency = 1
@@ -4315,7 +4246,7 @@ end
 			
 			local toggleBg = Instance.new("Frame", toggleContainer)
 			toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-            toggleBg:SetAttribute("IsToggleOn", false) -- Track state
+			toggleBg:SetAttribute("IsToggleOn", false) 
 			toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
 			toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
 			toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
@@ -4348,33 +4279,14 @@ end
 			circle.ScaleType = Enum.ScaleType.Fit
 			
 			local isEnabled = false
-			
 			toggleBtn.MouseButton1Click:Connect(function()
-        isEnabled = not isEnabled
-        toggleBg:SetAttribute("IsToggleOn", isEnabled) -- Save state
-        toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-        toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-        callback(isEnabled)
-    end)
-			
-			return toggleContainer, toggleBg -- 🔴 Return toggleBg so we can update it later
-		end
-		
-		local function createButton(card, btnText, color, callback)
-			local btn = Instance.new("TextButton", card)
-			btn.BackgroundColor3 = color
-			btn.Size = UDim2.new(0.25, 0, 0.7, 0)
-			btn.Text = btnText
-			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-			btn.Font = Enum.Font.GothamBold
-			btn.TextSize = 12
-			btn.BorderSizePixel = 0
-			
-			local btnCorner = Instance.new("UICorner", btn)
-			btnCorner.CornerRadius = UDim.new(0, 8)
-			
-			btn.MouseButton1Click:Connect(callback)
-			return btn
+				isEnabled = not isEnabled
+				toggleBg:SetAttribute("IsToggleOn", isEnabled)
+				toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+				toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+				callback(isEnabled)
+			end)
+			return toggleContainer, toggleBg
 		end
 		
 		local function createSlider(card, callback)
@@ -4395,7 +4307,7 @@ end
 			
 			local sliderFill = Instance.new("Frame", sliderBg)
 			sliderFill.BackgroundColor3 = CurrentTheme
-            sliderFill.Name = "sliderFill" -- 🔴 ADD THIS
+			sliderFill.Name = "sliderFill"
 			sliderFill.Size = UDim2.new(0, 0, 1, 0)
 			sliderFill.Position = UDim2.new(0, 0, 0, 0)
 			sliderFill.BorderSizePixel = 0
@@ -4417,9 +4329,7 @@ end
 			local dragging = false
 			local UIS = game:GetService("UserInputService")
 			
-			sliderBtn.MouseButton1Down:Connect(function()
-				dragging = true
-			end)
+			sliderBtn.MouseButton1Down:Connect(function() dragging = true end)
 			
 			UIS.InputChanged:Connect(function()
 				if dragging then
@@ -4437,7 +4347,6 @@ end
 					dragging = false
 				end
 			end)
-			
 			return sliderContainer
 		end
 		
@@ -4448,21 +4357,21 @@ end
 		createSectionHeader("📱 APPEARANCE", -100)
 		
 		-- Theme Changer
-local themeCard = Instance.new("Frame", Scripts)
-themeCard.Name = "ThemeChangerCard" -- 🔴 ADD NAME
-themeCard.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-themeCard.Size = UDim2.new(1, 0, 0, 110)
-themeCard.BorderSizePixel = 0
-themeCard.LayoutOrder = -99
+		local themeCard = Instance.new("Frame", Scripts)
+		themeCard.Name = "ThemeChangerCard"
+		themeCard.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+		themeCard.Size = UDim2.new(1, 0, 0, 110)
+		themeCard.BorderSizePixel = 0
+		themeCard.LayoutOrder = -99
 
-local themeCorner = Instance.new("UICorner", themeCard)
-themeCorner.CornerRadius = UDim.new(0, 12)
+		local themeCorner = Instance.new("UICorner", themeCard)
+		themeCorner.CornerRadius = UDim.new(0, 12)
 
-local themeStroke = Instance.new("UIStroke", themeCard)
-themeStroke.Name = "ThemeStroke" -- 🔴 ADD NAME
-themeStroke.Transparency = 0.8
-themeStroke.Color = CurrentTheme
-themeStroke.Thickness = 1
+		local themeStroke = Instance.new("UIStroke", themeCard)
+		themeStroke.Name = "ThemeStroke"
+		themeStroke.Transparency = 0.8
+		themeStroke.Color = CurrentTheme
+		themeStroke.Thickness = 1
 
 		local themeLayout = Instance.new("UIListLayout", themeCard)
 		themeLayout.Padding = UDim.new(0, 6)
@@ -4485,6 +4394,7 @@ themeStroke.Thickness = 1
 		local pillContainer = Instance.new("Frame", themeCard)
 		pillContainer.BackgroundTransparency = 1
 		pillContainer.Size = UDim2.new(1, 0, 0, 65)
+		pillContainer.Name = "pillContainer"
 		
 		local pillLayout = Instance.new("UIListLayout", pillContainer)
 		pillLayout.FillDirection = Enum.FillDirection.Horizontal
@@ -4586,37 +4496,32 @@ themeStroke.Thickness = 1
 		
 		local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 51)
 		resetCard.Size = UDim2.new(1, 0, 0, 55)
+		
 		createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
-			if delfile and isfile then
-				if isfile("punk-x-env.txt") then
-					delfile("punk-x-env.txt")
+            -- 🟢 RESET LOGIC (Root Path)
+			if CLONED_Detectedly.delfile and CLONED_Detectedly.isfile then
+				if CLONED_Detectedly.isfile("punk-x-env.txt") then
+					CLONED_Detectedly.delfile("punk-x-env.txt")
 					createNotification("Reset Success. Re-inject.", "Success", 5)
 				else
 					createNotification("No preference saved.", "Error", 3)
 				end
 			else
 				createNotification("Not supported.", "Error", 5)
-    end
-end)
+			end
+		end)
 
--- ========================================
--- AUTO-APPLY SAVED THEME ON STARTUP
--- ========================================
-task.spawn(function()
-    -- Wait for Settings page to fully render
-    repeat task.wait(0.1) until Pages:FindFirstChild("Settings")
-    task.wait(0.3) -- Extra safety delay
-    
-    if getgenv().CurrentTheme then
-        print("[Theme] Auto-applying saved theme:", getgenv().CurrentTheme)
-        ApplyTheme(getgenv().CurrentTheme)
-    end
-end)
-
-end;
+        -- Apply theme on start
+        task.spawn(function()
+            task.wait(0.2)
+            if getgenv().CurrentTheme then
+                ApplyTheme(getgenv().CurrentTheme)
+            end
+        end)
+	end;
 
 	InitTabs.TabsData = function()
-		-- 🟢 FIXED PATH: scripts
+		-- 🟢 PATH: scripts/ (Root)
 		if not CLONED_Detectedly.isfolder("scripts") then
 			CLONED_Detectedly.makedir("scripts")
 		end
@@ -4626,12 +4531,11 @@ end;
 			if (Nextpath == "/recently.data") then continue; end
 
 			local success, Loadedscript = pcall(function()
-				-- 🟢 FIXED PATH: scripts/
+				-- Ensure correct path reading
 				local path = Nextpath
 				if not string.find(path, "scripts/") then
 					path = "scripts/" .. path
 				end
-				
 				local content = CLONED_Detectedly.readfile(path)
 				return game.HttpService:JSONDecode(content)
 			end)
@@ -4644,8 +4548,6 @@ end;
 					Loadedscript.Content,
 					Loadedscript.Order
 				};
-			else
-				-- warn("Skipped corrupted file: " .. tostring(Nextpath))
 			end
 		end
 
@@ -4654,9 +4556,8 @@ end;
 		end
 		UIEvents.EditorTabs.updateUI();
 	end;
-
 	InitTabs.Saved = function()
-		-- 🟢 FIXED PATHS: saves, autoexec, workspace
+		-- 🟢 CREATE ALL FOLDERS IN ROOT
 		local folders = {
 			"saves",
 			"autoexec",
@@ -4670,7 +4571,7 @@ end;
 			end
 		end
 		
-		-- 🟢 FIXED PATH: saves
+		-- 🟢 PATH: saves/ (Root)
 		local saves = CLONED_Detectedly.listfiles("saves") or {};
 		
 		for index, Nextpath in ipairs(saves) do
@@ -5305,11 +5206,10 @@ end
     goTo("Home", true);
 end;
 	InitTabs.Autoexecute = function()
-		-- 🟢 FIX: Only run queue if code exists
-		-- (queue_on_teleport usually needs a script string, not empty)
 		local request = request or http_request or (syn and syn.request) or (http and http.request)
-		
-		-- 🟢 FIXED PATH: autoexec
+		CLONED_Detectedly.pushautoexec();
+
+		-- 🟢 PATH: autoexec/ (Root)
 		if CLONED_Detectedly.isfolder("autoexec") then
 			local files = CLONED_Detectedly.listfiles("autoexec")
 			if files then
