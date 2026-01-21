@@ -4493,57 +4493,57 @@ InitTabs.Settings = function()
 	end;
 
 InitTabs.TabsData = function()
-		-- 🟢 CREATE FOLDER: Punk-X-Files
+		-- 🟢 ENSURE FOLDERS EXIST
 		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
 			CLONED_Detectedly.makedir("Punk-X-Files")
 		end
-		-- 🟢 CREATE FOLDER: Punk-X-Files/scripts
 		if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
 			CLONED_Detectedly.makedir("Punk-X-Files/scripts")
 		end
 
 		local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
+		
 		for index, Nextpath in ipairs(scripts) do
-			if (Nextpath == "/recently.data") then continue; end
+			-- 🟢 ROBUST FILENAME EXTRACTION
+			-- Gets "MyScript.lua" from "any/long/path/MyScript.lua"
+			local filename = Nextpath:match("([^/\\]+)$");
+			
+			if filename and filename ~= "recently.data" then
+				local success, Loadedscript = pcall(function()
+					-- 🟢 FORCE CORRECT READ PATH
+					local cleanPath = "Punk-X-Files/scripts/" .. filename
+					local content = CLONED_Detectedly.readfile(cleanPath)
+					return game.HttpService:JSONDecode(content)
+				end)
 
-			local success, Loadedscript = pcall(function()
-				-- Ensure correct path reading
-				local path = Nextpath
-				if not string.find(path, "Punk-X-Files/scripts") then
-					path = "Punk-X-Files/scripts/" .. path
+				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
+					-- Clean corruption if present
+					if string.find(Loadedscript.Content, "<font") then
+						Loadedscript.Content = StripSyntax(Loadedscript.Content)
+					end
+					Data.Editor.Tabs[Loadedscript.Name] = {
+						Loadedscript.Content,
+						Loadedscript.Order
+					};
 				end
-				local content = CLONED_Detectedly.readfile(path)
-				return game.HttpService:JSONDecode(content)
-			end)
-
-			if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
-				if string.find(Loadedscript.Content, "<font") then
-					Loadedscript.Content = StripSyntax(Loadedscript.Content)
-				end
-				Data.Editor.Tabs[Loadedscript.Name] = {
-					Loadedscript.Content,
-					Loadedscript.Order
-				};
 			end
 		end
 
-		if (#scripts == 0) then
+		-- If empty, create a default tab
+		if (next(Data.Editor.Tabs) == nil) then
 			UIEvents.EditorTabs.createTab("Script", "");
 		end
+		
 		UIEvents.EditorTabs.updateUI();
 	end;
-
 InitTabs.Saved = function()
-		-- 🟢 CREATE FOLDER STRUCTURE (Now includes 'scripts')
-		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
-			CLONED_Detectedly.makedir("Punk-X-Files")
-		end
-		
+		-- 🟢 ENSURE ALL FOLDERS EXIST (Added scripts back)
 		local folders = {
+			"Punk-X-Files",
 			"Punk-X-Files/saves",
 			"Punk-X-Files/autoexec",
 			"Punk-X-Files/rconsole",
-			"Punk-X-Files/scripts" -- 🟢 Added this back!
+			"Punk-X-Files/scripts" -- 🟢 Added this back for safety
 		}
 
 		for _, folder in ipairs(folders) do
@@ -4552,19 +4552,18 @@ InitTabs.Saved = function()
 			end
 		end
 		
-		-- 🟢 READ: Punk-X-Files/saves
+		-- 🟢 LOAD SAVED SCRIPTS
 		local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
 		
 		for index, Nextpath in ipairs(saves) do
+			-- 🟢 ROBUST FILENAME EXTRACTION
 			local filename = Nextpath:match("([^/\\]+)$");
 			
 			if filename and filename:match("%.lua$") then
 				local success, Loadedscript = pcall(function()
-					local path = Nextpath
-					if not string.find(path, "Punk-X-Files/saves") then
-						path = "Punk-X-Files/saves/" .. path
-					end
-					local content = CLONED_Detectedly.readfile(path)
+					-- 🟢 FORCE CORRECT READ PATH
+					local cleanPath = "Punk-X-Files/saves/" .. filename
+					local content = CLONED_Detectedly.readfile(cleanPath)
 					return game.HttpService:JSONDecode(content)
 				end)
 
@@ -4579,6 +4578,7 @@ InitTabs.Saved = function()
 		
 		UIEvents.Saved.UpdateUI();
 		
+		-- Search Bar Logic
 		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 			local hi = Pages.Saved.TextBox.Text
 			local isEmpty = #hi:gsub("[%s]","") <= 0
