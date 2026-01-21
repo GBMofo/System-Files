@@ -3544,85 +3544,83 @@ end
 	-- [[ UPDATED UI EVENTS & LOGIC ]]
 	local UIEvents = {};
 	UIEvents = {
-		EditorTabs = {
+	EditorTabs = {
+			-- 🟢 HELPER: PREVENTS DUPLICATE NAMES (Fixes + Button and Rename)
+			getDuplicatedName = function(baseName, existingNames)
+				if not existingNames[baseName] then return baseName; end
+				local counter = 1;
+				local newName;
+				repeat
+					newName = baseName .. " " .. counter;
+					counter = counter + 1;
+				until not existingNames[newName]
+				return newName;
+			end,
+
 			getHighestOrder = function()
-				local HighestOrder = - 1;
+				local HighestOrder = -1;
 				for _, v in pairs(Data.Editor.Tabs) do
-					if (v[2] > HighestOrder) then
-						HighestOrder = v[2];
-					end
+					if (v[2] > HighestOrder) then HighestOrder = v[2]; end
 				end
 				return HighestOrder;
 			end,
+
 			createTab = function(TabName, Content, isTemp)
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
 				
 				if not isTemp then
 					TabName = sanitizeFilename(TabName)
-TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
+					-- Uses the fixed duplicator
+					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
-						Name = TabName,
-						Content = Content,
-						Order = (HighestOrder + 1)
+						Name = TabName, Content = Content, Order = (HighestOrder + 1)
 					}));
 				end
 
 				if Data.Editor.Tabs then
-					Data.Editor.Tabs[TabName] = {
-						Content,
-						(HighestOrder + 1)
-					};
+					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
 				end
 				UIEvents.EditorTabs.switchTab(TabName);
 				UIEvents.EditorTabs.updateUI();
 			end,
-		saveTab = function(tabName, Content, isExplicitSave)
-                tabName = tabName or Data.Editor.CurrentTab;
-                if not tabName then 
-                    createNotification("No tab selected!", "Error", 3)
-                    return 
-                end
-                
-                -- Strip tags to ensure clean save
-                Content = StripSyntax(Content or "")
 
-                -- 1. SAVED FILE MODE
-                if Data.Editor.EditingSavedFile == tabName then
-                    if isExplicitSave then
-                        UIEvents.Saved.SaveFile(tabName, Content, true) 
-                        createNotification("File Saved: " .. tabName, "Success", 3) -- 🟢 ADDED NOTIFICATION
-                    else
-                        -- Auto-save logic (Silent)
-                        local TabData = Data.Editor.Tabs[tabName];
-                        if TabData then
-                            CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-                                Name = tabName, Content = Content, Order = TabData[2]
-                            }));
-                            Data.Editor.Tabs[tabName] = { Content, TabData[2] };
-                        end
-                    end
-                    return
-                end
+			saveTab = function(tabName, Content, isExplicitSave)
+				tabName = tabName or Data.Editor.CurrentTab;
+				if not tabName then return end
+				Content = StripSyntax(Content or "")
 
-                -- 2. NORMAL EDITOR MODE
-                if isExplicitSave then
-                    UIEvents.Saved.SaveFile(tabName, Content, true) -- True = Overwrite/Update
-                    createNotification("Saved to: " .. tabName, "Success", 3) -- 🟢 ADDED NOTIFICATION
-                else
-                    -- Auto-save logic (Silent)
-                    local TabData = Data.Editor.Tabs[tabName];
-                    if (TabData) then
-                        CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-                            Name = tabName, Content = Content, Order = TabData[2]
-                        }));
-                        Data.Editor.Tabs[tabName] = { Content, TabData[2] };
-                    end
-                end
-            end,
+				if Data.Editor.EditingSavedFile == tabName then
+					if isExplicitSave then
+						UIEvents.Saved.SaveFile(tabName, Content, true) 
+						createNotification("File Saved: " .. tabName, "Success", 3)
+					else
+						local TabData = Data.Editor.Tabs[tabName];
+						if TabData then
+							CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+								Name = tabName, Content = Content, Order = TabData[2]
+							}));
+							Data.Editor.Tabs[tabName] = { Content, TabData[2] };
+						end
+					end
+					return
+				end
 
-switchTab = function(ToTab)
-				-- Cancel saved edits if switching away
+				if isExplicitSave then
+					UIEvents.Saved.SaveFile(tabName, Content, true) 
+					createNotification("Saved to: " .. tabName, "Success", 3)
+				else
+					local TabData = Data.Editor.Tabs[tabName];
+					if (TabData) then
+						CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+							Name = tabName, Content = Content, Order = TabData[2]
+						}));
+						Data.Editor.Tabs[tabName] = { Content, TabData[2] };
+					end
+				end
+			end,
+
+			switchTab = function(ToTab)
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 					local editingName = Data.Editor.EditingSavedFile
 					createNotification("Editing Cancelled", "Warn", 3)
@@ -3637,24 +3635,19 @@ switchTab = function(ToTab)
 					local EditorFrame = Editor:WaitForChild("Editor").Input;
 					local OldTab = Data.Editor.CurrentTab;
 
-					-- Save previous tab safely
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						local cleanContent = StripSyntax(EditorFrame.Text);
 						UIEvents.EditorTabs.saveTab(OldTab, cleanContent, false);
 					end
 
-					-- Load New Tab
 					Data.Editor.CurrentTab = ToTab;
 					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
 					
-					-- 🟢 CLEAN CORRUPTION
 					if string.find(TabContent, "<font") then
 						TabContent = StripSyntax(TabContent)
 					end
 
-					-- 🟢 PREVENT CRASH (Max Length Check)
 					if #TabContent > 100000 then
-						-- If script is huge, disable colors so it doesn't crash Roblox
 						EditorFrame.RichText = false 
 						EditorFrame.Text = TabContent
 					else
@@ -3668,12 +3661,9 @@ switchTab = function(ToTab)
 
 			delTab = function(Name)
 				local total = 0;
-				for i, v in pairs(Data.Editor.Tabs) do
-					total = total + 1;
-				end
+				for i, v in pairs(Data.Editor.Tabs) do total = total + 1; end
 				
 				local isEditing = (Data.Editor.EditingSavedFile == Name)
-				
 				if ((total - 1) <= 0) and not isEditing then
 					createNotification("Cannot delete last tab!", "Error", 5)
 					return;
@@ -3681,15 +3671,10 @@ switchTab = function(ToTab)
 				
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				for i, v in pairs(Data.Editor.Tabs) do
-					if (i ~= Name) then
-						UIEvents.EditorTabs.switchTab(i);
-					end
+					if (i ~= Name) then UIEvents.EditorTabs.switchTab(i); end
 				end
 				
-				if not isEditing then
-					CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua");
-				end
-				
+				if not isEditing then CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua"); end
 				Data.Editor.Tabs[Name] = nil;
 				
 				if isEditing then
@@ -3697,90 +3682,73 @@ switchTab = function(ToTab)
 					Data.Editor.EditingSavedFile = nil
 					UIEvents.Nav.goTo("Saved") 
 				end
-
 				UIEvents.EditorTabs.updateUI();
 			end,
+
 			updateUI = function()
-				-- 1. Clean Tabs
 				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
 					if v:GetAttribute("no") then continue end
 					if v:IsA("TextButton") then v:Destroy() end
 				end
 				
-				-- 2. HIDE PLUS BUTTON if in Edit Mode
 				if Pages.Editor.Tabs:FindFirstChild("Create") then
 					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil)
 				end
 
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
-					-- 3. HIDE OTHER TABS if in Edit Mode
-				if Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile then
-					continue
+					if Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile then continue end
+					
+					total = total + 1;
+					local new = script.Yo:Clone();
+					new.Parent = Pages.Editor.Tabs;
+					new.Title.Text = i;
+					new.Name = i;
+					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
+					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
+					new.LayoutOrder = v[2];
+					if (Data.Editor.CurrentTab == i) then
+						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
+					end
 				end
 				
-				total = total + 1;
-				local new = script.Yo:Clone();
-				new.Parent = Pages.Editor.Tabs;
-				new.Title.Text = i;
-				new.Name = i;
-				new.MouseButton1Click:Connect(function()
-					UIEvents.EditorTabs.switchTab(i);
-				end);
-				new.Delete.MouseButton1Click:Connect(function()
-					UIEvents.EditorTabs.delTab(i);
-				end);
-				new.LayoutOrder = v[2];
-				if (Data.Editor.CurrentTab == i) then
-                new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
-             end
-			end
-			local Editor = Pages:WaitForChild("Editor");
-			local Panel = Editor:WaitForChild("Panel");
+				local Editor = Pages:WaitForChild("Editor");
+				local Panel = Editor:WaitForChild("Panel");
 				local EditorFrame = Editor:WaitForChild("Editor");
 				
 				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
-					EditorFrame.Visible = false;
-					Panel.Visible = false;
+					EditorFrame.Visible = false; Panel.Visible = false;
 				else
-					EditorFrame.Visible = true;
-					Panel.Visible = true;
+					EditorFrame.Visible = true; Panel.Visible = true;
 				end
 			end,
+
 			RenameFile = function(NewName, TargetTab)
 				if Data.Editor.EditingSavedFile == TargetTab then
-					NewName = getDuplicatedName(NewName, Data.Saves.Scripts or {});
+					-- Uses the fixed duplicator
+					NewName = UIEvents.EditorTabs.getDuplicatedName(NewName, Data.Saves.Scripts or {});
 					if not Data.Saves.Scripts[NewName] then
 						UIEvents.Saved.SaveFile(NewName, Data.Editor.Tabs[TargetTab][1], false);
 						UIEvents.Saved.DelFile(TargetTab);
-						
 						Data.Editor.EditingSavedFile = NewName
 						Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab]
 						Data.Editor.Tabs[TargetTab] = nil
 						Data.Editor.CurrentTab = NewName
-						
 						UIEvents.EditorTabs.updateUI()
 						createNotification("Saved Script Renamed", "Success", 3)
 					end
 					return
 				end
-
-				NewName = getDuplicatedName(NewName, Data.Editor.Tabs or {});
+				-- Uses the fixed duplicator
+				NewName = UIEvents.EditorTabs.getDuplicatedName(NewName, Data.Editor.Tabs or {});
 				if not Data.Editor.Tabs[NewName] then
-					if Data.Editor.Tabs then
-						Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab]
-					end
-					
+					if Data.Editor.Tabs then Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab] end
 					CLONED_Detectedly.writefile("scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
-						Name = NewName,
-						Content = Data.Editor.Tabs[TargetTab][1],
-						Order = Data.Editor.Tabs[TargetTab][2]
+						Name = NewName, Content = Data.Editor.Tabs[TargetTab][1], Order = Data.Editor.Tabs[TargetTab][2]
 					}));
 					CLONED_Detectedly.delfile("scripts/" .. TargetTab .. ".lua");
-					
 					Data.Editor.Tabs[TargetTab] = nil
 					Data.Editor.CurrentTab = NewName
-					
 					UIEvents.EditorTabs.updateUI();
 				end
 			end
