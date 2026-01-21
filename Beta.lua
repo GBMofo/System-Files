@@ -3167,31 +3167,29 @@ if v.Name == "Popups" then v.Visible = false return end
 	pcall(function()
 		getgenv()._PULL_INT();
 	end);
-	local CLONED_Detectedly = deepCopy(Detectedly or {});
-	Detectedly = nil;
-	local print = function(...)
-	end;
-	for i, v in pairs({
-		'pushautoexec',
-		'runcode',
+
+-- 🟢 FIX: Connect to Real Executor Functions
+	local CLONED_Detectedly = {}
 	
-		'open_url',
-		'toast',
-		-- file
-		'writefile' ,
-		'appendfile',
-		'readfile',
-		'isfile',
-		'listfiles',
-		'delfile',
-		-- folder
-		'deldir',
-		'isfolder',
-		'makedir'}) do
-		if not CLONED_Detectedly[v] then
-			CLONED_Detectedly[v] = function(...) print(v,"|", ...) end
-		end
-	end
+	-- Map the script's names to your Executor's Globals
+	CLONED_Detectedly.writefile = writefile
+	CLONED_Detectedly.readfile = readfile
+	CLONED_Detectedly.appendfile = appendfile
+	CLONED_Detectedly.isfile = isfile
+	CLONED_Detectedly.listfiles = listfiles
+	CLONED_Detectedly.delfile = delfile
+	CLONED_Detectedly.isfolder = isfolder
+	CLONED_Detectedly.delfolder = delfolder
+	
+	-- Handle different names (makedir vs makefolder)
+	CLONED_Detectedly.makedir = makefolder or makedir
+	CLONED_Detectedly.deldir = delfolder or deldir
+	
+	-- Misc
+	CLONED_Detectedly.setclipboard = setclipboard or toclipboard
+	CLONED_Detectedly.runcode = function(code) return loadstring(code) end
+	CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or syn.queue_on_teleport) or function() end
+
 	local BASE_WIDTH = 733;
 	local BASE_HEIGHT = 392;
 	local OriginalProperties = {};
