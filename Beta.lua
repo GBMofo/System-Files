@@ -4472,8 +4472,8 @@ InitTabs.Settings = function()
 		createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
             -- 🟢 RESET LOGIC (Root Path)
 			if CLONED_Detectedly.delfile and CLONED_Detectedly.isfile then
-				if CLONED_Detectedly.isfile("punk-x-env.txt") then
-					CLONED_Detectedly.delfile("punk-x-env.txt")
+				if CLONED_Detectedly.isfile("Punk-X-Files/punk-x-env.txt") then
+					CLONED_Detectedly.delfile("Punk-X-Files/punk-x-env.txt")
 					createNotification("Reset Success. Re-inject.", "Success", 5)
 				else
 					createNotification("No preference saved.", "Error", 3)
