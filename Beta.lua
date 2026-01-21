@@ -3424,47 +3424,53 @@ local SyntaxColors = {
     ["pairs"] = "rgb(0, 191, 255)", ["ipairs"] = "rgb(0, 191, 255)", ["loadstring"] = "rgb(0, 0, 139)",
 }
 
--- 🟢 THE STRIPPER (Removes the messy tags)
+-- 🟢 CLEANER
 local function StripSyntax(text)
     return string.gsub(text, "<[^>]+>", "")
 end
 
--- 🟢 THE HIGHLIGHTER (Now Safe)
+-- 🟢 ROBUST HIGHLIGHTER (Fixes the Glitch)
 local function ApplySyntax(text)
-    -- 1. CLEAN THE TEXT FIRST (This fixes the recursive glitch)
+    -- 1. Clean first
     text = StripSyntax(text)
+    
+    -- 2. Safety Limit
+    if #text > 50000 then return text end
 
-    -- 2. Safety Brake (Prevents crash on massive scripts)
-    if #text > 20000 then 
-        return text 
+    -- 3. HIDE STRINGS (Tokenization)
+    -- We replace strings with weird tokens so the highlighter ignores them for now
+    local strings = {}
+    local count = 0
+    local function hide(str)
+        count = count + 1
+        local token = "§" .. count .. "§"
+        strings[token] = '<font color="rgb(176, 224, 230)">' .. str .. '</font>'
+        return token
     end
 
-    -- 3. Apply Colors
+    -- Hide Double Quotes "..."
+    text = text:gsub('("[^"]*")', hide)
+    -- Hide Single Quotes '...'
+    text = text:gsub("('[^']*')", hide)
+
+    -- 4. HIGHLIGHT KEYWORDS (Now safe because strings are hidden)
     for keyword, color in pairs(SyntaxColors) do
         text = text:gsub("(%f[%a]" .. keyword .. "%f[%A])", '<font color="' .. color .. '">%1</font>')
     end
-    -- Numbers
+
+    -- 5. HIGHLIGHT NUMBERS
     text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
-    -- Strings
-    text = text:gsub('(".-")', '<font color="rgb(176, 224, 230)">%1</font>')
-    text = text:gsub("('.-')", '<font color="rgb(176, 224, 230)">%1</font>')
-    -- Operators
+
+    -- 6. HIGHLIGHT OPERATORS
     text = text:gsub("([%+%-%*/%%%^#=<>~%(%)%[%]{}])", '<font color="rgb(70, 130, 180)">%1</font>')
 
-    return text
-end
-
-local function getDuplicatedName(baseName, existingNames)
-    if not existingNames[baseName] then
-        return baseName;
+    -- 7. RESTORE STRINGS
+    -- Put the colored strings back where the tokens were
+    for token, replacement in pairs(strings) do
+        text = text:gsub(token, function() return replacement end)
     end
-    local counter = 1;
-    local newName;
-    repeat
-        newName = baseName .. " " .. counter;
-        counter = counter + 1;
-    until not existingNames[newName]
-    return newName;
+
+    return text
 end
 
 	local function hash(str: string): number
