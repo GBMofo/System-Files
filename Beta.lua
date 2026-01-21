@@ -3540,10 +3540,9 @@ local function sanitizeFilename(name)
     return name
 end
 	-- [[ UPDATED UI EVENTS & LOGIC ]]
-	local UIEvents = {};
+local UIEvents = {};
 	UIEvents = {
-	EditorTabs = {
-			-- 🟢 HELPER: PREVENTS DUPLICATE NAMES (Fixes + Button and Rename)
+		EditorTabs = {
 			getDuplicatedName = function(baseName, existingNames)
 				if not existingNames[baseName] then return baseName; end
 				local counter = 1;
@@ -3569,8 +3568,8 @@ end
 				
 				if not isTemp then
 					TabName = sanitizeFilename(TabName)
-					-- Uses the fixed duplicator
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
+					-- 🟢 FIXED PATH: scripts/
 					CLONED_Detectedly.writefile("scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
 						Name = TabName, Content = Content, Order = (HighestOrder + 1)
 					}));
@@ -3595,6 +3594,7 @@ end
 					else
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
+							-- 🟢 FIXED PATH: scripts/
 							CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
 								Name = tabName, Content = Content, Order = TabData[2]
 							}));
@@ -3610,6 +3610,7 @@ end
 				else
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
+						-- 🟢 FIXED PATH: scripts/
 						CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
 							Name = tabName, Content = Content, Order = TabData[2]
 						}));
@@ -3622,6 +3623,7 @@ end
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 					local editingName = Data.Editor.EditingSavedFile
 					createNotification("Editing Cancelled", "Warn", 3)
+					-- 🟢 FIXED PATH: scripts/
 					CLONED_Detectedly.delfile("scripts/" .. editingName .. ".lua");
 					Data.Editor.Tabs[editingName] = nil;
 					Data.Editor.EditingSavedFile = nil
@@ -3672,6 +3674,7 @@ end
 					if (i ~= Name) then UIEvents.EditorTabs.switchTab(i); end
 				end
 				
+				-- 🟢 FIXED PATH: scripts/
 				if not isEditing then CLONED_Detectedly.delfile("scripts/" .. Name .. ".lua"); end
 				Data.Editor.Tabs[Name] = nil;
 				
@@ -3723,7 +3726,6 @@ end
 
 			RenameFile = function(NewName, TargetTab)
 				if Data.Editor.EditingSavedFile == TargetTab then
-					-- Uses the fixed duplicator
 					NewName = UIEvents.EditorTabs.getDuplicatedName(NewName, Data.Saves.Scripts or {});
 					if not Data.Saves.Scripts[NewName] then
 						UIEvents.Saved.SaveFile(NewName, Data.Editor.Tabs[TargetTab][1], false);
@@ -3737,10 +3739,10 @@ end
 					end
 					return
 				end
-				-- Uses the fixed duplicator
 				NewName = UIEvents.EditorTabs.getDuplicatedName(NewName, Data.Editor.Tabs or {});
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab] end
+					-- 🟢 FIXED PATH: scripts/
 					CLONED_Detectedly.writefile("scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
 						Name = NewName, Content = Data.Editor.Tabs[TargetTab][1], Order = Data.Editor.Tabs[TargetTab][2]
 					}));
@@ -3751,28 +3753,24 @@ end
 				end
 			end
 		},
+
 		Saved = {
 			SaveFile = function(Name, Content, Overwrite)
 				Name = sanitizeFilename(Name)
-				-- Ensure unique name if not overwriting
 				if not Overwrite then 
 					Name = UIEvents.EditorTabs.getDuplicatedName(Name, Data.Saves.Scripts or {}); 
 				end
-				
-				-- 🟢 FORCE SAVE TO 'saves/' FOLDER
+				-- 🟢 FIXED PATH: saves/
 				CLONED_Detectedly.writefile("saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
 					Name = Name, Content = Content
 				}));
-				
 				Data.Saves.Scripts[Name] = Content;
 				UIEvents.Saved.UpdateUI();
-				
-				if not Overwrite then 
-					createNotification("Saved to: " .. Name, "Success", 3) 
-				end
+				if not Overwrite then createNotification("Saved to: " .. Name, "Success", 3) end
 			end,
 
 			DelFile = function(Name)
+				-- 🟢 FIXED PATH: saves/
 				if CLONED_Detectedly.isfile("saves/" .. Name .. ".lua") then
 					CLONED_Detectedly.delfile("saves/" .. Name .. ".lua");
 				end
@@ -3785,48 +3783,39 @@ end
 					if v:GetAttribute("no") then continue end
 					if v:IsA("CanvasGroup") then v:Destroy() end
 				end
-				
 				for i, v in pairs(Data.Saves.Scripts) do
 					local new = script.SaveTemplate:Clone();
 					new.Parent = Pages.Saved.Scripts;
 					new.Name = i;
 					new.Title.Text = i;
 					
-					-- Execute
 					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
 						UIEvents.Executor.RunCode(v)();
 					end)
 
-					-- Delete
 					new.Misc.Panel.Delete.MouseButton1Click:Connect(function()
 						UIEvents.Saved.DelFile(i);
 					end);
 
-					-- Edit
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
-						-- If already editing this file, just switch
 						if Data.Editor.EditingSavedFile == i then
 							UIEvents.Nav.goTo("Editor")
 							return
 						end
-						
-						-- Cancel previous edit
 						if Data.Editor.EditingSavedFile then
 							local old = Data.Editor.EditingSavedFile
+							-- 🟢 FIXED PATH: scripts/
 							CLONED_Detectedly.delfile("scripts/" .. old .. ".lua")
 							Data.Editor.Tabs[old] = nil
 							Data.Editor.EditingSavedFile = nil
 						end
-
-						-- Load into Editor as Saved File
 						Data.Editor.EditingSavedFile = i
-						UIEvents.EditorTabs.createTab(i, v, true) -- isTemp = true (don't create new file in scripts/)
-						
+						UIEvents.EditorTabs.createTab(i, v, true)
 						UIEvents.Nav.goTo("Editor")
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
 
-					-- AutoExec Logic
+					-- 🟢 FIXED PATH: autoexec/
 					local autoExecPath = "autoexec/" .. i .. ".lua"
 					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
 					
@@ -3848,12 +3837,9 @@ end
 						end
 					end)
 
-					-- Rename Logic for Saved Files
 					new.Title.FocusLost:Connect(function(press)
 						local newName = new.Title.Text;
-						-- Clean whitespace
 						newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
-						
 						local isEmpty = #newName <= 0;
 						if (not press or isEmpty or (newName == i)) then
 							new.Title.Text = i;
@@ -3873,139 +3859,58 @@ end
 				end
 			end
 		},
+
 		Executor = {
 			RunCode = function(content)
 				createNotification("Executed!", "Success", 5);
-				
-				-- 1. Compile the script
-				local func, loadErr = loadstring(content);
+				local func, x = loadstring(content);
 				if not func then
-					task.spawn(function() error(loadErr) end);
-					return function() end;
+					task.spawn(function() error(x) end);
+				else
+					return func;
 				end
-
-				-- 2. Create the Sandbox Environment
-				-- This inherits all global functions (print, game, etc.)
-				local env = setmetatable({}, { __index = getgenv() })
-
-				-- 3. HOOK FILE FUNCTIONS (Redirect to PunkX/workspace)
-				
-				-- Helper to enforce path
-				local function sandboxedPath(path)
-					-- Remove leading slash if present
-					if string.sub(path, 1, 1) == "/" then path = string.sub(path, 2) end
-					return "PunkX/workspace/" .. path
-				end
-
-				-- Override writefile
-				env.writefile = function(path, data)
-					return getgenv().writefile(sandboxedPath(path), data)
-				end
-
-				-- Override readfile
-				env.readfile = function(path)
-					return getgenv().readfile(sandboxedPath(path))
-				end
-
-				-- Override isfile
-				env.isfile = function(path)
-					return getgenv().isfile(sandboxedPath(path))
-				end
-
-				-- Override isfolder
-				env.isfolder = function(path)
-					return getgenv().isfolder(sandboxedPath(path))
-				end
-
-				-- Override makefolder
-				env.makefolder = function(path)
-					return getgenv().makefolder(sandboxedPath(path))
-				end
-				
-				-- Override delfile
-				env.delfile = function(path)
-					return getgenv().delfile(sandboxedPath(path))
-				end
-				
-				-- Override delfolder
-				env.delfolder = function(path)
-					return getgenv().delfolder(sandboxedPath(path))
-				end
-				
-				-- Override listfiles (Clean the return so scripts don't know they are sandboxed)
-				env.listfiles = function(path)
-					local realPath = sandboxedPath(path)
-					local files = getgenv().listfiles(realPath) or {}
-					local cleanFiles = {}
-					for _, file in pairs(files) do
-						-- Remove "PunkX/workspace/" from the path string
-						local clean = string.gsub(file, "PunkX/workspace/", "")
-						table.insert(cleanFiles, clean)
-					end
-					return cleanFiles
-				end
-
-				-- 4. Apply the Sandbox to the script
-				setfenv(func, env)
-
-				return func
+				return function() end;
 			end
 		},
 		Key = {
 			Save = function(Key)
+				-- 🟢 FIXED PATH: Key
 				CLONED_Detectedly.writefile("Key", Key);
 			end
 		},
 		Nav = {
-    goTo = function(Name)
-        -- 🔴 FIX: Hide all pages first to prevent overlap
-        for _, page in pairs(Pages:GetChildren()) do
-            if page:IsA("Frame") and page ~= Pages.UIPageLayout then
-                page.Visible = false
-            end
-        end
-        
-        -- Show and jump to target page
-        if Pages:FindFirstChild(Name) then
-            Pages[Name].Visible = true
-            Pages.UIPageLayout:JumpTo(Pages[Name])
-        end
-        
-        local Button = nil
-        for _, frame in ipairs(Nav:GetChildren()) do
-            if frame:IsA("Frame") then
-                for _, btn in ipairs(frame:GetChildren()) do
-                    if btn.Name == Name then 
-                        Button = btn 
-                        break 
-                    end
-                end
-            end
-        end
-        
-        if Button then
-            EnableFrame.Visible = true
-            Pages.Visible = true 
-            local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y)
-            local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition
-            local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y)
-            if (f or isInstantNext) then
-                EnableFrame.Position = TargetPos
-                EnableFrame.Size = TargetSize
-                if isInstantNext then isInstantNext = false end
-                return
-            end
-            
-            local TweenService = game:GetService("TweenService")
-            TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-                Position = TargetPos,
-                Size = TargetSize,
-                BackgroundTransparency = 0
-            }):Play()
-        end
-    end
-}
+			goTo = function(Name)
+				for _, page in pairs(Pages:GetChildren()) do
+					if page:IsA("Frame") and page ~= Pages.UIPageLayout then page.Visible = false end
+				end
+				if Pages:FindFirstChild(Name) then
+					Pages[Name].Visible = true
+					Pages.UIPageLayout:JumpTo(Pages[Name])
+				end
+				local Button = nil
+				for _, frame in ipairs(Nav:GetChildren()) do
+					if frame:IsA("Frame") then
+						for _, btn in ipairs(frame:GetChildren()) do
+							if btn.Name == Name then Button = btn; break; end
+						end
+					end
+				end
+				if Button then
+					EnableFrame.Visible = true
+					Pages.Visible = true 
+					local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y)
+					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition
+					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y)
+					
+					local TweenService = game:GetService("TweenService")
+					TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+						Position = TargetPos, Size = TargetSize, BackgroundTransparency = 0
+					}):Play()
+				end
+			end
+		}
 	};
+
  -- 🟢 UI FIX: PREVENT CLICK-THROUGH
     local Popups = script.Parent:WaitForChild("Popups")
     Popups.Active = true          -- Blocks clicks from going behind
@@ -4046,18 +3951,18 @@ end
 		getgenv().CurrentTheme = Color3.fromRGB(160, 85, 255)
 		local CurrentTheme = getgenv().CurrentTheme
 		
+	-- 🟢 FIXED PATH: theme.json (Root)
 		local function LoadTheme()
-    if CLONED_Detectedly.isfile("theme.json") then
-        local success, data = pcall(function()
-            return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("theme.json"))
-        end)
-        if success and data.r and data.g and data.b then
-            CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
-            getgenv().CurrentTheme = CurrentTheme -- 🔴 UPDATE GLOBAL
-            print("[Theme] Loaded:", CurrentTheme)
-        end
-    end
-end
+			if CLONED_Detectedly.isfile("theme.json") then
+				local success, data = pcall(function()
+					return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("theme.json"))
+				end)
+				if success and data.r and data.g and data.b then
+					CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
+					getgenv().CurrentTheme = CurrentTheme
+				end
+			end
+		end
 		
 		local function SaveTheme(color)
 			CLONED_Detectedly.writefile("theme.json", game.HttpService:JSONEncode({
@@ -4711,7 +4616,7 @@ end)
 end;
 
 	InitTabs.TabsData = function()
-		-- 🟢 FOLDER CHECK: Only create if missing (Won't delete existing files)
+		-- 🟢 FIXED PATH: scripts
 		if not CLONED_Detectedly.isfolder("scripts") then
 			CLONED_Detectedly.makedir("scripts")
 		end
@@ -4721,24 +4626,26 @@ end;
 			if (Nextpath == "/recently.data") then continue; end
 
 			local success, Loadedscript = pcall(function()
-				local content = CLONED_Detectedly.readfile("scripts" .. Nextpath)
+				-- 🟢 FIXED PATH: scripts/
+				local path = Nextpath
+				if not string.find(path, "scripts/") then
+					path = "scripts/" .. path
+				end
+				
+				local content = CLONED_Detectedly.readfile(path)
 				return game.HttpService:JSONDecode(content)
 			end)
 
-			-- Load valid scripts
 			if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
-				
-				-- Clean corruption if present
 				if string.find(Loadedscript.Content, "<font") then
 					Loadedscript.Content = StripSyntax(Loadedscript.Content)
 				end
-				
 				Data.Editor.Tabs[Loadedscript.Name] = {
 					Loadedscript.Content,
 					Loadedscript.Order
 				};
 			else
-				warn("[PunkX] Corrupted file skipped: " .. tostring(Nextpath))
+				-- warn("Skipped corrupted file: " .. tostring(Nextpath))
 			end
 		end
 
@@ -4749,44 +4656,47 @@ end;
 	end;
 
 	InitTabs.Saved = function()
-		-- 🟢 FOLDER CHECK: Create 'saves' if missing
-		if not CLONED_Detectedly.isfolder("saves") then
-			CLONED_Detectedly.makedir("saves");
-		end
-		-- 🟢 FOLDER CHECK: Create 'autoexec' if missing
-		if not CLONED_Detectedly.isfolder("autoexec") then
-			CLONED_Detectedly.makedir("autoexec");
+		-- 🟢 FIXED PATHS: saves, autoexec, workspace
+		local folders = {
+			"saves",
+			"autoexec",
+			"workspace",
+			"rconsole"
+		}
+
+		for _, folder in ipairs(folders) do
+			if not CLONED_Detectedly.isfolder(folder) then
+				CLONED_Detectedly.makedir(folder)
+			end
 		end
 		
-		-- List files
+		-- 🟢 FIXED PATH: saves
 		local saves = CLONED_Detectedly.listfiles("saves") or {};
 		
 		for index, Nextpath in ipairs(saves) do
-			-- Extract filename
 			local filename = Nextpath:match("([^/\\]+)$");
 			
 			if filename and filename:match("%.lua$") then
 				local success, Loadedscript = pcall(function()
-					local content = CLONED_Detectedly.readfile("saves/" .. filename)
+					local path = Nextpath
+					if not string.find(path, "saves/") then
+						path = "saves/" .. path
+					end
+					local content = CLONED_Detectedly.readfile(path)
 					return game.HttpService:JSONDecode(content)
 				end)
 
 				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
-					-- Clean corruption if present
 					if string.find(Loadedscript.Content, "<font") then
 						Loadedscript.Content = StripSyntax(Loadedscript.Content)
 					end
 					Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
-				else
-					warn("[PunkX] Skipped corrupted file: " .. filename)
 				end
 			end
 		end
 		
-		-- Update the UI
 		UIEvents.Saved.UpdateUI();
 		
-		-- Search Logic
 		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 			local hi = Pages.Saved.TextBox.Text
 			local isEmpty = #hi:gsub("[%s]","") <= 0
@@ -5395,22 +5305,19 @@ end
     goTo("Home", true);
 end;
 	InitTabs.Autoexecute = function()
-		-- 🟢 1. Keep Standard Decompiler Support (Optional, safe to keep)
+		-- 🟢 FIX: Only run queue if code exists
+		-- (queue_on_teleport usually needs a script string, not empty)
 		local request = request or http_request or (syn and syn.request) or (http and http.request)
-		-- (You can keep your decompile logic here if you want, or leave it empty)
-		CLONED_Detectedly.pushautoexec();
-
-		-- 🟢 2. PUNK X AUTOEXEC RUNNER
-		-- This checks your custom folder and runs any scripts found there
-		if CLONED_Detectedly.isfolder("PunkX/autoexec") then
-			local files = CLONED_Detectedly.listfiles("PunkX/autoexec")
+		
+		-- 🟢 FIXED PATH: autoexec
+		if CLONED_Detectedly.isfolder("autoexec") then
+			local files = CLONED_Detectedly.listfiles("autoexec")
 			if files then
 				for _, path in pairs(files) do
 					if path:match("%.lua$") then
 						task.spawn(function()
 							local content = CLONED_Detectedly.readfile(path)
 							if content and #content > 0 then
-								-- Run it using the sandboxed executor so it respects PunkX folder
 								UIEvents.Executor.RunCode(content)()
 								print("[PunkX] Auto-Executed: " .. path)
 							end
@@ -5420,6 +5327,7 @@ end;
 			end
 		end
 	end;
+
 	local Loaded = false;
 	local function loadUI()
 		if Loaded then
