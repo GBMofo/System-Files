@@ -3754,54 +3754,65 @@ end
 			end
 		},
 		Saved = {
-    SaveFile = function(Name, Content, Overwrite)
-        Name = sanitizeFilename(Name)
-        if not Overwrite then
-            Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
-        end
+			SaveFile = function(Name, Content, Overwrite)
+				Name = sanitizeFilename(Name)
+				-- Ensure unique name if not overwriting
+				if not Overwrite then 
+					Name = UIEvents.EditorTabs.getDuplicatedName(Name, Data.Saves.Scripts or {}); 
+				end
 				
+				-- 🟢 FORCE SAVE TO 'saves/' FOLDER
 				CLONED_Detectedly.writefile("saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
-					Name = Name,
-					Content = Content
+					Name = Name, Content = Content
 				}));
+				
 				Data.Saves.Scripts[Name] = Content;
 				UIEvents.Saved.UpdateUI();
 				
-				if not Overwrite then
-					createNotification("Saved to: " .. Name, "Success", 3)
+				if not Overwrite then 
+					createNotification("Saved to: " .. Name, "Success", 3) 
 				end
 			end,
+
 			DelFile = function(Name)
-				CLONED_Detectedly.delfile("saves/" .. Name .. ".lua");
+				if CLONED_Detectedly.isfile("saves/" .. Name .. ".lua") then
+					CLONED_Detectedly.delfile("saves/" .. Name .. ".lua");
+				end
 				Data.Saves.Scripts[Name] = nil;
 				UIEvents.Saved.UpdateUI();
 			end,
+
 			UpdateUI = function()
 				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
 					if v:GetAttribute("no") then continue end
 					if v:IsA("CanvasGroup") then v:Destroy() end
 				end
+				
 				for i, v in pairs(Data.Saves.Scripts) do
 					local new = script.SaveTemplate:Clone();
 					new.Parent = Pages.Saved.Scripts;
 					new.Name = i;
 					new.Title.Text = i;
 					
--- uses 'new' (the card), 'MouseButton1Click' (the method), and 'v' (the saved script content)
-new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
-    UIEvents.Executor.RunCode(v)(); 
-end)
-					
+					-- Execute
+					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
+						UIEvents.Executor.RunCode(v)();
+					end)
+
+					-- Delete
 					new.Misc.Panel.Delete.MouseButton1Click:Connect(function()
 						UIEvents.Saved.DelFile(i);
 					end);
 
+					-- Edit
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
+						-- If already editing this file, just switch
 						if Data.Editor.EditingSavedFile == i then
 							UIEvents.Nav.goTo("Editor")
 							return
 						end
 						
+						-- Cancel previous edit
 						if Data.Editor.EditingSavedFile then
 							local old = Data.Editor.EditingSavedFile
 							CLONED_Detectedly.delfile("scripts/" .. old .. ".lua")
@@ -3809,13 +3820,15 @@ end)
 							Data.Editor.EditingSavedFile = nil
 						end
 
+						-- Load into Editor as Saved File
 						Data.Editor.EditingSavedFile = i
-						UIEvents.EditorTabs.createTab(i, v, true)
+						UIEvents.EditorTabs.createTab(i, v, true) -- isTemp = true (don't create new file in scripts/)
 						
 						UIEvents.Nav.goTo("Editor")
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
 
+					-- AutoExec Logic
 					local autoExecPath = "autoexec/" .. i .. ".lua"
 					local isAutoOn = CLONED_Detectedly.isfile(autoExecPath)
 					
@@ -3837,9 +3850,13 @@ end)
 						end
 					end)
 
+					-- Rename Logic for Saved Files
 					new.Title.FocusLost:Connect(function(press)
 						local newName = new.Title.Text;
-						local isEmpty = # (string.gsub(newName, "[%s]", "")) <= 0;
+						-- Clean whitespace
+						newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
+						
+						local isEmpty = #newName <= 0;
 						if (not press or isEmpty or (newName == i)) then
 							new.Title.Text = i;
 							return;
@@ -3848,12 +3865,13 @@ end)
 					end);
 				end
 			end,
+
 			RenameFile = function(NewName, TargetTab)
-				NewName = getDuplicatedName(NewName, Data.Saves.Scripts or {});
+				NewName = UIEvents.EditorTabs.getDuplicatedName(NewName, Data.Saves.Scripts or {});
 				if not Data.Saves.Scripts[NewName] then
 					UIEvents.Saved.SaveFile(NewName, Data.Saves.Scripts[TargetTab], false);
 					UIEvents.Saved.DelFile(TargetTab);
-					UIEvents.Saved.UpdateUI();
+					createNotification("Renamed to: " .. NewName, "Success", 3)
 				end
 			end
 		},
