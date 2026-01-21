@@ -3577,58 +3577,49 @@ TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
 				UIEvents.EditorTabs.switchTab(TabName);
 				UIEvents.EditorTabs.updateUI();
 			end,
-			saveTab = function(tabName, Content, isExplicitSave)
-    tabName = tabName or Data.Editor.CurrentTab;
-    if not tabName then return end
-    
-    -- 🟢 ALWAYS STRIP TAGS BEFORE SAVING
-    Content = StripSyntax(Content or "")
+		saveTab = function(tabName, Content, isExplicitSave)
+                tabName = tabName or Data.Editor.CurrentTab;
+                if not tabName then 
+                    createNotification("No tab selected!", "Error", 3)
+                    return 
+                end
+                
+                -- Strip tags to ensure clean save
+                Content = StripSyntax(Content or "")
 
-    -- [[ MODE 1: EDITING SAVED FILE ]]
-    if Data.Editor.EditingSavedFile == tabName then
-        if isExplicitSave then
-            UIEvents.Saved.SaveFile(tabName, Content, true) 
-            createNotification("Saved File Overwritten", "Success", 3)
-            
-            CLONED_Detectedly.delfile("scripts/" .. tabName .. ".lua")
-            Data.Editor.Tabs[tabName] = nil
-            Data.Editor.EditingSavedFile = nil
-            Data.Editor.CurrentTab = nil
-            
-            UIEvents.EditorTabs.updateUI()
-            UIEvents.Nav.goTo("Saved")
-        else
-            local TabData = Data.Editor.Tabs[tabName];
-            if TabData then
-                CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-                    Name = tabName,
-                    Content = Content, -- Already stripped
-                    Order = TabData[2]
-                }));
-                Data.Editor.Tabs[tabName] = { Content, TabData[2] };
-            end
-        end
-        return
-    end
+                -- 1. SAVED FILE MODE
+                if Data.Editor.EditingSavedFile == tabName then
+                    if isExplicitSave then
+                        UIEvents.Saved.SaveFile(tabName, Content, true) 
+                        createNotification("File Saved: " .. tabName, "Success", 3) -- 🟢 ADDED NOTIFICATION
+                    else
+                        -- Auto-save logic (Silent)
+                        local TabData = Data.Editor.Tabs[tabName];
+                        if TabData then
+                            CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+                                Name = tabName, Content = Content, Order = TabData[2]
+                            }));
+                            Data.Editor.Tabs[tabName] = { Content, TabData[2] };
+                        end
+                    end
+                    return
+                end
 
-    -- [[ MODE 2: NORMAL EDITOR ]]
-    if isExplicitSave then
-        UIEvents.Saved.SaveFile(tabName, Content, false)
-    else
-        local TabData = Data.Editor.Tabs[tabName];
-        if (TabData) then
-            CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-                Name = tabName,
-                Content = Content, -- Already stripped
-                Order = TabData[2]
-            }));
-            Data.Editor.Tabs[tabName] = {
-                Content,
-                TabData[2]
-            };
-        end
-    end
-end,
+                -- 2. NORMAL EDITOR MODE
+                if isExplicitSave then
+                    UIEvents.Saved.SaveFile(tabName, Content, true) -- True = Overwrite/Update
+                    createNotification("Saved to: " .. tabName, "Success", 3) -- 🟢 ADDED NOTIFICATION
+                else
+                    -- Auto-save logic (Silent)
+                    local TabData = Data.Editor.Tabs[tabName];
+                    if (TabData) then
+                        CLONED_Detectedly.writefile("scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+                            Name = tabName, Content = Content, Order = TabData[2]
+                        }));
+                        Data.Editor.Tabs[tabName] = { Content, TabData[2] };
+                    end
+                end
+            end,
 
 switchTab = function(ToTab)
 				-- Cancel saved edits if switching away
@@ -3965,6 +3956,12 @@ end)
     end
 }
 	};
+ -- 🟢 UI FIX: PREVENT CLICK-THROUGH
+    local Popups = script.Parent:WaitForChild("Popups")
+    Popups.Active = true          -- Blocks clicks from going behind
+    Popups.Selectable = true
+    Popups.Main.Active = true     -- Blocks clicks inside the box
+    Popups.Main.Selectable = true
 
 	InitTabs.Settings = function()
 -- 🔴 FORCE DELETE OLD THEME (ONE-TIME FIX)
@@ -4757,96 +4754,98 @@ end;
 	end;
 
 	InitTabs.Editor = function()
-		local Editor = Pages:WaitForChild("Editor");
-		local Panel = Editor:WaitForChild("Panel");
-		local EditorFrame = Editor:WaitForChild("Editor");
-		local Method = "MouseButton1Click"; -- Standard click method
+        local Editor = Pages:WaitForChild("Editor");
+        local Panel = Editor:WaitForChild("Panel");
+        local EditorFrame = Editor:WaitForChild("Editor");
+        local Method = "MouseButton1Click"; 
 
-		-- [[ EXECUTE ]]
-		Panel.Execute[Method]:Connect(function()
-			-- Always clean code before running so we don't run HTML tags
-			local cleanCode = StripSyntax(EditorFrame.Input.Text)
-			UIEvents.Executor.RunCode(cleanCode)();
-		end);
+        -- [[ EXECUTE ]]
+        Panel.Execute[Method]:Connect(function()
+            local cleanCode = StripSyntax(EditorFrame.Input.Text)
+            UIEvents.Executor.RunCode(cleanCode)();
+        end);
 
-		-- [[ PASTE - FIXED ]]
-		Panel.Paste[Method]:Connect(function()
-			local pastedText = safeGetClipboard();
-			-- ApplySyntax now auto-cleans, so this is safe
-			EditorFrame.Input.Text = ApplySyntax(pastedText);
-		end);
+        -- [[ PASTE ]]
+        Panel.Paste[Method]:Connect(function()
+            local pastedText = safeGetClipboard();
+            EditorFrame.Input.Text = ApplySyntax(pastedText);
+        end);
 
-		-- [[ EXECUTE CLIPBOARD ]]
-		Panel.ExecuteClipboard[Method]:Connect(function()
-			local clipCode = safeGetClipboard()
-			UIEvents.Executor.RunCode(clipCode)();
-		end);
+        -- [[ EXECUTE CLIPBOARD ]]
+        Panel.ExecuteClipboard[Method]:Connect(function()
+            local clipCode = safeGetClipboard()
+            UIEvents.Executor.RunCode(clipCode)();
+        end);
 
-		-- [[ CLEAR ]]
-		Panel.Delete[Method]:Connect(function()
-			EditorFrame.Input.Text = "";
-		end);
+        -- [[ CLEAR ]]
+        Panel.Delete[Method]:Connect(function()
+            EditorFrame.Input.Text = "";
+        end);
 
-		-- [[ SAVE ]]
-		Panel.Save[Method]:Connect(function()
-			-- ALWAYS strip tags before saving to file
-			local cleanText = StripSyntax(EditorFrame.Input.Text)
-			UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
-		end);
+        -- [[ SAVE (Now includes visual feedback) ]]
+        Panel.Save[Method]:Connect(function()
+            local cleanText = StripSyntax(EditorFrame.Input.Text)
+            UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
+        end);
 
-		-- [[ RENAME ]]
-		Panel.Rename[Method]:Connect(function()
-			script.Parent.Popups.Visible = true;
-			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-		end);
+        -- [[ RENAME START ]]
+        Panel.Rename[Method]:Connect(function()
+            script.Parent.Popups.Visible = true;
+            local current = Data.Editor.CurrentTab or ""
+            script.Parent.Popups.Main.Input.Text = current
+            -- Force focus on the popup input so keyboard appears
+            script.Parent.Popups.Main.Input:CaptureFocus() 
+        end);
 
-		-- 🟢 RICHTEXT HANDLING (The Magic Fix) 🟢
-		
-		-- When you click to type: Remove colors (Raw Text)
-		EditorFrame.Input.Focused:Connect(function()
-			EditorFrame.Input.Text = StripSyntax(EditorFrame.Input.Text)
-		end)
+        -- [[ EDITOR INPUT HANDLING ]]
+        EditorFrame.Input.Focused:Connect(function()
+            EditorFrame.Input.Text = StripSyntax(EditorFrame.Input.Text)
+        end)
 
-		-- When you stop typing: Add colors back
-		EditorFrame.Input.FocusLost:Connect(function()
-			EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
-		end)
+        EditorFrame.Input.FocusLost:Connect(function()
+            EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
+        end)
 
-		-- [[ LINE NUMBERS ]]
-		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
-			UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
-			
-			-- Auto-save logic (Safe)
-			if not Data.Editor.EditingSavedFile then
-				local cleanText = StripSyntax(EditorFrame.Input.Text)
-				-- Only save if clean
-				if not string.find(cleanText, "font color") then
-					UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-				end
-			end
-		end)
+        EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+            if not Data.Editor.EditingSavedFile then
+                local cleanText = StripSyntax(EditorFrame.Input.Text)
+                if not string.find(cleanText, "font color") then
+                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+                end
+            end
+        end)
+        
+        UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
 
-		-- Initial Setup
-		UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+        -- [[ TAB CREATE ]]
+        Editor.Tabs.Create.Activated:Connect(function()
+            UIEvents.EditorTabs.createTab("Script", "");
+        end);
 
-		-- [[ TAB BUTTONS ]]
-		Editor.Tabs.Create.Activated:Connect(function()
-			UIEvents.EditorTabs.createTab("Script", "");
-		end);
+        -- [[ POPUP BUTTONS ]]
+        local Buttons = script.Parent.Popups.Main.Button
+        
+        -- CONFIRM BUTTON
+        Buttons["Confirm"][Method]:Connect(function()
+            local newName = script.Parent.Popups.Main.Input.Text;
+            -- Remove whitespace
+            newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
+            
+            if (#newName == 0 or (newName == Data.Editor.CurrentTab)) then 
+                script.Parent.Popups.Visible = false;
+                return; 
+            end
 
-		local Buttons = script.Parent.Popups.Main.Button
-		Buttons["Confirm"][Method]:Connect(function()
-			local newName = script.Parent.Popups.Main.Input.Text;
-			local isEmpty = #(string.gsub(newName, "[%s]", "")) <= 0;
-			if (isEmpty or (newName == Data.Editor.CurrentTab)) then return; end
-			UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
-			script.Parent.Popups.Visible = false;
-		end)
+            UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
+            script.Parent.Popups.Visible = false;
+        end)
 
-		Buttons["Cancel"][Method]:Connect(function()
-			script.Parent.Popups.Visible = false;
-		end)
-	end;
+        -- CANCEL BUTTON
+        Buttons["Cancel"][Method]:Connect(function()
+            script.Parent.Popups.Visible = false;
+        end)
+    end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
