@@ -3429,45 +3429,69 @@ local function StripSyntax(text)
     return string.gsub(text, "<[^>]+>", "")
 end
 
--- 🟢 ROBUST HIGHLIGHTER (Fixes the Glitch)
+-- 🟢 HELPER: GENERATE SAFE TOKEN (No numbers allowed!)
+local function GenerateToken(i, prefix)
+    local s = ""
+    while i > 0 do
+        local rem = (i-1) % 26
+        s = string.char(65 + rem) .. s
+        i = math.floor((i-1) / 26)
+    end
+    return prefix .. s .. "_"
+end
+
+-- 🟢 ROBUST HIGHLIGHTER (The Fix)
 local function ApplySyntax(text)
     -- 1. Clean first
     text = StripSyntax(text)
     
-    -- 2. Safety Limit
+    -- 2. Safety Limit (50k chars)
     if #text > 50000 then return text end
 
-    -- 3. HIDE STRINGS (Tokenization)
-    -- We replace strings with weird tokens so the highlighter ignores them for now
+    -- 3. HIDE STRINGS
+    -- We replace strings with tokens like _STR_A_ (No numbers!)
     local strings = {}
-    local count = 0
-    local function hide(str)
-        count = count + 1
-        local token = "§" .. count .. "§"
-        strings[token] = '<font color="rgb(176, 224, 230)">' .. str .. '</font>'
+    local sCount = 0
+    local function hideStr(s)
+        sCount = sCount + 1
+        local token = GenerateToken(sCount, "_STR_")
+        strings[token] = '<font color="rgb(176, 224, 230)">' .. s .. '</font>'
         return token
     end
+    text = text:gsub('("[^"]*")', hideStr)
+    text = text:gsub("('[^']*')", hideStr)
 
-    -- Hide Double Quotes "..."
-    text = text:gsub('("[^"]*")', hide)
-    -- Hide Single Quotes '...'
-    text = text:gsub("('[^']*')", hide)
-
-    -- 4. HIGHLIGHT KEYWORDS (Now safe because strings are hidden)
-    for keyword, color in pairs(SyntaxColors) do
-        text = text:gsub("(%f[%a]" .. keyword .. "%f[%A])", '<font color="' .. color .. '">%1</font>')
+    -- 4. HIGHLIGHT KEYWORDS
+    for k, c in pairs(SyntaxColors) do
+         text = text:gsub("(%f[%a]"..k.."%f[%A])", '<font color="'..c..'">%1</font>')
     end
 
-    -- 5. HIGHLIGHT NUMBERS
+    -- 5. HIDE TAGS (CRITICAL FIX)
+    -- We hide the <font...> tags we just made so the Number Highlighter ignores them
+    local tags = {}
+    local tCount = 0
+    local function hideTag(t)
+        tCount = tCount + 1
+        local token = GenerateToken(tCount, "_TAG_")
+        tags[token] = t
+        return token
+    end
+    text = text:gsub("(<[^>]+>)", hideTag)
+
+    -- 6. HIGHLIGHT NUMBERS (Now Safe!)
     text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
 
-    -- 6. HIGHLIGHT OPERATORS
+    -- 7. HIGHLIGHT OPERATORS
     text = text:gsub("([%+%-%*/%%%^#=<>~%(%)%[%]{}])", '<font color="rgb(70, 130, 180)">%1</font>')
 
-    -- 7. RESTORE STRINGS
-    -- Put the colored strings back where the tokens were
-    for token, replacement in pairs(strings) do
-        text = text:gsub(token, function() return replacement end)
+    -- 8. RESTORE TAGS
+    for k, v in pairs(tags) do
+        text = text:gsub(k, function() return v end)
+    end
+    
+    -- 9. RESTORE STRINGS
+    for k, v in pairs(strings) do
+        text = text:gsub(k, function() return v end)
     end
 
     return text
