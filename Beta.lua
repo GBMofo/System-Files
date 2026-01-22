@@ -1693,6 +1693,32 @@ G2L["a3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["a3"]["Text"] = [[]];
 G2L["a3"]["LayoutOrder"] = -1;
 
+-- 🟢 ADD CLEAR ICON INSIDE SEARCH BOX
+local ClearIcon = Instance.new("TextButton", G2L["a3"])
+ClearIcon.Name = "ClearIcon"
+ClearIcon.Text = "✖"
+ClearIcon.BackgroundTransparency = 1
+ClearIcon.TextColor3 = Color3.fromRGB(150, 150, 150)
+ClearIcon.Size = UDim2.new(0, 30, 1, 0)
+ClearIcon.Position = UDim2.new(1, -35, 0, 0)
+ClearIcon.Font = Enum.Font.GothamBold
+ClearIcon.TextSize = 16
+ClearIcon.Visible = false -- Hidden by default
+ClearIcon.ZIndex = G2L["a3"].ZIndex + 1
+
+-- Show/hide clear icon based on text
+G2L["a3"]:GetPropertyChangedSignal("Text"):Connect(function()
+	ClearIcon.Visible = (#G2L["a3"].Text > 0)
+end)
+
+-- Clear search when clicked
+ClearIcon.MouseButton1Click:Connect(function()
+	G2L["a3"].Text = ""
+	CurrentFilter = "All"
+	detectGame()
+	updateUI()
+	Update()
+end)
 
 -- StarterGui.ScreenGui.Main.Pages.Search.TextBox.UICorner
 G2L["a4"] = Instance.new("UICorner", G2L["a3"]);
@@ -4731,16 +4757,26 @@ InitTabs.Search = function()
 	local Scripts = Search.Scripts;
 	local SearchBox = Search.TextBox;
 	
-	-- 🔴 STATE
+-- 🔴 STATE
 local CurrentFilter = "All"
 local OriginalGameName = nil 
 local CachedScripts = {}
 local isUpdating = false
-local searchDebounce = nil -- 🔴 FIX #8: SEARCH DEBOUNCING
-	
-	-- 🔴 SETTINGS
-local SEARCH_PAGES = 3
-local BROWSE_PAGES = 2
+local searchDebounce = nil
+
+-- 🟢 REMOVED STATIC SETTINGS, REPLACED WITH FUNCTION
+-- 🟢 ADD DYNAMIC FETCH PAGE FUNCTION
+local function getFetchPages()
+	if CurrentFilter == "Recommended" then
+		return 8  -- 400 scripts - ensures enough verified
+	elseif CurrentFilter == "Trending" then
+		return 1  -- 50 scripts - curated list (though Trending uses separate endpoint)
+	elseif CurrentFilter == "KeyRequired" then
+		return 3  -- 150 scripts - premium might be rarer
+	else
+		return 3  -- 150 scripts - standard
+	end
+end
 
 -- 🔴 FIX #14: API RATE LIMITING
 local API_RETRY_LIMIT = 3
@@ -4832,7 +4868,41 @@ local HttpService = game:GetService("HttpService")
 	end
 	
 	detectGame()
-	
+
+-- 🟢 ADD SORT TOGGLE (Below search box)
+local SortToggle = Instance.new("TextButton", Search)
+SortToggle.Name = "SortToggle"
+SortToggle.Text = "📊 Sort: Relevance"
+SortToggle.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+SortToggle.TextColor3 = Color3.fromRGB(200, 200, 200)
+SortToggle.BorderSizePixel = 0
+SortToggle.Font = Enum.Font.GothamBold
+SortToggle.TextSize = 12
+SortToggle.Size = UDim2.new(0.25, 0, 0, 35)
+SortToggle.Position = UDim2.new(0.73, 0, 0, 0)
+SortToggle.LayoutOrder = -1.5
+SortToggle.Visible = false -- Only show when searching
+
+local toggleCorner = Instance.new("UICorner", SortToggle)
+toggleCorner.CornerRadius = UDim.new(0, 8)
+
+local sortByViews = false
+SortToggle.MouseButton1Click:Connect(function()
+	sortByViews = not sortByViews
+	SortToggle.Text = sortByViews and "📊 Sort: Popular" or "📊 Sort: Relevance"
+	SortToggle.BackgroundColor3 = sortByViews and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(30, 30, 40)
+	Update() -- Re-fetch with new sort
+end)
+
+-- Show/hide toggle when searching
+SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+	SortToggle.Visible = (#SearchBox.Text > 0)
+end)
+
+local FilterBar = Instance.new("Frame", Search)
+FilterBar.Name = "FilterBar"
+FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+
 	-- 🔴 UI SETUP
 	local FilterBar = Instance.new("Frame", Search)
 	FilterBar.Name = "FilterBar"
@@ -4880,11 +4950,13 @@ FilterBarStroke.Name = "FilterBarStroke" -- Give it a name so we can find it
 		return btn
 	end
 	
-	local RecommendedBtn = createButton("Recommended", "⭐ Recommended")
-	local AllBtn = createButton("All", "All")
-	local NoKeyBtn = createButton("NoKey", "No Key")
-	local KeyBtn = createButton("KeyRequired", "Key Required")
-	local TrendingBtn = createButton("Trending", "🔥 Trending")
+local RecommendedBtn = createButton("Recommended", "⭐ Recommended")
+local AllBtn = createButton("All", "📂 All")
+local NoKeyBtn = createButton("NoKey", "🔓 No Key")
+local KeyBtn = createButton("KeyRequired", "🔑 Key Required")
+local TrendingBtn = createButton("Trending", "🔥 Trending")
+local ClearBtn = createButton("Clear", "🔄 Clear")
+ClearBtn.LayoutOrder = -999 -- Put it first (leftmost)
 	
 	local function updateUI()
 		for _, btn in pairs(FilterBar:GetChildren()) do
@@ -4914,8 +4986,6 @@ FilterBarStroke.Name = "FilterBarStroke" -- Give it a name so we can find it
 				passes = (not isPaid) and (not hasKey)
 			elseif CurrentFilter == "KeyRequired" then
 				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
-			elseif CurrentFilter == "Trending" then
-				passes = true
 			elseif CurrentFilter == "All" then
 				passes = true
 			end
@@ -4944,17 +5014,32 @@ FilterBarStroke.Name = "FilterBarStroke" -- Give it a name so we can find it
 		
 		local displayText = SearchBox.Text ~= "" and SearchBox.Text or (OriginalGameName or "Universal")
 		
-		if not scriptList or #scriptList == 0 then
-			local noResults = Instance.new("TextLabel", Scripts)
-			noResults.Name = "ErrorMessage"
-			noResults.Text = "No " .. CurrentFilter .. " scripts for: " .. displayText
-			noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
-			noResults.BackgroundTransparency = 1
-			noResults.Size = UDim2.new(1, 0, 0, 50)
-			noResults.Font = Enum.Font.GothamBold
-			noResults.TextSize = 14
-			return
-		end
+	if not scriptList or #scriptList == 0 then
+	local noResults = Instance.new("TextLabel", Scripts)
+	noResults.Name = "ErrorMessage"
+	
+	-- 🟢 IMPROVED: Context-aware messages
+	local message = ""
+	if SearchBox.Text ~= "" then
+		message = "No " .. CurrentFilter .. " scripts found for: \"" .. SearchBox.Text .. "\""
+	elseif CurrentFilter == "Recommended" then
+		message = "No verified scripts found for: " .. displayText
+	elseif CurrentFilter == "NoKey" then
+		message = "No free scripts found for: " .. displayText
+	elseif CurrentFilter == "KeyRequired" then
+		message = "No premium scripts found for: " .. displayText
+	else
+		message = "No scripts found for: " .. displayText
+	end
+	
+	noResults.Text = message
+	noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
+	noResults.BackgroundTransparency = 1
+	noResults.Size = UDim2.new(1, 0, 0, 50)
+	noResults.Font = Enum.Font.GothamBold
+	noResults.TextSize = 14
+	return
+end
 		
 		local verifyicon = utf8.char(57344)
 		for i, scriptData in pairs(scriptList) do
@@ -5017,17 +5102,73 @@ FilterBarStroke.Name = "FilterBarStroke" -- Give it a name so we can find it
 	end
 	
 	-- 🔴 MAIN UPDATE (MULTI-PAGE FETCH)
-local function Update()
+   local function Update()
+	-- 🟢 ADD THIS: TRENDING SPECIAL CASE
+	if CurrentFilter == "Trending" then
+		if isUpdating then return end
+		isUpdating = true
+		
+		local GameLabel = Search:FindFirstChild("GameLabel")
+		if GameLabel then 
+			GameLabel.Text = "Mode: Trending | Most Interactions"
+		end
+		
+		-- Clear old results
+		for _, v in pairs(Scripts:GetChildren()) do
+			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
+		end
+		
+		-- Fetch from trending endpoint
+		local url = "https://scriptblox.com/api/script/trending?max=50"
+		local response = fetchWithRetry(url)
+		
+		if response then
+			local success, data = pcall(function() 
+				return HttpService:JSONDecode(response) 
+			end)
+			
+			if success and data.result and data.result.scripts then
+				renderScripts(data.result.scripts)
+			else
+				local noResults = Instance.new("TextLabel", Scripts)
+				noResults.Text = "Failed to load trending scripts"
+				noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
+				noResults.BackgroundTransparency = 1
+				noResults.Size = UDim2.new(1, 0, 0, 50)
+				noResults.Font = Enum.Font.GothamBold
+				noResults.TextSize = 14
+			end
+		end
+		
+		isUpdating = false
+		return -- Exit Update() early
+	end
+	
     -- 🔴 FIX #8: DEBOUNCE SEARCH
     if searchDebounce then
         task.cancel(searchDebounce)
     end
     
-  searchDebounce = task.delay(0.15, function()
-        if isUpdating then return end
-        isUpdating = true
-        
-        local currentQuery = SearchBox.Text
+searchDebounce = task.delay(0.15, function()
+	if isUpdating then return end
+	isUpdating = true
+	
+	-- 🟢 ADD LOADING INDICATOR
+	for _, v in pairs(Scripts:GetChildren()) do
+		if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
+	end
+	
+	local loadingMsg = Instance.new("TextLabel", Scripts)
+	loadingMsg.Name = "LoadingMessage"
+	loadingMsg.Text = "⏳ Loading scripts..."
+	loadingMsg.TextColor3 = Color3.fromRGB(200, 200, 200)
+	loadingMsg.BackgroundTransparency = 1
+	loadingMsg.Size = UDim2.new(1, 0, 0, 50)
+	loadingMsg.Font = Enum.Font.GothamBold
+	loadingMsg.TextSize = 14
+	loadingMsg.Position = UDim2.new(0, 0, 0.4, 0)
+	
+	local currentQuery = SearchBox.Text
 		if currentQuery == "*" then
 			currentQuery = ""
 			SearchBox.Text = ""
@@ -5065,32 +5206,43 @@ local function Update()
 		local MasterList = {}
 		local GameLabel = Search:FindFirstChild("GameLabel")
 		
-		if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-			-- 1️⃣ SEARCH MODE (RELEVANCE)
-			if GameLabel then GameLabel.Text = "Custom: " .. currentQuery end
-			
-			local encoded = HttpService:UrlEncode(currentQuery)
-			local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50" -- Old logic URL
-			
-			MasterList = fetchPages(url, SEARCH_PAGES)
+	if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
+	-- 1️⃣ SEARCH MODE (RELEVANCE)
+	if GameLabel then 
+		GameLabel.Text = "Search: " .. currentQuery .. " | Filter: " .. CurrentFilter .. " | Sort: Relevance"
+	end
+		
+	local encoded = HttpService:UrlEncode(currentQuery)
+	local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50"
+	
+	-- 🟢 ADD THIS: If sort toggle is on, add sortBy=views
+	if sortByViews then
+		url = url .. "&sortBy=views"
+	end
+	
+MasterList = fetchPages(url, getFetchPages())
 			
 		elseif OriginalGameName then
-			-- 2️⃣ BROWSING GAME MODE (VIEWS + DUAL FETCH)
-			if GameLabel then GameLabel.Text = "Game: " .. OriginalGameName end
+	-- 2️⃣ BROWSING GAME MODE (VIEWS + DUAL FETCH)
+	if GameLabel then 
+		GameLabel.Text = "Game: " .. OriginalGameName .. " | Filter: " .. CurrentFilter .. " | Sort: Popular"
+	end
 			
 			local encodedGame = HttpService:UrlEncode(OriginalGameName)
 			local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame.."&max=50&sortBy=views"
 			local urlUni = "https://scriptblox.com/api/script/search?q=Universal&max=50&sortBy=views"
 			
-			local listGame = fetchPages(urlGame, BROWSE_PAGES)
-			local listUni = fetchPages(urlUni, BROWSE_PAGES)
+			local listGame = fetchPages(urlGame, getFetchPages())
+local listUni = fetchPages(urlUni, getFetchPages())
 			
 			for _, v in pairs(listGame) do table.insert(MasterList, v) end
 			for _, v in pairs(listUni) do table.insert(MasterList, v) end
 			
 		else
-			-- 3️⃣ UNIVERSAL MODE
-			if GameLabel then GameLabel.Text = "Mode: Universal" end
+	-- 3️⃣ UNIVERSAL MODE
+	if GameLabel then 
+		GameLabel.Text = "Mode: Universal | Filter: " .. CurrentFilter .. " | Sort: Popular"
+	end
 			local url = "https://scriptblox.com/api/script/fetch?max=50"
 			MasterList = fetchPages(url, BROWSE_PAGES)
 		end
@@ -5129,10 +5281,20 @@ end
 	end
 	
 	RecommendedBtn.MouseButton1Click:Connect(function() onFilterClick("Recommended") end)
-	AllBtn.MouseButton1Click:Connect(function() onFilterClick("All") end)
-	NoKeyBtn.MouseButton1Click:Connect(function() onFilterClick("NoKey") end)
-	KeyBtn.MouseButton1Click:Connect(function() onFilterClick("KeyRequired") end)
-	TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
+AllBtn.MouseButton1Click:Connect(function() onFilterClick("All") end)
+NoKeyBtn.MouseButton1Click:Connect(function() onFilterClick("NoKey") end)
+KeyBtn.MouseButton1Click:Connect(function() onFilterClick("KeyRequired") end)
+TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
+
+-- 🟢 ADD THIS NEW SECTION
+ClearBtn.MouseButton1Click:Connect(function()
+	SearchBox.Text = ""        -- Clear search box
+	CurrentFilter = "All"       -- Reset filter
+	detectGame()                -- Reset to current game
+	updateUI()                  -- Update button colors
+	Update()                    -- Fetch new scripts
+	createNotification("Search Cleared", "Info", 2)
+end)
 	
 	SearchBox.FocusLost:Connect(function()
 		Update()
