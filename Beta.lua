@@ -3513,7 +3513,7 @@ local function GenerateToken(i, prefix)
     return prefix .. s .. "_"
 end
 
--- 🟢 2. ROBUST HIGHLIGHTER (FIXED v2)
+-- 🟢 2. ROBUST HIGHLIGHTER (FIXED v3)
 local function ApplySyntax(text)
     -- STEP A: Clean first
     text = StripSyntax(text)
@@ -3528,27 +3528,27 @@ local function ApplySyntax(text)
     -- Helper to generate safe tokens
     local function getToken()
         sCount = sCount + 1
-        return "XSTRX" .. string.rep("X", sCount) .. "XENDX"
+        return "XSTRX" .. string.rep("Z", sCount) .. "XENDX"
     end
     
     -- Hide double-quoted strings
     text = text:gsub('"(.-)"', function(content)
         local token = getToken()
-        -- Escape the content and wrap in color
-        local escaped = content:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
-        strings[token] = '<font color="rgb(173, 216, 230)">&quot;' .. escaped .. '&quot;</font>'
+        -- Only escape < and > (NOT &, to avoid double-escaping)
+        local escaped = content:gsub("<", "&lt;"):gsub(">", "&gt;")
+        strings[token] = '<font color="rgb(173, 216, 230)">"' .. escaped .. '"</font>'
         return token
     end)
     
     -- Hide single-quoted strings
     text = text:gsub("'(.-)'", function(content)
         local token = getToken()
-        local escaped = content:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
-        strings[token] = '<font color="rgb(173, 216, 230)">&apos;' .. escaped .. '&apos;</font>'
+        local escaped = content:gsub("<", "&lt;"):gsub(">", "&gt;")
+        strings[token] = "<font color=\"rgb(173, 216, 230)'>\">" .. escaped .. "'</font>"
         return token
     end)
 
-    -- STEP C: NOW escape remaining characters
+    -- STEP C: NOW escape remaining characters (outside strings)
     text = text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
 
     -- STEP D: HIGHLIGHT KEYWORDS
@@ -3559,7 +3559,7 @@ local function ApplySyntax(text)
     -- STEP E: HIGHLIGHT NUMBERS
     text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(255, 125, 125)">%1</font>')
 
-    -- STEP F: RESTORE STRINGS
+    -- STEP F: RESTORE STRINGS (inject pre-colored HTML)
     for token, coloredStr in pairs(strings) do
         text = text:gsub(token, function() return coloredStr end)
     end
