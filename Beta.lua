@@ -4471,7 +4471,7 @@ InitTabs.Settings = function()
         if enabled then
             Main.Title.TextLabel.Text = "Hello, User!"
         else
-            Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!"
+            Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.DisplayName .. "!"
         end
     end)
     
@@ -5558,7 +5558,7 @@ dragify(script.Parent.Open);
 		
 		if KeyVailded then
 			if Main and Main:FindFirstChild("Title") and Main.Title:FindFirstChild("TextLabel") then
-				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
+				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.DisplayName .. "!";
 			end
 		end
 	end);
