@@ -4037,7 +4037,6 @@ InitTabs.Settings = function()
             g = math.floor(color.G * 255),
             b = math.floor(color.B * 255)
         }))
-        print("[THEME] Saved theme:", color)
     end
 
     local function ApplyTheme(color)
@@ -4045,7 +4044,6 @@ InitTabs.Settings = function()
         getgenv().CurrentTheme = color
         SaveTheme(color)
         
-        print("[THEME] Applying theme:", color)
         
         -- 1. UPDATE STROKES
         for _, obj in pairs(script.Parent:GetDescendants()) do
@@ -4556,8 +4554,7 @@ InitTabs.Settings = function()
 
     -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built (with longer delay)
     task.spawn(function()
-        task.wait(1.5) -- 🔴 Increased delay to ensure all UI elements exist
-        print("[THEME] Applying saved theme after UI load...")
+        task.wait(0.5) -- 🔴 Increased delay to ensure all UI elements exist
         ApplyTheme(savedTheme)
     end)
 end -- End of InitTabs.Settings
