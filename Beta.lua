@@ -3223,10 +3223,17 @@ if v.Name == "Popups" then v.Visible = false return end
 	local BASE_HEIGHT = 392;
 -- 🟢 1. HELPER: STRIP SYNTAX (Decodes & Cleans)
 local function StripSyntax(text)
-    -- Remove XML tags
+    -- A. Remove basic XML tags <...>
     local clean = string.gsub(text, "<[^>]+>", "")
-    -- Decode entities (Turn &lt; back into <)
-    clean = clean:gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&quot;", '"'):gsub("&apos;", "'"):gsub("&amp;", "&")
+    
+    -- B. Decode HTML Entities (Turn &lt; back into <)
+    -- This fixes the "Growing Text" bug
+    clean = clean:gsub("&lt;", "<")
+    clean = clean:gsub("&gt;", ">")
+    clean = clean:gsub("&quot;", '"')
+    clean = clean:gsub("&apos;", "'")
+    clean = clean:gsub("&amp;", "&")
+    
     return clean
 end
 -- 🟢 2. CONNECT REAL EXECUTOR FUNCTIONS
@@ -3508,30 +3515,31 @@ end
 
 -- 🟢 2. ROBUST HIGHLIGHTER
 local function ApplySyntax(text)
-    -- STEP A: Clean the text first
+    -- STEP A: Clean the text first (Prevents the loop)
     text = StripSyntax(text)
     
     -- Safety Limit
     if #text > 50000 then return text end
 
     -- STEP B: Escape special characters GLOBALLY
-    -- This turns " into &quot; so it doesn't break the XML
+    -- This turns < into &lt; so Roblox displays it as text, not a tag
     local function Escape(str)
         return str:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub('"', "&quot;"):gsub("'", "&apos;")
     end
     text = Escape(text)
 
-    -- STEP C: HIDE STRINGS
-    -- Note: We look for &quot; because we just escaped them in Step B!
+    -- STEP C: TOKENIZE STRINGS
+    -- We hide strings so they don't get colored accidentally
     local strings = {}
     local sCount = 0
     local function hideStr(s)
         sCount = sCount + 1
-        local token = "_STR_" .. sCount .. "_"
-        strings[token] = '<font color="rgb(176, 224, 230)">' .. s .. '</font>'
+        local token = "__STR_" .. sCount .. "__"
+        strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
         return token
     end
     
+    -- Match escaped quotes (since we ran Escape in Step B)
     text = text:gsub('(&quot;.-&quot;)', hideStr)
     text = text:gsub("(&apos;.-&apos;)", hideStr)
 
@@ -3542,10 +3550,10 @@ local function ApplySyntax(text)
     end
 
     -- STEP E: HIGHLIGHT NUMBERS
-    text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
+    text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(255, 125, 125)">%1</font>')
 
     -- STEP F: HIGHLIGHT OPERATORS
-    text = text:gsub("([%+%-%*/%%%^#=~%(%)%[%]{}])", '<font color="rgb(70, 130, 180)">%1</font>')
+    text = text:gsub("([%+%-%*/%%%^#=~%(%)%[%]{}])", '<font color="rgb(200, 200, 200)">%1</font>')
 
     -- STEP G: RESTORE STRINGS
     for k, v in pairs(strings) do
@@ -4676,21 +4684,6 @@ InitTabs.Saved = function()
             UIEvents.Executor.RunCode(rawCode)();
         end);
 
-        -- [[ PASTE ]]
-        Panel.Paste[Method]:Connect(function()
-            local pastedText = safeGetClipboard();
-            
-            -- 🟢 FIX: Reset text first to clear weird formatting states
-            EditorFrame.Input.RichText = false 
-            EditorFrame.Input.Text = pastedText 
-            
-            -- Re-enable RichText and apply highlighting safely
-            task.delay(0.05, function()
-                EditorFrame.Input.RichText = true
-                EditorFrame.Input.Text = ApplySyntax(pastedText)
-            end)
-        end);
-
         -- [[ EXECUTE CLIPBOARD ]]
         Panel.ExecuteClipboard[Method]:Connect(function()
             local clipCode = safeGetClipboard()
@@ -4717,30 +4710,41 @@ InitTabs.Saved = function()
             script.Parent.Popups.Main.Input:CaptureFocus() 
         end);
 
-      -- [[ EDITOR INPUT HANDLING ]]
+        -- [[ EDITOR INPUT HANDLING ]]
         
-        -- 1. When you CLICK the box -> Turn OFF colors, show raw text
+        -- 1. FOCUS GAINED: Turn OFF colors, show raw text
         EditorFrame.Input.Focused:Connect(function()
             local raw = StripSyntax(EditorFrame.Input.Text)
-            EditorFrame.Input.RichText = false -- 🟢 CRITICAL FIX
+            EditorFrame.Input.RichText = false
             EditorFrame.Input.Text = raw
         end)
 
-        -- 2. When you CLICK AWAY -> Turn ON colors, apply highlighting
+        -- 2. FOCUS LOST: Turn ON colors, apply highlighting
         EditorFrame.Input.FocusLost:Connect(function()
             local raw = EditorFrame.Input.Text
-            EditorFrame.Input.RichText = true -- 🟢 CRITICAL FIX
+            EditorFrame.Input.RichText = true
             EditorFrame.Input.Text = ApplySyntax(raw)
         end)
 
-        -- 3. Live Updates (Line Numbers & Autosave)
+        -- 3. PASTE HANDLING (Fixed)
+        Panel.Paste[Method]:Connect(function()
+            local pastedText = safeGetClipboard();
+            
+            EditorFrame.Input.RichText = false
+            EditorFrame.Input.Text = pastedText
+            
+            task.delay(0.05, function()
+                EditorFrame.Input.RichText = true
+                EditorFrame.Input.Text = ApplySyntax(pastedText)
+            end)
+        end);
+
+        -- 4. REAL-TIME UPDATES (Line Numbers & Autosave)
         EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
             
-            -- Only auto-save if we aren't editing a saved file
-            if not Data.Editor.EditingSavedFile then
-                -- Note: While typing (Focused), text is raw. When not focused, it's colored.
-                -- StripSyntax handles both cases safely now.
+            -- Only auto-save if we aren't editing a saved file AND not actively typing
+            if not Data.Editor.EditingSavedFile and not EditorFrame.Input.Focused then
                 local cleanText = StripSyntax(EditorFrame.Input.Text)
                 UIEvents.EditorTabs.saveTab(nil, cleanText, false)
             end
