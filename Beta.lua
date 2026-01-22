@@ -4554,7 +4554,7 @@ InitTabs.Settings = function()
 
     -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built (with longer delay)
     task.spawn(function()
-        task.wait(0.1) -- 🔴 Increased delay to ensure all UI elements exist
+        task.wait(0) -- 🔴 Increased delay to ensure all UI elements exist
         ApplyTheme(savedTheme)
     end)
 end -- End of InitTabs.Settings
