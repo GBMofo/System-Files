@@ -4029,6 +4029,11 @@ InitTabs.Settings = function()
 				b = math.floor(color.B * 255)
 			}))
 		end
+	-- 🟢 LOAD THEME ON STARTUP
+LoadTheme()
+if getgenv().CurrentTheme then
+    CurrentTheme = getgenv().CurrentTheme
+end
 		local function ApplyTheme(color)
 			local oldTheme = CurrentTheme
 			getgenv().CurrentTheme = color
@@ -4522,30 +4527,29 @@ InitTabs.Settings = function()
 		createSectionHeader("🔧 ADVANCED", 50)
 		
 		local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 51)
-		resetCard.Size = UDim2.new(1, 0, 0, 55)
-		
-		createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
-            -- 🟢 RESET LOGIC (Root Path)
-			if CLONED_Detectedly.delfile and CLONED_Detectedly.isfile then
-				if CLONED_Detectedly.isfile("Punk-X-Files/punk-x-env.txt") then
-					CLONED_Detectedly.delfile("Punk-X-Files/punk-x-env.txt")
-					createNotification("Reset Success. Re-inject.", "Success", 5)
-				else
-					createNotification("No preference saved.", "Error", 3)
-				end
-			else
-				createNotification("Not supported.", "Error", 5)
-			end
-		end)
+        resetCard.Size = UDim2.new(1, 0, 0, 55)
+        
+        createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
+            if CLONED_Detectedly.delfile and CLONED_Detectedly.isfile then
+                if CLONED_Detectedly.isfile("Punk-X-Files/punk-x-env.txt") then
+                    CLONED_Detectedly.delfile("Punk-X-Files/punk-x-env.txt")
+                    createNotification("Reset Success. Re-inject.", "Success", 5)
+                else
+                    createNotification("No preference saved.", "Error", 3)
+                end
+            else
+                createNotification("Not supported.", "Error", 5)
+            end
+        end)
 
-        -- Apply theme on start
+        -- 🟢 Apply theme on start
         task.spawn(function()
             task.wait(0.2)
             if getgenv().CurrentTheme then
                 ApplyTheme(getgenv().CurrentTheme)
             end
         end)
-	end;
+    end;  -- ← Closing of InitTabs.Settings
 
 InitTabs.TabsData = function()
 		-- 🟢 ENSURE FOLDERS EXIST
