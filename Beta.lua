@@ -3192,6 +3192,42 @@ if v.Name == "Popups" then v.Visible = false return end
 
 	local BASE_WIDTH = 733;
 	local BASE_HEIGHT = 392;
+-- 🟢 1. HELPER: STRIP SYNTAX (Prevents Color Tags in Files)
+local function StripSyntax(text)
+    return string.gsub(text, "<[^>]+>", "")
+end
+
+-- 🟢 2. CONNECT REAL EXECUTOR FUNCTIONS
+CLONED_Detectedly.writefile = writefile
+CLONED_Detectedly.readfile = readfile
+CLONED_Detectedly.appendfile = appendfile
+CLONED_Detectedly.isfile = isfile
+CLONED_Detectedly.listfiles = listfiles
+CLONED_Detectedly.delfile = delfile
+CLONED_Detectedly.isfolder = isfolder
+CLONED_Detectedly.delfolder = delfolder
+CLONED_Detectedly.makedir = makefolder or makedir
+CLONED_Detectedly.deldir = delfolder or deldir
+CLONED_Detectedly.setclipboard = setclipboard or toclipboard
+CLONED_Detectedly.runcode = function(code) return loadstring(code) end
+CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport)) or function() end
+
+-- 🟢 3. FORCE FOLDER CREATION (IMMEDIATELY)
+do
+    local function SafeMakeDir(dir)
+        if CLONED_Detectedly.isfolder and CLONED_Detectedly.makedir then
+            if not CLONED_Detectedly.isfolder(dir) then
+                pcall(function() CLONED_Detectedly.makedir(dir) end)
+            end
+        end
+    end
+
+    SafeMakeDir("Punk-X-Files")
+    SafeMakeDir("Punk-X-Files/scripts")
+    SafeMakeDir("Punk-X-Files/saves")
+    SafeMakeDir("Punk-X-Files/autoexec")
+    SafeMakeDir("Punk-X-Files/rconsole")
+end
 	local OriginalProperties = {};
 	local function scaleUIElement(element, storeOnly)
 		if not OriginalProperties[element] then
