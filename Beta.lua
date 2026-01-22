@@ -4029,11 +4029,7 @@ InitTabs.Settings = function()
 				b = math.floor(color.B * 255)
 			}))
 		end
-	-- 🟢 LOAD THEME ON STARTUP
-LoadTheme()
-if getgenv().CurrentTheme then
-    CurrentTheme = getgenv().CurrentTheme
-end
+
 		local function ApplyTheme(color)
 			local oldTheme = CurrentTheme
 			getgenv().CurrentTheme = color
@@ -4542,14 +4538,18 @@ end
             end
         end)
 
-        -- 🟢 Apply theme on start
-        task.spawn(function()
-            task.wait(0.2)
-            if getgenv().CurrentTheme then
-                ApplyTheme(getgenv().CurrentTheme)
-            end
-        end)
-    end;  -- ← Closing of InitTabs.Settings
+        -- 🟢 Load and apply theme AFTER UI is built
+LoadTheme()
+task.spawn(function()
+    task.wait(0.5) -- Longer delay to ensure UI is ready
+    if getgenv().CurrentTheme then
+        ApplyTheme(getgenv().CurrentTheme)
+        print("[THEME] Loaded:", getgenv().CurrentTheme) -- Debug
+    else
+        print("[THEME] No saved theme found") -- Debug
+    end
+end)
+end; -- End of InitTabs.Settings
 
 InitTabs.TabsData = function()
 		-- 🟢 ENSURE FOLDERS EXIST
