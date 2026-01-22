@@ -3513,45 +3513,25 @@ local function GenerateToken(i, prefix)
     return prefix .. s .. "_"
 end
 
--- 🟢 FINAL WORKING SYNTAX HIGHLIGHTER
+-- 🟢 SIMPLE & RELIABLE HIGHLIGHTER
 local function ApplySyntax(text)
     text = StripSyntax(text)
     if #text > 50000 then return text end
 
-    -- STEP 1: Hide strings FIRST
-    local strings = {}
-    local strCount = 0
-    
-    local function hideString(content, quote)
-        strCount = strCount + 1
-        local token = "XSTRINGTOKEN" .. strCount .. "X"
-        -- Use SINGLE quotes in HTML to avoid conflicts!
-        local colored = "<font color='rgb(173, 216, 230)'>" .. quote .. content .. quote .. "</font>"
-        strings[token] = colored
-        return token
-    end
-    
-    -- Hide double-quoted strings
-    text = text:gsub('"([^"]*)"', function(c) return hideString(c, '"') end)
-    
-    -- Hide single-quoted strings  
-    text = text:gsub("'([^']*)'", function(c) return hideString(c, "'") end)
-
-    -- STEP 2: Escape remaining code (NOT strings!)
+    -- Escape HTML first
     text = text:gsub("<", "&lt;"):gsub(">", "&gt;")
 
-    -- STEP 3: Highlight keywords
+    -- Highlight strings (cyan)
+    text = text:gsub('(".-")', "<font color='rgb(173,216,230)'>%1</font>")
+    text = text:gsub("('.-')", "<font color='rgb(173,216,230)'>%1</font>")
+
+    -- Highlight keywords
     for k, c in pairs(SyntaxColors) do
         text = text:gsub("(%f[%w]"..k.."%f[%W])", "<font color='"..c.."'>%1</font>")
     end
 
-    -- STEP 4: Highlight numbers
-    text = text:gsub("(%f[%d]%d+%.?%d*)", "<font color='rgb(255, 125, 125)'>%1</font>")
-
-    -- STEP 5: Restore strings (they already have color!)
-    for token, colored in pairs(strings) do
-        text = text:gsub(token, function() return colored end)
-    end
+    -- Highlight numbers (pink)
+    text = text:gsub("(%f[%d]%d+%.?%d*)", "<font color='rgb(255,125,125)'>%1</font>")
 
     return text
 end
@@ -4014,7 +3994,7 @@ InitTabs.Settings = function()
 		
 	-- 🟢 PATH: Punk-X-Files/theme.json
 		local function LoadTheme()
-			if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
+			if CLONED_Detectedly.isfile("Punk-X-Files/theme.txt") then
 				local success, data = pcall(function()
 					return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
 				end)
@@ -4029,7 +4009,7 @@ InitTabs.Settings = function()
 			-- Ensure folder exists
 			if not CLONED_Detectedly.isfolder("Punk-X-Files") then CLONED_Detectedly.makedir("Punk-X-Files") end
 			
-			CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
+			CLONED_Detectedly.writefile("Punk-X-Files/theme.txt", game.HttpService:JSONEncode({
 				r = math.floor(color.R * 255),
 				g = math.floor(color.G * 255),
 				b = math.floor(color.B * 255)
