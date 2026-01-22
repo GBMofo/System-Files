@@ -3513,51 +3513,51 @@ local function GenerateToken(i, prefix)
     return prefix .. s .. "_"
 end
 
--- 🟢 2. ROBUST HIGHLIGHTER
+-- 🟢 2. ROBUST HIGHLIGHTER (FIXED)
 local function ApplySyntax(text)
-    -- STEP A: Clean the text first (Prevents the loop)
+    -- STEP A: Clean first
     text = StripSyntax(text)
     
-    -- Safety Limit
+    -- Safety limit
     if #text > 50000 then return text end
 
-    -- STEP B: Escape special characters GLOBALLY
-    -- This turns < into &lt; so Roblox displays it as text, not a tag
+    -- STEP B: Escape HTML
     local function Escape(str)
         return str:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub('"', "&quot;"):gsub("'", "&apos;")
     end
     text = Escape(text)
 
-    -- STEP C: TOKENIZE STRINGS
-    -- We hide strings so they don't get colored accidentally
+    -- STEP C: HIDE STRINGS (Store them safely)
     local strings = {}
     local sCount = 0
-    local function hideStr(s)
+    
+    -- Match double quotes
+    text = text:gsub('(&quot;.-&quot;)', function(s)
         sCount = sCount + 1
-        local token = "__STR_" .. sCount .. "__"
+        local token = "___STRING" .. sCount .. "___"
         strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
         return token
-    end
+    end)
     
-    -- Match escaped quotes (since we ran Escape in Step B)
-    text = text:gsub('(&quot;.-&quot;)', hideStr)
-    text = text:gsub("(&apos;.-&apos;)", hideStr)
+    -- Match single quotes
+    text = text:gsub("(&apos;.-&apos;)", function(s)
+        sCount = sCount + 1
+        local token = "___STRING" .. sCount .. "___"
+        strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
+        return token
+    end)
 
     -- STEP D: HIGHLIGHT KEYWORDS
     for k, c in pairs(SyntaxColors) do
-         -- %f[%w] ensures we match "end" but not "ending"
          text = text:gsub("(%f[%w]"..k.."%f[%W])", '<font color="'..c..'">%1</font>')
     end
 
     -- STEP E: HIGHLIGHT NUMBERS
     text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(255, 125, 125)">%1</font>')
 
-    -- STEP F: HIGHLIGHT OPERATORS
-    text = text:gsub("([%+%-%*/%%%^#=~%(%)%[%]{}])", '<font color="rgb(200, 200, 200)">%1</font>')
-
-    -- STEP G: RESTORE STRINGS
-    for k, v in pairs(strings) do
-        text = text:gsub(k, function() return v end)
+    -- STEP F: RESTORE STRINGS (No re-highlighting!)
+    for token, coloredStr in pairs(strings) do
+        text = text:gsub(token, function() return coloredStr end)
     end
 
     return text
