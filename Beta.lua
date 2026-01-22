@@ -4008,9 +4008,9 @@ InitTabs.Settings = function()
 		
 	-- 🟢 PATH: Punk-X-Files/theme.json
 		local function LoadTheme()
-			if CLONED_Detectedly.isfile("Punk-X-Files/theme.txt") then
+			if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
     local success, data = pcall(function()
-        return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.txt"))
+        return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
 				end)
 				if success and data.r and data.g and data.b then
 					CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
@@ -4023,7 +4023,7 @@ InitTabs.Settings = function()
 			-- Ensure folder exists
 			if not CLONED_Detectedly.isfolder("Punk-X-Files") then CLONED_Detectedly.makedir("Punk-X-Files") end
 			
-			CLONED_Detectedly.writefile("Punk-X-Files/theme.txt", game.HttpService:JSONEncode({
+			CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
 				r = math.floor(color.R * 255),
 				g = math.floor(color.G * 255),
 				b = math.floor(color.B * 255)
