@@ -3222,10 +3222,13 @@ if v.Name == "Popups" then v.Visible = false return end
 	local BASE_WIDTH = 733;
 	local BASE_HEIGHT = 392;
 -- 🟢 1. HELPER: STRIP SYNTAX (Prevents Color Tags in Files)
+-- 🟢 HELPER: STRIP SYNTAX (Removes tags AND fixes special characters)
 local function StripSyntax(text)
-    return string.gsub(text, "<[^>]+>", "")
+    local clean = string.gsub(text, "<[^>]+>", "")
+    -- Decode XML entities back to normal code
+    clean = clean:gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&quot;", '"'):gsub("&apos;", "'"):gsub("&amp;", "&")
+    return clean
 end
-
 -- 🟢 2. CONNECT REAL EXECUTOR FUNCTIONS
 CLONED_Detectedly.writefile = writefile
 CLONED_Detectedly.readfile = readfile
@@ -3503,22 +3506,27 @@ local function GenerateToken(i, prefix)
     return prefix .. s .. "_"
 end
 
--- 🟢 ROBUST HIGHLIGHTER (The Fix)
+-- 🟢 ROBUST HIGHLIGHTER (With Safety Escaping)
 local function ApplySyntax(text)
     -- 1. Clean first
     text = StripSyntax(text)
     
-    -- 2. Safety Limit (50k chars)
+    -- 2. Safety Limit
     if #text > 50000 then return text end
 
-    -- 3. HIDE STRINGS
-    -- We replace strings with tokens like _STR_A_ (No numbers!)
+    -- Helper to escape XML characters
+    local function Escape(str)
+        return str:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub('"', "&quot;"):gsub("'", "&apos;")
+    end
+
+    -- 3. HIDE STRINGS (And escape their content!)
     local strings = {}
     local sCount = 0
     local function hideStr(s)
         sCount = sCount + 1
         local token = GenerateToken(sCount, "_STR_")
-        strings[token] = '<font color="rgb(176, 224, 230)">' .. s .. '</font>'
+        -- We escape the content inside the string so it renders correctly
+        strings[token] = '<font color="rgb(176, 224, 230)">' .. Escape(s) .. '</font>'
         return token
     end
     text = text:gsub('("[^"]*")', hideStr)
@@ -3529,8 +3537,7 @@ local function ApplySyntax(text)
          text = text:gsub("(%f[%a]"..k.."%f[%A])", '<font color="'..c..'">%1</font>')
     end
 
-    -- 5. HIDE TAGS (CRITICAL FIX)
-    -- We hide the <font...> tags we just made so the Number Highlighter ignores them
+    -- 5. HIDE TAGS
     local tags = {}
     local tCount = 0
     local function hideTag(t)
@@ -3541,21 +3548,17 @@ local function ApplySyntax(text)
     end
     text = text:gsub("(<[^>]+>)", hideTag)
 
-    -- 6. HIGHLIGHT NUMBERS (Now Safe!)
+    -- 6. HIGHLIGHT NUMBERS
     text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
 
-    -- 7. HIGHLIGHT OPERATORS
-    text = text:gsub("([%+%-%*/%%%^#=<>~%(%)%[%]{}])", '<font color="rgb(70, 130, 180)">%1</font>')
+    -- 7. HIGHLIGHT OPERATORS (With Escaping!)
+    text = text:gsub("([%+%-%*/%%%^#=<>~%(%)%[%]{}])", function(c)
+        return '<font color="rgb(70, 130, 180)">' .. Escape(c) .. '</font>'
+    end)
 
-    -- 8. RESTORE TAGS
-    for k, v in pairs(tags) do
-        text = text:gsub(k, function() return v end)
-    end
-    
-    -- 9. RESTORE STRINGS
-    for k, v in pairs(strings) do
-        text = text:gsub(k, function() return v end)
-    end
+    -- 8. RESTORE
+    for k, v in pairs(tags) do text = text:gsub(k, function() return v end) end
+    for k, v in pairs(strings) do text = text:gsub(k, function() return v end) end
 
     return text
 end
@@ -4667,16 +4670,33 @@ InitTabs.Saved = function()
         local EditorFrame = Editor:WaitForChild("Editor");
         local Method = "MouseButton1Click"; 
 
-        -- [[ EXECUTE ]]
+   -- [[ EXECUTE ]]
         Panel.Execute[Method]:Connect(function()
-            local cleanCode = StripSyntax(EditorFrame.Input.Text)
-            UIEvents.Executor.RunCode(cleanCode)();
+            -- 🟢 FIX: Ensure we get the ContentText (Raw text without formatting) if available, 
+            -- or strip tags manually if ContentText isn't reliable in your environment.
+            local rawCode = EditorFrame.Input.ContentText -- ContentText ignores RichText tags!
+            
+            -- Fallback: If ContentText is empty (some executors glitch), strip tags manually
+            if not rawCode or rawCode == "" then 
+                rawCode = StripSyntax(EditorFrame.Input.Text)
+            end
+            
+            UIEvents.Executor.RunCode(rawCode)();
         end);
 
         -- [[ PASTE ]]
         Panel.Paste[Method]:Connect(function()
             local pastedText = safeGetClipboard();
-            EditorFrame.Input.Text = ApplySyntax(pastedText);
+            
+            -- 🟢 FIX: Reset text first to clear weird formatting states
+            EditorFrame.Input.RichText = false 
+            EditorFrame.Input.Text = pastedText 
+            
+            -- Re-enable RichText and apply highlighting safely
+            task.delay(0.05, function()
+                EditorFrame.Input.RichText = true
+                EditorFrame.Input.Text = ApplySyntax(pastedText)
+            end)
         end);
 
         -- [[ EXECUTE CLIPBOARD ]]
