@@ -3221,11 +3221,11 @@ if v.Name == "Popups" then v.Visible = false return end
 
 	local BASE_WIDTH = 733;
 	local BASE_HEIGHT = 392;
--- 🟢 1. HELPER: STRIP SYNTAX (Prevents Color Tags in Files)
--- 🟢 HELPER: STRIP SYNTAX (Removes tags AND fixes special characters)
+-- 🟢 1. HELPER: STRIP SYNTAX (Decodes & Cleans)
 local function StripSyntax(text)
+    -- Remove XML tags
     local clean = string.gsub(text, "<[^>]+>", "")
-    -- Decode XML entities back to normal code
+    -- Decode entities (Turn &lt; back into <)
     clean = clean:gsub("&lt;", "<"):gsub("&gt;", ">"):gsub("&quot;", '"'):gsub("&apos;", "'"):gsub("&amp;", "&")
     return clean
 end
@@ -3506,59 +3506,51 @@ local function GenerateToken(i, prefix)
     return prefix .. s .. "_"
 end
 
--- 🟢 ROBUST HIGHLIGHTER (With Safety Escaping)
+-- 🟢 2. ROBUST HIGHLIGHTER
 local function ApplySyntax(text)
-    -- 1. Clean first
+    -- STEP A: Clean the text first
     text = StripSyntax(text)
     
-    -- 2. Safety Limit
+    -- Safety Limit
     if #text > 50000 then return text end
 
-    -- Helper to escape XML characters
+    -- STEP B: Escape special characters GLOBALLY
+    -- This turns " into &quot; so it doesn't break the XML
     local function Escape(str)
         return str:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub('"', "&quot;"):gsub("'", "&apos;")
     end
+    text = Escape(text)
 
-    -- 3. HIDE STRINGS (And escape their content!)
+    -- STEP C: HIDE STRINGS
+    -- Note: We look for &quot; because we just escaped them in Step B!
     local strings = {}
     local sCount = 0
     local function hideStr(s)
         sCount = sCount + 1
-        local token = GenerateToken(sCount, "_STR_")
-        -- We escape the content inside the string so it renders correctly
-        strings[token] = '<font color="rgb(176, 224, 230)">' .. Escape(s) .. '</font>'
+        local token = "_STR_" .. sCount .. "_"
+        strings[token] = '<font color="rgb(176, 224, 230)">' .. s .. '</font>'
         return token
     end
-    text = text:gsub('("[^"]*")', hideStr)
-    text = text:gsub("('[^']*')", hideStr)
+    
+    text = text:gsub('(&quot;.-&quot;)', hideStr)
+    text = text:gsub("(&apos;.-&apos;)", hideStr)
 
-    -- 4. HIGHLIGHT KEYWORDS
+    -- STEP D: HIGHLIGHT KEYWORDS
     for k, c in pairs(SyntaxColors) do
-         text = text:gsub("(%f[%a]"..k.."%f[%A])", '<font color="'..c..'">%1</font>')
+         -- %f[%w] ensures we match "end" but not "ending"
+         text = text:gsub("(%f[%w]"..k.."%f[%W])", '<font color="'..c..'">%1</font>')
     end
 
-    -- 5. HIDE TAGS
-    local tags = {}
-    local tCount = 0
-    local function hideTag(t)
-        tCount = tCount + 1
-        local token = GenerateToken(tCount, "_TAG_")
-        tags[token] = t
-        return token
-    end
-    text = text:gsub("(<[^>]+>)", hideTag)
-
-    -- 6. HIGHLIGHT NUMBERS
+    -- STEP E: HIGHLIGHT NUMBERS
     text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(0, 0, 255)">%1</font>')
 
-    -- 7. HIGHLIGHT OPERATORS (With Escaping!)
-    text = text:gsub("([%+%-%*/%%%^#=<>~%(%)%[%]{}])", function(c)
-        return '<font color="rgb(70, 130, 180)">' .. Escape(c) .. '</font>'
-    end)
+    -- STEP F: HIGHLIGHT OPERATORS
+    text = text:gsub("([%+%-%*/%%%^#=~%(%)%[%]{}])", '<font color="rgb(70, 130, 180)">%1</font>')
 
-    -- 8. RESTORE
-    for k, v in pairs(tags) do text = text:gsub(k, function() return v end) end
-    for k, v in pairs(strings) do text = text:gsub(k, function() return v end) end
+    -- STEP G: RESTORE STRINGS
+    for k, v in pairs(strings) do
+        text = text:gsub(k, function() return v end)
+    end
 
     return text
 end
@@ -4725,22 +4717,32 @@ InitTabs.Saved = function()
             script.Parent.Popups.Main.Input:CaptureFocus() 
         end);
 
-        -- [[ EDITOR INPUT HANDLING ]]
+      -- [[ EDITOR INPUT HANDLING ]]
+        
+        -- 1. When you CLICK the box -> Turn OFF colors, show raw text
         EditorFrame.Input.Focused:Connect(function()
-            EditorFrame.Input.Text = StripSyntax(EditorFrame.Input.Text)
+            local raw = StripSyntax(EditorFrame.Input.Text)
+            EditorFrame.Input.RichText = false -- 🟢 CRITICAL FIX
+            EditorFrame.Input.Text = raw
         end)
 
+        -- 2. When you CLICK AWAY -> Turn ON colors, apply highlighting
         EditorFrame.Input.FocusLost:Connect(function()
-            EditorFrame.Input.Text = ApplySyntax(EditorFrame.Input.Text)
+            local raw = EditorFrame.Input.Text
+            EditorFrame.Input.RichText = true -- 🟢 CRITICAL FIX
+            EditorFrame.Input.Text = ApplySyntax(raw)
         end)
 
+        -- 3. Live Updates (Line Numbers & Autosave)
         EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+            
+            -- Only auto-save if we aren't editing a saved file
             if not Data.Editor.EditingSavedFile then
+                -- Note: While typing (Focused), text is raw. When not focused, it's colored.
+                -- StripSyntax handles both cases safely now.
                 local cleanText = StripSyntax(EditorFrame.Input.Text)
-                if not string.find(cleanText, "font color") then
-                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-                end
+                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
             end
         end)
         
