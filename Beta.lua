@@ -3513,25 +3513,39 @@ local function GenerateToken(i, prefix)
     return prefix .. s .. "_"
 end
 
--- 🟢 SIMPLE & RELIABLE HIGHLIGHTER
+-- 🟢 SIMPLE HIGHLIGHTER (Keywords + Strings Only)
 local function ApplySyntax(text)
     text = StripSyntax(text)
     if #text > 50000 then return text end
 
-    -- Escape HTML first
-    text = text:gsub("<", "&lt;"):gsub(">", "&gt;")
+    -- Highlight strings FIRST (before escaping)
+    local strings = {}
+    local sCount = 0
+    text = text:gsub('(".-")', function(s)
+        sCount = sCount + 1
+        local token = "XSTRX" .. sCount .. "X"
+        strings[token] = "<font color='rgb(173,216,230)'>" .. s .. "</font>"
+        return token
+    end)
+    text = text:gsub("('.-')", function(s)
+        sCount = sCount + 1
+        local token = "XSTRX" .. sCount .. "X"
+        strings[token] = "<font color='rgb(173,216,230)'>" .. s .. "</font>"
+        return token
+    end)
 
-    -- Highlight strings (cyan)
-    text = text:gsub('(".-")', "<font color='rgb(173,216,230)'>%1</font>")
-    text = text:gsub("('.-')", "<font color='rgb(173,216,230)'>%1</font>")
+    -- Escape HTML
+    text = text:gsub("<", "&lt;"):gsub(">", "&gt;")
 
     -- Highlight keywords
     for k, c in pairs(SyntaxColors) do
         text = text:gsub("(%f[%w]"..k.."%f[%W])", "<font color='"..c.."'>%1</font>")
     end
 
-    -- Highlight numbers (pink)
-    text = text:gsub("(%f[%d]%d+%.?%d*)", "<font color='rgb(255,125,125)'>%1</font>")
+    -- Restore strings
+    for token, colored in pairs(strings) do
+        text = text:gsub(token, function() return colored end)
+    end
 
     return text
 end
@@ -3995,8 +4009,8 @@ InitTabs.Settings = function()
 	-- 🟢 PATH: Punk-X-Files/theme.json
 		local function LoadTheme()
 			if CLONED_Detectedly.isfile("Punk-X-Files/theme.txt") then
-				local success, data = pcall(function()
-					return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
+    local success, data = pcall(function()
+        return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.txt"))
 				end)
 				if success and data.r and data.g and data.b then
 					CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
