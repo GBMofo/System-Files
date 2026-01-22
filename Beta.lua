@@ -5444,7 +5444,7 @@ end;
 		end
 		Loaded = true;
 	end
-	print("done");
+	print("Welcome, " .. game.Players.LocalPlayer.DisplayName .. "!")
 	
 	local Stored = {};
 	local function closeUI()
