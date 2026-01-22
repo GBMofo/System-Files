@@ -3975,581 +3975,592 @@ local UIEvents = {};
 
 	
 
+-- 🟢 REPLACE THE ENTIRE InitTabs.Settings FUNCTION WITH THIS FIXED VERSION
+
 InitTabs.Settings = function()
-		-- 🟢 1. CLEANUP (Root Path)
-if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
-    CLONED_Detectedly.delfile("Punk-X-Files/theme.json")
-		end
-		
-		local Settings = Pages:WaitForChild("Settings")
-		local Scripts = Settings.Scripts
-		
-		-- Clear old UI
-		for _, child in pairs(Scripts:GetChildren()) do
-			if not child:IsA("UIListLayout") and not child:IsA("UIPadding") and not child:IsA("UICorner") and not child:IsA("UIStroke") then
-				child:Destroy()
-			end
-		end
-		
-		-- 🟢 2. THEME SYSTEM (Root Path)
-		local Themes = {
-			{name = "Neon Purple", color = Color3.fromRGB(160, 85, 255)},
-			{name = "Neon Pink", color = Color3.fromRGB(255, 20, 147)},
-			{name = "Fluorescent Cyan", color = Color3.fromRGB(0, 255, 255)},
-			{name = "Neon Green", color = Color3.fromRGB(57, 255, 20)},
-			{name = "Bright Yellow", color = Color3.fromRGB(255, 255, 0)},
-			{name = "Neon Scarlet", color = Color3.fromRGB(255, 36, 0)},
-			{name = "Vibrant Coral", color = Color3.fromRGB(255, 127, 80)},
-			{name = "Neon Blue", color = Color3.fromRGB(0, 191, 255)}
-		}
-		
-		getgenv().CurrentTheme = Color3.fromRGB(160, 85, 255)
-		local CurrentTheme = getgenv().CurrentTheme
-		
-	-- 🟢 PATH: Punk-X-Files/theme.json
-		local function LoadTheme()
-			if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
-    local success, data = pcall(function()
-        return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
-				end)
-				if success and data.r and data.g and data.b then
-					CurrentTheme = Color3.fromRGB(data.r, data.g, data.b)
-					getgenv().CurrentTheme = CurrentTheme
-				end
-			end
-		end
-		
-		local function SaveTheme(color)
-			-- Ensure folder exists
-			if not CLONED_Detectedly.isfolder("Punk-X-Files") then CLONED_Detectedly.makedir("Punk-X-Files") end
-			
-			CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
-				r = math.floor(color.R * 255),
-				g = math.floor(color.G * 255),
-				b = math.floor(color.B * 255)
-			}))
-		end
-
-		local function ApplyTheme(color)
-			local oldTheme = CurrentTheme
-			getgenv().CurrentTheme = color
-			SaveTheme(color)
-			
-			-- 1. UPDATE STROKES
-			for _, obj in pairs(script.Parent:GetDescendants()) do
-				if obj:IsA("UIStroke") then
-					local isThemeStroke = (
-						obj.Color == Color3.fromRGB(160, 85, 255) or 
-						obj.Color == oldTheme or
-						obj.Thickness <= 2
-					)
-					if isThemeStroke then obj.Color = color end
-				end
-			end
-			
-			-- 2. UPDATE TOGGLES/CARDS
-			if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
-				for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
-					if card:IsA("Frame") or card:IsA("CanvasGroup") then
-						local stroke = card:FindFirstChild("UIStroke")
-						if stroke then stroke.Color = color end
-						
-						local toggleContainer = card:FindFirstChild("ToggleContainer")
-						if toggleContainer then
-							local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
-							if toggleBg and toggleBg:GetAttribute("IsToggleOn") then
-								toggleBg.BackgroundColor3 = color
-							end
-						end
-					end
-				end
-			end
-
-			-- 3. UPDATE SLIDERS
-			for _, slider in pairs(Scripts:GetDescendants()) do
-				if slider.Name == "sliderFill" and slider:IsA("Frame") then
-					slider.BackgroundColor3 = color
-				end
-			end
-			
-			-- 4. UPDATE ENABLEFRAME
-			if Main:FindFirstChild("EnableFrame") then
-				Main.EnableFrame.BackgroundColor3 = color
-				if Main.EnableFrame:FindFirstChild("Glow") then
-					Main.EnableFrame.Glow.BackgroundColor3 = color
-					Main.EnableFrame.Glow.ImageColor3 = color
-				end
-			end
-			
-			-- 5. UPDATE EDITOR TABS
-			if Pages.Editor and Pages.Editor:FindFirstChild("Tabs") then
-				for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
-					if tab:IsA("TextButton") and tab.Name == Data.Editor.CurrentTab then
-						tab.BackgroundColor3 = color
-					end
-				end
-			end
-			
-			-- 6. UPDATE ICONS
-			if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
-				local panel = Pages.Editor.Panel
-				if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-					panel.Execute.Icon.ImageColor3 = color
-				end
-				if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
-				if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
-			end
-
-			if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
-				for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
-					if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
-						local panel = card.Misc:FindFirstChild("Panel")
-						if panel then
-							if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-								panel.Execute.Icon.ImageColor3 = color
-							end
-							if panel:FindFirstChild("Spacer") then panel.Spacer.BackgroundColor3 = color end
-						end
-					end
-				end
-			end
-			
-			-- 7. UPDATE SEARCH FILTER
-			if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-				for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-					if btn:IsA("TextButton") and btn.Name == CurrentFilter then
-						btn.BackgroundColor3 = color
-					end
-				end
-				local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
-				if stroke then stroke.Color = color end
-			end
-			
-			-- 8. UPDATE HOME KEY
-			if Pages.Home and Pages.Home:FindFirstChild("Key") then
-				local keyBox = Pages.Home.Key
-				if keyBox:FindFirstChild("UIStroke") then keyBox.UIStroke.Color = color end
-				if keyBox.Folder and keyBox.Folder:FindFirstChild("Background") then
-					keyBox.Folder.Background.ImageColor3 = color
-				end
-				if keyBox:FindFirstChild("KeyText") then
-					keyBox.KeyText.Text = string.gsub(
-						keyBox.KeyText.Text,
-						'<font color="rgb%(%d+, %d+, %d+%)">',
-						'<font color="rgb(' .. math.floor(color.R * 255) .. ', ' .. math.floor(color.G * 255) .. ', ' .. math.floor(color.B * 255) .. ')">'
-					)
-				end
-			end
-			
-			-- 9. UPDATE CLOSE BTN
-			if Leftside and Leftside:FindFirstChild("Close") then
-				Leftside.Close.BackgroundColor3 = color
-			end
-			
-			-- 10. UPDATE NAV
-			if Nav and Nav:FindFirstChild("Page1") then
-				for _, btn in pairs(Nav.Page1:GetChildren()) do
-					if btn:IsA("TextButton") and btn.BackgroundColor3 == oldTheme then
-						btn.BackgroundColor3 = color
-					end
-				end
-			end
-			
-			-- 11. UPDATE GRADIENT
-			for _, obj in pairs(script.Parent:GetDescendants()) do
-				if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
-					local r1 = math.clamp(math.floor(color.R * 255 * 0.8), 0, 255)
-					local g1 = math.clamp(math.floor(color.G * 255 * 0.5), 0, 255)
-					local b1 = math.clamp(math.floor(color.B * 255 * 1.2), 0, 255)
-					
-					local r2 = math.clamp(math.floor(color.R * 255 * 0.4), 0, 255)
-					local g2 = math.clamp(math.floor(color.G * 255 * 0.25), 0, 255)
-					local b2 = math.clamp(math.floor(color.B * 255 * 0.7), 0, 255)
-					
-					local newColorSeq = ColorSequence.new{
-						ColorSequenceKeypoint.new(0, Color3.fromRGB(r1, g1, b1)),
-						ColorSequenceKeypoint.new(1, Color3.fromRGB(r2, g2, b2))
-					}
-					obj.Color = newColorSeq
-				end
-			end
-		end
-		
-		LoadTheme()
-
-		-- Helper Functions
-		local function createSectionHeader(text, order)
-			local header = Instance.new("TextLabel", Scripts)
-			header.BackgroundTransparency = 1
-			header.Size = UDim2.new(1, 0, 0, 35)
-			header.Font = Enum.Font.GothamBold
-			header.TextSize = 16
-			header.TextColor3 = Color3.fromRGB(255, 255, 255)
-			header.TextXAlignment = Enum.TextXAlignment.Left
-			header.Text = text
-			header.LayoutOrder = order
-			return header
-		end
-		
-		local function createCard(title, description, order)
-			local card = Instance.new("Frame", Scripts)
-			card.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-			card.Size = UDim2.new(1, 0, 0, 60)
-			card.BorderSizePixel = 0
-			card.LayoutOrder = order
-			card.Name = title
-			
-			local corner = Instance.new("UICorner", card)
-			corner.CornerRadius = UDim.new(0, 12)
-			
-			local stroke = Instance.new("UIStroke", card)
-			stroke.Transparency = 0.8
-			stroke.Color = CurrentTheme
-			stroke.Thickness = 1
-			
-			local layout = Instance.new("UIListLayout", card)
-			layout.HorizontalFlex = Enum.UIFlexAlignment.Fill
-			layout.Wraps = true
-			layout.VerticalAlignment = Enum.VerticalAlignment.Center
-			layout.SortOrder = Enum.SortOrder.LayoutOrder
-			
-			local padding = Instance.new("UIPadding", card)
-			padding.PaddingTop = UDim.new(0, 8)
-			padding.PaddingRight = UDim.new(0, 12)
-			padding.PaddingLeft = UDim.new(0, 12)
-			padding.PaddingBottom = UDim.new(0, 8)
-			
-			local titleLabel = Instance.new("TextLabel", card)
-			titleLabel.BackgroundTransparency = 1
-			titleLabel.Size = UDim2.new(0.7, 0, 0.5, 0)
-			titleLabel.Font = Enum.Font.GothamBold
-			titleLabel.TextSize = 14
-			titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-			titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-			titleLabel.TextYAlignment = Enum.TextYAlignment.Top
-			titleLabel.Text = title
-			titleLabel.TextWrapped = true
-			titleLabel.TextScaled = true
-			titleLabel.LayoutOrder = -2
-			
-			if description then
-				local descLabel = Instance.new("TextLabel", card)
-				descLabel.BackgroundTransparency = 1
-				descLabel.Size = UDim2.new(0.7, 0, 0.4, 0)
-				descLabel.Font = Enum.Font.Gotham
-				descLabel.TextSize = 11
-				descLabel.TextColor3 = Color3.fromRGB(150, 150, 160)
-				descLabel.TextXAlignment = Enum.TextXAlignment.Left
-				descLabel.TextYAlignment = Enum.TextYAlignment.Top
-				descLabel.Text = description
-				descLabel.TextWrapped = true
-				descLabel.LayoutOrder = -1
-			end
-			return card
-		end
-		
-		local function createButton(card, btnText, color, callback)
-			local btn = Instance.new("TextButton", card)
-			btn.BackgroundColor3 = color
-			btn.Size = UDim2.new(0.25, 0, 0.7, 0)
-			btn.Text = btnText
-			btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-			btn.Font = Enum.Font.GothamBold
-			btn.TextSize = 12
-			btn.BorderSizePixel = 0
-			
-			local btnCorner = Instance.new("UICorner", btn)
-			btnCorner.CornerRadius = UDim.new(0, 8)
-			
-			btn.MouseButton1Click:Connect(callback)
-			return btn
-		end
-
-		local function createToggle(card, callback)
-			local toggleContainer = Instance.new("CanvasGroup", card)
-			toggleContainer.BackgroundTransparency = 1
-			toggleContainer.Size = UDim2.new(0.12, 0, 0.8, 0)
-			toggleContainer.Position = UDim2.new(0.88, 0, 0.1, 0)
-			toggleContainer.Name = "ToggleContainer"
-			
-			local toggleBg = Instance.new("Frame", toggleContainer)
-			toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-			toggleBg:SetAttribute("IsToggleOn", false) 
-			toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
-			toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
-			toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
-			toggleBg.BorderSizePixel = 0
-			toggleBg.Name = "ToggleBg"
-			
-			local toggleCorner = Instance.new("UICorner", toggleBg)
-			toggleCorner.CornerRadius = UDim.new(1, 0)
-			
-			local toggleBtn = Instance.new("TextButton", toggleBg)
-			toggleBtn.BackgroundTransparency = 1
-			toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-			toggleBtn.Text = ""
-			
-			local toggleLayout = Instance.new("UIListLayout", toggleBtn)
-			toggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-			toggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-			toggleLayout.Padding = UDim.new(0, 3)
-			
-			local togglePadding = Instance.new("UIPadding", toggleBtn)
-			togglePadding.PaddingLeft = UDim.new(0, 3)
-			togglePadding.PaddingRight = UDim.new(0, 3)
-			
-			local circle = Instance.new("ImageLabel", toggleBtn)
-			circle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
-			circle.ImageColor3 = Color3.fromRGB(232, 229, 255)
-			circle.Image = "rbxassetid://5552526748"
-			circle.Size = UDim2.new(0, 20, 0, 20)
-			circle.BackgroundTransparency = 1
-			circle.ScaleType = Enum.ScaleType.Fit
-			
-			local isEnabled = false
-			toggleBtn.MouseButton1Click:Connect(function()
-				isEnabled = not isEnabled
-				toggleBg:SetAttribute("IsToggleOn", isEnabled)
-				toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-				toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-				callback(isEnabled)
-			end)
-			return toggleContainer, toggleBg
-		end
-		
-		local function createSlider(card, callback)
-			local sliderContainer = Instance.new("Frame", card)
-			sliderContainer.BackgroundTransparency = 1
-			sliderContainer.Size = UDim2.new(0.3, 0, 0.6, 0)
-			sliderContainer.Position = UDim2.new(0.65, 0, 0.2, 0)
-			
-			local sliderBg = Instance.new("Frame", sliderContainer)
-			sliderBg.BackgroundColor3 = Color3.fromRGB(100, 100, 110)
-			sliderBg.AnchorPoint = Vector2.new(0.5, 0.5)
-			sliderBg.Size = UDim2.new(1, 0, 0.4, 0)
-			sliderBg.Position = UDim2.new(0.5, 0, 0.5, 0)
-			sliderBg.BorderSizePixel = 0
-			
-			local sliderCorner = Instance.new("UICorner", sliderBg)
-			sliderCorner.CornerRadius = UDim.new(0.3, 0)
-			
-			local sliderFill = Instance.new("Frame", sliderBg)
-			sliderFill.BackgroundColor3 = CurrentTheme
-			sliderFill.Name = "sliderFill"
-			sliderFill.Size = UDim2.new(0, 0, 1, 0)
-			sliderFill.Position = UDim2.new(0, 0, 0, 0)
-			sliderFill.BorderSizePixel = 0
-			
-			local fillCorner = Instance.new("UICorner", sliderFill)
-			fillCorner.CornerRadius = UDim.new(0.3, 0)
-			
-			local sliderBtn = Instance.new("TextButton", sliderBg)
-			sliderBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			sliderBtn.AnchorPoint = Vector2.new(0.5, 0.5)
-			sliderBtn.Size = UDim2.new(0, 12, 1.5, 0)
-			sliderBtn.Position = UDim2.new(0, 0, 0.5, 0)
-			sliderBtn.Text = ""
-			sliderBtn.BorderSizePixel = 0
-			
-			local btnCorner = Instance.new("UICorner", sliderBtn)
-			btnCorner.CornerRadius = UDim.new(0, 4)
-			
-			local dragging = false
-			local UIS = game:GetService("UserInputService")
-			
-			sliderBtn.MouseButton1Down:Connect(function() dragging = true end)
-			
-			UIS.InputChanged:Connect(function()
-				if dragging then
-					local MousePos = UIS:GetMouseLocation() + Vector2.new(0, -36)
-					local RelPos = MousePos - sliderBg.AbsolutePosition
-					local Percent = math.clamp(RelPos.X / sliderBg.AbsoluteSize.X, 0, 1)
-					sliderBtn.Position = UDim2.new(Percent, 0, 0.5, 0)
-					sliderFill.Size = UDim2.new(Percent, 0, 1, 0)
-					callback(Percent)
-				end
-			end)
-			
-			UIS.InputEnded:Connect(function(input)
-				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-					dragging = false
-				end
-			end)
-			return sliderContainer
-		end
-		
-		-- ========================================
-		-- APPEARANCE SECTION
-		-- ========================================
-		
-		createSectionHeader("📱 APPEARANCE", -100)
-		
-		-- Theme Changer
-		local themeCard = Instance.new("Frame", Scripts)
-		themeCard.Name = "ThemeChangerCard"
-		themeCard.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-		themeCard.Size = UDim2.new(1, 0, 0, 110)
-		themeCard.BorderSizePixel = 0
-		themeCard.LayoutOrder = -99
-
-		local themeCorner = Instance.new("UICorner", themeCard)
-		themeCorner.CornerRadius = UDim.new(0, 12)
-
-		local themeStroke = Instance.new("UIStroke", themeCard)
-		themeStroke.Name = "ThemeStroke"
-		themeStroke.Transparency = 0.8
-		themeStroke.Color = CurrentTheme
-		themeStroke.Thickness = 1
-
-		local themeLayout = Instance.new("UIListLayout", themeCard)
-		themeLayout.Padding = UDim.new(0, 6)
-		
-		local themePadding = Instance.new("UIPadding", themeCard)
-		themePadding.PaddingTop = UDim.new(0, 10)
-		themePadding.PaddingRight = UDim.new(0, 10)
-		themePadding.PaddingLeft = UDim.new(0, 10)
-		themePadding.PaddingBottom = UDim.new(0, 10)
-		
-		local themeTitle = Instance.new("TextLabel", themeCard)
-		themeTitle.BackgroundTransparency = 1
-		themeTitle.Size = UDim2.new(1, 0, 0, 18)
-		themeTitle.Font = Enum.Font.GothamBold
-		themeTitle.TextSize = 14
-		themeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-		themeTitle.TextXAlignment = Enum.TextXAlignment.Left
-		themeTitle.Text = "🎨 Theme Changer"
-		
-		local pillContainer = Instance.new("Frame", themeCard)
-		pillContainer.BackgroundTransparency = 1
-		pillContainer.Size = UDim2.new(1, 0, 0, 65)
-		pillContainer.Name = "pillContainer"
-		
-		local pillLayout = Instance.new("UIListLayout", pillContainer)
-		pillLayout.FillDirection = Enum.FillDirection.Horizontal
-		pillLayout.Padding = UDim.new(0, 6)
-		pillLayout.Wraps = true
-		
-		for _, theme in ipairs(Themes) do
-			local pill = Instance.new("TextButton", pillContainer)
-			pill.BackgroundColor3 = theme.color
-			pill.Size = UDim2.new(0, 65, 0, 26)
-			pill.Text = ""
-			pill.BorderSizePixel = 0
-			
-			local pillCorner = Instance.new("UICorner", pill)
-			pillCorner.CornerRadius = UDim.new(0, 8)
-			
-			pill.MouseButton1Click:Connect(function()
-				ApplyTheme(theme.color)
-			end)
-		end
-		
-		-- UI Transparency
-		local transCard = createCard("UI Transparency", "Adjust background opacity", -98)
-		transCard.Size = UDim2.new(1, 0, 0, 55)
-		createSlider(transCard, function(v)
-			script.Parent.Full.Transparency = v
-		end)
-		
-		-- Censored Name
-		local nameCard = createCard("Censor Name", "Hide your username from the UI", -97)
-		createToggle(nameCard, function(enabled)
-			if enabled then
-				Main.Title.TextLabel.Text = "Hello, User!"
-			else
-				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!"
-			end
-		end)
-		
-		-- ========================================
-		-- PRIVACY SECTION
-		-- ========================================
-		
-		createSectionHeader("🔒 PRIVACY & SECURITY", -50)
-		
-		local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -49)
-		createToggle(invisCard, function(enabled)
-			InvisTriggerOpen = enabled
-			if enabled then
-				createNotification('Chat "/e open" to open UI', "Info", 5)
-			end
-		end)
-		
-		-- ========================================
-		-- PERFORMANCE SECTION
-		-- ========================================
-		
-		createSectionHeader("⚡ PERFORMANCE", 0)
-		
-		local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
-		createToggle(afkCard, function(enabled)
-			if enabled then
-				local speaker = game:GetService("Players").LocalPlayer
-				if getconnections then
-					for _, connection in pairs(getconnections(speaker.Idled)) do
-						connection:Disable()
-					end
-				else
-					speaker.Idled:Connect(function()
-						Services.VirtualUser:CaptureController()
-						Services.VirtualUser:ClickButton2(Vector2.new())
-					end)
-				end
-				createNotification("Anti AFK Enabled", "Success", 5)
-			end
-		end)
-		
-		local fpsCard = createCard("FPS Boost", "Removes shadows and textures", 2)
-		createToggle(fpsCard, function(enabled)
-			if enabled then
-				for _, obj in pairs(game:GetDescendants()) do
-					if obj:IsA("BasePart") then
-						obj.CastShadow = false
-						obj.Material = Enum.Material.Plastic
-					end
-					if obj:IsA("Texture") or obj:IsA("Decal") then
-						obj.Transparency = 1
-					end
-				end
-				game.Lighting.GlobalShadows = false
-				createNotification("FPS Boost Activated", "Success", 3)
-			end
-		end)
-		
-		-- ========================================
-		-- ADVANCED SECTION
-		-- ========================================
-		
-		createSectionHeader("🔧 ADVANCED", 50)
-		
-		local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 51)
-        resetCard.Size = UDim2.new(1, 0, 0, 55)
+    -- 🟢 1. CLEANUP (Root Path)
+    if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
+        -- Don't delete! We need to read it first
+        -- CLONED_Detectedly.delfile("Punk-X-Files/theme.json") -- REMOVED
+    end
+    
+    local Settings = Pages:WaitForChild("Settings")
+    local Scripts = Settings.Scripts
+    
+    -- Clear old UI
+    for _, child in pairs(Scripts:GetChildren()) do
+        if not child:IsA("UIListLayout") and not child:IsA("UIPadding") and not child:IsA("UICorner") and not child:IsA("UIStroke") then
+            child:Destroy()
+        end
+    end
+    
+    -- 🟢 2. THEME SYSTEM (Root Path)
+    local Themes = {
+        {name = "Neon Purple", color = Color3.fromRGB(160, 85, 255)},
+        {name = "Neon Pink", color = Color3.fromRGB(255, 20, 147)},
+        {name = "Fluorescent Cyan", color = Color3.fromRGB(0, 255, 255)},
+        {name = "Neon Green", color = Color3.fromRGB(57, 255, 20)},
+        {name = "Bright Yellow", color = Color3.fromRGB(255, 255, 0)},
+        {name = "Neon Scarlet", color = Color3.fromRGB(255, 36, 0)},
+        {name = "Vibrant Coral", color = Color3.fromRGB(255, 127, 80)},
+        {name = "Neon Blue", color = Color3.fromRGB(0, 191, 255)}
+    }
+    
+    -- 🔴 FIX: Initialize with default first, then load saved
+    getgenv().CurrentTheme = Color3.fromRGB(160, 85, 255)
+    
+    -- 🟢 PATH: Punk-X-Files/theme.json
+    local function LoadTheme()
+        if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
+            local success, data = pcall(function()
+                return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
+            end)
+            if success and data.r and data.g and data.b then
+                local loadedColor = Color3.fromRGB(data.r, data.g, data.b)
+                getgenv().CurrentTheme = loadedColor
+                print("[THEME] Loaded saved theme:", loadedColor)
+                return loadedColor
+            end
+        end
+        print("[THEME] No saved theme, using default purple")
+        return Color3.fromRGB(160, 85, 255)
+    end
+    
+    local function SaveTheme(color)
+        -- Ensure folder exists
+        if not CLONED_Detectedly.isfolder("Punk-X-Files") then 
+            CLONED_Detectedly.makedir("Punk-X-Files") 
+        end
         
-        createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
-            if CLONED_Detectedly.delfile and CLONED_Detectedly.isfile then
-                if CLONED_Detectedly.isfile("Punk-X-Files/punk-x-env.txt") then
-                    CLONED_Detectedly.delfile("Punk-X-Files/punk-x-env.txt")
-                    createNotification("Reset Success. Re-inject.", "Success", 5)
-                else
-                    createNotification("No preference saved.", "Error", 3)
+        CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
+            r = math.floor(color.R * 255),
+            g = math.floor(color.G * 255),
+            b = math.floor(color.B * 255)
+        }))
+        print("[THEME] Saved theme:", color)
+    end
+
+    local function ApplyTheme(color)
+        local oldTheme = CurrentTheme
+        getgenv().CurrentTheme = color
+        SaveTheme(color)
+        
+        print("[THEME] Applying theme:", color)
+        
+        -- 1. UPDATE STROKES
+        for _, obj in pairs(script.Parent:GetDescendants()) do
+            if obj:IsA("UIStroke") then
+                local isThemeStroke = (
+                    obj.Color == Color3.fromRGB(160, 85, 255) or 
+                    obj.Color == oldTheme or
+                    obj.Thickness <= 2
+                )
+                if isThemeStroke then obj.Color = color end
+            end
+        end
+        
+        -- 2. UPDATE TOGGLES/CARDS
+        if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
+            for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
+                if card:IsA("Frame") or card:IsA("CanvasGroup") then
+                    local stroke = card:FindFirstChild("UIStroke")
+                    if stroke then stroke.Color = color end
+                    
+                    local toggleContainer = card:FindFirstChild("ToggleContainer")
+                    if toggleContainer then
+                        local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
+                        if toggleBg and toggleBg:GetAttribute("IsToggleOn") then
+                            toggleBg.BackgroundColor3 = color
+                        end
+                    end
                 end
-            else
-                createNotification("Not supported.", "Error", 5)
+            end
+        end
+
+        -- 3. UPDATE SLIDERS
+        for _, slider in pairs(Scripts:GetDescendants()) do
+            if slider.Name == "sliderFill" and slider:IsA("Frame") then
+                slider.BackgroundColor3 = color
+            end
+        end
+        
+        -- 4. UPDATE ENABLEFRAME
+        if Main:FindFirstChild("EnableFrame") then
+            Main.EnableFrame.BackgroundColor3 = color
+            if Main.EnableFrame:FindFirstChild("Glow") then
+                Main.EnableFrame.Glow.BackgroundColor3 = color
+                Main.EnableFrame.Glow.ImageColor3 = color
+            end
+        end
+        
+        -- 5. UPDATE EDITOR TABS
+        if Pages.Editor and Pages.Editor:FindFirstChild("Tabs") then
+            for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
+                if tab:IsA("TextButton") and tab.Name == Data.Editor.CurrentTab then
+                    tab.BackgroundColor3 = color
+                end
+            end
+        end
+        
+        -- 6. UPDATE ICONS
+        if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
+            local panel = Pages.Editor.Panel
+            if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                panel.Execute.Icon.ImageColor3 = color
+            end
+            if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
+            if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
+        end
+
+        if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
+            for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
+                if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+                    local panel = card.Misc:FindFirstChild("Panel")
+                    if panel then
+                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                            panel.Execute.Icon.ImageColor3 = color
+                        end
+                        if panel:FindFirstChild("Spacer") then panel.Spacer.BackgroundColor3 = color end
+                    end
+                end
+            end
+        end
+        
+        -- 7. UPDATE SEARCH FILTER
+        if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+            for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+                if btn:IsA("TextButton") and btn.Name == CurrentFilter then
+                    btn.BackgroundColor3 = color
+                end
+            end
+            local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+            if stroke then stroke.Color = color end
+        end
+        
+        -- 8. UPDATE HOME KEY
+        if Pages.Home and Pages.Home:FindFirstChild("Key") then
+            local keyBox = Pages.Home.Key
+            if keyBox:FindFirstChild("UIStroke") then keyBox.UIStroke.Color = color end
+            if keyBox.Folder and keyBox.Folder:FindFirstChild("Background") then
+                keyBox.Folder.Background.ImageColor3 = color
+            end
+            if keyBox:FindFirstChild("KeyText") then
+                keyBox.KeyText.Text = string.gsub(
+                    keyBox.KeyText.Text,
+                    '<font color="rgb%(%d+, %d+, %d+%)">',
+                    '<font color="rgb(' .. math.floor(color.R * 255) .. ', ' .. math.floor(color.G * 255) .. ', ' .. math.floor(color.B * 255) .. ')">'
+                )
+            end
+        end
+        
+        -- 9. UPDATE CLOSE BTN
+        if Leftside and Leftside:FindFirstChild("Close") then
+            Leftside.Close.BackgroundColor3 = color
+        end
+        
+        -- 10. UPDATE NAV
+        if Nav and Nav:FindFirstChild("Page1") then
+            for _, btn in pairs(Nav.Page1:GetChildren()) do
+                if btn:IsA("TextButton") and btn.BackgroundColor3 == oldTheme then
+                    btn.BackgroundColor3 = color
+                end
+            end
+        end
+        
+        -- 11. UPDATE GRADIENT
+        for _, obj in pairs(script.Parent:GetDescendants()) do
+            if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
+                local r1 = math.clamp(math.floor(color.R * 255 * 0.8), 0, 255)
+                local g1 = math.clamp(math.floor(color.G * 255 * 0.5), 0, 255)
+                local b1 = math.clamp(math.floor(color.B * 255 * 1.2), 0, 255)
+                
+                local r2 = math.clamp(math.floor(color.R * 255 * 0.4), 0, 255)
+                local g2 = math.clamp(math.floor(color.G * 255 * 0.25), 0, 255)
+                local b2 = math.clamp(math.floor(color.B * 255 * 0.7), 0, 255)
+                
+                local newColorSeq = ColorSequence.new{
+                    ColorSequenceKeypoint.new(0, Color3.fromRGB(r1, g1, b1)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(r2, g2, b2))
+                }
+                obj.Color = newColorSeq
+            end
+        end
+        
+        print("[THEME] Theme applied successfully!")
+    end
+    
+    -- 🔴 CRITICAL FIX: Load theme FIRST before building UI
+    local savedTheme = LoadTheme()
+    getgenv().CurrentTheme = savedTheme
+
+    -- Helper Functions (createSectionHeader, createCard, etc. - KEEP AS IS)
+    local function createSectionHeader(text, order)
+        local header = Instance.new("TextLabel", Scripts)
+        header.BackgroundTransparency = 1
+        header.Size = UDim2.new(1, 0, 0, 35)
+        header.Font = Enum.Font.GothamBold
+        header.TextSize = 16
+        header.TextColor3 = Color3.fromRGB(255, 255, 255)
+        header.TextXAlignment = Enum.TextXAlignment.Left
+        header.Text = text
+        header.LayoutOrder = order
+        return header
+    end
+    
+    local function createCard(title, description, order)
+        local card = Instance.new("Frame", Scripts)
+        card.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        card.Size = UDim2.new(1, 0, 0, 60)
+        card.BorderSizePixel = 0
+        card.LayoutOrder = order
+        card.Name = title
+        
+        local corner = Instance.new("UICorner", card)
+        corner.CornerRadius = UDim.new(0, 12)
+        
+        local stroke = Instance.new("UIStroke", card)
+        stroke.Transparency = 0.8
+        stroke.Color = savedTheme -- 🔴 USE LOADED THEME
+        stroke.Thickness = 1
+        
+        local layout = Instance.new("UIListLayout", card)
+        layout.HorizontalFlex = Enum.UIFlexAlignment.Fill
+        layout.Wraps = true
+        layout.VerticalAlignment = Enum.VerticalAlignment.Center
+        layout.SortOrder = Enum.SortOrder.LayoutOrder
+        
+        local padding = Instance.new("UIPadding", card)
+        padding.PaddingTop = UDim.new(0, 8)
+        padding.PaddingRight = UDim.new(0, 12)
+        padding.PaddingLeft = UDim.new(0, 12)
+        padding.PaddingBottom = UDim.new(0, 8)
+        
+        local titleLabel = Instance.new("TextLabel", card)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Size = UDim2.new(0.7, 0, 0.5, 0)
+        titleLabel.Font = Enum.Font.GothamBold
+        titleLabel.TextSize = 14
+        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.TextYAlignment = Enum.TextYAlignment.Top
+        titleLabel.Text = title
+        titleLabel.TextWrapped = true
+        titleLabel.TextScaled = true
+        titleLabel.LayoutOrder = -2
+        
+        if description then
+            local descLabel = Instance.new("TextLabel", card)
+            descLabel.BackgroundTransparency = 1
+            descLabel.Size = UDim2.new(0.7, 0, 0.4, 0)
+            descLabel.Font = Enum.Font.Gotham
+            descLabel.TextSize = 11
+            descLabel.TextColor3 = Color3.fromRGB(150, 150, 160)
+            descLabel.TextXAlignment = Enum.TextXAlignment.Left
+            descLabel.TextYAlignment = Enum.TextYAlignment.Top
+            descLabel.Text = description
+            descLabel.TextWrapped = true
+            descLabel.LayoutOrder = -1
+        end
+        return card
+    end
+    
+    local function createButton(card, btnText, color, callback)
+        local btn = Instance.new("TextButton", card)
+        btn.BackgroundColor3 = color
+        btn.Size = UDim2.new(0.25, 0, 0.7, 0)
+        btn.Text = btnText
+        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+        btn.Font = Enum.Font.GothamBold
+        btn.TextSize = 12
+        btn.BorderSizePixel = 0
+        
+        local btnCorner = Instance.new("UICorner", btn)
+        btnCorner.CornerRadius = UDim.new(0, 8)
+        
+        btn.MouseButton1Click:Connect(callback)
+        return btn
+    end
+
+    local function createToggle(card, callback)
+        local toggleContainer = Instance.new("CanvasGroup", card)
+        toggleContainer.BackgroundTransparency = 1
+        toggleContainer.Size = UDim2.new(0.12, 0, 0.8, 0)
+        toggleContainer.Position = UDim2.new(0.88, 0, 0.1, 0)
+        toggleContainer.Name = "ToggleContainer"
+        
+        local toggleBg = Instance.new("Frame", toggleContainer)
+        toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        toggleBg:SetAttribute("IsToggleOn", false) 
+        toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
+        toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+        toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+        toggleBg.BorderSizePixel = 0
+        toggleBg.Name = "ToggleBg"
+        
+        local toggleCorner = Instance.new("UICorner", toggleBg)
+        toggleCorner.CornerRadius = UDim.new(1, 0)
+        
+        local toggleBtn = Instance.new("TextButton", toggleBg)
+        toggleBtn.BackgroundTransparency = 1
+        toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+        toggleBtn.Text = ""
+        
+        local toggleLayout = Instance.new("UIListLayout", toggleBtn)
+        toggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        toggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        toggleLayout.Padding = UDim.new(0, 3)
+        
+        local togglePadding = Instance.new("UIPadding", toggleBtn)
+        togglePadding.PaddingLeft = UDim.new(0, 3)
+        togglePadding.PaddingRight = UDim.new(0, 3)
+        
+        local circle = Instance.new("ImageLabel", toggleBtn)
+        circle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+        circle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+        circle.Image = "rbxassetid://5552526748"
+        circle.Size = UDim2.new(0, 20, 0, 20)
+        circle.BackgroundTransparency = 1
+        circle.ScaleType = Enum.ScaleType.Fit
+        
+        local isEnabled = false
+        toggleBtn.MouseButton1Click:Connect(function()
+            isEnabled = not isEnabled
+            toggleBg:SetAttribute("IsToggleOn", isEnabled)
+            toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+            toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+            callback(isEnabled)
+        end)
+        return toggleContainer, toggleBg
+    end
+    
+    local function createSlider(card, callback)
+        local sliderContainer = Instance.new("Frame", card)
+        sliderContainer.BackgroundTransparency = 1
+        sliderContainer.Size = UDim2.new(0.3, 0, 0.6, 0)
+        sliderContainer.Position = UDim2.new(0.65, 0, 0.2, 0)
+        
+        local sliderBg = Instance.new("Frame", sliderContainer)
+        sliderBg.BackgroundColor3 = Color3.fromRGB(100, 100, 110)
+        sliderBg.AnchorPoint = Vector2.new(0.5, 0.5)
+        sliderBg.Size = UDim2.new(1, 0, 0.4, 0)
+        sliderBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+        sliderBg.BorderSizePixel = 0
+        
+        local sliderCorner = Instance.new("UICorner", sliderBg)
+        sliderCorner.CornerRadius = UDim.new(0.3, 0)
+        
+        local sliderFill = Instance.new("Frame", sliderBg)
+        sliderFill.BackgroundColor3 = savedTheme -- 🔴 USE LOADED THEME
+        sliderFill.Name = "sliderFill"
+        sliderFill.Size = UDim2.new(0, 0, 1, 0)
+        sliderFill.Position = UDim2.new(0, 0, 0, 0)
+        sliderFill.BorderSizePixel = 0
+        
+        local fillCorner = Instance.new("UICorner", sliderFill)
+        fillCorner.CornerRadius = UDim.new(0.3, 0)
+        
+        local sliderBtn = Instance.new("TextButton", sliderBg)
+        sliderBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        sliderBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+        sliderBtn.Size = UDim2.new(0, 12, 1.5, 0)
+        sliderBtn.Position = UDim2.new(0, 0, 0.5, 0)
+        sliderBtn.Text = ""
+        sliderBtn.BorderSizePixel = 0
+        
+        local btnCorner = Instance.new("UICorner", sliderBtn)
+        btnCorner.CornerRadius = UDim.new(0, 4)
+        
+        local dragging = false
+        local UIS = game:GetService("UserInputService")
+        
+        sliderBtn.MouseButton1Down:Connect(function() dragging = true end)
+        
+        UIS.InputChanged:Connect(function()
+            if dragging then
+                local MousePos = UIS:GetMouseLocation() + Vector2.new(0, -36)
+                local RelPos = MousePos - sliderBg.AbsolutePosition
+                local Percent = math.clamp(RelPos.X / sliderBg.AbsoluteSize.X, 0, 1)
+                sliderBtn.Position = UDim2.new(Percent, 0, 0.5, 0)
+                sliderFill.Size = UDim2.new(Percent, 0, 1, 0)
+                callback(Percent)
             end
         end)
-
-        -- 🟢 Load and apply theme AFTER UI is built
-LoadTheme()
-task.spawn(function()
-    task.wait(0.5) -- Longer delay to ensure UI is ready
-    if getgenv().CurrentTheme then
-        ApplyTheme(getgenv().CurrentTheme)
-        print("[THEME] Loaded:", getgenv().CurrentTheme) -- Debug
-    else
-        print("[THEME] No saved theme found") -- Debug
+        
+        UIS.InputEnded:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+            end
+        end)
+        return sliderContainer
     end
-end)
-end; -- End of InitTabs.Settings
+    
+    -- ========================================
+    -- APPEARANCE SECTION
+    -- ========================================
+    
+    createSectionHeader("📱 APPEARANCE", -100)
+    
+    -- Theme Changer
+    local themeCard = Instance.new("Frame", Scripts)
+    themeCard.Name = "ThemeChangerCard"
+    themeCard.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+    themeCard.Size = UDim2.new(1, 0, 0, 110)
+    themeCard.BorderSizePixel = 0
+    themeCard.LayoutOrder = -99
+
+    local themeCorner = Instance.new("UICorner", themeCard)
+    themeCorner.CornerRadius = UDim.new(0, 12)
+
+    local themeStroke = Instance.new("UIStroke", themeCard)
+    themeStroke.Name = "ThemeStroke"
+    themeStroke.Transparency = 0.8
+    themeStroke.Color = savedTheme -- 🔴 USE LOADED THEME
+    themeStroke.Thickness = 1
+
+    local themeLayout = Instance.new("UIListLayout", themeCard)
+    themeLayout.Padding = UDim.new(0, 6)
+    
+    local themePadding = Instance.new("UIPadding", themeCard)
+    themePadding.PaddingTop = UDim.new(0, 10)
+    themePadding.PaddingRight = UDim.new(0, 10)
+    themePadding.PaddingLeft = UDim.new(0, 10)
+    themePadding.PaddingBottom = UDim.new(0, 10)
+    
+    local themeTitle = Instance.new("TextLabel", themeCard)
+    themeTitle.BackgroundTransparency = 1
+    themeTitle.Size = UDim2.new(1, 0, 0, 18)
+    themeTitle.Font = Enum.Font.GothamBold
+    themeTitle.TextSize = 14
+    themeTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    themeTitle.TextXAlignment = Enum.TextXAlignment.Left
+    themeTitle.Text = "🎨 Theme Changer"
+    
+    local pillContainer = Instance.new("Frame", themeCard)
+    pillContainer.BackgroundTransparency = 1
+    pillContainer.Size = UDim2.new(1, 0, 0, 65)
+    pillContainer.Name = "pillContainer"
+    
+    local pillLayout = Instance.new("UIListLayout", pillContainer)
+    pillLayout.FillDirection = Enum.FillDirection.Horizontal
+    pillLayout.Padding = UDim.new(0, 6)
+    pillLayout.Wraps = true
+    
+    for _, theme in ipairs(Themes) do
+        local pill = Instance.new("TextButton", pillContainer)
+        pill.BackgroundColor3 = theme.color
+        pill.Size = UDim2.new(0, 65, 0, 26)
+        pill.Text = ""
+        pill.BorderSizePixel = 0
+        
+        local pillCorner = Instance.new("UICorner", pill)
+        pillCorner.CornerRadius = UDim.new(0, 8)
+        
+        pill.MouseButton1Click:Connect(function()
+            ApplyTheme(theme.color)
+        end)
+    end
+    
+    -- UI Transparency
+    local transCard = createCard("UI Transparency", "Adjust background opacity", -98)
+    transCard.Size = UDim2.new(1, 0, 0, 55)
+    createSlider(transCard, function(v)
+        script.Parent.Full.Transparency = v
+    end)
+    
+    -- Censored Name
+    local nameCard = createCard("Censor Name", "Hide your username from the UI", -97)
+    createToggle(nameCard, function(enabled)
+        if enabled then
+            Main.Title.TextLabel.Text = "Hello, User!"
+        else
+            Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!"
+        end
+    end)
+    
+    -- ========================================
+    -- PRIVACY SECTION
+    -- ========================================
+    
+    createSectionHeader("🔒 PRIVACY & SECURITY", -50)
+    
+    local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -49)
+    createToggle(invisCard, function(enabled)
+        InvisTriggerOpen = enabled
+        if enabled then
+            createNotification('Chat "/e open" to open UI', "Info", 5)
+        end
+    end)
+    
+    -- ========================================
+    -- PERFORMANCE SECTION
+    -- ========================================
+    
+    createSectionHeader("⚡ PERFORMANCE", 0)
+    
+    local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
+    createToggle(afkCard, function(enabled)
+        if enabled then
+            local speaker = game:GetService("Players").LocalPlayer
+            if getconnections then
+                for _, connection in pairs(getconnections(speaker.Idled)) do
+                    connection:Disable()
+                end
+            else
+                speaker.Idled:Connect(function()
+                    Services.VirtualUser:CaptureController()
+                    Services.VirtualUser:ClickButton2(Vector2.new())
+                end)
+            end
+            createNotification("Anti AFK Enabled", "Success", 5)
+        end
+    end)
+    
+    local fpsCard = createCard("FPS Boost", "Removes shadows and textures", 2)
+    createToggle(fpsCard, function(enabled)
+        if enabled then
+            for _, obj in pairs(game:GetDescendants()) do
+                if obj:IsA("BasePart") then
+                    obj.CastShadow = false
+                    obj.Material = Enum.Material.Plastic
+                end
+                if obj:IsA("Texture") or obj:IsA("Decal") then
+                    obj.Transparency = 1
+                end
+            end
+            game.Lighting.GlobalShadows = false
+            createNotification("FPS Boost Activated", "Success", 3)
+        end
+    end)
+    
+    -- ========================================
+    -- ADVANCED SECTION
+    -- ========================================
+    
+    createSectionHeader("🔧 ADVANCED", 50)
+    
+    local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 51)
+    resetCard.Size = UDim2.new(1, 0, 0, 55)
+    
+    createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
+        if CLONED_Detectedly.delfile and CLONED_Detectedly.isfile then
+            if CLONED_Detectedly.isfile("Punk-X-Files/punk-x-env.txt") then
+                CLONED_Detectedly.delfile("Punk-X-Files/punk-x-env.txt")
+                createNotification("Reset Success. Re-inject.", "Success", 5)
+            else
+                createNotification("No preference saved.", "Error", 3)
+            end
+        else
+            createNotification("Not supported.", "Error", 5)
+        end
+    end)
+
+    -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built (with longer delay)
+    task.spawn(function()
+        task.wait(1.5) -- 🔴 Increased delay to ensure all UI elements exist
+        print("[THEME] Applying saved theme after UI load...")
+        ApplyTheme(savedTheme)
+    end)
+end -- End of InitTabs.Settings
 
 InitTabs.TabsData = function()
 		-- 🟢 ENSURE FOLDERS EXIST
