@@ -3977,8 +3977,8 @@ local UIEvents = {};
 
 InitTabs.Settings = function()
 		-- 🟢 1. CLEANUP (Root Path)
-if CLONED_Detectedly.isfile("theme.json") then
-    CLONED_Detectedly.delfile("theme.json")
+if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
+    CLONED_Detectedly.delfile("Punk-X-Files/theme.json")
 		end
 		
 		local Settings = Pages:WaitForChild("Settings")
