@@ -3527,25 +3527,34 @@ local function ApplySyntax(text)
     end
     text = Escape(text)
 
-    -- STEP C: HIDE STRINGS (Store them safely)
-    local strings = {}
-    local sCount = 0
-    
-    -- Match double quotes
-    text = text:gsub('(&quot;.-&quot;)', function(s)
-        sCount = sCount + 1
-        local token = "___STRING" .. sCount .. "___"
-        strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
-        return token
-    end)
-    
-    -- Match single quotes
-    text = text:gsub("(&apos;.-&apos;)", function(s)
-        sCount = sCount + 1
-        local token = "___STRING" .. sCount .. "___"
-        strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
-        return token
-    end)
+  -- STEP C: HIDE STRINGS (Store them safely)
+local strings = {}
+local sCount = 0
+
+-- Helper to generate letter-only tokens (no numbers to highlight!)
+local function getToken()
+    sCount = sCount + 1
+    local letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    local token = "XSTRINGX"
+    for i = 1, 3 do
+        token = token .. letters:sub(math.random(1, 26), math.random(1, 26))
+    end
+    return token .. "X"
+end
+
+-- Match double quotes
+text = text:gsub('(&quot;.-&quot;)', function(s)
+    local token = getToken()
+    strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
+    return token
+end)
+
+-- Match single quotes
+text = text:gsub("(&apos;.-&apos;)", function(s)
+    local token = getToken()
+    strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
+    return token
+end)
 
     -- STEP D: HIGHLIGHT KEYWORDS
     for k, c in pairs(SyntaxColors) do
