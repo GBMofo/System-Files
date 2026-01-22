@@ -3513,55 +3513,44 @@ local function GenerateToken(i, prefix)
     return prefix .. s .. "_"
 end
 
--- 🟢 2. ROBUST HIGHLIGHTER (FIXED v3)
+-- 🟢 FINAL WORKING SYNTAX HIGHLIGHTER
 local function ApplySyntax(text)
-    -- STEP A: Clean first
     text = StripSyntax(text)
-    
-    -- Safety limit
     if #text > 50000 then return text end
 
-    -- STEP B: HIDE STRINGS FIRST (before escaping!)
+    -- STEP 1: Hide strings FIRST
     local strings = {}
-    local sCount = 0
+    local strCount = 0
     
-    -- Helper to generate safe tokens
-    local function getToken()
-        sCount = sCount + 1
-        return "XSTRX" .. string.rep("Z", sCount) .. "XENDX"
+    local function hideString(content, quote)
+        strCount = strCount + 1
+        local token = "XSTRINGTOKEN" .. strCount .. "X"
+        -- Use SINGLE quotes in HTML to avoid conflicts!
+        local colored = "<font color='rgb(173, 216, 230)'>" .. quote .. content .. quote .. "</font>"
+        strings[token] = colored
+        return token
     end
     
     -- Hide double-quoted strings
-    text = text:gsub('"(.-)"', function(content)
-        local token = getToken()
-        -- Only escape < and > (NOT &, to avoid double-escaping)
-        local escaped = content:gsub("<", "&lt;"):gsub(">", "&gt;")
-        strings[token] = '<font color="rgb(173, 216, 230)">"' .. escaped .. '"</font>'
-        return token
-    end)
+    text = text:gsub('"([^"]*)"', function(c) return hideString(c, '"') end)
     
-    -- Hide single-quoted strings
-    text = text:gsub("'(.-)'", function(content)
-        local token = getToken()
-        local escaped = content:gsub("<", "&lt;"):gsub(">", "&gt;")
-        strings[token] = "<font color=\"rgb(173, 216, 230)'>\">" .. escaped .. "'</font>"
-        return token
-    end)
+    -- Hide single-quoted strings  
+    text = text:gsub("'([^']*)'", function(c) return hideString(c, "'") end)
 
-    -- STEP C: NOW escape remaining characters (outside strings)
-    text = text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+    -- STEP 2: Escape remaining code (NOT strings!)
+    text = text:gsub("<", "&lt;"):gsub(">", "&gt;")
 
-    -- STEP D: HIGHLIGHT KEYWORDS
+    -- STEP 3: Highlight keywords
     for k, c in pairs(SyntaxColors) do
-         text = text:gsub("(%f[%w]"..k.."%f[%W])", '<font color="'..c..'">%1</font>')
+        text = text:gsub("(%f[%w]"..k.."%f[%W])", "<font color='"..c.."'>%1</font>")
     end
 
-    -- STEP E: HIGHLIGHT NUMBERS
-    text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(255, 125, 125)">%1</font>')
+    -- STEP 4: Highlight numbers
+    text = text:gsub("(%f[%d]%d+%.?%d*)", "<font color='rgb(255, 125, 125)'>%1</font>")
 
-    -- STEP F: RESTORE STRINGS (inject pre-colored HTML)
-    for token, coloredStr in pairs(strings) do
-        text = text:gsub(token, function() return coloredStr end)
+    -- STEP 5: Restore strings (they already have color!)
+    for token, colored in pairs(strings) do
+        text = text:gsub(token, function() return colored end)
     end
 
     return text
