@@ -1693,6 +1693,9 @@ G2L["a3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["a3"]["Text"] = [[]];
 G2L["a3"]["LayoutOrder"] = -1;
 
+-- 🟢 ADD THIS LINE
+local SearchBox = G2L["a3"]  -- Create reference
+
 -- 🟢 ADD CLEAR ICON INSIDE SEARCH BOX
 local ClearIcon = Instance.new("TextButton", G2L["a3"])
 ClearIcon.Name = "ClearIcon"
@@ -4755,7 +4758,7 @@ InitTabs.Saved = function()
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
 	local Scripts = Search.Scripts;
-	local SearchBox = Search.TextBox;
+	local SearchBox = Search.TextBox;  -- 🟢 This should already exist, if not add it
 	
 -- 🔴 STATE
 local CurrentFilter = "All"
@@ -4895,8 +4898,8 @@ SortToggle.MouseButton1Click:Connect(function()
 end)
 
 -- Show/hide toggle when searching
-SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-	SortToggle.Visible = (#SearchBox.Text > 0)
+G2L["a3"]:GetPropertyChangedSignal("Text"):Connect(function()
+	SortToggle.Visible = (#G2L["a3"].Text > 0)
 end)
 
 local FilterBar = Instance.new("Frame", Search)
@@ -5020,8 +5023,8 @@ ClearBtn.LayoutOrder = -999 -- Put it first (leftmost)
 	
 	-- 🟢 IMPROVED: Context-aware messages
 	local message = ""
-	if SearchBox.Text ~= "" then
-		message = "No " .. CurrentFilter .. " scripts found for: \"" .. SearchBox.Text .. "\""
+	if G2L["a3"].Text ~= "" then
+	message = "No " .. CurrentFilter .. " scripts found for: \"" .. G2L["a3"].Text .. "\""
 	elseif CurrentFilter == "Recommended" then
 		message = "No verified scripts found for: " .. displayText
 	elseif CurrentFilter == "NoKey" then
@@ -5288,11 +5291,11 @@ TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
 
 -- 🟢 ADD THIS NEW SECTION
 ClearBtn.MouseButton1Click:Connect(function()
-	SearchBox.Text = ""        -- Clear search box
-	CurrentFilter = "All"       -- Reset filter
-	detectGame()                -- Reset to current game
-	updateUI()                  -- Update button colors
-	Update()                    -- Fetch new scripts
+	G2L["a3"].Text = ""        -- 🟢 FIXED
+	CurrentFilter = "All"
+	detectGame()
+	updateUI()
+	Update()
 	createNotification("Search Cleared", "Info", 2)
 end)
 	
