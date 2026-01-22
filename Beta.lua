@@ -3178,6 +3178,48 @@ if v.Name == "Popups" then v.Visible = false return end
 	end
 	local BASE_WIDTH = 733;
 	local BASE_HEIGHT = 392;
+-- 🟢 1. CONNECT REAL EXECUTOR FUNCTIONS
+	-- We overwrite the dummy functions with the real ones from your executor
+	CLONED_Detectedly.writefile = writefile
+	CLONED_Detectedly.readfile = readfile
+	CLONED_Detectedly.appendfile = appendfile
+	CLONED_Detectedly.isfile = isfile
+	CLONED_Detectedly.listfiles = listfiles
+	CLONED_Detectedly.delfile = delfile
+	CLONED_Detectedly.isfolder = isfolder
+	CLONED_Detectedly.delfolder = delfolder
+	CLONED_Detectedly.makedir = makefolder or makedir
+	CLONED_Detectedly.deldir = delfolder or deldir
+	CLONED_Detectedly.setclipboard = setclipboard or toclipboard
+	CLONED_Detectedly.runcode = function(code) return loadstring(code) end
+	CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or syn and syn.queue_on_teleport) or function() end
+
+	-- 🟢 2. FORCE FOLDER CREATION (IMMEDIATELY)
+	do
+		local function SafeMakeDir(dir)
+			if CLONED_Detectedly.isfolder and CLONED_Detectedly.makedir then
+				-- If folder doesn't exist, create it
+				if not CLONED_Detectedly.isfolder(dir) then
+					pcall(function() CLONED_Detectedly.makedir(dir) end)
+				end
+			end
+		end
+
+		-- Create Parent First
+		SafeMakeDir("Punk-X-Files")
+		
+		-- Create Subfolders
+		local subs = {
+			"Punk-X-Files/scripts",
+			"Punk-X-Files/saves",
+			"Punk-X-Files/autoexec",
+			"Punk-X-Files/rconsole"
+		}
+		
+		for _, folder in ipairs(subs) do
+			SafeMakeDir(folder)
+		end
+	end
 	local OriginalProperties = {};
 	local function scaleUIElement(element, storeOnly)
 		if not OriginalProperties[element] then
@@ -5495,24 +5537,9 @@ InitTabs.Autoexecute = function()
 		if Loaded then
 			return;
 		end
-
-		-- 🟢 1. Create Folders Synchronously (First!)
-		-- This guarantees folders exist before any tab tries to list files
-		local folders = {
-			"Punk-X-Files",
-			"Punk-X-Files/scripts",
-			"Punk-X-Files/saves",
-			"Punk-X-Files/autoexec",
-			"Punk-X-Files/rconsole"
-		}
 		
-		for _, v in ipairs(folders) do
-			if not CLONED_Detectedly.isfolder(v) then
-				CLONED_Detectedly.makedir(v)
-			end
-		end
-
-		-- 🟢 2. Now load the tabs
+		-- (Folders are already created at the top of the script now)
+		
 		for _, f in pairs(InitTabs) do
 			task.spawn(f);
 		end
