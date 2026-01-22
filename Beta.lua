@@ -3513,7 +3513,7 @@ local function GenerateToken(i, prefix)
     return prefix .. s .. "_"
 end
 
--- 🟢 2. ROBUST HIGHLIGHTER (FIXED)
+-- 🟢 2. ROBUST HIGHLIGHTER (FIXED v2)
 local function ApplySyntax(text)
     -- STEP A: Clean first
     text = StripSyntax(text)
@@ -3521,40 +3521,35 @@ local function ApplySyntax(text)
     -- Safety limit
     if #text > 50000 then return text end
 
-    -- STEP B: Escape HTML
-    local function Escape(str)
-        return str:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;"):gsub('"', "&quot;"):gsub("'", "&apos;")
+    -- STEP B: HIDE STRINGS FIRST (before escaping!)
+    local strings = {}
+    local sCount = 0
+    
+    -- Helper to generate safe tokens
+    local function getToken()
+        sCount = sCount + 1
+        return "XSTRX" .. string.rep("X", sCount) .. "XENDX"
     end
-    text = Escape(text)
+    
+    -- Hide double-quoted strings
+    text = text:gsub('"(.-)"', function(content)
+        local token = getToken()
+        -- Escape the content and wrap in color
+        local escaped = content:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+        strings[token] = '<font color="rgb(173, 216, 230)">&quot;' .. escaped .. '&quot;</font>'
+        return token
+    end)
+    
+    -- Hide single-quoted strings
+    text = text:gsub("'(.-)'", function(content)
+        local token = getToken()
+        local escaped = content:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
+        strings[token] = '<font color="rgb(173, 216, 230)">&apos;' .. escaped .. '&apos;</font>'
+        return token
+    end)
 
-  -- STEP C: HIDE STRINGS (Store them safely)
-local strings = {}
-local sCount = 0
-
--- Helper to generate letter-only tokens (no numbers to highlight!)
-local function getToken()
-    sCount = sCount + 1
-    local letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    local token = "XSTRINGX"
-    for i = 1, 3 do
-        token = token .. letters:sub(math.random(1, 26), math.random(1, 26))
-    end
-    return token .. "X"
-end
-
--- Match double quotes
-text = text:gsub('(&quot;.-&quot;)', function(s)
-    local token = getToken()
-    strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
-    return token
-end)
-
--- Match single quotes
-text = text:gsub("(&apos;.-&apos;)", function(s)
-    local token = getToken()
-    strings[token] = '<font color="rgb(173, 216, 230)">' .. s .. '</font>'
-    return token
-end)
+    -- STEP C: NOW escape remaining characters
+    text = text:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;")
 
     -- STEP D: HIGHLIGHT KEYWORDS
     for k, c in pairs(SyntaxColors) do
@@ -3564,7 +3559,7 @@ end)
     -- STEP E: HIGHLIGHT NUMBERS
     text = text:gsub("(%f[%d]%d+%.?%d*)", '<font color="rgb(255, 125, 125)">%1</font>')
 
-    -- STEP F: RESTORE STRINGS (No re-highlighting!)
+    -- STEP F: RESTORE STRINGS
     for token, coloredStr in pairs(strings) do
         text = text:gsub(token, function() return coloredStr end)
     end
