@@ -5495,11 +5495,28 @@ InitTabs.Autoexecute = function()
 		if Loaded then
 			return;
 		end
+
+		-- 🟢 1. Create Folders Synchronously (First!)
+		-- This guarantees folders exist before any tab tries to list files
+		local folders = {
+			"Punk-X-Files",
+			"Punk-X-Files/scripts",
+			"Punk-X-Files/saves",
+			"Punk-X-Files/autoexec",
+			"Punk-X-Files/rconsole"
+		}
+		
+		for _, v in ipairs(folders) do
+			if not CLONED_Detectedly.isfolder(v) then
+				CLONED_Detectedly.makedir(v)
+			end
+		end
+
+		-- 🟢 2. Now load the tabs
 		for _, f in pairs(InitTabs) do
 			task.spawn(f);
 		end
 		
-		-- Migration Notification
 		createNotification("Punk X: Files organized! Check Punk-X-Files folder.", "Info", 8)
 		
 		Loaded = true;
