@@ -3595,7 +3595,7 @@ local Data = {
         Scripts = {}
     },
     Search = {
-        Data.Search.CurrentFilter = "All"  -- 🟢 ADD THIS
+         CurrentFilter = "All"  -- ✅ CORRECT (just the key name)
     }
 };
 	
