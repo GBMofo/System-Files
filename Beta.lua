@@ -4514,9 +4514,27 @@ end
         local pillCorner = Instance.new("UICorner", pill)
         pillCorner.CornerRadius = UDim.new(0, 8)
         
-        pill.MouseButton1Click:Connect(function()
-            ApplyTheme(theme.color)
-        end)
+      pill.MouseButton1Click:Connect(function()
+    ApplyTheme(theme.color)
+    
+    -- 🟢 FORCE SEARCH BUTTONS TO UPDATE
+    task.spawn(function()
+        task.wait(0.05) -- Wait for ApplyTheme to finish
+        if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+            for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+                if btn:IsA("TextButton") then
+                    if btn.Name == Data.Search.CurrentFilter then
+                        btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    else
+                        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                    end
+                end
+            end
+        end
+    end)
+end)
     end
     
     -- UI Transparency
