@@ -4177,11 +4177,18 @@ if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
     end
 end
         
-       -- 7. UPDATE SEARCH FILTER
+      -- 7. UPDATE SEARCH FILTER (WITH DEBUG)
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+    print("[DEBUG] FilterBar found!")
+    print("[DEBUG] CurrentFilter =", Data.Search.CurrentFilter)
+    
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") and btn.Name == Data.Search.CurrentFilter then
-            btn.BackgroundColor3 = color
+        if btn:IsA("TextButton") then
+            print("[DEBUG] Button name:", btn.Name, "Current filter:", Data.Search.CurrentFilter)
+            if btn.Name == Data.Search.CurrentFilter then
+                print("[DEBUG] UPDATING BUTTON:", btn.Name)
+                btn.BackgroundColor3 = color
+            end
         end
     end
     local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
