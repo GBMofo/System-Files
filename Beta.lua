@@ -3834,17 +3834,26 @@ local UIEvents = {};
 			end,
 
 			UpdateUI = function()
-				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-					if v:GetAttribute("no") then continue end
-					if v:IsA("CanvasGroup") then v:Destroy() end
-				end
-				for i, v in pairs(Data.Saves.Scripts) do
-					local new = script.SaveTemplate:Clone();
-					new.Parent = Pages.Saved.Scripts;
-					new.Name = i;
-					new.Title.Text = i;
-					
-					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
+    for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+        if v:GetAttribute("no") then continue end
+        if v:IsA("CanvasGroup") then v:Destroy() end
+    end
+    
+    -- 🟢 GET CURRENT THEME
+    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    
+    for i, v in pairs(Data.Saves.Scripts) do
+        local new = script.SaveTemplate:Clone();
+        new.Parent = Pages.Saved.Scripts;
+        new.Name = i;
+        new.Title.Text = i;
+        
+        -- 🟢 APPLY THEME TO SPACER
+        if new.Misc.Panel:FindFirstChild("Spacer") then
+            new.Misc.Panel.Spacer.BackgroundColor3 = currentTheme
+        end
+        
+        new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
 						UIEvents.Executor.RunCode(v)();
 					end)
 
@@ -4800,6 +4809,9 @@ InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
 	local Scripts = Search.Scripts;
 	local SearchBox = Search.TextBox;  -- 🟢 This should already exist, if not add it
+
+  -- 🟢 LOAD THEME FIRST
+    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
 	
 -- 🔴 STATE
 local CurrentFilter = "All"
@@ -5003,18 +5015,18 @@ local ClearBtn = createButton("Clear", "🔄 Clear")
 ClearBtn.LayoutOrder = -999 -- Put it first (leftmost)
 	
 	local function updateUI()
-		for _, btn in pairs(FilterBar:GetChildren()) do
-			if btn:IsA("TextButton") then
-				if btn.Name == CurrentFilter then
-					btn.BackgroundColor3 = Color3.fromRGB(160, 85, 255)
-					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-				else
-					btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-					btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-				end
-			end
-		end
-	end
+    for _, btn in pairs(FilterBar:GetChildren()) do
+        if btn:IsA("TextButton") then
+            if btn.Name == CurrentFilter then
+                btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255) -- 🟢 USE GLOBAL
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            end
+        end
+    end
+end
 	
 	-- 🔴 FILTER & SORT
 	local function filterScripts(scriptList)
@@ -5325,26 +5337,45 @@ local function onFilterClick(filterName)
     Update()
 end
 	
-	RecommendedBtn.MouseButton1Click:Connect(function() onFilterClick("Recommended") end)
-AllBtn.MouseButton1Click:Connect(function() onFilterClick("All") end)
-NoKeyBtn.MouseButton1Click:Connect(function() onFilterClick("NoKey") end)
-KeyBtn.MouseButton1Click:Connect(function() onFilterClick("KeyRequired") end)
-TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
+	RecommendedBtn.MouseButton1Click:Connect(function() 
+    if isUpdating then return end -- 🟢 ADD THIS
+    onFilterClick("Recommended") 
+end)
 
--- 🟢 ADD THIS NEW SECTION
+AllBtn.MouseButton1Click:Connect(function() 
+    if isUpdating then return end -- 🟢 ADD THIS
+    onFilterClick("All") 
+end)
+
+NoKeyBtn.MouseButton1Click:Connect(function() 
+    if isUpdating then return end -- 🟢 ADD THIS
+    onFilterClick("NoKey") 
+end)
+
+KeyBtn.MouseButton1Click:Connect(function() 
+    if isUpdating then return end -- 🟢 ADD THIS
+    onFilterClick("KeyRequired") 
+end)
+
+TrendingBtn.MouseButton1Click:Connect(function() 
+    if isUpdating then return end -- 🟢 ADD THIS
+    onFilterClick("Trending") 
+end)
+
 ClearBtn.MouseButton1Click:Connect(function()
-   -- 🟢 CANCEL PROPERLY
+    -- 🟢 RESET ON CANCEL
     if searchDebounce then
         task.cancel(searchDebounce)
         searchDebounce = nil
-        isUpdating = false -- ⭐ ADD THIS LINE
+        isUpdating = false
     end
-	G2L["a3"].Text = ""        -- 🟢 FIXED
-	CurrentFilter = "All"
-	detectGame()
-	updateUI()
-	Update()
-	createNotification("Search Cleared", "Info", 2)
+    
+    G2L["a3"].Text = ""
+    CurrentFilter = "All"
+    detectGame()
+    updateUI()
+    Update()
+    createNotification("Search Cleared", "Info", 2)
 end)
 	
 	SearchBox.FocusLost:Connect(function()
