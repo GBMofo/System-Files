@@ -4177,25 +4177,31 @@ if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
     end
 end
         
--- 7. UPDATE SEARCH FILTER (WITH MORE DEBUG)
+-- 7. UPDATE SEARCH FILTER (SAFE VERSION)
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-    print("[DEBUG] FilterBar found!")
-    print("[DEBUG] CurrentFilter =", Data.Search.CurrentFilter)
-    print("[DEBUG] FilterBar ClassName:", filterBar.ClassName)  -- 🟢 NEW
-    print("[DEBUG] FilterBar BackgroundColor3:", filterBar.BackgroundColor3)  -- 🟢 NEW
-    print("[DEBUG] FilterBar has", #Pages.Search.FilterBar:GetChildren(), "direct children")  -- 🟢 NEW
-    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        print("[DEBUG] Found child:", btn.Name, "Type:", btn.ClassName)  -- 🟢 NEW LINE
-        if btn:IsA("TextButton") then
-            print("[DEBUG] Button name:", btn.Name, "Current filter:", Data.Search.CurrentFilter)
-            if btn.Name == Data.Search.CurrentFilter then
-                print("[DEBUG] UPDATING BUTTON:", btn.Name)
-                btn.BackgroundColor3 = color
+    local filterBar = Pages.Search:FindFirstChild("FilterBar")  -- 🟢 Use FindFirstChild again
+    if filterBar then  -- 🟢 Extra safety check
+        print("[DEBUG] FilterBar found!")
+        print("[DEBUG] FilterBar ClassName:", filterBar.ClassName)
+        print("[DEBUG] FilterBar BackgroundColor3:", filterBar.BackgroundColor3)
+        print("[DEBUG] CurrentFilter =", Data.Search.CurrentFilter)
+        print("[DEBUG] FilterBar has", #filterBar:GetChildren(), "direct children")
+        
+        for _, btn in pairs(filterBar:GetChildren()) do
+            print("[DEBUG] Found child:", btn.Name, "Type:", btn.ClassName)
+            if btn:IsA("TextButton") then
+                print("[DEBUG] Button name:", btn.Name, "Current filter:", Data.Search.CurrentFilter)
+                if btn.Name == Data.Search.CurrentFilter then
+                    print("[DEBUG] UPDATING BUTTON:", btn.Name)
+                    btn.BackgroundColor3 = color
+                end
             end
         end
+        local stroke = filterBar:FindFirstChild("FilterBarStroke")
+        if stroke then stroke.Color = color end
+    else
+        print("[DEBUG] FilterBar disappeared before we could use it!")
     end
-    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
-    if stroke then stroke.Color = color end
 end
         
         -- 8. UPDATE HOME KEY
