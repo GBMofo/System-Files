@@ -4177,34 +4177,23 @@ if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
     end
 end
         
--- 7. UPDATE SEARCH FILTER (CHECK SIBLINGS)
+-- 7. UPDATE SEARCH FILTER BUTTONS
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-    local filterBar = Pages.Search:FindFirstChild("FilterBar")
-    if filterBar then
-        print("[DEBUG] FilterBar found!")
-        print("[DEBUG] FilterBar ClassName:", filterBar.ClassName)
-        print("[DEBUG] FilterBar has", #filterBar:GetChildren(), "direct children")
-        
-        -- 🟢 NEW: Check FilterBar's parent and siblings
-        if filterBar.Parent then
-            print("[DEBUG] FilterBar's parent:", filterBar.Parent.Name)
-            print("[DEBUG] Siblings of FilterBar:")
-            for _, sibling in pairs(filterBar.Parent:GetChildren()) do
-                print("  - ", sibling.Name, "Type:", sibling.ClassName)
-                if sibling.Name:match("All") or sibling.Name:match("Filter") then
-                    print("    ^ POSSIBLE BUTTON!")
-                end
-            end
-        end
-        
-        -- Also search ALL of Pages.Search for buttons
-        print("[DEBUG] Searching all of Pages.Search for filter buttons:")
-        for _, desc in pairs(Pages.Search:GetDescendants()) do
-            if desc:IsA("TextButton") and (desc.Name == "All" or desc.Name == "Images" or desc.Name == "Videos") then
-                print("  FOUND BUTTON:", desc.Name, "Parent:", desc.Parent.Name)
+    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+        if btn:IsA("TextButton") then
+            if btn.Name == Data.Search.CurrentFilter then
+                btn.BackgroundColor3 = color
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
             end
         end
     end
+    
+    -- Update stroke color too
+    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+    if stroke then stroke.Color = color end
 end
         
         -- 8. UPDATE HOME KEY
