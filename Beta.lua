@@ -3107,7 +3107,7 @@ local script = G2L["2"];
     script.Parent.Parent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 end)
 
-	-- 🟢 ADD THIS SAFE THEME GETTER
+-- 🟢 ADD THIS SAFE THEME GETTER
 local function getSafeTheme()
     local success, theme = pcall(function()
         return getgenv().CurrentTheme
@@ -5026,11 +5026,10 @@ local ClearBtn = createButton("Clear", "🔄 Clear")
 ClearBtn.LayoutOrder = -999 -- Put it first (leftmost)
 	
 	local function updateUI()
-    local safeTheme = getSafeTheme() -- 🟢 USE SAFE GETTER
     for _, btn in pairs(FilterBar:GetChildren()) do
         if btn:IsA("TextButton") then
             if btn.Name == CurrentFilter then
-                btn.BackgroundColor3 = safeTheme
+                btn.BackgroundColor3 = getSafeTheme() -- 🟢 FIXED
                 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             else
                 btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
@@ -5272,7 +5271,7 @@ local function Update()
                 url = url .. "&sortBy=views"
             end
             
-            MasterList = fetchPages(url, 3) -- Reduced from getFetchPages()
+           MasterList = fetchPages(url, getFetchPages()) -- ✅ ORIGINAL
             
         elseif OriginalGameName then
             -- BROWSING GAME MODE
@@ -5284,8 +5283,8 @@ local function Update()
             local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame.."&max=50&sortBy=views"
             local urlUni = "https://scriptblox.com/api/script/search?q=Universal&max=50&sortBy=views"
             
-            local listGame = fetchPages(urlGame, 2) -- Reduced
-            local listUni = fetchPages(urlUni, 2)   -- Reduced
+           local listGame = fetchPages(urlGame, getFetchPages()) -- ✅ ORIGINAL
+local listUni = fetchPages(urlUni, getFetchPages())   -- ✅ ORIGINAL
             
             for _, v in pairs(listGame) do table.insert(MasterList, v) end
             for _, v in pairs(listUni) do table.insert(MasterList, v) end
@@ -5296,7 +5295,7 @@ local function Update()
                 GameLabel.Text = "Mode: Universal"
             end
             local url = "https://scriptblox.com/api/script/fetch?max=50"
-            MasterList = fetchPages(url, 2) -- Reduced
+           MasterList = fetchPages(url, getFetchPages()) -- ✅ ORIGINAL
         end
         
         CachedScripts = MasterList
