@@ -1381,14 +1381,18 @@ G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
 G2L["83"]["TextWrapped"] = false;
 G2L["83"]["TextEditable"] = true;
-G2L["83"]["RichText"] = true;
+G2L["83"]["RichText"] = true; -- 🟢 NEW: ENABLE RICHTEXT
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(1, -70, 1, -10); -- ✅ FIXED: Smaller size, doesn't overlap buttons
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None; -- ✅ CHANGED: No auto-sizing
+G2L["83"]["Size"] = UDim2.new(0, 1000, 0, 1000); 
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; -- 🟢 CHANGED: Auto-sizing
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
+
+-- [[ 4. UICORNER ]] --
+G2L["86"] = Instance.new("UICorner", G2L["82"]);
+G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
 -- [[ RESTORED DESIGN: PURPLE BORDER ]] --
 G2L["88"] = Instance.new("UIStroke", G2L["82"]);
@@ -1399,7 +1403,7 @@ G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
-G2L["89"]["ZIndex"] = 999; -- ✅ VERY HIGH to ensure it's on top
+G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
@@ -1407,8 +1411,6 @@ G2L["89"]["Size"] = UDim2.new(0.42127, 0, 0.15, 0);
 G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
 G2L["89"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["Active"] = true; -- ✅ ADD THIS
-G2L["89"]["Selectable"] = true; -- ✅ ADD THIS
 
 -- (Standard Panel Contents re-added below to prevent breaking)
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
@@ -1529,7 +1531,6 @@ G2L["95"]["Name"] = [[Icon]];
 G2L["95"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
 G2L["96"] = Instance.new("TextButton", G2L["89"]);
-G2L["96"]["ZIndex"] = 1000; -- ✅ ADD THIS LINE
 G2L["96"]["BorderSizePixel"] = 0;
 G2L["96"]["AutoButtonColor"] = false;
 G2L["96"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1544,7 +1545,7 @@ G2L["96"]["Text"] = [[]];
 G2L["96"]["Name"] = [[Execute]];
 
 G2L["97"] = Instance.new("ImageLabel", G2L["96"]);
-G2L["97"]["ZIndex"] = 1001; -- ✅ ADD THIS LINE
+G2L["97"]["ZIndex"] = 12;
 G2L["97"]["BorderSizePixel"] = 0;
 G2L["97"]["ScaleType"] = Enum.ScaleType.Fit;
 G2L["97"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
@@ -1716,7 +1717,7 @@ end)
 -- Clear search when clicked
 ClearIcon.MouseButton1Click:Connect(function()
 	G2L["a3"].Text = ""
-	Data.Search.CurrentFilter = "All"
+	CurrentFilter = "All"
 	detectGame()
 	updateUI()
 	Update()
@@ -3106,17 +3107,6 @@ local script = G2L["2"];
     script.Parent.Parent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 end)
 
--- 🟢 ADD THIS SAFE THEME GETTER
-local function getSafeTheme()
-    local success, theme = pcall(function()
-        return getgenv().CurrentTheme
-    end)
-    if success and theme then
-        return theme
-    end
-    return Color3.fromRGB(160, 85, 255)
-end
-	
 -- 🔴 FIX #17: CLIPBOARD PROTECTION
 local safeGetClipboard = function()
     local success, result = pcall(function()
@@ -3589,12 +3579,10 @@ local Data = {
         CurrentTab = nil,
         CurrentOrder = 0,
         Tabs = {}
+        -- IsSwitching removed
     },
     Saves = {
         Scripts = {}
-    },
-    Search = {
-         CurrentFilter = "All"  -- ✅ CORRECT (just the key name)
     }
 };
 	
@@ -3846,30 +3834,17 @@ local UIEvents = {};
 			end,
 
 			UpdateUI = function()
-    for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-        if v:GetAttribute("no") then continue end
-        if v:IsA("CanvasGroup") then v:Destroy() end
-    end
-    
-    -- 🟢 GET CURRENT THEME
-    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-    
-    for i, v in pairs(Data.Saves.Scripts) do
-        local new = script.SaveTemplate:Clone();
-        new.Parent = Pages.Saved.Scripts;
-        new.Name = i;
-        new.Title.Text = i;
-        
-        -- 🟢 APPLY THEME TO SPACER
-        if new.Misc.Panel:FindFirstChild("Spacer") then
-            new.Misc.Panel.Spacer.BackgroundColor3 = currentTheme
-        end
-	-- 🟢 APPLY THEME TO EXECUTE ICON
-        if new.Misc.Panel:FindFirstChild("Execute") and new.Misc.Panel.Execute:FindFirstChild("Icon") then
-            new.Misc.Panel.Execute.Icon.ImageColor3 = getSafeTheme()
-        end
-        
-        new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
+				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+					if v:GetAttribute("no") then continue end
+					if v:IsA("CanvasGroup") then v:Destroy() end
+				end
+				for i, v in pairs(Data.Saves.Scripts) do
+					local new = script.SaveTemplate:Clone();
+					new.Parent = Pages.Saved.Scripts;
+					new.Name = i;
+					new.Title.Text = i;
+					
+					new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
 						UIEvents.Executor.RunCode(v)();
 					end)
 
@@ -4064,15 +4039,15 @@ InitTabs.Settings = function()
         }))
     end
 
-   getgenv().ApplyTheme = function(color)  -- ✅ CHANGED THIS LINE
-    local oldTheme = getgenv().CurrentTheme
-    getgenv().CurrentTheme = color
-    SaveTheme(color)
+    local function ApplyTheme(color)
+        local oldTheme = CurrentTheme
+        getgenv().CurrentTheme = color
+        SaveTheme(color)
         
-        -- 1. UPDATE STROKES (Global)
+        
+        -- 1. UPDATE STROKES
         for _, obj in pairs(script.Parent:GetDescendants()) do
             if obj:IsA("UIStroke") then
-                -- Check if it matches old theme OR default purple OR is thin (generic border)
                 local isThemeStroke = (
                     obj.Color == Color3.fromRGB(160, 85, 255) or 
                     obj.Color == oldTheme or
@@ -4082,8 +4057,8 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 2. UPDATE TOGGLES/CARDS (Settings Page)
-        if Pages:FindFirstChild("Settings") and Pages.Settings:FindFirstChild("Scripts") then
+        -- 2. UPDATE TOGGLES/CARDS
+        if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
             for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
                 if card:IsA("Frame") or card:IsA("CanvasGroup") then
                     local stroke = card:FindFirstChild("UIStroke")
@@ -4107,7 +4082,7 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 4. UPDATE ENABLEFRAME (Nav Highlight)
+        -- 4. UPDATE ENABLEFRAME
         if Main:FindFirstChild("EnableFrame") then
             Main.EnableFrame.BackgroundColor3 = color
             if Main.EnableFrame:FindFirstChild("Glow") then
@@ -4115,112 +4090,82 @@ InitTabs.Settings = function()
                 Main.EnableFrame.Glow.ImageColor3 = color
             end
         end
- -- 🟢 6. UPDATE SEARCH FILTER BUTTONS (THE FIXED PART)
-        local searchPage = Pages:FindFirstChild("Search")
-        if searchPage then
-            local filterBar = searchPage:FindFirstChild("FilterBar")
-            if filterBar then
-                -- Update the FilterBar Stroke
-                local fStroke = filterBar:FindFirstChild("FilterBarStroke") or filterBar:FindFirstChildOfClass("UIStroke")
-                if fStroke then fStroke.Color = color end
-
-                -- Force Update Buttons based on current Data
-                for _, btn in pairs(filterBar:GetChildren()) do
-                    if btn:IsA("TextButton") then
-                        if btn.Name == (Data.Search.CurrentFilter or "All") then
-                            btn.BackgroundColor3 = color -- Active
-                            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                        else
-                            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40) -- Inactive
-                            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-                        end
-                    end
-                end
-            end
-            
-            -- Update Search Results Execute Icons
-            if searchPage:FindFirstChild("Scripts") then
-                for _, card in pairs(searchPage.Scripts:GetChildren()) do
-                    if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") and card.Misc:FindFirstChild("Panel") then
-                        local panel = card.Misc.Panel
-                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                            panel.Execute.Icon.ImageColor3 = color
-                        end
-                        if panel:FindFirstChild("Spacer1") then
-                            panel.Spacer1.BackgroundColor3 = color
-                        end
-                    end
-                end
-            end
-        end
+        
         -- 5. UPDATE EDITOR TABS
-        if Pages:FindFirstChild("Editor") and Pages.Editor:FindFirstChild("Tabs") then
+        if Pages.Editor and Pages.Editor:FindFirstChild("Tabs") then
             for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
                 if tab:IsA("TextButton") and tab.Name == Data.Editor.CurrentTab then
                     tab.BackgroundColor3 = color
                 end
             end
-            -- Update Editor Icons/Spacers
-            if Pages.Editor:FindFirstChild("Panel") then
-                local panel = Pages.Editor.Panel
-                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                    panel.Execute.Icon.ImageColor3 = color
+        end
+        
+        -- 6. UPDATE ICONS
+        if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
+            local panel = Pages.Editor.Panel
+            if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                panel.Execute.Icon.ImageColor3 = color
+            end
+            if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
+            if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
+        end
+
+        if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
+            for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
+                if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+                    local panel = card.Misc:FindFirstChild("Panel")
+                    if panel then
+                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                            panel.Execute.Icon.ImageColor3 = color
+                        end
+                        if panel:FindFirstChild("Spacer") then panel.Spacer.BackgroundColor3 = color end
+                    end
                 end
-                if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
-                if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
             end
         end
         
-
-        -- 7. UPDATE SAVED SCRIPTS
-        if Pages:FindFirstChild("Saved") and Pages.Saved:FindFirstChild("Scripts") then
-            for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
-                if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") and card.Misc:FindFirstChild("Panel") then
-                    local panel = card.Misc.Panel
-                    if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                        panel.Execute.Icon.ImageColor3 = color
-                    end
-                    if panel:FindFirstChild("Spacer") then
-                        panel.Spacer.BackgroundColor3 = color
-                    end
+        -- 7. UPDATE SEARCH FILTER
+        if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+            for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+                if btn:IsA("TextButton") and btn.Name == CurrentFilter then
+                    btn.BackgroundColor3 = color
                 end
             end
+            local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+            if stroke then stroke.Color = color end
         end
         
         -- 8. UPDATE HOME KEY
-        if Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
+        if Pages.Home and Pages.Home:FindFirstChild("Key") then
             local keyBox = Pages.Home.Key
             if keyBox:FindFirstChild("UIStroke") then keyBox.UIStroke.Color = color end
-            if keyBox:FindFirstChild("Folder") and keyBox.Folder:FindFirstChild("Background") then
+            if keyBox.Folder and keyBox.Folder:FindFirstChild("Background") then
                 keyBox.Folder.Background.ImageColor3 = color
             end
-            -- Update RichText color string
             if keyBox:FindFirstChild("KeyText") then
                 keyBox.KeyText.Text = string.gsub(
                     keyBox.KeyText.Text,
-                    'rgb%(%d+, %d+, %d+%)', -- Find old rgb
-                    'rgb(' .. math.floor(color.R * 255) .. ', ' .. math.floor(color.G * 255) .. ', ' .. math.floor(color.B * 255) .. ')'
+                    '<font color="rgb%(%d+, %d+, %d+%)">',
+                    '<font color="rgb(' .. math.floor(color.R * 255) .. ', ' .. math.floor(color.G * 255) .. ', ' .. math.floor(color.B * 255) .. ')">'
                 )
             end
         end
         
-        -- 9. UPDATE CLOSE BTN & NAV
+        -- 9. UPDATE CLOSE BTN
         if Leftside and Leftside:FindFirstChild("Close") then
             Leftside.Close.BackgroundColor3 = color
         end
         
+        -- 10. UPDATE NAV
         if Nav and Nav:FindFirstChild("Page1") then
             for _, btn in pairs(Nav.Page1:GetChildren()) do
-                if btn:IsA("TextButton") then
-                    -- If it's not the background color of the Nav container (Dark), it's an active button
-                    if btn.BackgroundColor3 ~= Color3.fromRGB(26, 31, 36) then 
-                        btn.BackgroundColor3 = color
-                    end
+                if btn:IsA("TextButton") and btn.BackgroundColor3 == oldTheme then
+                    btn.BackgroundColor3 = color
                 end
             end
         end
         
-        -- 10. UPDATE GRADIENT
+        -- 11. UPDATE GRADIENT
         for _, obj in pairs(script.Parent:GetDescendants()) do
             if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
                 local r1 = math.clamp(math.floor(color.R * 255 * 0.8), 0, 255)
@@ -4231,14 +4176,15 @@ InitTabs.Settings = function()
                 local g2 = math.clamp(math.floor(color.G * 255 * 0.25), 0, 255)
                 local b2 = math.clamp(math.floor(color.B * 255 * 0.7), 0, 255)
                 
-                obj.Color = ColorSequence.new{
+                local newColorSeq = ColorSequence.new{
                     ColorSequenceKeypoint.new(0, Color3.fromRGB(r1, g1, b1)),
                     ColorSequenceKeypoint.new(1, Color3.fromRGB(r2, g2, b2))
                 }
+                obj.Color = newColorSeq
             end
         end
         
-        print("[THEME] Applied:", color)
+        print("[THEME] Theme applied successfully!")
     end
     
     -- 🔴 CRITICAL FIX: Load theme FIRST before building UI
@@ -4525,7 +4471,7 @@ InitTabs.Settings = function()
         if enabled then
             Main.Title.TextLabel.Text = "Hello, User!"
         else
-            Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.DisplayName .. "!"
+            Main.Title.TextLabel.Text = "Welcome, " .. game.Players.LocalPlayer.DisplayName .. "!"
         end
     end)
     
@@ -4602,257 +4548,245 @@ InitTabs.Settings = function()
                 createNotification("No preference saved.", "Error", 3)
             end
         else
-           createNotification("Not supported.", "Error", 5)
+            createNotification("Not supported.", "Error", 5)
         end
     end)
 
-
-
--- 🔴 CRITICAL FIX: Add this RIGHT after the StripSyntax function (around line 300)
-
--- 🟢 ENHANCED: Strip Syntax + Validate JSON
-local function SafeJSONDecode(text)
-    -- Step 1: Strip all HTML/RichText tags
-    text = StripSyntax(text)
-    
-    -- Step 2: Remove any stray control characters
-    text = text:gsub("[%c]", "")
-    
-    -- Step 3: Attempt decode
-    local success, result = pcall(function()
-        return game.HttpService:JSONDecode(text)
+    -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built (with longer delay)
+    task.spawn(function()
+        task.wait(0) -- 🔴 Increased delay to ensure all UI elements exist
+        ApplyTheme(savedTheme)
     end)
-    
-    if success then
-        return result
-    else
-        warn("[PUNK X] JSON Decode Failed - File Corrupted")
-        return nil
-    end
-end
+end -- End of InitTabs.Settings
 
--- 🔴 REPLACE InitTabs.TabsData (around line 1850) with this SAFE version:
 InitTabs.TabsData = function()
-    if not CLONED_Detectedly.isfolder("Punk-X-Files") then
-        CLONED_Detectedly.makedir("Punk-X-Files")
-    end
-    if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
-        CLONED_Detectedly.makedir("Punk-X-Files/scripts")
-    end
+		-- 🟢 ENSURE FOLDERS EXIST
+		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
+			CLONED_Detectedly.makedir("Punk-X-Files")
+		end
+		if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
+			CLONED_Detectedly.makedir("Punk-X-Files/scripts")
+		end
 
-    local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
-    
-    for index, Nextpath in ipairs(scripts) do
-        local filename = Nextpath:match("([^/\\]+)$");
-        
-        if filename and filename ~= "recently.data" and filename:match("%.lua$") then
-            local success, Loadedscript = pcall(function()
-                local cleanPath = "Punk-X-Files/scripts/" .. filename
-                local rawContent = CLONED_Detectedly.readfile(cleanPath)
-                
-                -- 🟢 USE SAFE DECODER
-                return SafeJSONDecode(rawContent)
-            end)
+		local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
+		
+		for index, Nextpath in ipairs(scripts) do
+			-- 🟢 ROBUST FILENAME EXTRACTION
+			-- Gets "MyScript.lua" from "any/long/path/MyScript.lua"
+			local filename = Nextpath:match("([^/\\]+)$");
+			
+			if filename and filename ~= "recently.data" then
+				local success, Loadedscript = pcall(function()
+					-- 🟢 FORCE CORRECT READ PATH
+					local cleanPath = "Punk-X-Files/scripts/" .. filename
+					local content = CLONED_Detectedly.readfile(cleanPath)
+					return game.HttpService:JSONDecode(content)
+				end)
 
-            if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
-                -- Extra safety: Strip any residual tags
-                Loadedscript.Content = StripSyntax(Loadedscript.Content)
-                
-                Data.Editor.Tabs[Loadedscript.Name] = {
-                    Loadedscript.Content,
-                    Loadedscript.Order
-                };
-            else
-                -- 🟢 AUTO-DELETE CORRUPTED FILES
-                warn("[PUNK X] Deleting corrupted file: " .. filename)
-                pcall(function()
-                    CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. filename)
-                end)
-            end
-        end
-    end
+				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
+					-- Clean corruption if present
+					if string.find(Loadedscript.Content, "<font") then
+						Loadedscript.Content = StripSyntax(Loadedscript.Content)
+					end
+					Data.Editor.Tabs[Loadedscript.Name] = {
+						Loadedscript.Content,
+						Loadedscript.Order
+					};
+				end
+			end
+		end
 
-    if (next(Data.Editor.Tabs) == nil) then
-        UIEvents.EditorTabs.createTab("Script", "");
-    end
-    
-    UIEvents.EditorTabs.updateUI();
-end;
-
--- 🔴 ALSO REPLACE InitTabs.Saved (around line 1900) with this SAFE version:
+		-- If empty, create a default tab
+		if (next(Data.Editor.Tabs) == nil) then
+			UIEvents.EditorTabs.createTab("Script", "");
+		end
+		
+		UIEvents.EditorTabs.updateUI();
+	end;
 InitTabs.Saved = function()
-    local folders = {
-        "Punk-X-Files",
-        "Punk-X-Files/saves",
-        "Punk-X-Files/autoexec",
-        "Punk-X-Files/rconsole",
-        "Punk-X-Files/scripts"
-    }
+		-- 🟢 ENSURE ALL FOLDERS EXIST (Added scripts back)
+		local folders = {
+			"Punk-X-Files",
+			"Punk-X-Files/saves",
+			"Punk-X-Files/autoexec",
+			"Punk-X-Files/rconsole",
+			"Punk-X-Files/scripts" -- 🟢 Added this back for safety
+		}
 
-    for _, folder in ipairs(folders) do
-        if not CLONED_Detectedly.isfolder(folder) then
-            CLONED_Detectedly.makedir(folder)
-        end
-    end
-    
-    local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
-    
-    for index, Nextpath in ipairs(saves) do
-        local filename = Nextpath:match("([^/\\]+)$");
+		for _, folder in ipairs(folders) do
+			if not CLONED_Detectedly.isfolder(folder) then
+				CLONED_Detectedly.makedir(folder)
+			end
+		end
+		
+		-- 🟢 LOAD SAVED SCRIPTS
+		local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
+		
+		for index, Nextpath in ipairs(saves) do
+			-- 🟢 ROBUST FILENAME EXTRACTION
+			local filename = Nextpath:match("([^/\\]+)$");
+			
+			if filename and filename:match("%.lua$") then
+				local success, Loadedscript = pcall(function()
+					-- 🟢 FORCE CORRECT READ PATH
+					local cleanPath = "Punk-X-Files/saves/" .. filename
+					local content = CLONED_Detectedly.readfile(cleanPath)
+					return game.HttpService:JSONDecode(content)
+				end)
+
+				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
+					if string.find(Loadedscript.Content, "<font") then
+						Loadedscript.Content = StripSyntax(Loadedscript.Content)
+					end
+					Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
+				end
+			end
+		end
+		
+		UIEvents.Saved.UpdateUI();
+		
+		-- Search Bar Logic
+		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+			local hi = Pages.Saved.TextBox.Text
+			local isEmpty = #hi:gsub("[%s]","") <= 0
+			if isEmpty then
+				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+					if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
+				end
+				return
+			end
+			for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+				if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
+					v.Visible = v.Title.Text:lower():match("^" .. hi:lower()) ~= nil;
+				end
+			end
+		end)
+	end;
+
+	InitTabs.Editor = function()
+        local Editor = Pages:WaitForChild("Editor");
+        local Panel = Editor:WaitForChild("Panel");
+        local EditorFrame = Editor:WaitForChild("Editor");
+        local Method = "MouseButton1Click"; 
+
+   -- [[ EXECUTE ]]
+        Panel.Execute[Method]:Connect(function()
+            -- 🟢 FIX: Ensure we get the ContentText (Raw text without formatting) if available, 
+            -- or strip tags manually if ContentText isn't reliable in your environment.
+            local rawCode = EditorFrame.Input.ContentText -- ContentText ignores RichText tags!
+            
+            -- Fallback: If ContentText is empty (some executors glitch), strip tags manually
+            if not rawCode or rawCode == "" then 
+                rawCode = StripSyntax(EditorFrame.Input.Text)
+            end
+            
+            UIEvents.Executor.RunCode(rawCode)();
+        end);
+
+        -- [[ EXECUTE CLIPBOARD ]]
+        Panel.ExecuteClipboard[Method]:Connect(function()
+            local clipCode = safeGetClipboard()
+            UIEvents.Executor.RunCode(clipCode)();
+        end);
+
+        -- [[ CLEAR ]]
+        Panel.Delete[Method]:Connect(function()
+            EditorFrame.Input.Text = "";
+        end);
+
+        -- [[ SAVE (Now includes visual feedback) ]]
+        Panel.Save[Method]:Connect(function()
+            local cleanText = StripSyntax(EditorFrame.Input.Text)
+            UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
+        end);
+
+        -- [[ RENAME START ]]
+        Panel.Rename[Method]:Connect(function()
+            script.Parent.Popups.Visible = true;
+            local current = Data.Editor.CurrentTab or ""
+            script.Parent.Popups.Main.Input.Text = current
+            -- Force focus on the popup input so keyboard appears
+            script.Parent.Popups.Main.Input:CaptureFocus() 
+        end);
+
+        -- [[ EDITOR INPUT HANDLING ]]
         
-        if filename and filename:match("%.lua$") then
-            local success, Loadedscript = pcall(function()
-                local cleanPath = "Punk-X-Files/saves/" .. filename
-                local rawContent = CLONED_Detectedly.readfile(cleanPath)
-                
-                -- 🟢 USE SAFE DECODER
-                return SafeJSONDecode(rawContent)
-            end)
-
-            if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
-                Loadedscript.Content = StripSyntax(Loadedscript.Content)
-                Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
-            else
-                -- 🟢 AUTO-DELETE CORRUPTED SAVES
-                warn("[PUNK X] Deleting corrupted save: " .. filename)
-                pcall(function()
-                    CLONED_Detectedly.delfile("Punk-X-Files/saves/" .. filename)
-                end)
-            end
-        end
-    end
-    
-    UIEvents.Saved.UpdateUI();
-    
-    -- Search Bar Logic (keep as-is)
-    Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
-        local hi = Pages.Saved.TextBox.Text
-        local isEmpty = #hi:gsub("[%s]","") <= 0
-        if isEmpty then
-            for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-                if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
-            end
-            return
-        end
-        for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-            if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
-                v.Visible = v.Title.Text:lower():match("^" .. hi:lower()) ~= nil;
-            end
-        end
-    end)
-end;
-
-InitTabs.Editor = function()
-    local Editor = Pages:WaitForChild("Editor");
-    local Panel = Editor:WaitForChild("Panel");
-    local EditorFrame = Editor:WaitForChild("Editor");
-    
-    -- ✅ Make Panel always clickable
-    Panel.Active = true
-    Panel.Selectable = true
-
-    -- [[ EXECUTE ]]
-    Panel.Execute.MouseButton1Click:Connect(function()
-        print("Execute clicked!") -- Debug
-        local rawCode = EditorFrame.Input.ContentText or StripSyntax(EditorFrame.Input.Text)
-        UIEvents.Executor.RunCode(rawCode)();
-    end)
-
-    -- [[ EXECUTE CLIPBOARD ]]
-    Panel.ExecuteClipboard.MouseButton1Click:Connect(function()
-        print("Clipboard clicked!") -- Debug
-        local clipCode = safeGetClipboard()
-        UIEvents.Executor.RunCode(clipCode)();
-    end)
-
-    -- [[ CLEAR ]]
-    Panel.Delete.MouseButton1Click:Connect(function()
-        print("Clear clicked!") -- Debug
-        EditorFrame.Input.Text = "";
-    end)
-
-    -- [[ SAVE ]]
-    Panel.Save.MouseButton1Click:Connect(function()
-        print("Save clicked!") -- Debug
-        local cleanText = EditorFrame.Input.ContentText or StripSyntax(EditorFrame.Input.Text)
-        UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
-    end)
-
-    -- [[ RENAME ]]
-    Panel.Rename.MouseButton1Click:Connect(function()
-        print("Rename clicked!") -- Debug
-        script.Parent.Popups.Visible = true;
-        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-        script.Parent.Popups.Main.Input:CaptureFocus() 
-    end)
-
-    -- [[ PASTE ]]
-    Panel.Paste.MouseButton1Click:Connect(function()
-        print("Paste clicked!") -- Debug
-        local pastedText = safeGetClipboard();
-        EditorFrame.Input.RichText = false
-        EditorFrame.Input.Text = pastedText
-        task.delay(0.05, function()
-            EditorFrame.Input.RichText = true
-            EditorFrame.Input.Text = ApplySyntax(pastedText)
+        -- 1. FOCUS GAINED: Turn OFF colors, show raw text
+        EditorFrame.Input.Focused:Connect(function()
+            local raw = StripSyntax(EditorFrame.Input.Text)
+            EditorFrame.Input.RichText = false
+            EditorFrame.Input.Text = raw
         end)
-    end)
 
-    -- [[ FOCUS HANDLING ]]
-    EditorFrame.Input.Focused:Connect(function()
-        local plainText = EditorFrame.Input.ContentText or StripSyntax(EditorFrame.Input.Text)
-        EditorFrame.Input.RichText = false
-        EditorFrame.Input.Text = plainText
-    end)
+        -- 2. FOCUS LOST: Turn ON colors, apply highlighting
+        EditorFrame.Input.FocusLost:Connect(function()
+            local raw = EditorFrame.Input.Text
+            EditorFrame.Input.RichText = true
+            EditorFrame.Input.Text = ApplySyntax(raw)
+        end)
 
-    EditorFrame.Input.FocusLost:Connect(function()
-        local plainText = EditorFrame.Input.Text
-        EditorFrame.Input.RichText = true
-        EditorFrame.Input.Text = ApplySyntax(plainText)
-    end)
+        -- 3. PASTE HANDLING (Fixed)
+        Panel.Paste[Method]:Connect(function()
+            local pastedText = safeGetClipboard();
+            
+            EditorFrame.Input.RichText = false
+            EditorFrame.Input.Text = pastedText
+            
+            task.delay(0.05, function()
+                EditorFrame.Input.RichText = true
+                EditorFrame.Input.Text = ApplySyntax(pastedText)
+            end)
+        end);
 
-    -- [[ AUTO-SAVE ]]
-    EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+        -- 4. REAL-TIME UPDATES (Line Numbers & Autosave)
+        EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+            
+            -- Only auto-save if we aren't editing a saved file AND not actively typing
+            if not Data.Editor.EditingSavedFile and not EditorFrame.Input.Focused then
+                local cleanText = StripSyntax(EditorFrame.Input.Text)
+                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+            end
+        end)
+        
         UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
-        if not EditorFrame.Input:IsFocused() and not Data.Editor.EditingSavedFile then
-            local cleanText = EditorFrame.Input.ContentText or StripSyntax(EditorFrame.Input.Text)
-            UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-        end
-    end)
 
-    -- [[ TAB CREATE ]]
-    Editor.Tabs.Create.MouseButton1Click:Connect(function()
-        print("Create tab clicked!") -- Debug
-        UIEvents.EditorTabs.createTab("Script", "");
-    end)
+        -- [[ TAB CREATE ]]
+        Editor.Tabs.Create.Activated:Connect(function()
+            UIEvents.EditorTabs.createTab("Script", "");
+        end);
 
-    -- [[ POPUP BUTTONS ]]
-    local Buttons = script.Parent.Popups.Main.Button
-    
-    Buttons.Confirm.MouseButton1Click:Connect(function()
-        local newName = script.Parent.Popups.Main.Input.Text;
-        newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
-        if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
+        -- [[ POPUP BUTTONS ]]
+        local Buttons = script.Parent.Popups.Main.Button
+        
+        -- CONFIRM BUTTON
+        Buttons["Confirm"][Method]:Connect(function()
+            local newName = script.Parent.Popups.Main.Input.Text;
+            -- Remove whitespace
+            newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
+            
+            if (#newName == 0 or (newName == Data.Editor.CurrentTab)) then 
+                script.Parent.Popups.Visible = false;
+                return; 
+            end
+
             UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
-        end
-        script.Parent.Popups.Visible = false;
-    end)
+            script.Parent.Popups.Visible = false;
+        end)
 
-    Buttons.Cancel.MouseButton1Click:Connect(function()
-        script.Parent.Popups.Visible = false;
-    end)
-end;
+        -- CANCEL BUTTON
+        Buttons["Cancel"][Method]:Connect(function()
+            script.Parent.Popups.Visible = false;
+        end)
+    end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
 	local Scripts = Search.Scripts;
 	local SearchBox = Search.TextBox;  -- 🟢 This should already exist, if not add it
-
-  -- 🟢 LOAD THEME FIRST
-    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
 	
 -- 🔴 STATE
-
+local CurrentFilter = "All"
 local OriginalGameName = nil 
 local CachedScripts = {}
 local isUpdating = false
@@ -4861,14 +4795,14 @@ local searchDebounce = nil
 -- 🟢 REMOVED STATIC SETTINGS, REPLACED WITH FUNCTION
 -- 🟢 ADD DYNAMIC FETCH PAGE FUNCTION
 local function getFetchPages()
-	if Data.Search.CurrentFilter == "Recommended" then
-		return 8
-	elseif Data.Search.CurrentFilter == "Trending" then
-		return 1
-	elseif Data.Search.CurrentFilter == "KeyRequired" then
-		return 3
+	if CurrentFilter == "Recommended" then
+		return 8  -- 400 scripts - ensures enough verified
+	elseif CurrentFilter == "Trending" then
+		return 1  -- 50 scripts - curated list (though Trending uses separate endpoint)
+	elseif CurrentFilter == "KeyRequired" then
+		return 3  -- 150 scripts - premium might be rarer
 	else
-		return 3
+		return 3  -- 150 scripts - standard
 	end
 end
 
@@ -5053,18 +4987,18 @@ local ClearBtn = createButton("Clear", "🔄 Clear")
 ClearBtn.LayoutOrder = -999 -- Put it first (leftmost)
 	
 	local function updateUI()
-    for _, btn in pairs(FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") then
-            if btn.Name == Data.Search.CurrentFilter then
-                btn.BackgroundColor3 = getSafeTheme() -- 🟢 FIXED
-                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            else
-                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-            end
-        end
-    end
-end
+		for _, btn in pairs(FilterBar:GetChildren()) do
+			if btn:IsA("TextButton") then
+				if btn.Name == CurrentFilter then
+					btn.BackgroundColor3 = Color3.fromRGB(160, 85, 255)
+					btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+				else
+					btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+					btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+				end
+			end
+		end
+	end
 	
 	-- 🔴 FILTER & SORT
 	local function filterScripts(scriptList)
@@ -5072,17 +5006,17 @@ end
 		for _, scriptData in pairs(scriptList) do
 			local passes = false
 			
-			if Data.Search.CurrentFilter == "Recommended" then
-	passes = (scriptData.verified == true)
-elseif Data.Search.CurrentFilter == "NoKey" then
-	local isPaid = (scriptData.scriptType == "paid")
-	local hasKey = (scriptData.key == true)
-	passes = (not isPaid) and (not hasKey)
-elseif Data.Search.CurrentFilter == "KeyRequired" then
-	passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
-elseif Data.Search.CurrentFilter == "All" then
-	passes = true
-end
+			if CurrentFilter == "Recommended" then
+				passes = (scriptData.verified == true)
+			elseif CurrentFilter == "NoKey" then
+				local isPaid = (scriptData.scriptType == "paid")
+				local hasKey = (scriptData.key == true)
+				passes = (not isPaid) and (not hasKey)
+			elseif CurrentFilter == "KeyRequired" then
+				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
+			elseif CurrentFilter == "All" then
+				passes = true
+			end
 			
 			if passes then
 				table.insert(filtered, scriptData)
@@ -5114,17 +5048,17 @@ end
 	
 	-- 🟢 IMPROVED: Context-aware messages
 	local message = ""
-if G2L["a3"].Text ~= "" then
-message = "No " .. Data.Search.CurrentFilter .. " scripts found for: \"" .. G2L["a3"].Text .. "\""
-elseif Data.Search.CurrentFilter == "Recommended" then
-	message = "No verified scripts found for: " .. displayText
-elseif Data.Search.CurrentFilter == "NoKey" then
-	message = "No free scripts found for: " .. displayText
-elseif Data.Search.CurrentFilter == "KeyRequired" then
-	message = "No premium scripts found for: " .. displayText
-else
-	message = "No scripts found for: " .. displayText
-end
+	if G2L["a3"].Text ~= "" then
+	message = "No " .. CurrentFilter .. " scripts found for: \"" .. G2L["a3"].Text .. "\""
+	elseif CurrentFilter == "Recommended" then
+		message = "No verified scripts found for: " .. displayText
+	elseif CurrentFilter == "NoKey" then
+		message = "No free scripts found for: " .. displayText
+	elseif CurrentFilter == "KeyRequired" then
+		message = "No premium scripts found for: " .. displayText
+	else
+		message = "No scripts found for: " .. displayText
+	end
 	
 	noResults.Text = message
 	noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
@@ -5143,17 +5077,7 @@ end
 				new.Name = scriptData.title
 				new.Title.Text = scriptData.title .. ((scriptData.verified and verifyicon) or "")
 				new.Misc.Thumbnail.Image = scriptData.imageUrl or "rbxassetid://109798560145884"
-	
-            -- 🟢 APPLY THEME TO EXECUTE ICON
-        if new.Misc.Panel:FindFirstChild("Execute") and new.Misc.Panel.Execute:FindFirstChild("Icon") then
-            new.Misc.Panel.Execute.Icon.ImageColor3 = getSafeTheme()
-        end
-        
-        -- 🟢 APPLY THEME TO SPACER
-        if new.Misc.Panel:FindFirstChild("Spacer1") then
-            new.Misc.Panel.Spacer1.BackgroundColor3 = getSafeTheme()
-        end
-	
+				
 				-- STATS PILL
 				local StatsPill = Instance.new("Frame", new.Misc)
 				StatsPill.Name = "StatsPill"
@@ -5205,209 +5129,199 @@ end
 		end
 	end
 	
-local function Update()
-    -- 🟢 TRENDING SPECIAL CASE
-    if Data.Search.CurrentFilter == "Trending" then
-        if isUpdating then return end
-        isUpdating = true
-        
-        local GameLabel = Search:FindFirstChild("GameLabel")
-        if GameLabel then 
-            GameLabel.Text = "Mode: Trending | Most Interactions"
-        end
-        
-        for _, v in pairs(Scripts:GetChildren()) do
-            if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
-        end
-        
-        local url = "https://scriptblox.com/api/script/trending?max=50"
-        local response = fetchWithRetry(url)
-        
-        if response then
-            local success, data = pcall(function() 
-                return HttpService:JSONDecode(response) 
-            end)
-            
-            if success and data.result and data.result.scripts then
-                renderScripts(data.result.scripts)
-            end
-        end
-        
-        isUpdating = false
-        return
-    end
-    
+	-- 🔴 MAIN UPDATE (MULTI-PAGE FETCH)
+   local function Update()
+	-- 🟢 ADD THIS: TRENDING SPECIAL CASE
+	if CurrentFilter == "Trending" then
+		if isUpdating then return end
+		isUpdating = true
+		
+		local GameLabel = Search:FindFirstChild("GameLabel")
+		if GameLabel then 
+			GameLabel.Text = "Mode: Trending | Most Interactions"
+		end
+		
+		-- Clear old results
+		for _, v in pairs(Scripts:GetChildren()) do
+			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
+		end
+		
+		-- Fetch from trending endpoint
+		local url = "https://scriptblox.com/api/script/trending?max=50"
+		local response = fetchWithRetry(url)
+		
+		if response then
+			local success, data = pcall(function() 
+				return HttpService:JSONDecode(response) 
+			end)
+			
+			if success and data.result and data.result.scripts then
+				renderScripts(data.result.scripts)
+			else
+				local noResults = Instance.new("TextLabel", Scripts)
+				noResults.Text = "Failed to load trending scripts"
+				noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
+				noResults.BackgroundTransparency = 1
+				noResults.Size = UDim2.new(1, 0, 0, 50)
+				noResults.Font = Enum.Font.GothamBold
+				noResults.TextSize = 14
+			end
+		end
+		
+		isUpdating = false
+		return -- Exit Update() early
+	end
+	
+    -- 🔴 FIX #8: DEBOUNCE SEARCH
     if searchDebounce then
         task.cancel(searchDebounce)
-        searchDebounce = nil
     end
     
-    searchDebounce = task.spawn(function()
-        task.wait(0.15)
-        
-        if isUpdating then return end
-        isUpdating = true
-        
-        for _, v in pairs(Scripts:GetChildren()) do
-            if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
-        end
-        
-        local loadingMsg = Instance.new("TextLabel", Scripts)
-        loadingMsg.Name = "LoadingMessage"
-        loadingMsg.Text = "⏳ Loading scripts..."
-        loadingMsg.TextColor3 = Color3.fromRGB(200, 200, 200)
-        loadingMsg.BackgroundTransparency = 1
-        loadingMsg.Size = UDim2.new(1, 0, 0, 50)
-        loadingMsg.Font = Enum.Font.GothamBold
-        loadingMsg.TextSize = 14
-        
-        local currentQuery = SearchBox.Text
-        if currentQuery == "*" then
-            currentQuery = ""
-            SearchBox.Text = ""
-        end
-        
+searchDebounce = task.delay(0.15, function()
+	if isUpdating then return end
+	isUpdating = true
+	
+	-- 🟢 ADD LOADING INDICATOR
+	for _, v in pairs(Scripts:GetChildren()) do
+		if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
+	end
+	
+	local loadingMsg = Instance.new("TextLabel", Scripts)
+	loadingMsg.Name = "LoadingMessage"
+	loadingMsg.Text = "⏳ Loading scripts..."
+	loadingMsg.TextColor3 = Color3.fromRGB(200, 200, 200)
+	loadingMsg.BackgroundTransparency = 1
+	loadingMsg.Size = UDim2.new(1, 0, 0, 50)
+	loadingMsg.Font = Enum.Font.GothamBold
+	loadingMsg.TextSize = 14
+	loadingMsg.Position = UDim2.new(0, 0, 0.4, 0)
+	
+	local currentQuery = SearchBox.Text
+		if currentQuery == "*" then
+			currentQuery = ""
+			SearchBox.Text = ""
+		end
+		
+		-- 🟢 SINGLE PAGE FETCH
         local function fetchOnePage(url)
-            local response = fetchWithRetry(url)
+            local response = fetchWithRetry(url) -- 🔴 USE RETRY LOGIC
             if response then
                 local s2, d = pcall(function() return HttpService:JSONDecode(response) end)
                 if s2 and d.result and d.result.scripts then return d.result.scripts end
             end
             return {}
         end
-        
-        local function fetchPages(baseUrl, numPages)
-            local combined = {}
-            for i = 1, numPages do
-                local url = baseUrl .. "&page=" .. i
-                local result = fetchOnePage(url)
-                
-                if #result == 0 then break end
-                
-                for _, v in pairs(result) do table.insert(combined, v) end
-                
-                if numPages > 1 then task.wait(0.05) end
-            end
-            return combined
-        end
-        
-        local MasterList = {}
-        local GameLabel = Search:FindFirstChild("GameLabel")
-        
-        -- 🟢 FIX: ALWAYS SHOW SCRIPTS (Don't filter by empty search)
-        if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-            -- SEARCH MODE
-            if GameLabel then 
-                GameLabel.Text = "Search: " .. currentQuery
-            end
-            
-            local encoded = HttpService:UrlEncode(currentQuery)
-            local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50"
-            
-            if sortByViews then
-                url = url .. "&sortBy=views"
-            end
-            
-           MasterList = fetchPages(url, getFetchPages()) -- ✅ ORIGINAL
-            
-        elseif OriginalGameName then
-            -- BROWSING GAME MODE
-            if GameLabel then 
-                GameLabel.Text = "Game: " .. OriginalGameName
-            end
-            
-            local encodedGame = HttpService:UrlEncode(OriginalGameName)
-            local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame.."&max=50&sortBy=views"
-            local urlUni = "https://scriptblox.com/api/script/search?q=Universal&max=50&sortBy=views"
-            
-           local listGame = fetchPages(urlGame, getFetchPages()) -- ✅ ORIGINAL
-local listUni = fetchPages(urlUni, getFetchPages())   -- ✅ ORIGINAL
-            
-            for _, v in pairs(listGame) do table.insert(MasterList, v) end
-            for _, v in pairs(listUni) do table.insert(MasterList, v) end
-            
-        else
-            -- UNIVERSAL MODE
-            if GameLabel then 
-                GameLabel.Text = "Mode: Universal"
-            end
-            local url = "https://scriptblox.com/api/script/fetch?max=50"
-           MasterList = fetchPages(url, getFetchPages()) -- ✅ ORIGINAL
-        end
-        
-        CachedScripts = MasterList
-        local finalScripts = filterScripts(CachedScripts)
-        
-        if not (currentQuery and currentQuery ~= "") then
-            finalScripts = sortScripts(finalScripts)
-        end
-        
-        renderScripts(finalScripts)
-        
-        isUpdating = false
-        searchDebounce = nil
-    end)
-end
-
-	-- 🔴 EVENTS
-local function onFilterClick(filterName)
-    Data.Search.CurrentFilter = filterName
-    updateUI()
-    
-    -- 🟢 UPDATE BUTTON COLORS WITH CURRENT THEME
-    for _, btn in pairs(FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") then
-            if btn.Name == filterName then
-                btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            else
-                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-            end
-        end
-    end
-    Update()
-end
+		
+		-- 🟢 MULTI-PAGE FETCHER
+		local function fetchPages(baseUrl, numPages)
+			local combined = {}
+			for i = 1, numPages do
+				-- Append page number
+				local url = baseUrl .. "&page=" .. i
+				local result = fetchOnePage(url)
+				
+				-- If no results on this page, stop fetching deeper
+				if #result == 0 then break end
+				
+				for _, v in pairs(result) do table.insert(combined, v) end
+				
+				-- Small delay to prevent rate limiting if fetching many pages
+				if numPages > 1 then task.wait(0.05) end
+			end
+			return combined
+		end
+		
+		local MasterList = {}
+		local GameLabel = Search:FindFirstChild("GameLabel")
+		
+	if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
+	-- 1️⃣ SEARCH MODE (RELEVANCE)
+	if GameLabel then 
+		GameLabel.Text = "Search: " .. currentQuery .. " | Filter: " .. CurrentFilter .. " | Sort: Relevance"
+	end
+		
+	local encoded = HttpService:UrlEncode(currentQuery)
+	local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50"
 	
-	RecommendedBtn.MouseButton1Click:Connect(function() 
-    if isUpdating then return end -- 🟢 ADD THIS
-    onFilterClick("Recommended") 
-end)
-
-AllBtn.MouseButton1Click:Connect(function() 
-    if isUpdating then return end -- 🟢 ADD THIS
-    onFilterClick("All") 
-end)
-
-NoKeyBtn.MouseButton1Click:Connect(function() 
-    if isUpdating then return end -- 🟢 ADD THIS
-    onFilterClick("NoKey") 
-end)
-
-KeyBtn.MouseButton1Click:Connect(function() 
-    if isUpdating then return end -- 🟢 ADD THIS
-    onFilterClick("KeyRequired") 
-end)
-
-TrendingBtn.MouseButton1Click:Connect(function() 
-    if isUpdating then return end -- 🟢 ADD THIS
-    onFilterClick("Trending") 
-end)
-
-ClearBtn.MouseButton1Click:Connect(function()
-    -- 🟢 RESET ON CANCEL
-    if searchDebounce then
-        task.cancel(searchDebounce)
-        searchDebounce = nil
+	-- 🟢 ADD THIS: If sort toggle is on, add sortBy=views
+	if sortByViews then
+		url = url .. "&sortBy=views"
+	end
+	
+MasterList = fetchPages(url, getFetchPages())
+			
+		elseif OriginalGameName then
+	-- 2️⃣ BROWSING GAME MODE (VIEWS + DUAL FETCH)
+	if GameLabel then 
+		GameLabel.Text = "Game: " .. OriginalGameName .. " | Filter: " .. CurrentFilter .. " | Sort: Popular"
+	end
+			
+			local encodedGame = HttpService:UrlEncode(OriginalGameName)
+			local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame.."&max=50&sortBy=views"
+			local urlUni = "https://scriptblox.com/api/script/search?q=Universal&max=50&sortBy=views"
+			
+			local listGame = fetchPages(urlGame, getFetchPages())
+local listUni = fetchPages(urlUni, getFetchPages())
+			
+			for _, v in pairs(listGame) do table.insert(MasterList, v) end
+			for _, v in pairs(listUni) do table.insert(MasterList, v) end
+			
+		else
+	-- 3️⃣ UNIVERSAL MODE
+	if GameLabel then 
+		GameLabel.Text = "Mode: Universal | Filter: " .. CurrentFilter .. " | Sort: Popular"
+	end
+			local url = "https://scriptblox.com/api/script/fetch?max=50"
+			MasterList = fetchPages(url, BROWSE_PAGES)
+		end
+		
+		CachedScripts = MasterList
+		local finalScripts = filterScripts(CachedScripts)
+		
+		-- Locally sort by views ONLY if browsing (not searching)
+		if not (currentQuery and currentQuery ~= "") then
+			finalScripts = sortScripts(finalScripts)
+		end
+		
+		renderScripts(finalScripts)
+        
         isUpdating = false
-    end
-    
-   G2L["a3"].Text = ""
-    Data.Search.CurrentFilter = "All"
-    detectGame()
-    updateUI()
-    Update()
-    createNotification("Search Cleared", "Info", 2)
+        searchDebounce = nil -- 🔴 CLEAR DEBOUNCE
+    end) -- 🔴 END OF DEBOUNCE DELAY
+end
+	-- 🔴 EVENTS
+	local function onFilterClick(filterName)
+		CurrentFilter = filterName
+		updateUI()
+-- Update button colors
+	for _, btn in pairs(FilterBar:GetChildren()) do
+		if btn:IsA("TextButton") then
+			if btn.Name == filterName then
+				btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+				btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+			else
+				btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+				btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+			end
+		end
+	end
+		Update()
+	end
+	
+	RecommendedBtn.MouseButton1Click:Connect(function() onFilterClick("Recommended") end)
+AllBtn.MouseButton1Click:Connect(function() onFilterClick("All") end)
+NoKeyBtn.MouseButton1Click:Connect(function() onFilterClick("NoKey") end)
+KeyBtn.MouseButton1Click:Connect(function() onFilterClick("KeyRequired") end)
+TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
+
+-- 🟢 ADD THIS NEW SECTION
+ClearBtn.MouseButton1Click:Connect(function()
+	G2L["a3"].Text = ""        -- 🟢 FIXED
+	CurrentFilter = "All"
+	detectGame()
+	updateUI()
+	Update()
+	createNotification("Search Cleared", "Info", 2)
 end)
 	
 	SearchBox.FocusLost:Connect(function()
@@ -5417,7 +5331,6 @@ end)
 	updateUI()
 	Update() 
 end
-end -- End of InitTabs.Search
 
 	InitTabs.Nav = function()
     local isInstantNext = false;
@@ -5531,7 +5444,7 @@ end;
 		end
 		Loaded = true;
 	end
-	print("Welcome, " .. game.Players.LocalPlayer.DisplayName .. "!")
+	print("Welcome, " .. game.Players.LocalPlayer.DisplayName .. "!");
 	
 	local Stored = {};
 	local function closeUI()
@@ -5741,12 +5654,5 @@ dragify(script.Parent.Open);
 		UpdateSize();
 		print("✅ UI Scaled")
 	end);
--- ✅ PUT IT HERE (VERY LAST THING)
-task.spawn(function()
-    task.wait(0)
-    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-    getgenv().ApplyTheme(currentTheme)  -- ✅ Now accessible!
-    print("[THEME] Final re-apply:", currentTheme)
-end)
 end;
 C_2()
