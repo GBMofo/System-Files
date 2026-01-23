@@ -4608,9 +4608,16 @@ InitTabs.Settings = function()
         end
     end)
 
-    -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built (with longer delay)
+   -- 🔴 CRITICAL FIX: Wait for UI to exist before applying theme
     task.spawn(function()
-        task.wait(0) -- 🔴 Increased delay to ensure all UI elements exist
+        -- Wait until the Search Page and FilterBar actually exist
+        local maxWait = 50 -- 5 seconds max wait
+        repeat 
+            task.wait(0.1)
+            maxWait = maxWait - 1
+        until (Pages:FindFirstChild("Search") and Pages.Search:FindFirstChild("FilterBar") and #Pages.Search.FilterBar:GetChildren() >= 3) or maxWait <= 0
+        
+        -- Now that buttons definitely exist, Apply the Theme
         ApplyTheme(savedTheme)
     end)
 end -- End of InitTabs.Settings
