@@ -5434,7 +5434,7 @@ end)
 	updateUI()
 	Update() 
 end
-
+end -- End of InitTabs.Search
 
 	InitTabs.Nav = function()
     local isInstantNext = false;
