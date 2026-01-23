@@ -4624,116 +4624,141 @@ InitTabs.Settings = function()
         end
     end)
 
-      -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built (with longer delay)
-    task.spawn(function()
-        task.wait(0) -- 🔴 Increased delay to ensure all UI elements exist
-        ApplyTheme(savedTheme)
+  
+
+-- 🔴 CRITICAL FIX: Add this RIGHT after the StripSyntax function (around line 300)
+
+-- 🟢 ENHANCED: Strip Syntax + Validate JSON
+local function SafeJSONDecode(text)
+    -- Step 1: Strip all HTML/RichText tags
+    text = StripSyntax(text)
+    
+    -- Step 2: Remove any stray control characters
+    text = text:gsub("[%c]", "")
+    
+    -- Step 3: Attempt decode
+    local success, result = pcall(function()
+        return game.HttpService:JSONDecode(text)
     end)
-end -- End of InitTabs.Settings
+    
+    if success then
+        return result
+    else
+        warn("[PUNK X] JSON Decode Failed - File Corrupted")
+        return nil
+    end
+end
 
+-- 🔴 REPLACE InitTabs.TabsData (around line 1850) with this SAFE version:
 InitTabs.TabsData = function()
-		-- 🟢 ENSURE FOLDERS EXIST
-		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
-			CLONED_Detectedly.makedir("Punk-X-Files")
-		end
-		if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
-			CLONED_Detectedly.makedir("Punk-X-Files/scripts")
-		end
+    if not CLONED_Detectedly.isfolder("Punk-X-Files") then
+        CLONED_Detectedly.makedir("Punk-X-Files")
+    end
+    if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
+        CLONED_Detectedly.makedir("Punk-X-Files/scripts")
+    end
 
-		local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
-		
-		for index, Nextpath in ipairs(scripts) do
-			-- 🟢 ROBUST FILENAME EXTRACTION
-			-- Gets "MyScript.lua" from "any/long/path/MyScript.lua"
-			local filename = Nextpath:match("([^/\\]+)$");
-			
-			if filename and filename ~= "recently.data" then
-				local success, Loadedscript = pcall(function()
-					-- 🟢 FORCE CORRECT READ PATH
-					local cleanPath = "Punk-X-Files/scripts/" .. filename
-					local content = CLONED_Detectedly.readfile(cleanPath)
-					return game.HttpService:JSONDecode(content)
-				end)
+    local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
+    
+    for index, Nextpath in ipairs(scripts) do
+        local filename = Nextpath:match("([^/\\]+)$");
+        
+        if filename and filename ~= "recently.data" and filename:match("%.lua$") then
+            local success, Loadedscript = pcall(function()
+                local cleanPath = "Punk-X-Files/scripts/" .. filename
+                local rawContent = CLONED_Detectedly.readfile(cleanPath)
+                
+                -- 🟢 USE SAFE DECODER
+                return SafeJSONDecode(rawContent)
+            end)
 
-				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
-					-- Clean corruption if present
-					if string.find(Loadedscript.Content, "<font") then
-						Loadedscript.Content = StripSyntax(Loadedscript.Content)
-					end
-					Data.Editor.Tabs[Loadedscript.Name] = {
-						Loadedscript.Content,
-						Loadedscript.Order
-					};
-				end
-			end
-		end
+            if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
+                -- Extra safety: Strip any residual tags
+                Loadedscript.Content = StripSyntax(Loadedscript.Content)
+                
+                Data.Editor.Tabs[Loadedscript.Name] = {
+                    Loadedscript.Content,
+                    Loadedscript.Order
+                };
+            else
+                -- 🟢 AUTO-DELETE CORRUPTED FILES
+                warn("[PUNK X] Deleting corrupted file: " .. filename)
+                pcall(function()
+                    CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. filename)
+                end)
+            end
+        end
+    end
 
-		-- If empty, create a default tab
-		if (next(Data.Editor.Tabs) == nil) then
-			UIEvents.EditorTabs.createTab("Script", "");
-		end
-		
-		UIEvents.EditorTabs.updateUI();
-	end;
+    if (next(Data.Editor.Tabs) == nil) then
+        UIEvents.EditorTabs.createTab("Script", "");
+    end
+    
+    UIEvents.EditorTabs.updateUI();
+end;
+
+-- 🔴 ALSO REPLACE InitTabs.Saved (around line 1900) with this SAFE version:
 InitTabs.Saved = function()
-		-- 🟢 ENSURE ALL FOLDERS EXIST (Added scripts back)
-		local folders = {
-			"Punk-X-Files",
-			"Punk-X-Files/saves",
-			"Punk-X-Files/autoexec",
-			"Punk-X-Files/rconsole",
-			"Punk-X-Files/scripts" -- 🟢 Added this back for safety
-		}
+    local folders = {
+        "Punk-X-Files",
+        "Punk-X-Files/saves",
+        "Punk-X-Files/autoexec",
+        "Punk-X-Files/rconsole",
+        "Punk-X-Files/scripts"
+    }
 
-		for _, folder in ipairs(folders) do
-			if not CLONED_Detectedly.isfolder(folder) then
-				CLONED_Detectedly.makedir(folder)
-			end
-		end
-		
-		-- 🟢 LOAD SAVED SCRIPTS
-		local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
-		
-		for index, Nextpath in ipairs(saves) do
-			-- 🟢 ROBUST FILENAME EXTRACTION
-			local filename = Nextpath:match("([^/\\]+)$");
-			
-			if filename and filename:match("%.lua$") then
-				local success, Loadedscript = pcall(function()
-					-- 🟢 FORCE CORRECT READ PATH
-					local cleanPath = "Punk-X-Files/saves/" .. filename
-					local content = CLONED_Detectedly.readfile(cleanPath)
-					return game.HttpService:JSONDecode(content)
-				end)
+    for _, folder in ipairs(folders) do
+        if not CLONED_Detectedly.isfolder(folder) then
+            CLONED_Detectedly.makedir(folder)
+        end
+    end
+    
+    local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
+    
+    for index, Nextpath in ipairs(saves) do
+        local filename = Nextpath:match("([^/\\]+)$");
+        
+        if filename and filename:match("%.lua$") then
+            local success, Loadedscript = pcall(function()
+                local cleanPath = "Punk-X-Files/saves/" .. filename
+                local rawContent = CLONED_Detectedly.readfile(cleanPath)
+                
+                -- 🟢 USE SAFE DECODER
+                return SafeJSONDecode(rawContent)
+            end)
 
-				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
-					if string.find(Loadedscript.Content, "<font") then
-						Loadedscript.Content = StripSyntax(Loadedscript.Content)
-					end
-					Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
-				end
-			end
-		end
-		
-		UIEvents.Saved.UpdateUI();
-		
-		-- Search Bar Logic
-		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
-			local hi = Pages.Saved.TextBox.Text
-			local isEmpty = #hi:gsub("[%s]","") <= 0
-			if isEmpty then
-				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-					if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
-				end
-				return
-			end
-			for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-				if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
-					v.Visible = v.Title.Text:lower():match("^" .. hi:lower()) ~= nil;
-				end
-			end
-		end)
-	end;
+            if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
+                Loadedscript.Content = StripSyntax(Loadedscript.Content)
+                Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
+            else
+                -- 🟢 AUTO-DELETE CORRUPTED SAVES
+                warn("[PUNK X] Deleting corrupted save: " .. filename)
+                pcall(function()
+                    CLONED_Detectedly.delfile("Punk-X-Files/saves/" .. filename)
+                end)
+            end
+        end
+    end
+    
+    UIEvents.Saved.UpdateUI();
+    
+    -- Search Bar Logic (keep as-is)
+    Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+        local hi = Pages.Saved.TextBox.Text
+        local isEmpty = #hi:gsub("[%s]","") <= 0
+        if isEmpty then
+            for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+                if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
+            end
+            return
+        end
+        for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+            if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
+                v.Visible = v.Title.Text:lower():match("^" .. hi:lower()) ~= nil;
+            end
+        end
+    end)
+end;
 
 	InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
@@ -5426,6 +5451,23 @@ end)
 	updateUI()
 	Update() 
 end
+ -- 🟢 FIX: Apply theme to filter buttons (NO DELAY)
+    task.defer(function()
+        local theme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+        
+        for _, btn in pairs(FilterBar:GetChildren()) do
+            if btn:IsA("TextButton") then
+                if btn.Name == Data.Search.CurrentFilter then
+                    btn.BackgroundColor3 = theme
+                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                else
+                    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                end
+            end
+        end
+    end)
+end -- End of InitTabs.Search
 
 	InitTabs.Nav = function()
     local isInstantNext = false;
