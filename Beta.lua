@@ -4134,17 +4134,17 @@ if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
     if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
 end
 
--- 🟢 UPDATE SEARCH FILTER BUTTONS
+-- 🟢 UPDATE SEARCH FILTER BUTTONS (Check text color = active)
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
         if btn:IsA("TextButton") then
-            if btn.BackgroundColor3 == oldTheme then
+            -- Active buttons have WHITE text (255,255,255)
+            if btn.TextColor3 == Color3.fromRGB(255, 255, 255) then
                 btn.BackgroundColor3 = color
             end
         end
     end
 end
-
 -- 🟢 UPDATE SEARCH RESULTS (Execute Icons + Spacers)
 if Pages.Search and Pages.Search:FindFirstChild("Scripts") then
     for _, card in pairs(Pages.Search.Scripts:GetChildren()) do
