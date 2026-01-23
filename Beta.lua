@@ -1381,19 +1381,14 @@ G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
 G2L["83"]["TextWrapped"] = false;
 G2L["83"]["TextEditable"] = true;
-G2L["83"]["RichText"] = true; -- 🟢 NEW: ENABLE RICHTEXT
+G2L["83"]["RichText"] = true;
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(0, 1000, 0, 1000); 
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; -- 🟢 CHANGED: Auto-sizing
+G2L["83"]["Size"] = UDim2.new(1, -70, 1, -10); -- ✅ FIXED: Smaller size, doesn't overlap buttons
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.None; -- ✅ CHANGED: No auto-sizing
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
-G2L["83"]["ClipsDescendants"] = true; -- ✅ ADD THIS
-G2L["83"]["Active"] = false; -- ✅ ADD THIS (prevents blocking clicks outside)
--- [[ 4. UICORNER ]] --
-G2L["86"] = Instance.new("UICorner", G2L["82"]);
-G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
 -- [[ RESTORED DESIGN: PURPLE BORDER ]] --
 G2L["88"] = Instance.new("UIStroke", G2L["82"]);
@@ -1404,7 +1399,7 @@ G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
-G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
+G2L["89"]["ZIndex"] = 999; -- ✅ VERY HIGH to ensure it's on top
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
@@ -1412,6 +1407,8 @@ G2L["89"]["Size"] = UDim2.new(0.42127, 0, 0.15, 0);
 G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
 G2L["89"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["89"]["Name"] = [[Panel]];
+G2L["89"]["Active"] = true; -- ✅ ADD THIS
+G2L["89"]["Selectable"] = true; -- ✅ ADD THIS
 
 -- (Standard Panel Contents re-added below to prevent breaking)
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
@@ -1532,6 +1529,7 @@ G2L["95"]["Name"] = [[Icon]];
 G2L["95"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
 G2L["96"] = Instance.new("TextButton", G2L["89"]);
+G2L["96"]["ZIndex"] = 1000; -- ✅ ADD THIS LINE
 G2L["96"]["BorderSizePixel"] = 0;
 G2L["96"]["AutoButtonColor"] = false;
 G2L["96"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1546,7 +1544,7 @@ G2L["96"]["Text"] = [[]];
 G2L["96"]["Name"] = [[Execute]];
 
 G2L["97"] = Instance.new("ImageLabel", G2L["96"]);
-G2L["97"]["ZIndex"] = 12;
+G2L["97"]["ZIndex"] = 1001; -- ✅ ADD THIS LINE
 G2L["97"]["BorderSizePixel"] = 0;
 G2L["97"]["ScaleType"] = Enum.ScaleType.Fit;
 G2L["97"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
@@ -4749,125 +4747,98 @@ InitTabs.Editor = function()
     local Panel = Editor:WaitForChild("Panel");
     local EditorFrame = Editor:WaitForChild("Editor");
     
-    -- ✅ FIX: Use Activated instead of MouseButton1Click for better mobile support
-    local function connectButton(button, callback)
-        button.Activated:Connect(callback)
-        button.MouseButton1Click:Connect(callback) -- Backup for desktop
-    end
+    -- ✅ Make Panel always clickable
+    Panel.Active = true
+    Panel.Selectable = true
 
     -- [[ EXECUTE ]]
-    connectButton(Panel.Execute, function()
-        -- Use ContentText to get raw text without formatting
-        local rawCode = EditorFrame.Input.ContentText
-        if not rawCode or rawCode == "" then 
-            rawCode = StripSyntax(EditorFrame.Input.Text)
-        end
+    Panel.Execute.MouseButton1Click:Connect(function()
+        print("Execute clicked!") -- Debug
+        local rawCode = EditorFrame.Input.ContentText or StripSyntax(EditorFrame.Input.Text)
         UIEvents.Executor.RunCode(rawCode)();
     end)
 
     -- [[ EXECUTE CLIPBOARD ]]
-    connectButton(Panel.ExecuteClipboard, function()
+    Panel.ExecuteClipboard.MouseButton1Click:Connect(function()
+        print("Clipboard clicked!") -- Debug
         local clipCode = safeGetClipboard()
         UIEvents.Executor.RunCode(clipCode)();
     end)
 
     -- [[ CLEAR ]]
-    connectButton(Panel.Delete, function()
+    Panel.Delete.MouseButton1Click:Connect(function()
+        print("Clear clicked!") -- Debug
         EditorFrame.Input.Text = "";
-        EditorFrame.Input.ContentText = ""; -- Clear both
     end)
 
     -- [[ SAVE ]]
-    connectButton(Panel.Save, function()
-        -- Always use ContentText for saving
+    Panel.Save.MouseButton1Click:Connect(function()
+        print("Save clicked!") -- Debug
         local cleanText = EditorFrame.Input.ContentText or StripSyntax(EditorFrame.Input.Text)
         UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
     end)
 
     -- [[ RENAME ]]
-    connectButton(Panel.Rename, function()
+    Panel.Rename.MouseButton1Click:Connect(function()
+        print("Rename clicked!") -- Debug
         script.Parent.Popups.Visible = true;
-        local current = Data.Editor.CurrentTab or ""
-        script.Parent.Popups.Main.Input.Text = current
+        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
         script.Parent.Popups.Main.Input:CaptureFocus() 
     end)
 
     -- [[ PASTE ]]
-    connectButton(Panel.Paste, function()
+    Panel.Paste.MouseButton1Click:Connect(function()
+        print("Paste clicked!") -- Debug
         local pastedText = safeGetClipboard();
-        
-        -- ✅ FIX: Disable RichText before pasting
         EditorFrame.Input.RichText = false
         EditorFrame.Input.Text = pastedText
-        
-        task.delay(0.1, function()
+        task.delay(0.05, function()
             EditorFrame.Input.RichText = true
             EditorFrame.Input.Text = ApplySyntax(pastedText)
         end)
     end)
 
-    -- ✅ FIX: Better Focus Handling
-    local isFocused = false
-    
+    -- [[ FOCUS HANDLING ]]
     EditorFrame.Input.Focused:Connect(function()
-        isFocused = true
-        -- CRITICAL: Use ContentText (ignores RichText tags)
-        local plainText = EditorFrame.Input.ContentText
-        
-        -- Disable RichText FIRST
+        local plainText = EditorFrame.Input.ContentText or StripSyntax(EditorFrame.Input.Text)
         EditorFrame.Input.RichText = false
-        
-        -- Then set plain text
-        task.wait(0.05) -- Small delay prevents race condition
         EditorFrame.Input.Text = plainText
     end)
 
     EditorFrame.Input.FocusLost:Connect(function()
-        isFocused = false
-        -- Get the current plain text
         local plainText = EditorFrame.Input.Text
-        
-        -- Apply syntax highlighting
         EditorFrame.Input.RichText = true
-        task.wait(0.05)
         EditorFrame.Input.Text = ApplySyntax(plainText)
     end)
 
-    -- [[ REAL-TIME UPDATES ]]
+    -- [[ AUTO-SAVE ]]
     EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
-        
-        -- Auto-save only if not focused and not editing saved file
-        if not isFocused and not Data.Editor.EditingSavedFile then
+        if not EditorFrame.Input:IsFocused() and not Data.Editor.EditingSavedFile then
             local cleanText = EditorFrame.Input.ContentText or StripSyntax(EditorFrame.Input.Text)
             UIEvents.EditorTabs.saveTab(nil, cleanText, false)
         end
     end)
-    
-    UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
 
-    -- [[ TAB CREATE - FIX: Use both Activated and MouseButton1Click ]]
-    connectButton(Editor.Tabs.Create, function()
+    -- [[ TAB CREATE ]]
+    Editor.Tabs.Create.MouseButton1Click:Connect(function()
+        print("Create tab clicked!") -- Debug
         UIEvents.EditorTabs.createTab("Script", "");
     end)
 
     -- [[ POPUP BUTTONS ]]
     local Buttons = script.Parent.Popups.Main.Button
     
-    connectButton(Buttons.Confirm, function()
+    Buttons.Confirm.MouseButton1Click:Connect(function()
         local newName = script.Parent.Popups.Main.Input.Text;
         newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
-        
-        if (#newName == 0 or (newName == Data.Editor.CurrentTab)) then 
-            script.Parent.Popups.Visible = false;
-            return; 
+        if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
+            UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
         end
-
-        UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
         script.Parent.Popups.Visible = false;
     end)
 
-    connectButton(Buttons.Cancel, function()
+    Buttons.Cancel.MouseButton1Click:Connect(function()
         script.Parent.Popups.Visible = false;
     end)
 end;
