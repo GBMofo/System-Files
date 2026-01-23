@@ -3863,6 +3863,10 @@ local UIEvents = {};
         if new.Misc.Panel:FindFirstChild("Spacer") then
             new.Misc.Panel.Spacer.BackgroundColor3 = currentTheme
         end
+	-- 🟢 APPLY THEME TO EXECUTE ICON
+        if new.Misc.Panel:FindFirstChild("Execute") and new.Misc.Panel.Execute:FindFirstChild("Icon") then
+            new.Misc.Panel.Execute.Icon.ImageColor3 = getSafeTheme()
+        end
         
         new.Misc.Panel.Execute.MouseButton1Click:Connect(function()
 						UIEvents.Executor.RunCode(v)();
@@ -4129,31 +4133,29 @@ InitTabs.Settings = function()
             if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
             if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
         end
-
-       -- 🟢 UPDATE SAVED SCRIPTS AUTOEXEC & SPACERS
+-- 🟢 FIX: UPDATE SEARCH FILTER BUTTONS IMMEDIATELY
+if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+        if btn:IsA("TextButton") and btn.Name == CurrentFilter then
+            btn.BackgroundColor3 = color
+        end
+    end
+end
+	
+-- 🟢 UPDATE SAVED SCRIPTS EXECUTE ICON & SPACER
 if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
     for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
         if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
             local panel = card.Misc:FindFirstChild("Panel")
             if panel then
-                -- Update AutoExec icon if active
-                if panel:FindFirstChild("AutoExec") and panel.AutoExec:FindFirstChild("Icon") then
-                    local autoExecIcon = panel.AutoExec.Icon
-                    -- Check if it's currently green (active)
-                    if autoExecIcon.ImageColor3 == Color3.fromRGB(85, 255, 85) then
-                        -- Keep it green (active state)
-                    else
-                        -- Update to current theme if it was purple
-                        if autoExecIcon.ImageColor3 == Color3.fromRGB(160, 85, 255) or 
-                           autoExecIcon.ImageColor3 == oldTheme then
-                            autoExecIcon.ImageColor3 = color
-                        end
-                    end
-                end
-                
                 -- Update Spacer line
                 if panel:FindFirstChild("Spacer") then
                     panel.Spacer.BackgroundColor3 = color
+                end
+                
+                -- Update Execute icon (the play button)
+                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                    panel.Execute.Icon.ImageColor3 = color
                 end
             end
         end
