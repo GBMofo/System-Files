@@ -4065,10 +4065,10 @@ InitTabs.Settings = function()
         }))
     end
 
-   getgenv().ApplyTheme = function(color)  -- ✅ CHANGED THIS LINE
-    local oldTheme = getgenv().CurrentTheme
-    getgenv().CurrentTheme = color
-    SaveTheme(color)
+    local function ApplyTheme(color)
+        local oldTheme = getgenv().CurrentTheme
+        getgenv().CurrentTheme = color
+        SaveTheme(color)
         
         -- 1. UPDATE STROKES (Global)
         for _, obj in pairs(script.Parent:GetDescendants()) do
@@ -4116,7 +4116,65 @@ InitTabs.Settings = function()
                 Main.EnableFrame.Glow.ImageColor3 = color
             end
         end
- -- 🟢 6. UPDATE SEARCH FILTER BUTTONS (THE FIXED PART)
+            
+            -- Update Search Results Execute Icons
+            if searchPage:FindFirstChild("Scripts") then
+                for _, card in pairs(searchPage.Scripts:GetChildren()) do
+                    if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") and card.Misc:FindFirstChild("Panel") then
+                        local panel = card.Misc.Panel
+                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                            panel.Execute.Icon.ImageColor3 = color
+                        end
+                        if panel:FindFirstChild("Spacer1") then
+                            panel.Spacer1.BackgroundColor3 = color
+                        end
+                    end
+                end
+            end
+        end
+
+  -- 6. UPDATE SEARCH FILTER BUTTONS
+
+        local searchPage = Pages:FindFirstChild("Search")
+        if searchPage then
+            local filterBar = searchPage:FindFirstChild("FilterBar")
+            if filterBar then
+                -- Update the FilterBar Stroke
+                local fStroke = filterBar:FindFirstChild("FilterBarStroke") or filterBar:FindFirstChildOfClass("UIStroke")
+                if fStroke then fStroke.Color = color end
+                -- Update Active Filter Button
+                for _, btn in pairs(filterBar:GetChildren()) do
+                    if btn:IsA("TextButton") then
+                        if btn.Name == (Data.Search.CurrentFilter or "All") then
+                            btn.BackgroundColor3 = color -- Active button gets theme color
+                            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        else
+                            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40) -- Inactive stays dark
+                            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                        end
+                    end
+                end
+            end
+
+        -- 5. UPDATE EDITOR TABS
+        if Pages:FindFirstChild("Editor") and Pages.Editor:FindFirstChild("Tabs") then
+            for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
+                if tab:IsA("TextButton") and tab.Name == Data.Editor.CurrentTab then
+                    tab.BackgroundColor3 = color
+                end
+            end
+            -- Update Editor Icons/Spacers
+            if Pages.Editor:FindFirstChild("Panel") then
+                local panel = Pages.Editor.Panel
+                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                    panel.Execute.Icon.ImageColor3 = color
+                end
+                if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
+                if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
+            end
+        end
+        
+        -- 🟢 6. UPDATE SEARCH FILTER BUTTONS (THE FIXED PART)
         local searchPage = Pages:FindFirstChild("Search")
         if searchPage then
             local filterBar = searchPage:FindFirstChild("FilterBar")
@@ -4139,7 +4197,7 @@ InitTabs.Settings = function()
                 end
             end
             
-            -- Update Search Results Execute Icons
+            -- Update Search Results Icons (Execute/Save)
             if searchPage:FindFirstChild("Scripts") then
                 for _, card in pairs(searchPage.Scripts:GetChildren()) do
                     if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") and card.Misc:FindFirstChild("Panel") then
@@ -4154,24 +4212,6 @@ InitTabs.Settings = function()
                 end
             end
         end
-        -- 5. UPDATE EDITOR TABS
-        if Pages:FindFirstChild("Editor") and Pages.Editor:FindFirstChild("Tabs") then
-            for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
-                if tab:IsA("TextButton") and tab.Name == Data.Editor.CurrentTab then
-                    tab.BackgroundColor3 = color
-                end
-            end
-            -- Update Editor Icons/Spacers
-            if Pages.Editor:FindFirstChild("Panel") then
-                local panel = Pages.Editor.Panel
-                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                    panel.Execute.Icon.ImageColor3 = color
-                end
-                if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
-                if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
-            end
-        end
-        
 
         -- 7. UPDATE SAVED SCRIPTS
         if Pages:FindFirstChild("Saved") and Pages.Saved:FindFirstChild("Scripts") then
@@ -4603,145 +4643,120 @@ InitTabs.Settings = function()
                 createNotification("No preference saved.", "Error", 3)
             end
         else
-           createNotification("Not supported.", "Error", 5)
+            createNotification("Not supported.", "Error", 5)
         end
     end)
 
-
-
--- 🔴 CRITICAL FIX: Add this RIGHT after the StripSyntax function (around line 300)
-
--- 🟢 ENHANCED: Strip Syntax + Validate JSON
-local function SafeJSONDecode(text)
-    -- Step 1: Strip all HTML/RichText tags
-    text = StripSyntax(text)
-    
-    -- Step 2: Remove any stray control characters
-    text = text:gsub("[%c]", "")
-    
-    -- Step 3: Attempt decode
-    local success, result = pcall(function()
-        return game.HttpService:JSONDecode(text)
+      -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built (with longer delay)
+    task.spawn(function()
+        task.wait(0) -- 🔴 Increased delay to ensure all UI elements exist
+        ApplyTheme(savedTheme)
     end)
-    
-    if success then
-        return result
-    else
-        warn("[PUNK X] JSON Decode Failed - File Corrupted")
-        return nil
-    end
-end
+end -- End of InitTabs.Settings
 
--- 🔴 REPLACE InitTabs.TabsData (around line 1850) with this SAFE version:
 InitTabs.TabsData = function()
-    if not CLONED_Detectedly.isfolder("Punk-X-Files") then
-        CLONED_Detectedly.makedir("Punk-X-Files")
-    end
-    if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
-        CLONED_Detectedly.makedir("Punk-X-Files/scripts")
-    end
+		-- 🟢 ENSURE FOLDERS EXIST
+		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
+			CLONED_Detectedly.makedir("Punk-X-Files")
+		end
+		if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
+			CLONED_Detectedly.makedir("Punk-X-Files/scripts")
+		end
 
-    local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
-    
-    for index, Nextpath in ipairs(scripts) do
-        local filename = Nextpath:match("([^/\\]+)$");
-        
-        if filename and filename ~= "recently.data" and filename:match("%.lua$") then
-            local success, Loadedscript = pcall(function()
-                local cleanPath = "Punk-X-Files/scripts/" .. filename
-                local rawContent = CLONED_Detectedly.readfile(cleanPath)
-                
-                -- 🟢 USE SAFE DECODER
-                return SafeJSONDecode(rawContent)
-            end)
+		local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
+		
+		for index, Nextpath in ipairs(scripts) do
+			-- 🟢 ROBUST FILENAME EXTRACTION
+			-- Gets "MyScript.lua" from "any/long/path/MyScript.lua"
+			local filename = Nextpath:match("([^/\\]+)$");
+			
+			if filename and filename ~= "recently.data" then
+				local success, Loadedscript = pcall(function()
+					-- 🟢 FORCE CORRECT READ PATH
+					local cleanPath = "Punk-X-Files/scripts/" .. filename
+					local content = CLONED_Detectedly.readfile(cleanPath)
+					return game.HttpService:JSONDecode(content)
+				end)
 
-            if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
-                -- Extra safety: Strip any residual tags
-                Loadedscript.Content = StripSyntax(Loadedscript.Content)
-                
-                Data.Editor.Tabs[Loadedscript.Name] = {
-                    Loadedscript.Content,
-                    Loadedscript.Order
-                };
-            else
-                -- 🟢 AUTO-DELETE CORRUPTED FILES
-                warn("[PUNK X] Deleting corrupted file: " .. filename)
-                pcall(function()
-                    CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. filename)
-                end)
-            end
-        end
-    end
+				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
+					-- Clean corruption if present
+					if string.find(Loadedscript.Content, "<font") then
+						Loadedscript.Content = StripSyntax(Loadedscript.Content)
+					end
+					Data.Editor.Tabs[Loadedscript.Name] = {
+						Loadedscript.Content,
+						Loadedscript.Order
+					};
+				end
+			end
+		end
 
-    if (next(Data.Editor.Tabs) == nil) then
-        UIEvents.EditorTabs.createTab("Script", "");
-    end
-    
-    UIEvents.EditorTabs.updateUI();
-end;
-
--- 🔴 ALSO REPLACE InitTabs.Saved (around line 1900) with this SAFE version:
+		-- If empty, create a default tab
+		if (next(Data.Editor.Tabs) == nil) then
+			UIEvents.EditorTabs.createTab("Script", "");
+		end
+		
+		UIEvents.EditorTabs.updateUI();
+	end;
 InitTabs.Saved = function()
-    local folders = {
-        "Punk-X-Files",
-        "Punk-X-Files/saves",
-        "Punk-X-Files/autoexec",
-        "Punk-X-Files/rconsole",
-        "Punk-X-Files/scripts"
-    }
+		-- 🟢 ENSURE ALL FOLDERS EXIST (Added scripts back)
+		local folders = {
+			"Punk-X-Files",
+			"Punk-X-Files/saves",
+			"Punk-X-Files/autoexec",
+			"Punk-X-Files/rconsole",
+			"Punk-X-Files/scripts" -- 🟢 Added this back for safety
+		}
 
-    for _, folder in ipairs(folders) do
-        if not CLONED_Detectedly.isfolder(folder) then
-            CLONED_Detectedly.makedir(folder)
-        end
-    end
-    
-    local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
-    
-    for index, Nextpath in ipairs(saves) do
-        local filename = Nextpath:match("([^/\\]+)$");
-        
-        if filename and filename:match("%.lua$") then
-            local success, Loadedscript = pcall(function()
-                local cleanPath = "Punk-X-Files/saves/" .. filename
-                local rawContent = CLONED_Detectedly.readfile(cleanPath)
-                
-                -- 🟢 USE SAFE DECODER
-                return SafeJSONDecode(rawContent)
-            end)
+		for _, folder in ipairs(folders) do
+			if not CLONED_Detectedly.isfolder(folder) then
+				CLONED_Detectedly.makedir(folder)
+			end
+		end
+		
+		-- 🟢 LOAD SAVED SCRIPTS
+		local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
+		
+		for index, Nextpath in ipairs(saves) do
+			-- 🟢 ROBUST FILENAME EXTRACTION
+			local filename = Nextpath:match("([^/\\]+)$");
+			
+			if filename and filename:match("%.lua$") then
+				local success, Loadedscript = pcall(function()
+					-- 🟢 FORCE CORRECT READ PATH
+					local cleanPath = "Punk-X-Files/saves/" .. filename
+					local content = CLONED_Detectedly.readfile(cleanPath)
+					return game.HttpService:JSONDecode(content)
+				end)
 
-            if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
-                Loadedscript.Content = StripSyntax(Loadedscript.Content)
-                Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
-            else
-                -- 🟢 AUTO-DELETE CORRUPTED SAVES
-                warn("[PUNK X] Deleting corrupted save: " .. filename)
-                pcall(function()
-                    CLONED_Detectedly.delfile("Punk-X-Files/saves/" .. filename)
-                end)
-            end
-        end
-    end
-    
-    UIEvents.Saved.UpdateUI();
-    
-    -- Search Bar Logic (keep as-is)
-    Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
-        local hi = Pages.Saved.TextBox.Text
-        local isEmpty = #hi:gsub("[%s]","") <= 0
-        if isEmpty then
-            for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-                if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
-            end
-            return
-        end
-        for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
-            if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
-                v.Visible = v.Title.Text:lower():match("^" .. hi:lower()) ~= nil;
-            end
-        end
-    end)
-end;
+				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
+					if string.find(Loadedscript.Content, "<font") then
+						Loadedscript.Content = StripSyntax(Loadedscript.Content)
+					end
+					Data.Saves.Scripts[Loadedscript.Name] = Loadedscript.Content;
+				end
+			end
+		end
+		
+		UIEvents.Saved.UpdateUI();
+		
+		-- Search Bar Logic
+		Pages.Saved.TextBox:GetPropertyChangedSignal("Text"):Connect(function()
+			local hi = Pages.Saved.TextBox.Text
+			local isEmpty = #hi:gsub("[%s]","") <= 0
+			if isEmpty then
+				for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+					if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then v.Visible = true; end
+				end
+				return
+			end
+			for _, v in pairs(Pages.Saved.Scripts:GetChildren()) do
+				if v:IsA("CanvasGroup") and v:FindFirstChild("Title") then
+					v.Visible = v.Title.Text:lower():match("^" .. hi:lower()) ~= nil;
+				end
+			end
+		end)
+	end;
 
 	InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
@@ -5434,7 +5449,6 @@ end)
 	updateUI()
 	Update() 
 end
-end -- End of InitTabs.Search
 
 	InitTabs.Nav = function()
     local isInstantNext = false;
@@ -5758,12 +5772,5 @@ dragify(script.Parent.Open);
 		UpdateSize();
 		print("✅ UI Scaled")
 	end);
--- ✅ PUT IT HERE (VERY LAST THING)
-task.spawn(function()
-    task.wait(1.5)
-    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-    getgenv().ApplyTheme(currentTheme)  -- ✅ Now accessible!
-    print("[THEME] Final re-apply:", currentTheme)
-end)
 end;
 C_2()
