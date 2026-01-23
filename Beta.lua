@@ -5434,23 +5434,7 @@ end)
 	updateUI()
 	Update() 
 end
- -- 🟢 FIX: Apply theme to filter buttons (NO DELAY)
-    task.defer(function()
-        local theme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-        
-        for _, btn in pairs(FilterBar:GetChildren()) do
-            if btn:IsA("TextButton") then
-                if btn.Name == Data.Search.CurrentFilter then
-                    btn.BackgroundColor3 = theme
-                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                else
-                    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-                end
-            end
-        end
-    end)
-end -- End of InitTabs.Search
+
 
 	InitTabs.Nav = function()
     local isInstantNext = false;
