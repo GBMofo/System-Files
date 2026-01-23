@@ -4172,44 +4172,6 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 🟢 6. UPDATE SEARCH FILTER BUTTONS (THE FIXED PART)
-        local searchPage = Pages:FindFirstChild("Search")
-        if searchPage then
-            local filterBar = searchPage:FindFirstChild("FilterBar")
-            if filterBar then
-                -- Update the FilterBar Stroke
-                local fStroke = filterBar:FindFirstChild("FilterBarStroke") or filterBar:FindFirstChildOfClass("UIStroke")
-                if fStroke then fStroke.Color = color end
-
-                -- Force Update Buttons based on current Data
-                for _, btn in pairs(filterBar:GetChildren()) do
-                    if btn:IsA("TextButton") then
-                        if btn.Name == (Data.Search.CurrentFilter or "All") then
-                            btn.BackgroundColor3 = color -- Active
-                            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                        else
-                            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40) -- Inactive
-                            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-                        end
-                    end
-                end
-            end
-            
-            -- Update Search Results Icons (Execute/Save)
-            if searchPage:FindFirstChild("Scripts") then
-                for _, card in pairs(searchPage.Scripts:GetChildren()) do
-                    if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") and card.Misc:FindFirstChild("Panel") then
-                        local panel = card.Misc.Panel
-                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                            panel.Execute.Icon.ImageColor3 = color
-                        end
-                        if panel:FindFirstChild("Spacer1") then
-                            panel.Spacer1.BackgroundColor3 = color
-                        end
-                    end
-                end
-            end
-        end
 
         -- 7. UPDATE SAVED SCRIPTS
         if Pages:FindFirstChild("Saved") and Pages.Saved:FindFirstChild("Scripts") then
