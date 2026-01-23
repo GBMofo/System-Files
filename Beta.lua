@@ -4177,30 +4177,33 @@ if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
     end
 end
         
--- 7. UPDATE SEARCH FILTER (SAFE VERSION)
+-- 7. UPDATE SEARCH FILTER (CHECK SIBLINGS)
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-    local filterBar = Pages.Search:FindFirstChild("FilterBar")  -- 🟢 Use FindFirstChild again
-    if filterBar then  -- 🟢 Extra safety check
+    local filterBar = Pages.Search:FindFirstChild("FilterBar")
+    if filterBar then
         print("[DEBUG] FilterBar found!")
         print("[DEBUG] FilterBar ClassName:", filterBar.ClassName)
-        print("[DEBUG] FilterBar BackgroundColor3:", filterBar.BackgroundColor3)
-        print("[DEBUG] CurrentFilter =", Data.Search.CurrentFilter)
         print("[DEBUG] FilterBar has", #filterBar:GetChildren(), "direct children")
         
-        for _, btn in pairs(filterBar:GetChildren()) do
-            print("[DEBUG] Found child:", btn.Name, "Type:", btn.ClassName)
-            if btn:IsA("TextButton") then
-                print("[DEBUG] Button name:", btn.Name, "Current filter:", Data.Search.CurrentFilter)
-                if btn.Name == Data.Search.CurrentFilter then
-                    print("[DEBUG] UPDATING BUTTON:", btn.Name)
-                    btn.BackgroundColor3 = color
+        -- 🟢 NEW: Check FilterBar's parent and siblings
+        if filterBar.Parent then
+            print("[DEBUG] FilterBar's parent:", filterBar.Parent.Name)
+            print("[DEBUG] Siblings of FilterBar:")
+            for _, sibling in pairs(filterBar.Parent:GetChildren()) do
+                print("  - ", sibling.Name, "Type:", sibling.ClassName)
+                if sibling.Name:match("All") or sibling.Name:match("Filter") then
+                    print("    ^ POSSIBLE BUTTON!")
                 end
             end
         end
-        local stroke = filterBar:FindFirstChild("FilterBarStroke")
-        if stroke then stroke.Color = color end
-    else
-        print("[DEBUG] FilterBar disappeared before we could use it!")
+        
+        -- Also search ALL of Pages.Search for buttons
+        print("[DEBUG] Searching all of Pages.Search for filter buttons:")
+        for _, desc in pairs(Pages.Search:GetDescendants()) do
+            if desc:IsA("TextButton") and (desc.Name == "All" or desc.Name == "Images" or desc.Name == "Videos") then
+                print("  FOUND BUTTON:", desc.Name, "Parent:", desc.Parent.Name)
+            end
+        end
     end
 end
         
