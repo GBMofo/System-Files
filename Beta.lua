@@ -3595,7 +3595,7 @@ local Data = {
         Scripts = {}
     },
     Search = {
-        CurrentFilter = "All"  -- 🟢 ADD THIS
+        Data.Search.CurrentFilter = "All"  -- 🟢 ADD THIS
     }
 };
 	
