@@ -4065,10 +4065,10 @@ InitTabs.Settings = function()
         }))
     end
 
-    local function ApplyTheme(color)
-        local oldTheme = getgenv().CurrentTheme
-        getgenv().CurrentTheme = color
-        SaveTheme(color)
+   getgenv().ApplyTheme = function(color)  -- ✅ CHANGED THIS LINE
+    local oldTheme = getgenv().CurrentTheme
+    getgenv().CurrentTheme = color
+    SaveTheme(color)
         
         -- 1. UPDATE STROKES (Global)
         for _, obj in pairs(script.Parent:GetDescendants()) do
@@ -5762,7 +5762,7 @@ dragify(script.Parent.Open);
 task.spawn(function()
     task.wait(1.5)
     local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-    ApplyTheme(currentTheme)
+    getgenv().ApplyTheme(currentTheme)  -- ✅ Now accessible!
     print("[THEME] Final re-apply:", currentTheme)
 end)
 end;
