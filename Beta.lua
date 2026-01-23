@@ -4177,24 +4177,41 @@ if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
     end
 end
         
--- 7. UPDATE SEARCH FILTER BUTTONS
-if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") then
-            if btn.Name == Data.Search.CurrentFilter then
-                btn.BackgroundColor3 = color
-                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            else
-                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+-- 7. UPDATE SEARCH FILTER BUTTONS (DEBUG VERSION)
+print("[THEME] === Attempting to update Search buttons ===")
+if Pages.Search then
+    print("[THEME] ✓ Pages.Search exists")
+    if Pages.Search:FindFirstChild("FilterBar") then
+        print("[THEME] ✓ FilterBar found!")
+        print("[THEME] Current filter:", Data.Search.CurrentFilter)
+        
+        for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+            print("[THEME] Found child:", btn.Name, "Type:", btn.ClassName)
+            if btn:IsA("TextButton") then
+                if btn.Name == Data.Search.CurrentFilter then
+                    print("[THEME] 🎯 UPDATING ACTIVE BUTTON:", btn.Name, "to color:", color)
+                    btn.BackgroundColor3 = color
+                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                else
+                    print("[THEME] Updating inactive button:", btn.Name)
+                    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                end
             end
         end
+        
+        local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+        if stroke then 
+            stroke.Color = color 
+            print("[THEME] ✓ Updated FilterBarStroke")
+        end
+    else
+        print("[THEME] ✗ FilterBar NOT FOUND!")
     end
-    
-    -- Update stroke color too
-    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
-    if stroke then stroke.Color = color end
+else
+    print("[THEME] ✗ Pages.Search doesn't exist!")
 end
+print("[THEME] === Done ===")
         
         -- 8. UPDATE HOME KEY
         if Pages.Home and Pages.Home:FindFirstChild("Key") then
