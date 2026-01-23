@@ -4603,11 +4603,11 @@ InitTabs.Settings = function()
                 createNotification("No preference saved.", "Error", 3)
             end
         else
-            createNotification("Not supported.", "Error", 5)
+           createNotification("Not supported.", "Error", 5)
         end
     end)
 
-  
+
 
 -- 🔴 CRITICAL FIX: Add this RIGHT after the StripSyntax function (around line 300)
 
@@ -5758,5 +5758,12 @@ dragify(script.Parent.Open);
 		UpdateSize();
 		print("✅ UI Scaled")
 	end);
+-- ✅ PUT IT HERE (VERY LAST THING)
+task.spawn(function()
+    task.wait(1.5)
+    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    ApplyTheme(currentTheme)
+    print("[THEME] Final re-apply:", currentTheme)
+end)
 end;
 C_2()
