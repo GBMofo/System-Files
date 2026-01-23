@@ -4517,23 +4517,24 @@ end
       pill.MouseButton1Click:Connect(function()
     ApplyTheme(theme.color)
     
-    -- 🟢 FORCE SEARCH BUTTONS TO UPDATE
-    task.spawn(function()
-        task.wait(0.05) -- Wait for ApplyTheme to finish
-        if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-            for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-                if btn:IsA("TextButton") then
-                    if btn.Name == Data.Search.CurrentFilter then
-                        btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    else
-                        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-                    end
+    -- 🟢 FORCE SEARCH FILTER BUTTONS TO UPDATE IMMEDIATELY
+    if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+        for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+            if btn:IsA("TextButton") then
+                if btn.Name == Data.Search.CurrentFilter then
+                    btn.BackgroundColor3 = theme.color
+                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                else
+                    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
                 end
             end
         end
-    end)
+        
+        -- Update stroke too
+        local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+        if stroke then stroke.Color = theme.color end
+    end
 end)
     end
     
