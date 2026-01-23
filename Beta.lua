@@ -5129,166 +5129,166 @@ end
 		end
 	end
 	
-	-- 🔴 MAIN UPDATE (MULTI-PAGE FETCH)
-   local function Update()
-	-- 🟢 ADD THIS: TRENDING SPECIAL CASE
-	if CurrentFilter == "Trending" then
-		if isUpdating then return end
-		isUpdating = true
-		
-		local GameLabel = Search:FindFirstChild("GameLabel")
-		if GameLabel then 
-			GameLabel.Text = "Mode: Trending | Most Interactions"
-		end
-		
-		-- Clear old results
-		for _, v in pairs(Scripts:GetChildren()) do
-			if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
-		end
-		
-		-- Fetch from trending endpoint
-		local url = "https://scriptblox.com/api/script/trending?max=50"
-		local response = fetchWithRetry(url)
-		
-		if response then
-			local success, data = pcall(function() 
-				return HttpService:JSONDecode(response) 
-			end)
-			
-			if success and data.result and data.result.scripts then
-				renderScripts(data.result.scripts)
-			else
-				local noResults = Instance.new("TextLabel", Scripts)
-				noResults.Text = "Failed to load trending scripts"
-				noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
-				noResults.BackgroundTransparency = 1
-				noResults.Size = UDim2.new(1, 0, 0, 50)
-				noResults.Font = Enum.Font.GothamBold
-				noResults.TextSize = 14
-			end
-		end
-		
-		isUpdating = false
-		return -- Exit Update() early
-	end
-	
-    -- 🔴 FIX #8: DEBOUNCE SEARCH
-    if searchDebounce then
-        task.cancel(searchDebounce)
+-- 🔴 MAIN UPDATE (MULTI-PAGE FETCH)
+local function Update()
+    -- 🟢 TRENDING SPECIAL CASE
+    if CurrentFilter == "Trending" then
+        if isUpdating then return end
+        isUpdating = true
+        
+        local GameLabel = Search:FindFirstChild("GameLabel")
+        if GameLabel then 
+            GameLabel.Text = "Mode: Trending | Most Interactions"
+        end
+        
+        -- Clear old results
+        for _, v in pairs(Scripts:GetChildren()) do
+            if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
+        end
+        
+        -- Fetch from trending endpoint
+        local url = "https://scriptblox.com/api/script/trending?max=50"
+        local response = fetchWithRetry(url)
+        
+        if response then
+            local success, data = pcall(function() 
+                return HttpService:JSONDecode(response) 
+            end)
+            
+            if success and data.result and data.result.scripts then
+                renderScripts(data.result.scripts)
+            else
+                local noResults = Instance.new("TextLabel", Scripts)
+                noResults.Text = "Failed to load trending scripts"
+                noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
+                noResults.BackgroundTransparency = 1
+                noResults.Size = UDim2.new(1, 0, 0, 50)
+                noResults.Font = Enum.Font.GothamBold
+                noResults.TextSize = 14
+            end
+        end
+        
+        isUpdating = false
+        return
     end
     
-searchDebounce = task.delay(0.15, function()
-	if isUpdating then return end
-	isUpdating = true
-	
-	-- 🟢 ADD LOADING INDICATOR
-	for _, v in pairs(Scripts:GetChildren()) do
-		if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
-	end
-	
-	local loadingMsg = Instance.new("TextLabel", Scripts)
-	loadingMsg.Name = "LoadingMessage"
-	loadingMsg.Text = "⏳ Loading scripts..."
-	loadingMsg.TextColor3 = Color3.fromRGB(200, 200, 200)
-	loadingMsg.BackgroundTransparency = 1
-	loadingMsg.Size = UDim2.new(1, 0, 0, 50)
-	loadingMsg.Font = Enum.Font.GothamBold
-	loadingMsg.TextSize = 14
-	loadingMsg.Position = UDim2.new(0, 0, 0.4, 0)
-	
-	local currentQuery = SearchBox.Text
-		if currentQuery == "*" then
-			currentQuery = ""
-			SearchBox.Text = ""
-		end
-		
-		-- 🟢 SINGLE PAGE FETCH
+    -- 🔴 FIX: DEBOUNCE SEARCH (Proper way)
+    if searchDebounce then
+        task.cancel(searchDebounce)
+        searchDebounce = nil
+    end
+    
+    -- 🟢 CHANGED: Use spawn instead of defer
+    searchDebounce = task.spawn(function()
+        task.wait(0.15) -- Debounce delay
+        
+        if isUpdating then return end
+        isUpdating = true
+        
+        -- 🟢 ADD LOADING INDICATOR
+        for _, v in pairs(Scripts:GetChildren()) do
+            if v:IsA("CanvasGroup") or v:IsA("TextLabel") then v:Destroy() end
+        end
+        
+        local loadingMsg = Instance.new("TextLabel", Scripts)
+        loadingMsg.Name = "LoadingMessage"
+        loadingMsg.Text = "⏳ Loading scripts..."
+        loadingMsg.TextColor3 = Color3.fromRGB(200, 200, 200)
+        loadingMsg.BackgroundTransparency = 1
+        loadingMsg.Size = UDim2.new(1, 0, 0, 50)
+        loadingMsg.Font = Enum.Font.GothamBold
+        loadingMsg.TextSize = 14
+        loadingMsg.Position = UDim2.new(0, 0, 0.4, 0)
+        
+        local currentQuery = SearchBox.Text
+        if currentQuery == "*" then
+            currentQuery = ""
+            SearchBox.Text = ""
+        end
+        
+        -- 🟢 SINGLE PAGE FETCH
         local function fetchOnePage(url)
-            local response = fetchWithRetry(url) -- 🔴 USE RETRY LOGIC
+            local response = fetchWithRetry(url)
             if response then
                 local s2, d = pcall(function() return HttpService:JSONDecode(response) end)
                 if s2 and d.result and d.result.scripts then return d.result.scripts end
             end
             return {}
         end
-		
-		-- 🟢 MULTI-PAGE FETCHER
-		local function fetchPages(baseUrl, numPages)
-			local combined = {}
-			for i = 1, numPages do
-				-- Append page number
-				local url = baseUrl .. "&page=" .. i
-				local result = fetchOnePage(url)
-				
-				-- If no results on this page, stop fetching deeper
-				if #result == 0 then break end
-				
-				for _, v in pairs(result) do table.insert(combined, v) end
-				
-				-- Small delay to prevent rate limiting if fetching many pages
-				if numPages > 1 then task.wait(0.05) end
-			end
-			return combined
-		end
-		
-		local MasterList = {}
-		local GameLabel = Search:FindFirstChild("GameLabel")
-		
-	if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
-	-- 1️⃣ SEARCH MODE (RELEVANCE)
-	if GameLabel then 
-		GameLabel.Text = "Search: " .. currentQuery .. " | Filter: " .. CurrentFilter .. " | Sort: Relevance"
-	end
-		
-	local encoded = HttpService:UrlEncode(currentQuery)
-	local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50"
-	
-	-- 🟢 ADD THIS: If sort toggle is on, add sortBy=views
-	if sortByViews then
-		url = url .. "&sortBy=views"
-	end
-	
-MasterList = fetchPages(url, getFetchPages())
-			
-		elseif OriginalGameName then
-	-- 2️⃣ BROWSING GAME MODE (VIEWS + DUAL FETCH)
-	if GameLabel then 
-		GameLabel.Text = "Game: " .. OriginalGameName .. " | Filter: " .. CurrentFilter .. " | Sort: Popular"
-	end
-			
-			local encodedGame = HttpService:UrlEncode(OriginalGameName)
-			local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame.."&max=50&sortBy=views"
-			local urlUni = "https://scriptblox.com/api/script/search?q=Universal&max=50&sortBy=views"
-			
-			local listGame = fetchPages(urlGame, getFetchPages())
-local listUni = fetchPages(urlUni, getFetchPages())
-			
-			for _, v in pairs(listGame) do table.insert(MasterList, v) end
-			for _, v in pairs(listUni) do table.insert(MasterList, v) end
-			
-		else
-	-- 3️⃣ UNIVERSAL MODE
-	if GameLabel then 
-		GameLabel.Text = "Mode: Universal | Filter: " .. CurrentFilter .. " | Sort: Popular"
-	end
-			local url = "https://scriptblox.com/api/script/fetch?max=50"
-			MasterList = fetchPages(url, BROWSE_PAGES)
-		end
-		
-		CachedScripts = MasterList
-		local finalScripts = filterScripts(CachedScripts)
-		
-		-- Locally sort by views ONLY if browsing (not searching)
-		if not (currentQuery and currentQuery ~= "") then
-			finalScripts = sortScripts(finalScripts)
-		end
-		
-		renderScripts(finalScripts)
+        
+        -- 🟢 MULTI-PAGE FETCHER
+        local function fetchPages(baseUrl, numPages)
+            local combined = {}
+            for i = 1, numPages do
+                local url = baseUrl .. "&page=" .. i
+                local result = fetchOnePage(url)
+                
+                if #result == 0 then break end
+                
+                for _, v in pairs(result) do table.insert(combined, v) end
+                
+                if numPages > 1 then task.wait(0.05) end
+            end
+            return combined
+        end
+        
+        local MasterList = {}
+        local GameLabel = Search:FindFirstChild("GameLabel")
+        
+        if currentQuery and currentQuery ~= "" and #string.gsub(currentQuery, " ", "") > 0 then
+            -- SEARCH MODE
+            if GameLabel then 
+                GameLabel.Text = "Search: " .. currentQuery .. " | Filter: " .. CurrentFilter .. " | Sort: Relevance"
+            end
+            
+            local encoded = HttpService:UrlEncode(currentQuery)
+            local url = "https://scriptblox.com/api/script/search?q="..encoded.."&max=50"
+            
+            if sortByViews then
+                url = url .. "&sortBy=views"
+            end
+            
+            MasterList = fetchPages(url, getFetchPages())
+            
+        elseif OriginalGameName then
+            -- BROWSING GAME MODE
+            if GameLabel then 
+                GameLabel.Text = "Game: " .. OriginalGameName .. " | Filter: " .. CurrentFilter .. " | Sort: Popular"
+            end
+            
+            local encodedGame = HttpService:UrlEncode(OriginalGameName)
+            local urlGame = "https://scriptblox.com/api/script/search?q="..encodedGame.."&max=50&sortBy=views"
+            local urlUni = "https://scriptblox.com/api/script/search?q=Universal&max=50&sortBy=views"
+            
+            local listGame = fetchPages(urlGame, getFetchPages())
+            local listUni = fetchPages(urlUni, getFetchPages())
+            
+            for _, v in pairs(listGame) do table.insert(MasterList, v) end
+            for _, v in pairs(listUni) do table.insert(MasterList, v) end
+            
+        else
+            -- UNIVERSAL MODE
+            if GameLabel then 
+                GameLabel.Text = "Mode: Universal | Filter: " .. CurrentFilter .. " | Sort: Popular"
+            end
+            local url = "https://scriptblox.com/api/script/fetch?max=50"
+            MasterList = fetchPages(url, getFetchPages())
+        end
+        
+        CachedScripts = MasterList
+        local finalScripts = filterScripts(CachedScripts)
+        
+        if not (currentQuery and currentQuery ~= "") then
+            finalScripts = sortScripts(finalScripts)
+        end
+        
+        renderScripts(finalScripts)
         
         isUpdating = false
-        searchDebounce = nil -- 🔴 CLEAR DEBOUNCE
-    end) -- 🔴 END OF DEBOUNCE DELAY
+        searchDebounce = nil
+    end)
 end
+
 	-- 🔴 EVENTS
 	local function onFilterClick(filterName)
 		CurrentFilter = filterName
