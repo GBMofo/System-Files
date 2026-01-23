@@ -5760,7 +5760,7 @@ dragify(script.Parent.Open);
 	end);
 -- ✅ PUT IT HERE (VERY LAST THING)
 task.spawn(function()
-    task.wait(1.5)
+    task.wait(0)
     local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
     getgenv().ApplyTheme(currentTheme)  -- ✅ Now accessible!
     print("[THEME] Final re-apply:", currentTheme)
