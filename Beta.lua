@@ -4133,15 +4133,11 @@ if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
     if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
     if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
 end
-
--- 🟢 UPDATE SEARCH FILTER BUTTONS (Check text color = active)
+-- 🟢 UPDATE SEARCH FILTER BUTTONS (Use CurrentFilter name)
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") then
-            -- Active buttons have WHITE text (255,255,255)
-            if btn.TextColor3 == Color3.fromRGB(255, 255, 255) then
-                btn.BackgroundColor3 = color
-            end
+        if btn:IsA("TextButton") and btn.Name == CurrentFilter then
+            btn.BackgroundColor3 = color
         end
     end
 end
@@ -4844,7 +4840,7 @@ InitTabs.Search = function()
     local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
 	
 -- 🔴 STATE
-local CurrentFilter = "All"
+CurrentFilter = "All"  -- Remove 'local' to make it global
 local OriginalGameName = nil 
 local CachedScripts = {}
 local isUpdating = false
