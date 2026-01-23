@@ -4497,9 +4497,30 @@ end
         local pillCorner = Instance.new("UICorner", pill)
         pillCorner.CornerRadius = UDim.new(0, 8)
         
-  pill.MouseButton1Click:Connect(function()
+pill.MouseButton1Click:Connect(function()
     ApplyTheme(theme.color)
     print("[THEME] Theme changed to:", theme.name)
+    
+    -- 🟢 If already viewing Search, update buttons now
+    if Pages.UIPageLayout.CurrentPage == Pages.Search then
+        print("[THEME] User is on Search page, updating buttons immediately")
+        if Pages.Search:FindFirstChild("FilterBar") then
+            for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+                if btn:IsA("TextButton") then
+                    if btn.Name == Data.Search.CurrentFilter then
+                        btn.BackgroundColor3 = theme.color
+                        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    else
+                        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                    end
+                end
+            end
+            
+            local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+            if stroke then stroke.Color = theme.color end
+        end
+    end
 end)
     end
     
