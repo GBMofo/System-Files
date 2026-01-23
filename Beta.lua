@@ -4177,16 +4177,16 @@ if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
     end
 end
         
-        -- 7. UPDATE SEARCH FILTER
-        if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-            for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-                if btn:IsA("TextButton") and btn.Name == CurrentFilter then
-                    btn.BackgroundColor3 = color
-                end
-            end
-            local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
-            if stroke then stroke.Color = color end
+       -- 7. UPDATE SEARCH FILTER
+if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+        if btn:IsA("TextButton") and btn.Name == Data.Search.CurrentFilter then
+            btn.BackgroundColor3 = color
         end
+    end
+    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+    if stroke then stroke.Color = color end
+end
         
         -- 8. UPDATE HOME KEY
         if Pages.Home and Pages.Home:FindFirstChild("Key") then
