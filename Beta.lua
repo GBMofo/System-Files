@@ -5316,6 +5316,12 @@ TrendingBtn.MouseButton1Click:Connect(function() onFilterClick("Trending") end)
 
 -- 🟢 ADD THIS NEW SECTION
 ClearBtn.MouseButton1Click:Connect(function()
+   -- 🟢 CANCEL PROPERLY
+    if searchDebounce then
+        task.cancel(searchDebounce)
+        searchDebounce = nil
+        isUpdating = false -- ⭐ ADD THIS LINE
+    end
 	G2L["a3"].Text = ""        -- 🟢 FIXED
 	CurrentFilter = "All"
 	detectGame()
