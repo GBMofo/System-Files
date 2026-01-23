@@ -1717,7 +1717,7 @@ end)
 -- Clear search when clicked
 ClearIcon.MouseButton1Click:Connect(function()
 	G2L["a3"].Text = ""
-	CurrentFilter = "All"
+	Data.Search.CurrentFilter = "All"
 	detectGame()
 	updateUI()
 	Update()
@@ -3590,10 +3590,12 @@ local Data = {
         CurrentTab = nil,
         CurrentOrder = 0,
         Tabs = {}
-        -- IsSwitching removed
     },
     Saves = {
         Scripts = {}
+    },
+    Search = {
+        Data.Search.CurrentFilter = "All"  -- 🟢 ADD THIS
     }
 };
 	
@@ -4136,7 +4138,7 @@ end
 -- 🟢 UPDATE SEARCH FILTER BUTTONS (Use CurrentFilter name)
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") and btn.Name == CurrentFilter then
+        if btn:IsA("TextButton") and if btn.Name == Data.Search.CurrentFilter then
             btn.BackgroundColor3 = color
         end
     end
@@ -4840,7 +4842,7 @@ InitTabs.Search = function()
     local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
 	
 -- 🔴 STATE
-CurrentFilter = "All"  -- Remove 'local' to make it global
+
 local OriginalGameName = nil 
 local CachedScripts = {}
 local isUpdating = false
@@ -4849,14 +4851,14 @@ local searchDebounce = nil
 -- 🟢 REMOVED STATIC SETTINGS, REPLACED WITH FUNCTION
 -- 🟢 ADD DYNAMIC FETCH PAGE FUNCTION
 local function getFetchPages()
-	if CurrentFilter == "Recommended" then
-		return 8  -- 400 scripts - ensures enough verified
-	elseif CurrentFilter == "Trending" then
-		return 1  -- 50 scripts - curated list (though Trending uses separate endpoint)
-	elseif CurrentFilter == "KeyRequired" then
-		return 3  -- 150 scripts - premium might be rarer
+	if Data.Search.CurrentFilter == "Recommended" then
+		return 8
+	elseif Data.Search.CurrentFilter == "Trending" then
+		return 1
+	elseif Data.Search.CurrentFilter == "KeyRequired" then
+		return 3
 	else
-		return 3  -- 150 scripts - standard
+		return 3
 	end
 end
 
@@ -5043,7 +5045,7 @@ ClearBtn.LayoutOrder = -999 -- Put it first (leftmost)
 	local function updateUI()
     for _, btn in pairs(FilterBar:GetChildren()) do
         if btn:IsA("TextButton") then
-            if btn.Name == CurrentFilter then
+            if btn.Name == Data.Search.CurrentFilter then
                 btn.BackgroundColor3 = getSafeTheme() -- 🟢 FIXED
                 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             else
@@ -5060,17 +5062,17 @@ end
 		for _, scriptData in pairs(scriptList) do
 			local passes = false
 			
-			if CurrentFilter == "Recommended" then
-				passes = (scriptData.verified == true)
-			elseif CurrentFilter == "NoKey" then
-				local isPaid = (scriptData.scriptType == "paid")
-				local hasKey = (scriptData.key == true)
-				passes = (not isPaid) and (not hasKey)
-			elseif CurrentFilter == "KeyRequired" then
-				passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
-			elseif CurrentFilter == "All" then
-				passes = true
-			end
+			if Data.Search.CurrentFilter == "Recommended" then
+	passes = (scriptData.verified == true)
+elseif Data.Search.CurrentFilter == "NoKey" then
+	local isPaid = (scriptData.scriptType == "paid")
+	local hasKey = (scriptData.key == true)
+	passes = (not isPaid) and (not hasKey)
+elseif Data.Search.CurrentFilter == "KeyRequired" then
+	passes = ((scriptData.key == true) or (scriptData.scriptType == "paid"))
+elseif Data.Search.CurrentFilter == "All" then
+	passes = true
+end
 			
 			if passes then
 				table.insert(filtered, scriptData)
@@ -5102,17 +5104,17 @@ end
 	
 	-- 🟢 IMPROVED: Context-aware messages
 	local message = ""
-	if G2L["a3"].Text ~= "" then
-	message = "No " .. CurrentFilter .. " scripts found for: \"" .. G2L["a3"].Text .. "\""
-	elseif CurrentFilter == "Recommended" then
-		message = "No verified scripts found for: " .. displayText
-	elseif CurrentFilter == "NoKey" then
-		message = "No free scripts found for: " .. displayText
-	elseif CurrentFilter == "KeyRequired" then
-		message = "No premium scripts found for: " .. displayText
-	else
-		message = "No scripts found for: " .. displayText
-	end
+if G2L["a3"].Text ~= "" then
+message = "No " .. Data.Search.CurrentFilter .. " scripts found for: \"" .. G2L["a3"].Text .. "\""
+elseif Data.Search.CurrentFilter == "Recommended" then
+	message = "No verified scripts found for: " .. displayText
+elseif Data.Search.CurrentFilter == "NoKey" then
+	message = "No free scripts found for: " .. displayText
+elseif Data.Search.CurrentFilter == "KeyRequired" then
+	message = "No premium scripts found for: " .. displayText
+else
+	message = "No scripts found for: " .. displayText
+end
 	
 	noResults.Text = message
 	noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
@@ -5195,7 +5197,7 @@ end
 	
 local function Update()
     -- 🟢 TRENDING SPECIAL CASE
-    if CurrentFilter == "Trending" then
+    if Data.Search.CurrentFilter == "Trending" then
         if isUpdating then return end
         isUpdating = true
         
@@ -5339,7 +5341,7 @@ end
 
 	-- 🔴 EVENTS
 local function onFilterClick(filterName)
-    CurrentFilter = filterName
+    Data.Search.CurrentFilter = filterName
     updateUI()
     
     -- 🟢 UPDATE BUTTON COLORS WITH CURRENT THEME
@@ -5390,8 +5392,8 @@ ClearBtn.MouseButton1Click:Connect(function()
         isUpdating = false
     end
     
-    G2L["a3"].Text = ""
-    CurrentFilter = "All"
+   G2L["a3"].Text = ""
+    Data.Search.CurrentFilter = "All"
     detectGame()
     updateUI()
     Update()
