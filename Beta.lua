@@ -4138,7 +4138,7 @@ end
 -- 🟢 UPDATE SEARCH FILTER BUTTONS (Use CurrentFilter name)
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") and if btn.Name == Data.Search.CurrentFilter then
+        if btn:IsA("TextButton") and btn.Name == Data.Search.CurrentFilter then
             btn.BackgroundColor3 = color
         end
     end
