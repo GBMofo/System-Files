@@ -4116,7 +4116,44 @@ InitTabs.Settings = function()
                 Main.EnableFrame.Glow.ImageColor3 = color
             end
         end
-        
+        -- 6. UPDATE SEARCH FILTER BUTTONS
+        local searchPage = Pages:FindFirstChild("Search")
+        if searchPage then
+            local filterBar = searchPage:FindFirstChild("FilterBar")
+            if filterBar then
+                -- Update the FilterBar Stroke
+                local fStroke = filterBar:FindFirstChild("FilterBarStroke") or filterBar:FindFirstChildOfClass("UIStroke")
+                if fStroke then fStroke.Color = color end
+
+                -- Update Active Filter Button
+                for _, btn in pairs(filterBar:GetChildren()) do
+                    if btn:IsA("TextButton") then
+                        if btn.Name == (Data.Search.CurrentFilter or "All") then
+                            btn.BackgroundColor3 = color -- Active button gets theme color
+                            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        else
+                            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40) -- Inactive stays dark
+                            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                        end
+                    end
+                end
+            end
+            
+            -- Update Search Results Execute Icons
+            if searchPage:FindFirstChild("Scripts") then
+                for _, card in pairs(searchPage.Scripts:GetChildren()) do
+                    if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") and card.Misc:FindFirstChild("Panel") then
+                        local panel = card.Misc.Panel
+                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                            panel.Execute.Icon.ImageColor3 = color
+                        end
+                        if panel:FindFirstChild("Spacer1") then
+                            panel.Spacer1.BackgroundColor3 = color
+                        end
+                    end
+                end
+            end
+        end
         -- 5. UPDATE EDITOR TABS
         if Pages:FindFirstChild("Editor") and Pages.Editor:FindFirstChild("Tabs") then
             for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
