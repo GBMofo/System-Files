@@ -4181,7 +4181,7 @@ end
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
     print("[DEBUG] FilterBar found!")
     print("[DEBUG] CurrentFilter =", Data.Search.CurrentFilter)
-    
+    print("[DEBUG] FilterBar has", #Pages.Search.FilterBar:GetChildren(), "direct children")  -- 🟢 NEW
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
         print("[DEBUG] Found child:", btn.Name, "Type:", btn.ClassName)  -- 🟢 NEW LINE
         if btn:IsA("TextButton") then
