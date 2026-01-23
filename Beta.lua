@@ -4124,28 +4124,7 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 6. UPDATE ICONS
-        if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
-            local panel = Pages.Editor.Panel
-            if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                panel.Execute.Icon.ImageColor3 = color
-            end
-            if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
-            if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
-        end
--- 🟢 UPDATE SEARCH FILTER BUTTONS (Find active button by color)
-if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") then
-            -- If button has the OLD theme color, it's the active one - update it
-            if btn.BackgroundColor3 == oldTheme then
-                btn.BackgroundColor3 = color
-            end
-        end
-    end
-end
-	
--- 6. UPDATE ICONS
+      -- 6. UPDATE ICONS
 if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
     local panel = Pages.Editor.Panel
     if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
@@ -4155,7 +4134,7 @@ if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
     if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
 end
 
--- 🟢 UPDATE SEARCH FILTER BUTTONS (Find active button by old color)
+-- 🟢 UPDATE SEARCH FILTER BUTTONS
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
         if btn:IsA("TextButton") then
@@ -4172,14 +4151,28 @@ if Pages.Search and Pages.Search:FindFirstChild("Scripts") then
         if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
             local panel = card.Misc:FindFirstChild("Panel")
             if panel then
-                -- Update Execute icon
                 if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
                     panel.Execute.Icon.ImageColor3 = color
                 end
-                
-                -- Update Spacer1 (vertical line)
                 if panel:FindFirstChild("Spacer1") then
                     panel.Spacer1.BackgroundColor3 = color
+                end
+            end
+        end
+    end
+end
+
+-- 🟢 UPDATE SAVED SCRIPTS (Execute Icons + Spacers)
+if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
+    for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
+        if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+            local panel = card.Misc:FindFirstChild("Panel")
+            if panel then
+                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                    panel.Execute.Icon.ImageColor3 = color
+                end
+                if panel:FindFirstChild("Spacer") then
+                    panel.Spacer.BackgroundColor3 = color
                 end
             end
         end
