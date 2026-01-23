@@ -4497,7 +4497,7 @@ end
         local pillCorner = Instance.new("UICorner", pill)
         pillCorner.CornerRadius = UDim.new(0, 8)
         
-     pill.MouseButton1Click:Connect(function()
+    pill.MouseButton1Click:Connect(function()
     ApplyTheme(theme.color)
     
     -- 🟢 MANUALLY UPDATE SEARCH BUTTONS (Since ApplyTheme missed them)
@@ -4507,21 +4507,39 @@ end
         local Search = Pages.Search
         if Search:FindFirstChild("FilterBar") then
             print("[PILL CLICK] Updating FilterBar buttons now!")
+            print("[PILL CLICK] Current filter:", Data.Search.CurrentFilter)
+            print("[PILL CLICK] New theme color:", theme.color)
+            
+            local buttonCount = 0
             for _, btn in pairs(Search.FilterBar:GetChildren()) do
                 if btn:IsA("TextButton") then
+                    buttonCount = buttonCount + 1
+                    print("[PILL CLICK] Found button:", btn.Name)
+                    
                     if btn.Name == Data.Search.CurrentFilter then
+                        print("[PILL CLICK] 🎯 Updating ACTIVE button:", btn.Name)
                         btn.BackgroundColor3 = theme.color
                         btn.TextColor3 = Color3.fromRGB(255, 255, 255)
                     else
+                        print("[PILL CLICK] Updating inactive button:", btn.Name)
                         btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
                         btn.TextColor3 = Color3.fromRGB(200, 200, 200)
                     end
                 end
             end
             
+            print("[PILL CLICK] Total buttons found:", buttonCount)
+            
             local stroke = Search.FilterBar:FindFirstChild("FilterBarStroke")
-            if stroke then stroke.Color = theme.color end
+            if stroke then 
+                stroke.Color = theme.color 
+                print("[PILL CLICK] ✓ Updated stroke")
+            end
+        else
+            print("[PILL CLICK] ✗ FilterBar not found in Search!")
         end
+    else
+        print("[PILL CLICK] ✗ Search page doesn't exist!")
     end
 end)
     end
