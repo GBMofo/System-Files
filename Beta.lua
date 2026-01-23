@@ -4497,63 +4497,9 @@ end
         local pillCorner = Instance.new("UICorner", pill)
         pillCorner.CornerRadius = UDim.new(0, 8)
         
-   pill.MouseButton1Click:Connect(function()
+  pill.MouseButton1Click:Connect(function()
     ApplyTheme(theme.color)
-    
-    -- 🟢 WAIT FOR SEARCH BUTTONS TO EXIST, THEN UPDATE THEM
-    task.spawn(function()
-        local maxRetries = 20 -- Try for 2 seconds (20 * 0.1)
-        local retries = 0
-        
-        while retries < maxRetries do
-            task.wait(0.1)
-            
-            if Pages and Pages:FindFirstChild("Search") then
-                local Search = Pages.Search
-                if Search:FindFirstChild("FilterBar") then
-                    local buttonCount = 0
-                    
-                    -- Count buttons
-                    for _, btn in pairs(Search.FilterBar:GetChildren()) do
-                        if btn:IsA("TextButton") then
-                            buttonCount = buttonCount + 1
-                        end
-                    end
-                    
-                    if buttonCount > 0 then
-                        -- Buttons exist! Update them now
-                        print("[PILL CLICK] Found", buttonCount, "buttons, updating...")
-                        
-                        for _, btn in pairs(Search.FilterBar:GetChildren()) do
-                            if btn:IsA("TextButton") then
-                                if btn.Name == Data.Search.CurrentFilter then
-                                    btn.BackgroundColor3 = theme.color
-                                    btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                                else
-                                    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                                    btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-                                end
-                            end
-                        end
-                        
-                        local stroke = Search.FilterBar:FindFirstChild("FilterBarStroke")
-                        if stroke then stroke.Color = theme.color end
-                        
-                        print("[PILL CLICK] ✓ Buttons updated!")
-                        break -- Exit loop
-                    else
-                        print("[PILL CLICK] Retry", retries + 1, "- buttons not loaded yet...")
-                    end
-                end
-            end
-            
-            retries = retries + 1
-        end
-        
-        if retries >= maxRetries then
-            print("[PILL CLICK] ✗ Timeout waiting for buttons")
-        end
-    end)
+    print("[THEME] Theme changed to:", theme.name)
 end)
     end
     
@@ -5477,10 +5423,29 @@ end
         end
         
         -- Show and jump to target page
-        if Pages:FindFirstChild(Name) then
-            Pages[Name].Visible = true
-            Pages.UIPageLayout:JumpTo(Pages[Name]);
+       if Pages:FindFirstChild(Name) then
+    Pages[Name].Visible = true
+    Pages.UIPageLayout:JumpTo(Pages[Name]);
+end
+
+-- 🟢 ADD THIS NEW CODE HERE
+if Name == "Search" and Pages.Search:FindFirstChild("FilterBar") then
+    print("[NAV] Updating Search buttons with current theme")
+    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+        if btn:IsA("TextButton") then
+            if btn.Name == Data.Search.CurrentFilter then
+                btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            end
         end
+    end
+    
+    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+    if stroke then stroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255) end
+end
         
         -- Find navigation button
         local Button = nil
