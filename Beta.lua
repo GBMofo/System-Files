@@ -4110,19 +4110,35 @@ InitTabs.Settings = function()
             if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
         end
 
-        if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
-            for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
-                if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
-                    local panel = card.Misc:FindFirstChild("Panel")
-                    if panel then
-                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                            panel.Execute.Icon.ImageColor3 = color
+       -- 🟢 UPDATE SAVED SCRIPTS AUTOEXEC & SPACERS
+if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
+    for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
+        if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+            local panel = card.Misc:FindFirstChild("Panel")
+            if panel then
+                -- Update AutoExec icon if active
+                if panel:FindFirstChild("AutoExec") and panel.AutoExec:FindFirstChild("Icon") then
+                    local autoExecIcon = panel.AutoExec.Icon
+                    -- Check if it's currently green (active)
+                    if autoExecIcon.ImageColor3 == Color3.fromRGB(85, 255, 85) then
+                        -- Keep it green (active state)
+                    else
+                        -- Update to current theme if it was purple
+                        if autoExecIcon.ImageColor3 == Color3.fromRGB(160, 85, 255) or 
+                           autoExecIcon.ImageColor3 == oldTheme then
+                            autoExecIcon.ImageColor3 = color
                         end
-                        if panel:FindFirstChild("Spacer") then panel.Spacer.BackgroundColor3 = color end
                     end
+                end
+                
+                -- Update Spacer line
+                if panel:FindFirstChild("Spacer") then
+                    panel.Spacer.BackgroundColor3 = color
                 end
             end
         end
+    end
+end
         
         -- 7. UPDATE SEARCH FILTER
         if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
@@ -5290,23 +5306,24 @@ local function Update()
 end
 
 	-- 🔴 EVENTS
-	local function onFilterClick(filterName)
-		CurrentFilter = filterName
-		updateUI()
--- Update button colors
-	for _, btn in pairs(FilterBar:GetChildren()) do
-		if btn:IsA("TextButton") then
-			if btn.Name == filterName then
-				btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-				btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-			else
-				btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-				btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-			end
-		end
-	end
-		Update()
-	end
+local function onFilterClick(filterName)
+    CurrentFilter = filterName
+    updateUI()
+    
+    -- 🟢 UPDATE BUTTON COLORS WITH CURRENT THEME
+    for _, btn in pairs(FilterBar:GetChildren()) do
+        if btn:IsA("TextButton") then
+            if btn.Name == filterName then
+                btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            end
+        end
+    end
+    Update()
+end
 	
 	RecommendedBtn.MouseButton1Click:Connect(function() onFilterClick("Recommended") end)
 AllBtn.MouseButton1Click:Connect(function() onFilterClick("All") end)
