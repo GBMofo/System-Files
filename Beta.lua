@@ -5447,7 +5447,7 @@ createSectionHeader("🔧 ADVANCED", 50)
 
         -- GUI SETUP
         local ScreenGui = Instance.new("ScreenGui")
-        ScreenGui.Name = "CustomLogViewer"
+        ScreenGui.Name = "PunkX_Console"
         ScreenGui.ResetOnSpawn = false
         -- Safe Parenting
         if gethui then ScreenGui.Parent = gethui() else ScreenGui.Parent = CoreGui end
@@ -5462,7 +5462,7 @@ createSectionHeader("🔧 ADVANCED", 50)
         MainFrame.ClipsDescendants = true
         MainFrame.Active = true
         MainFrame.Parent = ScreenGui
-        MainFrame.Visible = false -- Hidden by default, toggled by button
+        MainFrame.Visible = true -- [CHANGED] Visible immediately
         Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
 
         -- Toast Container
@@ -5604,7 +5604,7 @@ createSectionHeader("🔧 ADVANCED", 50)
         Track(UserInputService.InputChanged:Connect(function(input) if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then local mousePos = input.Position; local framePos = MainFrame.AbsolutePosition; MainFrame.Size = UDim2.new(0, math.max(300, mousePos.X - framePos.X), 0, math.max(180, mousePos.Y - framePos.Y)) end end))
         Track(UserInputService.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then resizing = false end end))
 
-        -- Toggle Button (Floating)
+        -- Toggle Button
         local ToggleButton = Instance.new("ImageButton")
         ToggleButton.Name = "DebugToggle"
         ToggleButton.Size = UDim2.new(0, 45, 0, 45)
@@ -5618,7 +5618,7 @@ createSectionHeader("🔧 ADVANCED", 50)
         Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1, 0)
         Track(ToggleButton.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end))
 
-        -- TOGGLE DRAG LOGIC
+        -- TOGGLE DRAG LOGIC (Restored)
         local toggleDragging, toggleDragStart, toggleStartPos
         Track(ToggleButton.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
