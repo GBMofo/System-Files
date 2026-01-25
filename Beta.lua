@@ -4842,7 +4842,7 @@ end)
         end
     end)
     
-   -- ========================================
+  -- ========================================
     -- PERFORMANCE SECTION
     -- ========================================
     
@@ -4935,7 +4935,6 @@ end)
     -- FPS Dropdown
     local fpsDropdown = Instance.new("Frame", fpsCard)
     fpsDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    -- [FIXED] Positioned at 0.40 (Left) to create gap from toggle
     fpsDropdown.Size = UDim2.new(0.25, 0, 0.7, 0)
     fpsDropdown.Position = UDim2.new(0.40, 0, 0.15, 0)
     fpsDropdown.BorderSizePixel = 0
@@ -4985,7 +4984,6 @@ end)
     fpsListStroke.Thickness = 1
     fpsListStroke.Transparency = 0.8
     
-    -- [FIXED] Padding added so items respect the rounded corners
     local fpsListPadding = Instance.new("UIPadding", fpsList)
     fpsListPadding.PaddingTop = UDim.new(0, 4)
     fpsListPadding.PaddingBottom = UDim.new(0, 4)
@@ -5008,7 +5006,6 @@ end)
         opt.BorderSizePixel = 0
         opt.ZIndex = 11
         
-        -- Round the list items too
         local optCorner = Instance.new("UICorner", opt)
         optCorner.CornerRadius = UDim.new(0, 6)
         
@@ -5032,7 +5029,8 @@ end)
     local fpsToggleContainer = Instance.new("CanvasGroup", fpsCard)
     fpsToggleContainer.BackgroundTransparency = 1
     fpsToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
-    fpsToggleContainer.Position = UDim2.new(0.76, 0, 0.15, 0)
+    -- [UPDATED] Moved to 0.88 (Right Edge)
+    fpsToggleContainer.Position = UDim2.new(0.88, 0, 0.15, 0)
 
     local fpsToggleBg = Instance.new("Frame", fpsToggleContainer)
     fpsToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
@@ -5081,17 +5079,7 @@ end)
         end
     end)
 
-    -- Force Label (FPS)
-    local fpsForceLabel = Instance.new("TextLabel", fpsCard)
-    fpsForceLabel.BackgroundTransparency = 1
-    fpsForceLabel.Size = UDim2.new(0.08, 0, 0.5, 0)
-    -- [FIXED] Position moved to Right side (0.90) so it doesn't overlap toggle
-    fpsForceLabel.Position = UDim2.new(0.90, 0, 0.25, 0)
-    fpsForceLabel.Font = Enum.Font.Gotham
-    fpsForceLabel.TextSize = 11
-    fpsForceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    fpsForceLabel.Text = "Enable"
-    fpsForceLabel.TextXAlignment = Enum.TextXAlignment.Left
+    -- [REMOVED] fpsForceLabel
 
     -- Latency Smoothing
     local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
@@ -5116,7 +5104,6 @@ end)
     -- FOV Dropdown
     local fovDropdown = Instance.new("Frame", fovCard)
     fovDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    -- [FIXED] Positioned at 0.40 (Left)
     fovDropdown.Size = UDim2.new(0.25, 0, 0.7, 0)
     fovDropdown.Position = UDim2.new(0.40, 0, 0.15, 0)
     fovDropdown.BorderSizePixel = 0
@@ -5166,7 +5153,6 @@ end)
     fovListStroke.Thickness = 1
     fovListStroke.Transparency = 0.8
     
-    -- [FIXED] Padding added here too
     local fovListPadding = Instance.new("UIPadding", fovList)
     fovListPadding.PaddingTop = UDim.new(0, 4)
     fovListPadding.PaddingBottom = UDim.new(0, 4)
@@ -5201,7 +5187,6 @@ end)
 
     fovBtn.MouseButton1Click:Connect(function()
         fovList.Visible = not fovList.Visible
-        -- [FIXED] Removed the buggy 'fpsList' reference here
         fovList.Size = UDim2.new(1, 0, 0, math.min(#fovOptions * 30 + 10, 140))
     end)
 
@@ -5209,7 +5194,8 @@ end)
     local fovToggleContainer = Instance.new("CanvasGroup", fovCard)
     fovToggleContainer.BackgroundTransparency = 1
     fovToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
-    fovToggleContainer.Position = UDim2.new(0.76, 0, 0.15, 0)
+    -- [UPDATED] Moved to 0.88 (Right Edge)
+    fovToggleContainer.Position = UDim2.new(0.88, 0, 0.15, 0)
 
     local fovToggleBg = Instance.new("Frame", fovToggleContainer)
     fovToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
@@ -5261,17 +5247,7 @@ end)
         end
     end)
 
-    -- Force Label (FOV)
-    local forceLabel = Instance.new("TextLabel", fovCard)
-    forceLabel.BackgroundTransparency = 1
-    forceLabel.Size = UDim2.new(0.08, 0, 0.5, 0)
-    -- [FIXED] Position moved to Right side (0.90) so it doesn't overlap toggle
-    forceLabel.Position = UDim2.new(0.90, 0, 0.25, 0)
-    forceLabel.Font = Enum.Font.Gotham
-    forceLabel.TextSize = 11
-    forceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-    forceLabel.Text = "Force"
-    forceLabel.TextXAlignment = Enum.TextXAlignment.Left
+    -- [REMOVED] forceLabel
     
     -- ========================================
     -- ADVANCED SECTION
