@@ -4228,6 +4228,15 @@ end
             end
         end
         
+     -- 12. UPDATE DROPDOWN STROKES & SEPARATORS
+        for _, obj in pairs(Scripts:GetDescendants()) do
+            if obj.Name == "ThemeStroke" and obj:IsA("UIStroke") then
+                obj.Color = color
+            elseif obj.Name == "ThemeSeparator" and obj:IsA("Frame") then
+                obj.BackgroundColor3 = color
+            end
+        end
+        
         print("[THEME] Theme applied successfully!")
     end
     
@@ -4636,32 +4645,6 @@ local function optimize(obj)
     end
 end
 
-local function lodLoop()
-    while FPS.Enabled do
-        task.wait(1)
-        local cam = workspace.CurrentCamera
-        if not cam then continue end
-        
-        for _, v in ipairs(workspace:GetDescendants()) do
-            if not FPS.Enabled then break end
-            if v:IsA("BasePart")
-            and not v:IsDescendantOf(Players.LocalPlayer.Character)
-            and not isSafeObject(v) then
-                
-                local dist = (v.Position - cam.CFrame.Position).Magnitude
-                save(v, "LocalTransparencyModifier")
-                
-                if FPS.Preset == "Extreme" and dist > 250 then
-                    v.LocalTransparencyModifier = 1
-                elseif FPS.Preset == "Medium" and dist > 350 then
-                    v.LocalTransparencyModifier = 1
-                else
-                    v.LocalTransparencyModifier = 0
-                end
-            end
-        end
-    end
-end
 
 local function enableFPS(preset)
     if FPS.Enabled then return end
@@ -4677,7 +4660,24 @@ local function enableFPS(preset)
     end
     
     FPS.Connections.Descendant = workspace.DescendantAdded:Connect(optimize)
-    task.spawn(lodLoop)
+    
+    -- Apply-once LOD (Extreme only)
+    if preset == "Extreme" then
+        local cam = workspace.CurrentCamera
+        if cam then
+            for _, v in ipairs(workspace:GetDescendants()) do
+                if v:IsA("BasePart")
+                and not v:IsDescendantOf(Players.LocalPlayer.Character)
+                and not isSafeObject(v) then
+                    local dist = (v.Position - cam.CFrame.Position).Magnitude
+                    save(v, "LocalTransparencyModifier")
+                    if dist > 300 then
+                        v.LocalTransparencyModifier = 1
+                    end
+                end
+            end
+        end
+    end
 end
 
 local function disableFPS()
@@ -4711,7 +4711,13 @@ presetDropdown.Position = UDim2.new(0.65, 0, 0.15, 0)
 presetDropdown.BorderSizePixel = 0
 
 local dropCorner = Instance.new("UICorner", presetDropdown)
-dropCorner.CornerRadius = UDim.new(0, 8)
+dropCorner.CornerRadius = UDim.new(0, 12)
+
+local dropStroke = Instance.new("UIStroke", presetDropdown)
+dropStroke.Name = "ThemeStroke"
+dropStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+dropStroke.Thickness = 1
+dropStroke.Transparency = 0.8
 
 local selectedLabel = Instance.new("TextLabel", presetDropdown)
 selectedLabel.BackgroundTransparency = 1
@@ -4737,7 +4743,13 @@ dropList.Visible = false
 dropList.ZIndex = 10
 
 local listCorner = Instance.new("UICorner", dropList)
-listCorner.CornerRadius = UDim.new(0, 8)
+listCorner.CornerRadius = UDim.new(0, 12)
+
+local listStroke = Instance.new("UIStroke", dropList)
+listStroke.Name = "ThemeStroke"
+listStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+listStroke.Thickness = 1
+listStroke.Transparency = 0.8
 
 local listLayout = Instance.new("UIListLayout", dropList)
 listLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -4753,6 +4765,17 @@ for i, preset in ipairs(presets) do
     opt.TextColor3 = Color3.fromRGB(200, 200, 200)
     opt.BorderSizePixel = 0
     opt.ZIndex = 11
+    
+if i < #presets then
+        local separator = Instance.new("Frame", opt)
+        separator.Name = "ThemeSeparator"
+        separator.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+        separator.BackgroundTransparency = 0.7
+        separator.Size = UDim2.new(0.9, 0, 0, 1)
+        separator.Position = UDim2.new(0.05, 0, 1, 0)
+        separator.BorderSizePixel = 0
+        separator.ZIndex = 11
+    end
     
     opt.MouseButton1Click:Connect(function()
         selectedLabel.Text = preset
@@ -4828,7 +4851,13 @@ fovDropdown.Position = UDim2.new(0.5, 0, 0.15, 0)
 fovDropdown.BorderSizePixel = 0
 
 local fovCorner = Instance.new("UICorner", fovDropdown)
-fovCorner.CornerRadius = UDim.new(0, 8)
+fovCorner.CornerRadius = UDim.new(0, 12)
+
+local fovStroke = Instance.new("UIStroke", fovDropdown)
+fovStroke.Name = "ThemeStroke"
+fovStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+fovStroke.Thickness = 1
+fovStroke.Transparency = 0.8
 
 local fovLabel = Instance.new("TextLabel", fovDropdown)
 fovLabel.BackgroundTransparency = 1
@@ -4845,16 +4874,25 @@ fovBtn.BackgroundTransparency = 1
 fovBtn.Size = UDim2.new(1, 0, 1, 0)
 fovBtn.Text = ""
 
-local fovList = Instance.new("Frame", fovDropdown)
+local fovList = Instance.new("ScrollingFrame", fovDropdown)
 fovList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 fovList.Size = UDim2.new(1, 0, 0, 0)
 fovList.Position = UDim2.new(0, 0, 1, 5)
 fovList.BorderSizePixel = 0
 fovList.Visible = false
 fovList.ZIndex = 10
+fovList.ScrollBarThickness = 4
+fovList.CanvasSize = UDim2.new(0, 0, 0, 0)
+fovList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 
 local fovListCorner = Instance.new("UICorner", fovList)
-fovListCorner.CornerRadius = UDim.new(0, 8)
+fovListCorner.CornerRadius = UDim.new(0, 12)
+
+local fovListStroke = Instance.new("UIStroke", fovList)
+fovListStroke.Name = "ThemeStroke"
+fovListStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+fovListStroke.Thickness = 1
+fovListStroke.Transparency = 0.8
 
 local fovListLayout = Instance.new("UIListLayout", fovList)
 fovListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -4863,13 +4901,24 @@ local fovOptions = {"40", "60", "70", "80", "90", "100", "120"}
 for i, fov in ipairs(fovOptions) do
     local opt = Instance.new("TextButton", fovList)
     opt.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    opt.Size = UDim2.new(1, 0, 0, 28)
+    opt.Size = UDim2.new(1, -8, 0, 28)
     opt.Text = fov
     opt.Font = Enum.Font.Gotham
     opt.TextSize = 11
     opt.TextColor3 = Color3.fromRGB(200, 200, 200)
     opt.BorderSizePixel = 0
     opt.ZIndex = 11
+    
+if i < #fovOptions then
+        local separator = Instance.new("Frame", opt)
+        separator.Name = "ThemeSeparator"
+        separator.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+        separator.BackgroundTransparency = 0.7
+        separator.Size = UDim2.new(0.9, 0, 0, 1)
+        separator.Position = UDim2.new(0.05, 0, 1, 0)
+        separator.BorderSizePixel = 0
+        separator.ZIndex = 11
+    end
     
     opt.MouseButton1Click:Connect(function()
         fovLabel.Text = fov
@@ -4880,7 +4929,7 @@ end
 
 fovBtn.MouseButton1Click:Connect(function()
     fovList.Visible = not fovList.Visible
-    fovList.Size = UDim2.new(1, 0, 0, #fovOptions * 28)
+    fovList.Size = UDim2.new(1, 0, 0, math.min(#fovOptions * 28, 140))
 end)
 
 -- Force FOV Toggle
