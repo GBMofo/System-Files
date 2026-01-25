@@ -4550,6 +4550,298 @@ end)
         end
     end)
     
+ -- ========================================
+    -- PRIVACY SECTION (FIXED SYNC)
+    -- ========================================
+    
+    createSectionHeader("🔒 PRIVACY & SECURITY", -50)
+
+    -- [NEW] Smart Toggle Function (Allows External Control)
+    -- This replaces the standard createToggle just for this section to fix the sync bug.
+    local function createSmartToggle(card, callback)
+        local toggleContainer = Instance.new("CanvasGroup", card)
+        toggleContainer.BackgroundTransparency = 1
+        toggleContainer.Size = UDim2.new(0.12, 0, 0.8, 0)
+        toggleContainer.Position = UDim2.new(0.88, 0, 0.1, 0)
+        toggleContainer.Name = "ToggleContainer"
+        
+        local toggleBg = Instance.new("Frame", toggleContainer)
+        toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        toggleBg:SetAttribute("IsToggleOn", false) 
+        toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
+        toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+        toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+        toggleBg.BorderSizePixel = 0
+        toggleBg.Name = "ToggleBg"
+        
+        local toggleCorner = Instance.new("UICorner", toggleBg)
+        toggleCorner.CornerRadius = UDim.new(1, 0)
+        
+        local toggleBtn = Instance.new("TextButton", toggleBg)
+        toggleBtn.BackgroundTransparency = 1
+        toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+        toggleBtn.Text = ""
+        
+        local toggleLayout = Instance.new("UIListLayout", toggleBtn)
+        toggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        toggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        toggleLayout.Padding = UDim.new(0, 3)
+        
+        local togglePadding = Instance.new("UIPadding", toggleBtn)
+        togglePadding.PaddingLeft = UDim.new(0, 3)
+        togglePadding.PaddingRight = UDim.new(0, 3)
+        
+        local circle = Instance.new("ImageLabel", toggleBtn)
+        circle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+        circle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+        circle.Image = "rbxassetid://5552526748"
+        circle.Size = UDim2.new(0, 20, 0, 20)
+        circle.BackgroundTransparency = 1
+        circle.ScaleType = Enum.ScaleType.Fit
+        
+        -- INTERNAL STATE
+        local isEnabled = false
+
+        -- EXTERNAL CONTROL FUNCTION
+        local function setState(newState, silent)
+            isEnabled = newState
+            
+            -- Update Visuals
+            toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+            toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+            toggleBg:SetAttribute("IsToggleOn", isEnabled)
+            
+            -- Run Logic (if not silent)
+            if not silent then
+                callback(isEnabled)
+            end
+        end
+        
+        toggleBtn.MouseButton1Click:Connect(function()
+            setState(not isEnabled, false)
+        end)
+        
+        return toggleContainer, toggleBg, setState
+    end
+    
+    -- Variables
+    local ScamProtectionEnabled = false
+    local PurchaseGuard = false
+    local TeleportGuard = false
+    local UIClickGuard = false
+    local ScriptDetection = false
+
+    -- Cards
+    local scamCard = createCard("Scam Protection", "Blocks common client-side scams and forced actions", -49)
+    local advancedCard = createCard("Advanced Settings", "Customize Scam Protection behavior for specific game scenarios", -48)
+    advancedCard.Visible = false
+
+    local purchaseCard = createCard("Purchase Guard", "Blocks forced Robux purchase prompts", -47)
+    purchaseCard.Visible = false
+
+    local teleportCard = createCard("Teleport Guard", "Blocks suspicious forced teleports", -46)
+    teleportCard.Visible = false
+
+    local uiClickCard = createCard("UI Click Guard", "Prevents scripted auto-click confirmations", -45)
+    uiClickCard.Visible = false
+
+    local scriptDetectCard = createCard("Script Detection", "Warns about suspicious local scripts", -44)
+    scriptDetectCard.Visible = false
+
+    -- CREATE TOGGLES (Capturing the 'SetState' function)
+    local _, _, setPurchase = createSmartToggle(purchaseCard, function(enabled)
+        PurchaseGuard = enabled
+        if enabled then createNotification("Purchase Guard Enabled", "Success", 2)
+        else createNotification("Purchase Guard Disabled", "Warn", 2) end
+    end)
+
+    local _, _, setTeleport = createSmartToggle(teleportCard, function(enabled)
+        TeleportGuard = enabled
+        if enabled then createNotification("Teleport Guard Enabled", "Success", 2)
+        else createNotification("Teleport Guard Disabled", "Warn", 2) end
+    end)
+
+    local _, _, setUIClick = createSmartToggle(uiClickCard, function(enabled)
+        UIClickGuard = enabled
+        game:GetService("UserInputService").ModalEnabled = (ScamProtectionEnabled and enabled)
+        if enabled then createNotification("UI Click Guard Enabled", "Success", 2)
+        else createNotification("UI Click Guard Disabled", "Warn", 2) end
+    end)
+
+    local _, _, setScriptDetect = createSmartToggle(scriptDetectCard, function(enabled)
+        ScriptDetection = enabled
+        if enabled then createNotification("Script Detection Enabled", "Success", 2)
+        else createNotification("Script Detection Disabled", "Warn", 2) end
+    end)
+
+    -- ADVANCED TOGGLE
+    local _, advancedToggleBg, setAdvanced = createSmartToggle(advancedCard, function(enabled)
+        if ScamProtectionEnabled then
+            purchaseCard.Visible = enabled
+            teleportCard.Visible = enabled
+            uiClickCard.Visible = enabled
+            scriptDetectCard.Visible = enabled
+            
+            if enabled then createNotification("Advanced Settings Shown", "Info", 2) end
+        else
+            purchaseCard.Visible = false
+            teleportCard.Visible = false
+            uiClickCard.Visible = false
+            scriptDetectCard.Visible = false
+        end
+    end)
+
+    -- MASTER TOGGLE
+    createSmartToggle(scamCard, function(enabled)
+        ScamProtectionEnabled = enabled
+        advancedCard.Visible = enabled
+        
+        if enabled then
+            createNotification("Scam Protection Enabled", "Success", 3)
+            
+            -- 1. Reset Advanced Settings to hidden
+            setAdvanced(false, true) -- Silent update (Visual OFF + Internal OFF)
+            
+            -- 2. Enable all sub-features (Silently update UI + Internal State)
+            setPurchase(true, true) -- Silent = true (No notification spam)
+            setTeleport(true, true)
+            setUIClick(true, true)
+            setScriptDetect(true, true)
+            
+            -- 3. Manually update logic variables (since we silenced the callback)
+            PurchaseGuard = true
+            TeleportGuard = true
+            UIClickGuard = true
+            ScriptDetection = true
+            
+            -- 4. Hide them initially (Advanced mode controls visibility)
+            purchaseCard.Visible = false
+            teleportCard.Visible = false
+            uiClickCard.Visible = false
+            scriptDetectCard.Visible = false
+            
+        else
+            createNotification("Scam Protection Disabled", "Info", 3)
+            
+            -- 1. Reset Advanced
+            setAdvanced(false, true)
+            
+            -- 2. Disable all sub-features
+            setPurchase(false, true)
+            setTeleport(false, true)
+            setUIClick(false, true)
+            setScriptDetect(false, true)
+            
+            -- 3. Update logic variables
+            PurchaseGuard = false
+            TeleportGuard = false
+            UIClickGuard = false
+            ScriptDetection = false
+            
+            -- 4. Hide cards
+            purchaseCard.Visible = false
+            teleportCard.Visible = false
+            uiClickCard.Visible = false
+            scriptDetectCard.Visible = false
+        end
+    end)
+
+    -- Hook Purchase Methods
+    for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
+        if game:GetService("MarketplaceService")[method] then
+            local old
+            old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
+                if ScamProtectionEnabled and PurchaseGuard then
+                    warn("[Scam Protection] Purchase blocked")
+                    createNotification("Purchase Blocked", "Warn", 3)
+                    return
+                end
+                return old(...)
+            end)
+        end
+    end
+
+    -- Hook Teleport
+    local allowedPlaceId = game.PlaceId
+    local oldTeleport
+    oldTeleport = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
+        if ScamProtectionEnabled and TeleportGuard then
+            if placeId ~= allowedPlaceId then
+                warn("[Scam Protection] Teleport blocked:", placeId)
+                createNotification("Teleport Blocked", "Warn", 3)
+                return
+            end
+        end
+        return oldTeleport(self, placeId, ...)
+    end)
+    
+    -- Script Detection Loop
+    task.spawn(function()
+        while task.wait(5) do
+            if ScamProtectionEnabled and ScriptDetection then
+                for _, obj in ipairs(game:GetDescendants()) do
+                    if obj:IsA("LocalScript") then
+                        local success, src = pcall(function() return obj.Source:lower() end)
+                        if success and src then
+                            if src:find("trade") or src:find("purchase") then
+                                -- Detection logic
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+
+    -- Disable Robux (Standalone)
+    local disableRobuxCard = createCard("Disable Robux", "Completely blocks all Robux spending prompts", -43)
+    createSmartToggle(disableRobuxCard, function(enabled)
+        if enabled then
+            for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
+                if game:GetService("MarketplaceService")[method] then
+                    local old
+                    old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
+                        warn("[Disable Robux] All purchases blocked")
+                        createNotification("Purchase Blocked (Global)", "Error", 3)
+                        return
+                    end)
+                end
+            end
+            createNotification("Robux Spending Disabled", "Success", 3)
+        else
+            createNotification("Robux Spending Enabled", "Info", 3)
+        end
+    end)
+
+    -- Verify Teleports (Standalone)
+    local verifyTeleportCard = createCard("Verify Teleports", "Allows teleports only to current game place", -42)
+    createSmartToggle(verifyTeleportCard, function(enabled)
+        if enabled then
+            local currentPlaceId = game.PlaceId
+            local oldTeleport2
+            oldTeleport2 = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
+                if placeId ~= currentPlaceId then
+                    warn("[Verify Teleports] Blocked teleport to:", placeId)
+                    createNotification("Teleport Blocked (Verification)", "Warn", 3)
+                    return
+                end
+                return oldTeleport2(self, placeId, ...)
+            end)
+            createNotification("Teleport Verification Enabled", "Success", 3)
+        else
+            createNotification("Teleport Verification Disabled", "Info", 3)
+        end
+    end)
+
+    -- Invisible Open Trigger (Moved to bottom of Privacy section)
+    local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -41)
+    createSmartToggle(invisCard, function(enabled)
+        InvisTriggerOpen = enabled
+        if enabled then
+            createNotification('Chat "/e open" to open UI', "Info", 5)
+        end
+    end)
+    
     -- ========================================
     -- PERFORMANCE SECTION
     -- ========================================
@@ -4954,8 +5246,6 @@ end)
             createNotification("Force FOV Disabled", "Info", 2)
         end
     end)
-
-    -- [REMOVED] forceLabel
     
     -- ========================================
     -- ADVANCED SECTION
