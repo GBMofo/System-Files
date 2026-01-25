@@ -4741,6 +4741,7 @@ dropList.Position = UDim2.new(0, 0, 1, 5)
 dropList.BorderSizePixel = 0
 dropList.Visible = false
 dropList.ZIndex = 10
+dropList.ClipsDescendants = true
 
 local listCorner = Instance.new("UICorner", dropList)
 listCorner.CornerRadius = UDim.new(0, 12)
@@ -4884,6 +4885,7 @@ fovList.ZIndex = 10
 fovList.ScrollBarThickness = 4
 fovList.CanvasSize = UDim2.new(0, 0, 0, 0)
 fovList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+fovList.ClipsDescendants = true
 
 local fovListCorner = Instance.new("UICorner", fovList)
 fovListCorner.CornerRadius = UDim.new(0, 12)
