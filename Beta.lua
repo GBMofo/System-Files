@@ -4332,57 +4332,74 @@ end
         return btn
     end
 
-    local function createToggle(card, callback)
-        local toggleContainer = Instance.new("CanvasGroup", card)
-        toggleContainer.BackgroundTransparency = 1
-        toggleContainer.Size = UDim2.new(0.12, 0, 0.8, 0)
-        toggleContainer.Position = UDim2.new(0.88, 0, 0.1, 0)
-        toggleContainer.Name = "ToggleContainer"
-        
-        local toggleBg = Instance.new("Frame", toggleContainer)
-        toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-        toggleBg:SetAttribute("IsToggleOn", false) 
-        toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
-        toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
-        toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
-        toggleBg.BorderSizePixel = 0
-        toggleBg.Name = "ToggleBg"
-        
-        local toggleCorner = Instance.new("UICorner", toggleBg)
-        toggleCorner.CornerRadius = UDim.new(1, 0)
-        
-        local toggleBtn = Instance.new("TextButton", toggleBg)
-        toggleBtn.BackgroundTransparency = 1
-        toggleBtn.Size = UDim2.new(1, 0, 1, 0)
-        toggleBtn.Text = ""
-        
-        local toggleLayout = Instance.new("UIListLayout", toggleBtn)
-        toggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-        toggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-        toggleLayout.Padding = UDim.new(0, 3)
-        
-        local togglePadding = Instance.new("UIPadding", toggleBtn)
-        togglePadding.PaddingLeft = UDim.new(0, 3)
-        togglePadding.PaddingRight = UDim.new(0, 3)
-        
-        local circle = Instance.new("ImageLabel", toggleBtn)
-        circle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
-        circle.ImageColor3 = Color3.fromRGB(232, 229, 255)
-        circle.Image = "rbxassetid://5552526748"
-        circle.Size = UDim2.new(0, 20, 0, 20)
-        circle.BackgroundTransparency = 1
-        circle.ScaleType = Enum.ScaleType.Fit
-        
-        local isEnabled = false
-        toggleBtn.MouseButton1Click:Connect(function()
-            isEnabled = not isEnabled
-            toggleBg:SetAttribute("IsToggleOn", isEnabled)
-            toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-            toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-            callback(isEnabled)
-        end)
-        return toggleContainer, toggleBg
+   local function createToggle(card, callback)
+    local toggleContainer = Instance.new("CanvasGroup", card)
+    toggleContainer.BackgroundTransparency = 1
+    toggleContainer.Size = UDim2.new(0.12, 0, 0.8, 0)
+    toggleContainer.Position = UDim2.new(0.88, 0, 0.1, 0)
+    toggleContainer.Name = "ToggleContainer"
+    
+    local toggleBg = Instance.new("Frame", toggleContainer)
+    toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    toggleBg:SetAttribute("IsToggleOn", false)
+    toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
+    toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+    toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+    toggleBg.BorderSizePixel = 0
+    toggleBg.Name = "ToggleBg"
+    
+    local toggleCorner = Instance.new("UICorner", toggleBg)
+    toggleCorner.CornerRadius = UDim.new(1, 0)
+    
+    local toggleBtn = Instance.new("TextButton", toggleBg)
+    toggleBtn.BackgroundTransparency = 1
+    toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    toggleBtn.Text = ""
+    
+    local toggleLayout = Instance.new("UIListLayout", toggleBtn)
+    toggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    toggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    toggleLayout.Padding = UDim.new(0, 3)
+    
+    local togglePadding = Instance.new("UIPadding", toggleBtn)
+    togglePadding.PaddingLeft = UDim.new(0, 3)
+    togglePadding.PaddingRight = UDim.new(0, 3)
+    
+    local circle = Instance.new("ImageLabel", toggleBtn)
+    circle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+    circle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+    circle.Image = "rbxassetid://5552526748"
+    circle.Size = UDim2.new(0, 20, 0, 20)
+    circle.BackgroundTransparency = 1
+    circle.ScaleType = Enum.ScaleType.Fit
+    
+    local isEnabled = false
+    
+    local function updateToggleUI()
+        toggleBg:SetAttribute("IsToggleOn", isEnabled)
+        toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+        toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
     end
+    
+    toggleBtn.MouseButton1Click:Connect(function()
+        isEnabled = not isEnabled
+        updateToggleUI()
+        callback(isEnabled)
+    end)
+    
+    -- 🟢 NEW: Add method to programmatically set state
+    toggleBg.setState = function(newState, triggerCallback)
+        if isEnabled ~= newState then
+            isEnabled = newState
+            updateToggleUI()
+            if triggerCallback then
+                callback(isEnabled)
+            end
+        end
+    end
+    
+    return toggleContainer, toggleBg
+end
     
     local function createSlider(card, callback)
         local sliderContainer = Instance.new("Frame", card)
