@@ -4550,7 +4550,7 @@ end)
         end
     end)
     
-   -- ========================================
+  -- ========================================
     -- PRIVACY SECTION
     -- ========================================
     
@@ -4582,18 +4582,26 @@ end)
     local scriptDetectCard = createCard("Script Detection", "Warns about suspicious local scripts", -44)
     scriptDetectCard.Visible = false
 
-    -- Helper function to sync visual state without triggering callbacks
+    -- [FIXED] Helper function to sync visual state AND Knob Position
     local function syncToggleVisual(toggleBg, isEnabled)
         if not toggleBg then return end
-        local layout = toggleBg.Parent:FindFirstChild("UIListLayout")
-        if layout then 
-            layout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-        end
+        
+        -- 1. Sync Color
         toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
         toggleBg:SetAttribute("IsToggleOn", isEnabled)
+
+        -- 2. Sync Knob Position (This was the broken part)
+        local toggleBtn = toggleBg:FindFirstChildOfClass("TextButton")
+        if toggleBtn then
+            local layout = toggleBtn:FindFirstChildOfClass("UIListLayout")
+            if layout then
+                -- Force Right if Enabled, Force Left if Disabled
+                layout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+            end
+        end
     end
 
-    -- STEP 3: Create toggles for sub-features FIRST (so we can reference them)
+    -- STEP 3: Create toggles for sub-features FIRST
     local _, purchaseToggleBg = createToggle(purchaseCard, function(enabled)
         PurchaseGuard = enabled
         if enabled then
@@ -4649,7 +4657,7 @@ end)
             
             if enabled then
                 createNotification("Advanced Settings Shown", "Info", 2)
-                -- Sync visuals just in case
+                -- Sync visuals just in case (Ensures knobs are Right if they are ON)
                 syncToggleVisual(purchaseToggleBg, PurchaseGuard)
                 syncToggleVisual(teleportToggleBg, TeleportGuard)
                 syncToggleVisual(uiClickToggleBg, UIClickGuard)
@@ -4675,9 +4683,9 @@ end)
             -- [MASTER ON]
             createNotification("Scam Protection Enabled", "Success", 3)
             
-            -- 1. Force Advanced Settings OFF (Visual & Logic) - Resets view
+            -- 1. Force Advanced Settings OFF (Visual & Logic)
             ScamAdvancedEnabled = false
-            syncToggleVisual(advancedToggleBg, false)
+            syncToggleVisual(advancedToggleBg, false) -- This fixes Image 1 (Grey + Left)
             
             -- 2. Force Sub-Cards HIDDEN
             purchaseCard.Visible = false
@@ -4691,8 +4699,8 @@ end)
             UIClickGuard = true
             ScriptDetection = true
             
-            -- 4. Sync Sub-Toggles to ON (Visual Only)
-            syncToggleVisual(purchaseToggleBg, true)
+            -- 4. Sync Sub-Toggles to ON (Visual & Knob Position)
+            syncToggleVisual(purchaseToggleBg, true) -- This fixes Image 0 (Pink + Right)
             syncToggleVisual(teleportToggleBg, true)
             syncToggleVisual(uiClickToggleBg, true)
             syncToggleVisual(scriptDetectToggleBg, true)
@@ -4736,7 +4744,6 @@ end)
         if game:GetService("MarketplaceService")[method] then
             local old
             old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
-                -- Check: Master ON + Specific Guard ON
                 if ScamProtectionEnabled and PurchaseGuard then
                     warn("[Scam Protection] Purchase blocked")
                     createNotification("Purchase Blocked", "Warn", 3)
@@ -4751,7 +4758,6 @@ end)
     local allowedPlaceId = game.PlaceId
     local oldTeleport
     oldTeleport = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
-        -- Check: Master ON + Specific Guard ON
         if ScamProtectionEnabled and TeleportGuard then
             if placeId ~= allowedPlaceId then
                 warn("[Scam Protection] Teleport blocked:", placeId)
@@ -4768,11 +4774,10 @@ end)
             if ScamProtectionEnabled and ScriptDetection then
                 for _, obj in ipairs(game:GetDescendants()) do
                     if obj:IsA("LocalScript") then
-                        -- Basic heuristic check
                         local success, src = pcall(function() return obj.Source:lower() end)
                         if success and src then
                             if src:find("trade") or src:find("purchase") then
-                                -- warn("Suspicious script found: " .. obj:GetFullName())
+                                -- Detection logic here
                             end
                         end
                     end
