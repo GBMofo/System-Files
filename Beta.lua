@@ -4555,32 +4555,6 @@ end)
     -- ========================================
     
     createSectionHeader("🔒 PRIVACY & SECURITY", -50)
-    
--- Scam Protection Variables
-local ScamProtectionEnabled = false
-local ScamAdvancedEnabled = false
-local PurchaseGuard = false
-local TeleportGuard = false
-local UIClickGuard = false
-local ScriptDetection = false
-
--- STEP 1: Declare cards
-local scamCard = createCard("Scam Protection", "Blocks common client-side scams and forced actions", -49)
-local advancedCard = createCard("Advanced Settings", "Customize Scam Protection behavior for specific game scenarios", -48)
-advancedCard.Visible = false
-
--- STEP 2: Create sub-feature cards
-local purchaseCard = createCard("Purchase Guard", "Blocks forced Robux purchase prompts", -47)
-purchaseCard.Visible = false
-
-local teleportCard = createCard("Teleport Guard", "Blocks suspicious forced teleports", -46)
-teleportCard.Visible = false
-
-local uiClickCard = createCard("UI Click Guard", "Prevents scripted auto-click confirmations", -45)
-uiClickCard.Visible = false
-
-local scriptDetectCard = createCard("Script Detection", "Warns about suspicious local scripts", -44)
-scriptDetectCard.Visible = false
 
 -- Scam Protection Variables
 local ScamProtectionEnabled = false
