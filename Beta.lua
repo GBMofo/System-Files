@@ -4591,7 +4591,14 @@ local _, scamToggleBg = createToggle(scamCard, function(enabled)
         createNotification("Scam Protection Enabled", "Success", 3)
     else
         createNotification("Scam Protection Disabled", "Info", 3)
+        
+        -- Reset Advanced Settings toggle state
         ScamAdvancedEnabled = false
+        local advLayout = advancedToggleBg.Parent:FindFirstChild("UIListLayout")
+        if advLayout then advLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
+        advancedToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        
+        -- Hide all sub-features
         purchaseCard.Visible = false
         teleportCard.Visible = false
         uiClickCard.Visible = false
@@ -4607,6 +4614,34 @@ local _, advancedToggleBg = createToggle(advancedCard, function(enabled)
         teleportCard.Visible = enabled
         uiClickCard.Visible = enabled
         scriptDetectCard.Visible = enabled
+        
+        if not enabled then
+            -- Reset all sub-feature toggles when Advanced is turned OFF
+            PurchaseGuard = false
+            TeleportGuard = false
+            UIClickGuard = false
+            ScriptDetection = false
+            
+            -- Reset Purchase Guard toggle
+            local pLayout = purchaseToggleBg.Parent:FindFirstChild("UIListLayout")
+            if pLayout then pLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
+            purchaseToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            
+            -- Reset Teleport Guard toggle
+            local tLayout = teleportToggleBg.Parent:FindFirstChild("UIListLayout")
+            if tLayout then tLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
+            teleportToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            
+            -- Reset UI Click Guard toggle
+            local uLayout = uiClickToggleBg.Parent:FindFirstChild("UIListLayout")
+            if uLayout then uLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
+            uiClickToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            
+            -- Reset Script Detection toggle
+            local sLayout = scriptDetectToggleBg.Parent:FindFirstChild("UIListLayout")
+            if sLayout then sLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
+            scriptDetectToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        end
     else
         purchaseCard.Visible = false
         teleportCard.Visible = false
