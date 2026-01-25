@@ -5341,76 +5341,60 @@ game:GetService("Players").PlayerRemoving:Connect(function(plr)
     end)
 end)
 
--- Smart Server Hop
-    local smartHopCard = createCard("Smart Server Hop", "Finds a less crowded server for smoother gameplay.", 43)
-    smartHopCard.Size = UDim2.new(1, 0, 0, 55)
+-- Small Server (Simple & Aggressive)
+    local smallServerCard = createCard("Small Server", "Joins the server with the lowest player count found.", 43)
+    smallServerCard.Size = UDim2.new(1, 0, 0, 55)
 
-    createButton(smartHopCard, "HOP", Color3.fromRGB(70, 200, 120), function()
-        -- Check for HTTP request support
+    createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
         local request = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
         if not request then
-            createNotification("Executor does not support HTTP requests", "Error", 3)
+            createNotification("Executor not supported", "Error", 3)
             return
         end
 
-        createNotification("Scanning for better servers...", "Info", 2)
+        createNotification("Searching for small server...", "Info", 2)
 
         task.spawn(function()
             local HttpService = game:GetService("HttpService")
             local TeleportService = game:GetService("TeleportService")
             local Players = game:GetService("Players")
+            local PlaceId = game.PlaceId
+            local JobId = game.JobId
             
-            local placeId = game.PlaceId
-            local currentJobId = game.JobId
-            local currentPlayers = #Players:GetPlayers()
+            local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
             
+            local response = request({Url = url, Method = "GET"})
+            if not response or not response.Body then 
+                createNotification("API Failed", "Error", 3)
+                return 
+            end
+
+            local success, data = pcall(function() return HttpService:JSONDecode(response.Body) end)
+            if not success or not data or not data.data then 
+                createNotification("No servers found", "Error", 3)
+                return 
+            end
+
             local servers = {}
-            local cursor = ""
-            
-         -- Scan pages until we find enough candidates or run out
-            repeat
-                local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100" .. (cursor ~= "" and "&cursor=" .. cursor or "")
-                local response = request({Url = url, Method = "GET"})
-                
-                if not response or not response.Body then break end
-                
-                -- [FIX] Safe Decode: Prevents "Can't parse JSON" error if API fails
-                local success, data = pcall(function()
-                    return HttpService:JSONDecode(response.Body)
-                end)
-
-                if not success or not data or not data.data then break end
-
-                cursor = data.nextPageCursor or ""
-                
-                for _, server in ipairs(data.data) do
-                    -- Filter: Not full, not current server
-                    if server.playing < server.maxPlayers and server.id ~= currentJobId then
-                        table.insert(servers, server)
-                    end
+            for _, server in ipairs(data.data) do
+                -- Only check if it's not the current server and has space
+                if server.playing < server.maxPlayers and server.id ~= JobId then
+                    table.insert(servers, server)
                 end
-            until cursor == "" or #servers >= 150
-
-            if #servers == 0 then
-                createNotification("No better server found. You’re already in an optimal server.", "Info", 4)
-                return
             end
 
-            -- Sort by lowest player count (Smoother gameplay)
-            table.sort(servers, function(a, b) return a.playing < b.playing end)
-            local target = servers[1]
-
-            -- Fallback: Only hop if the target is actually better (fewer players)
-            if target.playing >= currentPlayers then
-                createNotification("No better server found. You’re already in an optimal server.", "Info", 4)
-                return
+            if #servers > 0 then
+                -- Sort by lowest player count
+                table.sort(servers, function(a, b) return a.playing < b.playing end)
+                
+                local target = servers[1]
+                createNotification("Joining server (" .. target.playing .. " players)...", "Success", 3)
+                TeleportService:TeleportToPlaceInstance(PlaceId, target.id, Players.LocalPlayer)
+            else
+                createNotification("No available servers found", "Error", 3)
             end
-
-            createNotification("Joining a better server...", "Success", 3)
-            TeleportService:TeleportToPlaceInstance(placeId, target.id, Players.LocalPlayer)
         end)
     end)
-
 -- Serverhop Button
 local serverhopCard = createCard("Serverhop", "Joins a different public server", 44)
 serverhopCard.Size = UDim2.new(1, 0, 0, 55)
