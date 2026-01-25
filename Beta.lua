@@ -6416,7 +6416,7 @@ FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 	FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 	FilterBar.BorderSizePixel = 0
 	FilterBar.Size = UDim2.new(1, 0, 0, 50)
-	FilterBar.LayoutOrder = 0
+	FilterBar.LayoutOrder = -1
 	
 	local FilterBarCorner = Instance.new("UICorner", FilterBar)
 	FilterBarCorner.CornerRadius = UDim.new(0, 12)
