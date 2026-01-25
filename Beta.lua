@@ -4135,13 +4135,24 @@ if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
     if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
     if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
 end
--- 🟢 UPDATE SEARCH FILTER BUTTONS (Use CurrentFilter name)
+-- AFTER (Fixed - Updates ALL buttons correctly)
 if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") and btn.Name == Data.Search.CurrentFilter then
-            btn.BackgroundColor3 = color
+        if btn:IsA("TextButton") then
+            if btn.Name == Data.Search.CurrentFilter then
+                -- Active Button gets the Theme Color
+                btn.BackgroundColor3 = color
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                -- Inactive Buttons get Dark Grey
+                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            end
         end
     end
+    -- Also fix the stroke color if it exists
+    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+    if stroke then stroke.Color = color end
 end
 -- 🟢 UPDATE SEARCH RESULTS (Execute Icons + Spacers)
 if Pages.Search and Pages.Search:FindFirstChild("Scripts") then
@@ -4512,7 +4523,6 @@ pill.MouseButton1Click:Connect(function()
     
     -- 🟢 If already viewing Search, update buttons now
     if Pages.UIPageLayout.CurrentPage == Pages.Search then
-        print("[THEME] User is on Search page, updating buttons immediately")
         if Pages.Search:FindFirstChild("FilterBar") then
             for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
                 if btn:IsA("TextButton") then
@@ -6406,7 +6416,7 @@ FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 	FilterBar.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
 	FilterBar.BorderSizePixel = 0
 	FilterBar.Size = UDim2.new(1, 0, 0, 50)
-	FilterBar.LayoutOrder = -2
+	FilterBar.LayoutOrder = 0
 	
 	local FilterBarCorner = Instance.new("UICorner", FilterBar)
 	FilterBarCorner.CornerRadius = UDim.new(0, 12)
@@ -6851,7 +6861,6 @@ end
 
 -- 🟢 ADD THIS NEW CODE HERE
 if Name == "Search" and Pages.Search:FindFirstChild("FilterBar") then
-    print("[NAV] Updating Search buttons with current theme")
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
         if btn:IsA("TextButton") then
             if btn.Name == Data.Search.CurrentFilter then
