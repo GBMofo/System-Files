@@ -4568,13 +4568,20 @@ local ScriptDetection = true
 local scamCard = createCard("Scam Protection", "Blocks common client-side scams and forced actions", -49)
 local _, scamToggleBg = createToggle(scamCard, function(enabled)
     ScamProtectionEnabled = enabled
+    
+    -- Control Advanced Settings visibility
+    advancedCard.Visible = enabled
+    
     if enabled then
         createNotification("Scam Protection Enabled", "Success", 3)
     else
         createNotification("Scam Protection Disabled", "Info", 3)
-        -- Hide advanced settings when main toggle is off
-        if advancedCard then advancedCard.Visible = false end
+        -- Reset Advanced Settings state and hide sub-features
         ScamAdvancedEnabled = false
+        if purchaseCard then purchaseCard.Visible = false end
+        if teleportCard then teleportCard.Visible = false end
+        if uiClickCard then uiClickCard.Visible = false end
+        if scriptDetectCard then scriptDetectCard.Visible = false end
     end
 end)
 
@@ -4583,19 +4590,19 @@ local advancedCard = createCard("Advanced Settings", "Customize Scam Protection 
 advancedCard.Visible = false
 local _, advancedToggleBg = createToggle(advancedCard, function(enabled)
     ScamAdvancedEnabled = enabled
-    -- Show/hide sub-features
-    if purchaseCard then purchaseCard.Visible = enabled end
-    if teleportCard then teleportCard.Visible = enabled end
-    if uiClickCard then uiClickCard.Visible = enabled end
-    if scriptDetectCard then scriptDetectCard.Visible = enabled end
-end)
-
--- Connect advanced card visibility to main toggle
-scamToggleBg:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
+    
+    -- Only control sub-features if parent is enabled
     if ScamProtectionEnabled then
-        advancedCard.Visible = true
+        purchaseCard.Visible = enabled
+        teleportCard.Visible = enabled
+        uiClickCard.Visible = enabled
+        scriptDetectCard.Visible = enabled
     else
-        advancedCard.Visible = false
+        -- Fail-safe: shouldn't happen, but enforce hierarchy
+        purchaseCard.Visible = false
+        teleportCard.Visible = false
+        uiClickCard.Visible = false
+        scriptDetectCard.Visible = false
     end
 end)
 
