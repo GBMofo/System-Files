@@ -5341,23 +5341,35 @@ game:GetService("Players").PlayerRemoving:Connect(function(plr)
     end)
 end)
 
--- Scan pages until we find enough candidates or run out
-            repeat
-                local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100" .. (cursor ~= "" and "&cursor=" .. cursor or "")
-                local response = request({Url = url, Method = "GET"})
-                
-                if not response or not response.Body then break end
-                
-                local data = HttpService:JSONDecode(response.Body)
-                cursor = data.nextPageCursor or ""
-                
-                for _, server in ipairs(data.data or {}) do
-                    -- Filter: Not full, not current server
-                    if server.playing < server.maxPlayers and server.id ~= currentJobId then
-                        table.insert(servers, server)
-                    end
-                end
-            until cursor == "" or #servers >= 150
+-- Small Server Button
+local smallServerCard = createCard("Small Server", "Joins a server with fewer players", 43)
+smallServerCard.Size = UDim2.new(1, 0, 0, 55)
+createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
+    local success, data = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(
+            game:HttpGet(
+                "https://games.roblox.com/v1/games/" ..
+                game.PlaceId ..
+                "/servers/Public?sortOrder=Asc&limit=100"
+            )
+        )
+    end)
+    
+    if success and data and data.data then
+        for _, server in ipairs(data.data) do
+            if server.playing and server.playing < 10 then
+                game:GetService("TeleportService"):TeleportToPlaceInstance(
+                    game.PlaceId,
+                    server.id,
+                    game:GetService("Players").LocalPlayer
+                )
+                break
+            end
+        end
+    else
+        createNotification("Failed to find small server", "Error", 3)
+    end
+end)
 
 -- Serverhop Button
 local serverhopCard = createCard("Serverhop", "Joins a different public server", 44)
