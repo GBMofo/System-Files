@@ -4842,503 +4842,436 @@ end)
         end
     end)
     
-    -- ========================================
+   -- ========================================
     -- PERFORMANCE SECTION
     -- ========================================
     
     createSectionHeader("⚡ PERFORMANCE", 0)
     
    -- Anti AFK
-local antiAFKConn
-local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
-createToggle(afkCard, function(enabled)
-    if enabled then
-        if antiAFKConn then return end
-        antiAFKConn = Players.LocalPlayer.Idled:Connect(function()
-            game:GetService("VirtualUser"):CaptureController()
-            game:GetService("VirtualUser"):ClickButton2(Vector2.new())
-        end)
-        createNotification("Anti AFK Enabled", "Success", 3)
-    else
-        if antiAFKConn then
-            antiAFKConn:Disconnect()
-            antiAFKConn = nil
+    local antiAFKConn
+    local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
+    createToggle(afkCard, function(enabled)
+        if enabled then
+            if antiAFKConn then return end
+            antiAFKConn = Players.LocalPlayer.Idled:Connect(function()
+                game:GetService("VirtualUser"):CaptureController()
+                game:GetService("VirtualUser"):ClickButton2(Vector2.new())
+            end)
+            createNotification("Anti AFK Enabled", "Success", 3)
+        else
+            if antiAFKConn then
+                antiAFKConn:Disconnect()
+                antiAFKConn = nil
+            end
+            createNotification("Anti AFK Disabled", "Info", 3)
         end
-        createNotification("Anti AFK Disabled", "Info", 3)
-    end
-end)
+    end)
     
--- FPS Boost System
-local FPS = {
-    Enabled = false,
-    Preset = "Light",
-    Saved = {},
-    Connections = {}
-}
+    -- FPS Boost System logic
+    local FPS = { Enabled = false, Preset = "Light", Saved = {}, Connections = {} }
+    local HitboxKeywords = { "hitbox", "damage", "hurt", "collider", "weapon", "attack" }
 
-local HitboxKeywords = {
-    "hitbox", "damage", "hurt", "collider", "weapon", "attack"
-}
+    local function isSafeObject(obj)
+        if obj:FindFirstAncestorOfClass("Humanoid") then return true end
+        if obj:FindFirstAncestorOfClass("Tool") then return true end
+        if obj:IsA("BasePart") and not obj.Anchored then return true end
+        local n = obj.Name:lower()
+        for _, k in ipairs(HitboxKeywords) do if n:find(k) then return true end end
+        return false
+    end
 
-local function isSafeObject(obj)
-    if obj:FindFirstAncestorOfClass("Humanoid") then return true end
-    if obj:FindFirstAncestorOfClass("Tool") then return true end
-    if obj:IsA("BasePart") and not obj.Anchored then return true end
-    
-    local n = obj.Name:lower()
-    for _, k in ipairs(HitboxKeywords) do
-        if n:find(k) then return true end
+    local function save(obj, prop)
+        FPS.Saved[obj] = FPS.Saved[obj] or {}
+        if FPS.Saved[obj][prop] == nil then FPS.Saved[obj][prop] = obj[prop] end
     end
-    return false
-end
 
-local function save(obj, prop)
-    FPS.Saved[obj] = FPS.Saved[obj] or {}
-    if FPS.Saved[obj][prop] == nil then
-        FPS.Saved[obj][prop] = obj[prop]
+    local function optimize(obj)
+        if not FPS.Enabled or not obj or not obj.Parent then return end
+        if isSafeObject(obj) then return end
+        if obj:IsA("BasePart") then save(obj, "CastShadow"); obj.CastShadow = false end
+        if obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then save(obj, "Enabled"); obj.Enabled = false end
+        if FPS.Preset ~= "Light" and obj:IsA("Beam") then save(obj, "Enabled"); obj.Enabled = false end
+        if FPS.Preset ~= "Light" and obj:IsA("SurfaceAppearance") then obj:Destroy() end
     end
-end
 
-local function optimize(obj)
-    if not FPS.Enabled or not obj or not obj.Parent then return end
-    if isSafeObject(obj) then return end
-    
-    if obj:IsA("BasePart") then
-        save(obj, "CastShadow")
-        obj.CastShadow = false
-    end
-    
-    if obj:IsA("Fire") or obj:IsA("Smoke") or obj:IsA("Sparkles") then
-        save(obj, "Enabled")
-        obj.Enabled = false
-    end
-    
-    if FPS.Preset ~= "Light" and obj:IsA("Beam") then
-        save(obj, "Enabled")
-        obj.Enabled = false
-    end
-    
-    if FPS.Preset ~= "Light" and obj:IsA("SurfaceAppearance") then
-        obj:Destroy()
-    end
-end
-
-
-local function enableFPS(preset)
-    if FPS.Enabled then return end
-    FPS.Enabled = true
-    FPS.Preset = preset
-    
-    if preset == "Extreme" then
-        settings().Rendering.QualityLevel = Enum.QualityLevel.Level01
-    end
-    
-    for _, obj in ipairs(workspace:GetDescendants()) do
-        optimize(obj)
-    end
-    
-    FPS.Connections.Descendant = workspace.DescendantAdded:Connect(optimize)
-    
-    -- Apply-once LOD (Extreme only)
-    if preset == "Extreme" then
-        local cam = workspace.CurrentCamera
-        if cam then
-            for _, v in ipairs(workspace:GetDescendants()) do
-                if v:IsA("BasePart")
-                and not v:IsDescendantOf(Players.LocalPlayer.Character)
-                and not isSafeObject(v) then
-                    local dist = (v.Position - cam.CFrame.Position).Magnitude
-                    save(v, "LocalTransparencyModifier")
-                    if dist > 300 then
-                        v.LocalTransparencyModifier = 1
+    local function enableFPS(preset)
+        if FPS.Enabled then return end
+        FPS.Enabled = true
+        FPS.Preset = preset
+        if preset == "Extreme" then settings().Rendering.QualityLevel = Enum.QualityLevel.Level01 end
+        for _, obj in ipairs(workspace:GetDescendants()) do optimize(obj) end
+        FPS.Connections.Descendant = workspace.DescendantAdded:Connect(optimize)
+        if preset == "Extreme" then
+            local cam = workspace.CurrentCamera
+            if cam then
+                for _, v in ipairs(workspace:GetDescendants()) do
+                    if v:IsA("BasePart") and not v:IsDescendantOf(Players.LocalPlayer.Character) and not isSafeObject(v) then
+                        local dist = (v.Position - cam.CFrame.Position).Magnitude
+                        save(v, "LocalTransparencyModifier")
+                        if dist > 300 then v.LocalTransparencyModifier = 1 end
                     end
                 end
             end
         end
     end
-end
 
-local function disableFPS()
-    FPS.Enabled = false
-    
-    for _, c in pairs(FPS.Connections) do
-        pcall(function() c:Disconnect() end)
-    end
-    FPS.Connections = {}
-    
-    for obj, props in pairs(FPS.Saved) do
-        if obj and obj.Parent then
-            for prop, val in pairs(props) do
-                pcall(function()
-                    obj[prop] = val
-                end)
+    local function disableFPS()
+        FPS.Enabled = false
+        for _, c in pairs(FPS.Connections) do pcall(function() c:Disconnect() end) end
+        FPS.Connections = {}
+        for obj, props in pairs(FPS.Saved) do
+            if obj and obj.Parent then
+                for prop, val in pairs(props) do pcall(function() obj[prop] = val end) end
             end
         end
+        FPS.Saved = {}
     end
-    FPS.Saved = {}
-end
 
--- FPS Boost (Grouped: Dropdown + Toggle)
-local fpsCard = createCard("FPS Boost", "Enable performance optimizations", 2)
-fpsCard.Size = UDim2.new(1, 0, 0, 55)
+    -- FPS Boost Card
+    local fpsCard = createCard("FPS Boost", "Enable performance optimizations", 2)
+    fpsCard.Size = UDim2.new(1, 0, 0, 55)
 
--- FPS Preset Dropdown
-local fpsDropdown = Instance.new("Frame", fpsCard)
-fpsDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-fpsDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
-fpsDropdown.Position = UDim2.new(0.48, 0, 0.15, 0)
-fpsDropdown.BorderSizePixel = 0
+    -- FPS Dropdown
+    local fpsDropdown = Instance.new("Frame", fpsCard)
+    fpsDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    -- [FIXED] Positioned at 0.40 (Left) to create gap from toggle
+    fpsDropdown.Size = UDim2.new(0.25, 0, 0.7, 0)
+    fpsDropdown.Position = UDim2.new(0.40, 0, 0.15, 0)
+    fpsDropdown.BorderSizePixel = 0
 
-local fpsCorner = Instance.new("UICorner", fpsDropdown)
-fpsCorner.CornerRadius = UDim.new(0, 12)
+    local fpsCorner = Instance.new("UICorner", fpsDropdown)
+    fpsCorner.CornerRadius = UDim.new(0, 12)
 
-local fpsStroke = Instance.new("UIStroke", fpsDropdown)
-fpsStroke.Name = "ThemeStroke"
-fpsStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-fpsStroke.Thickness = 1
-fpsStroke.Transparency = 0.8
+    local fpsStroke = Instance.new("UIStroke", fpsDropdown)
+    fpsStroke.Name = "ThemeStroke"
+    fpsStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    fpsStroke.Thickness = 1
+    fpsStroke.Transparency = 0.8
 
-local fpsLabel = Instance.new("TextLabel", fpsDropdown)
-fpsLabel.BackgroundTransparency = 1
-fpsLabel.Size = UDim2.new(0.7, 0, 1, 0)
-fpsLabel.Font = Enum.Font.GothamBold
-fpsLabel.TextSize = 12
-fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-fpsLabel.Text = "Light"
-fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
-fpsLabel.Position = UDim2.new(0.15, 0, 0, 0)
+    local fpsLabel = Instance.new("TextLabel", fpsDropdown)
+    fpsLabel.BackgroundTransparency = 1
+    fpsLabel.Size = UDim2.new(0.7, 0, 1, 0)
+    fpsLabel.Font = Enum.Font.GothamBold
+    fpsLabel.TextSize = 12
+    fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    fpsLabel.Text = "Light"
+    fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+    fpsLabel.Position = UDim2.new(0.15, 0, 0, 0)
 
-local fpsBtn = Instance.new("TextButton", fpsDropdown)
-fpsBtn.BackgroundTransparency = 1
-fpsBtn.Size = UDim2.new(1, 0, 1, 0)
-fpsBtn.Text = ""
+    local fpsBtn = Instance.new("TextButton", fpsDropdown)
+    fpsBtn.BackgroundTransparency = 1
+    fpsBtn.Size = UDim2.new(1, 0, 1, 0)
+    fpsBtn.Text = ""
 
-local fpsList = Instance.new("ScrollingFrame", fpsDropdown)
-fpsList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-fpsList.Size = UDim2.new(1, 0, 0, 0)
-fpsList.Position = UDim2.new(0, 0, 1, 5)
-fpsList.BorderSizePixel = 0
-fpsList.Visible = false
-fpsList.ZIndex = 10
-fpsList.ScrollBarThickness = 4
-fpsList.CanvasSize = UDim2.new(0, 0, 0, 0)
-fpsList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-fpsList.ClipsDescendants = true
+    local fpsList = Instance.new("ScrollingFrame", fpsDropdown)
+    fpsList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    fpsList.Size = UDim2.new(1, 0, 0, 0)
+    fpsList.Position = UDim2.new(0, 0, 1, 5)
+    fpsList.BorderSizePixel = 0
+    fpsList.Visible = false
+    fpsList.ZIndex = 10
+    fpsList.ScrollBarThickness = 2
+    fpsList.CanvasSize = UDim2.new(0, 0, 0, 0)
+    fpsList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    fpsList.ClipsDescendants = true
 
-local fpsListCorner = Instance.new("UICorner", fpsList)
-fpsListCorner.CornerRadius = UDim.new(0, 10)
+    local fpsListCorner = Instance.new("UICorner", fpsList)
+    fpsListCorner.CornerRadius = UDim.new(0, 10)
 
-local fpsListStroke = Instance.new("UIStroke", fpsList)
-fpsListStroke.Name = "ThemeStroke"
-fpsListStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-fpsListStroke.Thickness = 1
-fpsListStroke.Transparency = 0.8
-
-local fpsListLayout = Instance.new("UIListLayout", fpsList)
-fpsListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-local fpsOptions = {"Light", "Medium", "Extreme"}
-for i, preset in ipairs(fpsOptions) do
-    local opt = Instance.new("TextButton", fpsList)
-    opt.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    opt.Size = UDim2.new(1, -8, 0, 28)
-    opt.Text = preset
-    opt.Font = Enum.Font.Gotham
-    opt.TextSize = 11
-    opt.TextColor3 = Color3.fromRGB(200, 200, 200)
-    opt.BorderSizePixel = 0
-    opt.ZIndex = 11
+    local fpsListStroke = Instance.new("UIStroke", fpsList)
+    fpsListStroke.Name = "ThemeStroke"
+    fpsListStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    fpsListStroke.Thickness = 1
+    fpsListStroke.Transparency = 0.8
     
-    if i < #fpsOptions then
-        local separator = Instance.new("Frame", opt)
-        separator.Name = "ThemeSeparator"
-        separator.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-        separator.BackgroundTransparency = 0.7
-        separator.Size = UDim2.new(0.9, 0, 0, 1)
-        separator.Position = UDim2.new(0.05, 0, 1, 0)
-        separator.BorderSizePixel = 0
-        separator.ZIndex = 11
-    end
-    
-    opt.MouseButton1Click:Connect(function()
-        fpsLabel.Text = preset
-        fpsList.Visible = false
-        if FPS.Enabled then
-            disableFPS()
-            enableFPS(preset)
-            createNotification("FPS Preset: " .. preset, "Info", 2)
-        end
-    end)
-end
+    -- [FIXED] Padding added so items respect the rounded corners
+    local fpsListPadding = Instance.new("UIPadding", fpsList)
+    fpsListPadding.PaddingTop = UDim.new(0, 4)
+    fpsListPadding.PaddingBottom = UDim.new(0, 4)
+    fpsListPadding.PaddingLeft = UDim.new(0, 4)
+    fpsListPadding.PaddingRight = UDim.new(0, 4)
 
-fpsBtn.MouseButton1Click:Connect(function()
-    fpsList.Visible = not fpsList.Visible
-    fpsList.Size = UDim2.new(1, 0, 0, math.min(#fpsOptions * 28, 140))
-end)
+    local fpsListLayout = Instance.new("UIListLayout", fpsList)
+    fpsListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    fpsListLayout.Padding = UDim.new(0, 2)
 
--- FPS Toggle
-local fpsToggleContainer = Instance.new("CanvasGroup", fpsCard)
-fpsToggleContainer.BackgroundTransparency = 1
-fpsToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
-fpsToggleContainer.Position = UDim2.new(0.76, 0, 0.15, 0)
-
-local fpsToggleBg = Instance.new("Frame", fpsToggleContainer)
-fpsToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-fpsToggleBg.Size = UDim2.new(1, 0, 1, 0)
-fpsToggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
-fpsToggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
-fpsToggleBg.BorderSizePixel = 0
-
-local fpsToggleCorner = Instance.new("UICorner", fpsToggleBg)
-fpsToggleCorner.CornerRadius = UDim.new(1, 0)
-
-local fpsToggleBtn = Instance.new("TextButton", fpsToggleBg)
-fpsToggleBtn.BackgroundTransparency = 1
-fpsToggleBtn.Size = UDim2.new(1, 0, 1, 0)
-fpsToggleBtn.Text = ""
-
-local fpsToggleLayout = Instance.new("UIListLayout", fpsToggleBtn)
-fpsToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-fpsToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-fpsToggleLayout.Padding = UDim.new(0, 3)
-
-local fpsTogglePadding = Instance.new("UIPadding", fpsToggleBtn)
-fpsTogglePadding.PaddingLeft = UDim.new(0, 3)
-fpsTogglePadding.PaddingRight = UDim.new(0, 3)
-
-local fpsCircle = Instance.new("ImageLabel", fpsToggleBtn)
-fpsCircle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
-fpsCircle.ImageColor3 = Color3.fromRGB(232, 229, 255)
-fpsCircle.Image = "rbxassetid://5552526748"
-fpsCircle.Size = UDim2.new(0, 20, 0, 20)
-fpsCircle.BackgroundTransparency = 1
-fpsCircle.ScaleType = Enum.ScaleType.Fit
-
-local fpsEnabled = false
-fpsToggleBtn.MouseButton1Click:Connect(function()
-    fpsEnabled = not fpsEnabled
-    fpsToggleLayout.HorizontalAlignment = fpsEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-    fpsToggleBg.BackgroundColor3 = fpsEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-    
-    if fpsEnabled then
-        enableFPS(fpsLabel.Text)
-        createNotification("FPS Boost Enabled", "Success", 2)
-    else
-        disableFPS()
-        createNotification("FPS Boost Disabled", "Info", 2)
-    end
-end)
-
--- Force Label
-local fpsForceLabel = Instance.new("TextLabel", fpsCard)
-fpsForceLabel.BackgroundTransparency = 1
-fpsForceLabel.Size = UDim2.new(0.08, 0, 0.5, 0)
-fpsForceLabel.Position = UDim2.new(0.72, 0, 0.25, 0)
-fpsForceLabel.Font = Enum.Font.Gotham
-fpsForceLabel.TextSize = 11
-fpsForceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-fpsForceLabel.Text = "Enable"
-fpsForceLabel.TextXAlignment = Enum.TextXAlignment.Right
-
--- Latency Smoothing
-local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
-createToggle(latencyCard, function(enabled)
-    if enabled then
-        RunService:BindToRenderStep(
-            "LatencySmoothing",
-            Enum.RenderPriority.Camera.Value + 1,
-            function()
-                local cam = workspace.CurrentCamera
-                if cam then
-                    cam.CFrame = cam.CFrame
-                end
-            end
-        )
-        createNotification("Latency Smoothing Enabled", "Success", 3)
-    else
-        RunService:UnbindFromRenderStep("LatencySmoothing")
-        createNotification("Latency Smoothing Disabled", "Info", 3)
-    end
-end)
-
--- FOV Control
-local FOV_PRESETS = {
-    ["40"] = 40,
-    ["60"] = 60,
-    ["70"] = 70,
-    ["80"] = 80,
-    ["90"] = 90,
-    ["100"] = 100,
-    ["120"] = 120
-}
-
-local currentFOV = 70
-local fovConn
-
-local fovCard = createCard("FOV", "Field of view control", 5)
-fovCard.Size = UDim2.new(1, 0, 0, 55)
-
--- FOV Dropdown
-local fovDropdown = Instance.new("Frame", fovCard)
-fovDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-fovDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
-fovDropdown.Position = UDim2.new(0.48, 0, 0.15, 0)
-fovDropdown.BorderSizePixel = 0
-
-local fovCorner = Instance.new("UICorner", fovDropdown)
-fovCorner.CornerRadius = UDim.new(0, 12)
-
-local fovStroke = Instance.new("UIStroke", fovDropdown)
-fovStroke.Name = "ThemeStroke"
-fovStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-fovStroke.Thickness = 1
-fovStroke.Transparency = 0.8
-
-local fovLabel = Instance.new("TextLabel", fovDropdown)
-fovLabel.BackgroundTransparency = 1
-fovLabel.Size = UDim2.new(0.7, 0, 1, 0)
-fovLabel.Font = Enum.Font.GothamBold
-fovLabel.TextSize = 12
-fovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-fovLabel.Text = "70"
-fovLabel.TextXAlignment = Enum.TextXAlignment.Left
-fovLabel.Position = UDim2.new(0.15, 0, 0, 0)
-
-local fovBtn = Instance.new("TextButton", fovDropdown)
-fovBtn.BackgroundTransparency = 1
-fovBtn.Size = UDim2.new(1, 0, 1, 0)
-fovBtn.Text = ""
-
-local fovList = Instance.new("ScrollingFrame", fovDropdown)
-fovList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-fovList.Size = UDim2.new(1, 0, 0, 0)
-fovList.Position = UDim2.new(0, 0, 1, 5)
-fovList.BorderSizePixel = 0
-fovList.Visible = false
-fovList.ZIndex = 10
-fovList.ScrollBarThickness = 4
-fovList.CanvasSize = UDim2.new(0, 0, 0, 0)
-fovList.AutomaticCanvasSize = Enum.AutomaticSize.Y
-fovList.ClipsDescendants = true
-
-local fovListCorner = Instance.new("UICorner", fovList)
-fovListCorner.CornerRadius = UDim.new(0, 10)
-
-local fovListStroke = Instance.new("UIStroke", fovList)
-fovListStroke.Name = "ThemeStroke"
-fovListStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-fovListStroke.Thickness = 1
-fovListStroke.Transparency = 0.8
-
-local fovListLayout = Instance.new("UIListLayout", fovList)
-fovListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-local fovOptions = {"40", "60", "70", "80", "90", "100", "120"}
-for i, fov in ipairs(fovOptions) do
-    local opt = Instance.new("TextButton", fovList)
-    opt.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    opt.Size = UDim2.new(1, -8, 0, 28)
-    opt.Text = fov
-    opt.Font = Enum.Font.Gotham
-    opt.TextSize = 11
-    opt.TextColor3 = Color3.fromRGB(200, 200, 200)
-    opt.BorderSizePixel = 0
-    opt.ZIndex = 11
-    
-if i < #fovOptions then
-        local separator = Instance.new("Frame", opt)
-        separator.Name = "ThemeSeparator"
-        separator.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-        separator.BackgroundTransparency = 0.7
-        separator.Size = UDim2.new(0.9, 0, 0, 1)
-        separator.Position = UDim2.new(0.05, 0, 1, 0)
-        separator.BorderSizePixel = 0
-        separator.ZIndex = 11
-    end
-    
-    opt.MouseButton1Click:Connect(function()
-        fovLabel.Text = fov
-        currentFOV = FOV_PRESETS[fov]
-        fovList.Visible = false
-    end)
-end
-
-fovBtn.MouseButton1Click:Connect(function()
-    fovList.Visible = not fovList.Visible
-    fovList.Size = UDim2.new(1, 0, 0, math.min(#fovOptions * 28, 140))
-end)
-
--- Force FOV Toggle
-local fovToggleContainer = Instance.new("CanvasGroup", fovCard)
-fovToggleContainer.BackgroundTransparency = 1
-fovToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
-fovToggleContainer.Position = UDim2.new(0.76, 0, 0.15, 0)
-
-local fovToggleBg = Instance.new("Frame", fovToggleContainer)
-fovToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-fovToggleBg.Size = UDim2.new(1, 0, 1, 0)
-fovToggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
-fovToggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
-fovToggleBg.BorderSizePixel = 0
-
-local fovToggleCorner = Instance.new("UICorner", fovToggleBg)
-fovToggleCorner.CornerRadius = UDim.new(1, 0)
-
-local fovToggleBtn = Instance.new("TextButton", fovToggleBg)
-fovToggleBtn.BackgroundTransparency = 1
-fovToggleBtn.Size = UDim2.new(1, 0, 1, 0)
-fovToggleBtn.Text = ""
-
-local fovToggleLayout = Instance.new("UIListLayout", fovToggleBtn)
-fovToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-fovToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-fovToggleLayout.Padding = UDim.new(0, 3)
-
-local fovTogglePadding = Instance.new("UIPadding", fovToggleBtn)
-fovTogglePadding.PaddingLeft = UDim.new(0, 3)
-fovTogglePadding.PaddingRight = UDim.new(0, 3)
-
-local fovCircle = Instance.new("ImageLabel", fovToggleBtn)
-fovCircle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
-fovCircle.ImageColor3 = Color3.fromRGB(232, 229, 255)
-fovCircle.Image = "rbxassetid://5552526748"
-fovCircle.Size = UDim2.new(0, 20, 0, 20)
-fovCircle.BackgroundTransparency = 1
-fovCircle.ScaleType = Enum.ScaleType.Fit
-
-local fovEnabled = false
-fovToggleBtn.MouseButton1Click:Connect(function()
-    fovEnabled = not fovEnabled
-    fovToggleLayout.HorizontalAlignment = fovEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-    fovToggleBg.BackgroundColor3 = fovEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-    
-    if fovEnabled then
-        fovConn = RunService.RenderStepped:Connect(function()
-            local cam = workspace.CurrentCamera
-            if cam then
-                cam.FieldOfView = currentFOV
+    local fpsOptions = {"Light", "Medium", "Extreme"}
+    for i, preset in ipairs(fpsOptions) do
+        local opt = Instance.new("TextButton", fpsList)
+        opt.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        opt.Size = UDim2.new(1, 0, 0, 26)
+        opt.Text = preset
+        opt.Font = Enum.Font.Gotham
+        opt.TextSize = 11
+        opt.TextColor3 = Color3.fromRGB(200, 200, 200)
+        opt.BorderSizePixel = 0
+        opt.ZIndex = 11
+        
+        -- Round the list items too
+        local optCorner = Instance.new("UICorner", opt)
+        optCorner.CornerRadius = UDim.new(0, 6)
+        
+        opt.MouseButton1Click:Connect(function()
+            fpsLabel.Text = preset
+            fpsList.Visible = false
+            if FPS.Enabled then
+                disableFPS()
+                enableFPS(preset)
+                createNotification("FPS Preset: " .. preset, "Info", 2)
             end
         end)
-        createNotification("Force FOV Enabled", "Success", 2)
-    else
-        if fovConn then
-            fovConn:Disconnect()
-            fovConn = nil
-        end
-        createNotification("Force FOV Disabled", "Info", 2)
     end
-end)
 
--- Force Label
-local forceLabel = Instance.new("TextLabel", fovCard)
-forceLabel.BackgroundTransparency = 1
-forceLabel.Size = UDim2.new(0.08, 0, 0.5, 0)
-forceLabel.Position = UDim2.new(0.72, 0, 0.25, 0)
-forceLabel.Font = Enum.Font.Gotham
-forceLabel.TextSize = 11
-forceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
-forceLabel.Text = "Force"
-forceLabel.TextXAlignment = Enum.TextXAlignment.Right
+    fpsBtn.MouseButton1Click:Connect(function()
+        fpsList.Visible = not fpsList.Visible
+        fpsList.Size = UDim2.new(1, 0, 0, math.min(#fpsOptions * 30 + 10, 140))
+    end)
+
+    -- FPS Toggle
+    local fpsToggleContainer = Instance.new("CanvasGroup", fpsCard)
+    fpsToggleContainer.BackgroundTransparency = 1
+    fpsToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
+    fpsToggleContainer.Position = UDim2.new(0.76, 0, 0.15, 0)
+
+    local fpsToggleBg = Instance.new("Frame", fpsToggleContainer)
+    fpsToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    fpsToggleBg.Size = UDim2.new(1, 0, 1, 0)
+    fpsToggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+    fpsToggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+    fpsToggleBg.BorderSizePixel = 0
+
+    local fpsToggleCorner = Instance.new("UICorner", fpsToggleBg)
+    fpsToggleCorner.CornerRadius = UDim.new(1, 0)
+
+    local fpsToggleBtn = Instance.new("TextButton", fpsToggleBg)
+    fpsToggleBtn.BackgroundTransparency = 1
+    fpsToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    fpsToggleBtn.Text = ""
+
+    local fpsToggleLayout = Instance.new("UIListLayout", fpsToggleBtn)
+    fpsToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    fpsToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    fpsToggleLayout.Padding = UDim.new(0, 3)
+
+    local fpsTogglePadding = Instance.new("UIPadding", fpsToggleBtn)
+    fpsTogglePadding.PaddingLeft = UDim.new(0, 3)
+    fpsTogglePadding.PaddingRight = UDim.new(0, 3)
+
+    local fpsCircle = Instance.new("ImageLabel", fpsToggleBtn)
+    fpsCircle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+    fpsCircle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+    fpsCircle.Image = "rbxassetid://5552526748"
+    fpsCircle.Size = UDim2.new(0, 20, 0, 20)
+    fpsCircle.BackgroundTransparency = 1
+    fpsCircle.ScaleType = Enum.ScaleType.Fit
+
+    local fpsEnabled = false
+    fpsToggleBtn.MouseButton1Click:Connect(function()
+        fpsEnabled = not fpsEnabled
+        fpsToggleLayout.HorizontalAlignment = fpsEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+        fpsToggleBg.BackgroundColor3 = fpsEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        
+        if fpsEnabled then
+            enableFPS(fpsLabel.Text)
+            createNotification("FPS Boost Enabled", "Success", 2)
+        else
+            disableFPS()
+            createNotification("FPS Boost Disabled", "Info", 2)
+        end
+    end)
+
+    -- Force Label (FPS)
+    local fpsForceLabel = Instance.new("TextLabel", fpsCard)
+    fpsForceLabel.BackgroundTransparency = 1
+    fpsForceLabel.Size = UDim2.new(0.08, 0, 0.5, 0)
+    -- [FIXED] Position moved to Right side (0.90) so it doesn't overlap toggle
+    fpsForceLabel.Position = UDim2.new(0.90, 0, 0.25, 0)
+    fpsForceLabel.Font = Enum.Font.Gotham
+    fpsForceLabel.TextSize = 11
+    fpsForceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    fpsForceLabel.Text = "Enable"
+    fpsForceLabel.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Latency Smoothing
+    local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
+    createToggle(latencyCard, function(enabled)
+        if enabled then
+            RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
+                local cam = workspace.CurrentCamera; if cam then cam.CFrame = cam.CFrame end
+            end)
+            createNotification("Latency Smoothing Enabled", "Success", 3)
+        else
+            RunService:UnbindFromRenderStep("LatencySmoothing")
+            createNotification("Latency Smoothing Disabled", "Info", 3)
+        end
+    end)
+
+    -- FOV Control
+    local FOV_PRESETS = { ["40"]=40, ["60"]=60, ["70"]=70, ["80"]=80, ["90"]=90, ["100"]=100, ["120"]=120 }
+    local currentFOV = 70; local fovConn
+    local fovCard = createCard("FOV", "Field of view control", 5)
+    fovCard.Size = UDim2.new(1, 0, 0, 55)
+
+    -- FOV Dropdown
+    local fovDropdown = Instance.new("Frame", fovCard)
+    fovDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    -- [FIXED] Positioned at 0.40 (Left)
+    fovDropdown.Size = UDim2.new(0.25, 0, 0.7, 0)
+    fovDropdown.Position = UDim2.new(0.40, 0, 0.15, 0)
+    fovDropdown.BorderSizePixel = 0
+
+    local fovCorner = Instance.new("UICorner", fovDropdown)
+    fovCorner.CornerRadius = UDim.new(0, 12)
+
+    local fovStroke = Instance.new("UIStroke", fovDropdown)
+    fovStroke.Name = "ThemeStroke"
+    fovStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    fovStroke.Thickness = 1
+    fovStroke.Transparency = 0.8
+
+    local fovLabel = Instance.new("TextLabel", fovDropdown)
+    fovLabel.BackgroundTransparency = 1
+    fovLabel.Size = UDim2.new(0.7, 0, 1, 0)
+    fovLabel.Font = Enum.Font.GothamBold
+    fovLabel.TextSize = 12
+    fovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    fovLabel.Text = "70"
+    fovLabel.TextXAlignment = Enum.TextXAlignment.Left
+    fovLabel.Position = UDim2.new(0.15, 0, 0, 0)
+
+    local fovBtn = Instance.new("TextButton", fovDropdown)
+    fovBtn.BackgroundTransparency = 1
+    fovBtn.Size = UDim2.new(1, 0, 1, 0)
+    fovBtn.Text = ""
+
+    local fovList = Instance.new("ScrollingFrame", fovDropdown)
+    fovList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    fovList.Size = UDim2.new(1, 0, 0, 0)
+    fovList.Position = UDim2.new(0, 0, 1, 5)
+    fovList.BorderSizePixel = 0
+    fovList.Visible = false
+    fovList.ZIndex = 10
+    fovList.ScrollBarThickness = 2
+    fovList.CanvasSize = UDim2.new(0, 0, 0, 0)
+    fovList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    fovList.ClipsDescendants = true
+
+    local fovListCorner = Instance.new("UICorner", fovList)
+    fovListCorner.CornerRadius = UDim.new(0, 10)
+
+    local fovListStroke = Instance.new("UIStroke", fovList)
+    fovListStroke.Name = "ThemeStroke"
+    fovListStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    fovListStroke.Thickness = 1
+    fovListStroke.Transparency = 0.8
+    
+    -- [FIXED] Padding added here too
+    local fovListPadding = Instance.new("UIPadding", fovList)
+    fovListPadding.PaddingTop = UDim.new(0, 4)
+    fovListPadding.PaddingBottom = UDim.new(0, 4)
+    fovListPadding.PaddingLeft = UDim.new(0, 4)
+    fovListPadding.PaddingRight = UDim.new(0, 4)
+
+    local fovListLayout = Instance.new("UIListLayout", fovList)
+    fovListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    fovListLayout.Padding = UDim.new(0, 2)
+
+    local fovOptions = {"40", "60", "70", "80", "90", "100", "120"}
+    for i, fov in ipairs(fovOptions) do
+        local opt = Instance.new("TextButton", fovList)
+        opt.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        opt.Size = UDim2.new(1, 0, 0, 26)
+        opt.Text = fov
+        opt.Font = Enum.Font.Gotham
+        opt.TextSize = 11
+        opt.TextColor3 = Color3.fromRGB(200, 200, 200)
+        opt.BorderSizePixel = 0
+        opt.ZIndex = 11
+        
+        local optCorner = Instance.new("UICorner", opt)
+        optCorner.CornerRadius = UDim.new(0, 6)
+        
+        opt.MouseButton1Click:Connect(function()
+            fovLabel.Text = fov
+            currentFOV = FOV_PRESETS[fov]
+            fovList.Visible = false
+        end)
+    end
+
+    fovBtn.MouseButton1Click:Connect(function()
+        fovList.Visible = not fovList.Visible
+        -- [FIXED] Removed the buggy 'fpsList' reference here
+        fovList.Size = UDim2.new(1, 0, 0, math.min(#fovOptions * 30 + 10, 140))
+    end)
+
+    -- Force FOV Toggle
+    local fovToggleContainer = Instance.new("CanvasGroup", fovCard)
+    fovToggleContainer.BackgroundTransparency = 1
+    fovToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
+    fovToggleContainer.Position = UDim2.new(0.76, 0, 0.15, 0)
+
+    local fovToggleBg = Instance.new("Frame", fovToggleContainer)
+    fovToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    fovToggleBg.Size = UDim2.new(1, 0, 1, 0)
+    fovToggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+    fovToggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+    fovToggleBg.BorderSizePixel = 0
+
+    local fovToggleCorner = Instance.new("UICorner", fovToggleBg)
+    fovToggleCorner.CornerRadius = UDim.new(1, 0)
+
+    local fovToggleBtn = Instance.new("TextButton", fovToggleBg)
+    fovToggleBtn.BackgroundTransparency = 1
+    fovToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    fovToggleBtn.Text = ""
+
+    local fovToggleLayout = Instance.new("UIListLayout", fovToggleBtn)
+    fovToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    fovToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    fovToggleLayout.Padding = UDim.new(0, 3)
+
+    local fovTogglePadding = Instance.new("UIPadding", fovToggleBtn)
+    fovTogglePadding.PaddingLeft = UDim.new(0, 3)
+    fovTogglePadding.PaddingRight = UDim.new(0, 3)
+
+    local fovCircle = Instance.new("ImageLabel", fovToggleBtn)
+    fovCircle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+    fovCircle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+    fovCircle.Image = "rbxassetid://5552526748"
+    fovCircle.Size = UDim2.new(0, 20, 0, 20)
+    fovCircle.BackgroundTransparency = 1
+    fovCircle.ScaleType = Enum.ScaleType.Fit
+
+    local fovEnabled = false
+    fovToggleBtn.MouseButton1Click:Connect(function()
+        fovEnabled = not fovEnabled
+        fovToggleLayout.HorizontalAlignment = fovEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+        fovToggleBg.BackgroundColor3 = fovEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        
+        if fovEnabled then
+            fovConn = RunService.RenderStepped:Connect(function()
+                local cam = workspace.CurrentCamera
+                if cam then cam.FieldOfView = currentFOV end
+            end)
+            createNotification("Force FOV Enabled", "Success", 2)
+        else
+            if fovConn then fovConn:Disconnect(); fovConn = nil end
+            createNotification("Force FOV Disabled", "Info", 2)
+        end
+    end)
+
+    -- Force Label (FOV)
+    local forceLabel = Instance.new("TextLabel", fovCard)
+    forceLabel.BackgroundTransparency = 1
+    forceLabel.Size = UDim2.new(0.08, 0, 0.5, 0)
+    -- [FIXED] Position moved to Right side (0.90) so it doesn't overlap toggle
+    forceLabel.Position = UDim2.new(0.90, 0, 0.25, 0)
+    forceLabel.Font = Enum.Font.Gotham
+    forceLabel.TextSize = 11
+    forceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    forceLabel.Text = "Force"
+    forceLabel.TextXAlignment = Enum.TextXAlignment.Left
     
     -- ========================================
     -- ADVANCED SECTION
