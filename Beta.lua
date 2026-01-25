@@ -5367,17 +5367,23 @@ end)
             local servers = {}
             local cursor = ""
             
-            -- Scan pages until we find enough candidates or run out
+         -- Scan pages until we find enough candidates or run out
             repeat
                 local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100" .. (cursor ~= "" and "&cursor=" .. cursor or "")
                 local response = request({Url = url, Method = "GET"})
                 
                 if not response or not response.Body then break end
                 
-                local data = HttpService:JSONDecode(response.Body)
+                -- [FIX] Safe Decode: Prevents "Can't parse JSON" error if API fails
+                local success, data = pcall(function()
+                    return HttpService:JSONDecode(response.Body)
+                end)
+
+                if not success or not data or not data.data then break end
+
                 cursor = data.nextPageCursor or ""
                 
-                for _, server in ipairs(data.data or {}) do
+                for _, server in ipairs(data.data) do
                     -- Filter: Not full, not current server
                     if server.playing < server.maxPlayers and server.id ~= currentJobId then
                         table.insert(servers, server)
