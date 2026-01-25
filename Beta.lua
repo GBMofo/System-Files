@@ -4842,32 +4842,65 @@ end)
         end
     end)
     
+
     -- ========================================
     -- PERFORMANCE SECTION
     -- ========================================
     
     createSectionHeader("⚡ PERFORMANCE", 0)
     
-   -- Anti AFK
+    -- Anti AFK (Hybrid + Auto-Rearm)
+    local VirtualUser = game:GetService("VirtualUser")
+    local player = Players.LocalPlayer
     local antiAFKConn
+    local charConn
+
+    local function armAntiAFK()
+        if antiAFKConn then antiAFKConn:Disconnect() end
+        antiAFKConn = player.Idled:Connect(function()
+            VirtualUser:CaptureController()
+            VirtualUser:ClickButton2(Vector2.new())
+        end)
+    end
+
     local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
     createToggle(afkCard, function(enabled)
         if enabled then
-            if antiAFKConn then return end
-            antiAFKConn = Players.LocalPlayer.Idled:Connect(function()
-                game:GetService("VirtualUser"):CaptureController()
-                game:GetService("VirtualUser"):ClickButton2(Vector2.new())
-            end)
+            -- Try to disable Roblox's AFK listeners (executor-supported only)
+            if getconnections then
+                for _, c in pairs(getconnections(player.Idled)) do
+                    pcall(function()
+                        if c.Disable then c:Disable()
+                        elseif c.Disconnect then c:Disconnect() end
+                    end)
+                end
+            end
+
+            -- Arm immediately
+            armAntiAFK()
+
+            -- Auto-rearm after character respawn
+            if not charConn then
+                charConn = player.CharacterAdded:Connect(function()
+                    task.wait(1) -- wait for Roblox to fully rebuild character
+                    armAntiAFK()
+                end)
+            end
             createNotification("Anti AFK Enabled", "Success", 3)
         else
+            -- Cleanup
             if antiAFKConn then
                 antiAFKConn:Disconnect()
                 antiAFKConn = nil
             end
+            if charConn then
+                charConn:Disconnect()
+                charConn = nil
+            end
             createNotification("Anti AFK Disabled", "Info", 3)
         end
     end)
-    
+
     -- FPS Boost System logic
     local FPS = { Enabled = false, Preset = "Light", Saved = {}, Connections = {} }
     local HitboxKeywords = { "hitbox", "damage", "hurt", "collider", "weapon", "attack" }
