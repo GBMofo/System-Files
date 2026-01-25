@@ -4708,7 +4708,7 @@ fpsCard.Size = UDim2.new(1, 0, 0, 55)
 local fpsDropdown = Instance.new("Frame", fpsCard)
 fpsDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 fpsDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
-fpsDropdown.Position = UDim2.new(0.5, 0, 0.15, 0)
+fpsDropdown.Position = UDim2.new(0.48, 0, 0.15, 0)
 fpsDropdown.BorderSizePixel = 0
 
 local fpsCorner = Instance.new("UICorner", fpsDropdown)
@@ -4748,7 +4748,7 @@ fpsList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 fpsList.ClipsDescendants = true
 
 local fpsListCorner = Instance.new("UICorner", fpsList)
-fpsListCorner.CornerRadius = UDim.new(0, 12)
+fpsListCorner.CornerRadius = UDim.new(0, 10)
 
 local fpsListStroke = Instance.new("UIStroke", fpsList)
 fpsListStroke.Name = "ThemeStroke"
@@ -4904,7 +4904,7 @@ fovCard.Size = UDim2.new(1, 0, 0, 55)
 local fovDropdown = Instance.new("Frame", fovCard)
 fovDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
 fovDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
-fovDropdown.Position = UDim2.new(0.5, 0, 0.15, 0)
+fovDropdown.Position = UDim2.new(0.48, 0, 0.15, 0)
 fovDropdown.BorderSizePixel = 0
 
 local fovCorner = Instance.new("UICorner", fovDropdown)
@@ -4944,7 +4944,7 @@ fovList.AutomaticCanvasSize = Enum.AutomaticSize.Y
 fovList.ClipsDescendants = true
 
 local fovListCorner = Instance.new("UICorner", fovList)
-fovListCorner.CornerRadius = UDim.new(0, 12)
+fovListCorner.CornerRadius = UDim.new(0, 10)
 
 local fovListStroke = Instance.new("UIStroke", fovList)
 fovListStroke.Name = "ThemeStroke"
