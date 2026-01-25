@@ -4842,7 +4842,7 @@ end)
         end
     end)
     
-  -- ========================================
+ -- ========================================
     -- PERFORMANCE SECTION
     -- ========================================
     
@@ -4935,8 +4935,9 @@ end)
     -- FPS Dropdown
     local fpsDropdown = Instance.new("Frame", fpsCard)
     fpsDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    fpsDropdown.Size = UDim2.new(0.25, 0, 0.7, 0)
-    fpsDropdown.Position = UDim2.new(0.40, 0, 0.15, 0)
+    -- [FIXED] Narrower size (0.2) and Positioned (0.65) to create a GAP
+    fpsDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
+    fpsDropdown.Position = UDim2.new(0.65, 0, 0.15, 0)
     fpsDropdown.BorderSizePixel = 0
 
     local fpsCorner = Instance.new("UICorner", fpsDropdown)
@@ -5029,7 +5030,7 @@ end)
     local fpsToggleContainer = Instance.new("CanvasGroup", fpsCard)
     fpsToggleContainer.BackgroundTransparency = 1
     fpsToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
-    -- [UPDATED] Moved to 0.88 (Right Edge)
+    -- [UPDATED] Right Aligned (0.88)
     fpsToggleContainer.Position = UDim2.new(0.88, 0, 0.15, 0)
 
     local fpsToggleBg = Instance.new("Frame", fpsToggleContainer)
@@ -5079,6 +5080,172 @@ end)
         end
     end)
 
+    -- Latency Smoothing
+    local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
+    createToggle(latencyCard, function(enabled)
+        if enabled then
+            RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
+                local cam = workspace.CurrentCamera; if cam then cam.CFrame = cam.CFrame end
+            end)
+            createNotification("Latency Smoothing Enabled", "Success", 3)
+        else
+            RunService:UnbindFromRenderStep("LatencySmoothing")
+            createNotification("Latency Smoothing Disabled", "Info", 3)
+        end
+    end)
+
+    -- FOV Control
+    local FOV_PRESETS = { ["40"]=40, ["60"]=60, ["70"]=70, ["80"]=80, ["90"]=90, ["100"]=100, ["120"]=120 }
+    local currentFOV = 70; local fovConn
+    local fovCard = createCard("FOV", "Field of view control", 5)
+    fovCard.Size = UDim2.new(1, 0, 0, 55)
+
+    -- FOV Dropdown
+    local fovDropdown = Instance.new("Frame", fovCard)
+    fovDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    -- [FIXED] Narrower size (0.2) and Positioned (0.65)
+    fovDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
+    fovDropdown.Position = UDim2.new(0.65, 0, 0.15, 0)
+    fovDropdown.BorderSizePixel = 0
+
+    local fovCorner = Instance.new("UICorner", fovDropdown)
+    fovCorner.CornerRadius = UDim.new(0, 12)
+
+    local fovStroke = Instance.new("UIStroke", fovDropdown)
+    fovStroke.Name = "ThemeStroke"
+    fovStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    fovStroke.Thickness = 1
+    fovStroke.Transparency = 0.8
+
+    local fovLabel = Instance.new("TextLabel", fovDropdown)
+    fovLabel.BackgroundTransparency = 1
+    fovLabel.Size = UDim2.new(0.7, 0, 1, 0)
+    fovLabel.Font = Enum.Font.GothamBold
+    fovLabel.TextSize = 12
+    fovLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    fovLabel.Text = "70"
+    fovLabel.TextXAlignment = Enum.TextXAlignment.Left
+    fovLabel.Position = UDim2.new(0.15, 0, 0, 0)
+
+    local fovBtn = Instance.new("TextButton", fovDropdown)
+    fovBtn.BackgroundTransparency = 1
+    fovBtn.Size = UDim2.new(1, 0, 1, 0)
+    fovBtn.Text = ""
+
+    local fovList = Instance.new("ScrollingFrame", fovDropdown)
+    fovList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    fovList.Size = UDim2.new(1, 0, 0, 0)
+    fovList.Position = UDim2.new(0, 0, 1, 5)
+    fovList.BorderSizePixel = 0
+    fovList.Visible = false
+    fovList.ZIndex = 10
+    fovList.ScrollBarThickness = 2
+    fovList.CanvasSize = UDim2.new(0, 0, 0, 0)
+    fovList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    fovList.ClipsDescendants = true
+
+    local fovListCorner = Instance.new("UICorner", fovList)
+    fovListCorner.CornerRadius = UDim.new(0, 10)
+
+    local fovListStroke = Instance.new("UIStroke", fovList)
+    fovListStroke.Name = "ThemeStroke"
+    fovListStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    fovListStroke.Thickness = 1
+    fovListStroke.Transparency = 0.8
+    
+    local fovListPadding = Instance.new("UIPadding", fovList)
+    fovListPadding.PaddingTop = UDim.new(0, 4)
+    fovListPadding.PaddingBottom = UDim.new(0, 4)
+    fovListPadding.PaddingLeft = UDim.new(0, 4)
+    fovListPadding.PaddingRight = UDim.new(0, 4)
+
+    local fovListLayout = Instance.new("UIListLayout", fovList)
+    fovListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    fovListLayout.Padding = UDim.new(0, 2)
+
+    local fovOptions = {"40", "60", "70", "80", "90", "100", "120"}
+    for i, fov in ipairs(fovOptions) do
+        local opt = Instance.new("TextButton", fovList)
+        opt.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        opt.Size = UDim2.new(1, 0, 0, 26)
+        opt.Text = fov
+        opt.Font = Enum.Font.Gotham
+        opt.TextSize = 11
+        opt.TextColor3 = Color3.fromRGB(200, 200, 200)
+        opt.BorderSizePixel = 0
+        opt.ZIndex = 11
+        
+        local optCorner = Instance.new("UICorner", opt)
+        optCorner.CornerRadius = UDim.new(0, 6)
+        
+        opt.MouseButton1Click:Connect(function()
+            fovLabel.Text = fov
+            currentFOV = FOV_PRESETS[fov]
+            fovList.Visible = false
+        end)
+    end
+
+    fovBtn.MouseButton1Click:Connect(function()
+        fovList.Visible = not fovList.Visible
+        fovList.Size = UDim2.new(1, 0, 0, math.min(#fovOptions * 30 + 10, 140))
+    end)
+
+    -- Force FOV Toggle
+    local fovToggleContainer = Instance.new("CanvasGroup", fovCard)
+    fovToggleContainer.BackgroundTransparency = 1
+    fovToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
+    -- [UPDATED] Right Aligned (0.88)
+    fovToggleContainer.Position = UDim2.new(0.88, 0, 0.15, 0)
+
+    local fovToggleBg = Instance.new("Frame", fovToggleContainer)
+    fovToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    fovToggleBg.Size = UDim2.new(1, 0, 1, 0)
+    fovToggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+    fovToggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+    fovToggleBg.BorderSizePixel = 0
+
+    local fovToggleCorner = Instance.new("UICorner", fovToggleBg)
+    fovToggleCorner.CornerRadius = UDim.new(1, 0)
+
+    local fovToggleBtn = Instance.new("TextButton", fovToggleBg)
+    fovToggleBtn.BackgroundTransparency = 1
+    fovToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    fovToggleBtn.Text = ""
+
+    local fovToggleLayout = Instance.new("UIListLayout", fovToggleBtn)
+    fovToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    fovToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    fovToggleLayout.Padding = UDim.new(0, 3)
+
+    local fovTogglePadding = Instance.new("UIPadding", fovToggleBtn)
+    fovTogglePadding.PaddingLeft = UDim.new(0, 3)
+    fovTogglePadding.PaddingRight = UDim.new(0, 3)
+
+    local fovCircle = Instance.new("ImageLabel", fovToggleBtn)
+    fovCircle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+    fovCircle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+    fovCircle.Image = "rbxassetid://5552526748"
+    fovCircle.Size = UDim2.new(0, 20, 0, 20)
+    fovCircle.BackgroundTransparency = 1
+    fovCircle.ScaleType = Enum.ScaleType.Fit
+
+    local fovEnabled = false
+    fovToggleBtn.MouseButton1Click:Connect(function()
+        fovEnabled = not fovEnabled
+        fovToggleLayout.HorizontalAlignment = fovEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+        fovToggleBg.BackgroundColor3 = fovEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        
+        if fovEnabled then
+            fovConn = RunService.RenderStepped:Connect(function()
+                local cam = workspace.CurrentCamera
+                if cam then cam.FieldOfView = currentFOV end
+            end)
+            createNotification("Force FOV Enabled", "Success", 2)
+        else
+            if fovConn then fovConn:Disconnect(); fovConn = nil end
+            createNotification("Force FOV Disabled", "Info", 2)
+        end
+    end)
     -- [REMOVED] fpsForceLabel
 
     -- Latency Smoothing
