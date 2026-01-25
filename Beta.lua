@@ -4550,26 +4550,92 @@ end)
         end
     end)
     
-  -- ========================================
-    -- PRIVACY SECTION
+ -- ========================================
+    -- PRIVACY SECTION (FIXED SYNC)
     -- ========================================
     
     createSectionHeader("🔒 PRIVACY & SECURITY", -50)
+
+    -- [NEW] Smart Toggle Function (Allows External Control)
+    -- This replaces the standard createToggle just for this section to fix the sync bug.
+    local function createSmartToggle(card, callback)
+        local toggleContainer = Instance.new("CanvasGroup", card)
+        toggleContainer.BackgroundTransparency = 1
+        toggleContainer.Size = UDim2.new(0.12, 0, 0.8, 0)
+        toggleContainer.Position = UDim2.new(0.88, 0, 0.1, 0)
+        toggleContainer.Name = "ToggleContainer"
+        
+        local toggleBg = Instance.new("Frame", toggleContainer)
+        toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        toggleBg:SetAttribute("IsToggleOn", false) 
+        toggleBg.Size = UDim2.new(1, 0, 0.7, 0)
+        toggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+        toggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+        toggleBg.BorderSizePixel = 0
+        toggleBg.Name = "ToggleBg"
+        
+        local toggleCorner = Instance.new("UICorner", toggleBg)
+        toggleCorner.CornerRadius = UDim.new(1, 0)
+        
+        local toggleBtn = Instance.new("TextButton", toggleBg)
+        toggleBtn.BackgroundTransparency = 1
+        toggleBtn.Size = UDim2.new(1, 0, 1, 0)
+        toggleBtn.Text = ""
+        
+        local toggleLayout = Instance.new("UIListLayout", toggleBtn)
+        toggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+        toggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        toggleLayout.Padding = UDim.new(0, 3)
+        
+        local togglePadding = Instance.new("UIPadding", toggleBtn)
+        togglePadding.PaddingLeft = UDim.new(0, 3)
+        togglePadding.PaddingRight = UDim.new(0, 3)
+        
+        local circle = Instance.new("ImageLabel", toggleBtn)
+        circle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+        circle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+        circle.Image = "rbxassetid://5552526748"
+        circle.Size = UDim2.new(0, 20, 0, 20)
+        circle.BackgroundTransparency = 1
+        circle.ScaleType = Enum.ScaleType.Fit
+        
+        -- INTERNAL STATE
+        local isEnabled = false
+
+        -- EXTERNAL CONTROL FUNCTION
+        local function setState(newState, silent)
+            isEnabled = newState
+            
+            -- Update Visuals
+            toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+            toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+            toggleBg:SetAttribute("IsToggleOn", isEnabled)
+            
+            -- Run Logic (if not silent)
+            if not silent then
+                callback(isEnabled)
+            end
+        end
+        
+        toggleBtn.MouseButton1Click:Connect(function()
+            setState(not isEnabled, false)
+        end)
+        
+        return toggleContainer, toggleBg, setState
+    end
     
-    -- Scam Protection Variables
+    -- Variables
     local ScamProtectionEnabled = false
-    local ScamAdvancedEnabled = false
     local PurchaseGuard = false
     local TeleportGuard = false
     local UIClickGuard = false
     local ScriptDetection = false
 
-    -- STEP 1: Declare cards first
+    -- Cards
     local scamCard = createCard("Scam Protection", "Blocks common client-side scams and forced actions", -49)
     local advancedCard = createCard("Advanced Settings", "Customize Scam Protection behavior for specific game scenarios", -48)
     advancedCard.Visible = false
 
-    -- STEP 2: Create sub-feature cards
     local purchaseCard = createCard("Purchase Guard", "Blocks forced Robux purchase prompts", -47)
     purchaseCard.Visible = false
 
@@ -4582,89 +4648,42 @@ end)
     local scriptDetectCard = createCard("Script Detection", "Warns about suspicious local scripts", -44)
     scriptDetectCard.Visible = false
 
-    -- [FIXED] Helper function to sync visual state AND Knob Position
-    local function syncToggleVisual(toggleBg, isEnabled)
-        if not toggleBg then return end
-        
-        -- 1. Sync Color
-        toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-        toggleBg:SetAttribute("IsToggleOn", isEnabled)
-
-        -- 2. Sync Knob Position (This was the broken part)
-        local toggleBtn = toggleBg:FindFirstChildOfClass("TextButton")
-        if toggleBtn then
-            local layout = toggleBtn:FindFirstChildOfClass("UIListLayout")
-            if layout then
-                -- Force Right if Enabled, Force Left if Disabled
-                layout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-            end
-        end
-    end
-
-    -- STEP 3: Create toggles for sub-features FIRST
-    local _, purchaseToggleBg = createToggle(purchaseCard, function(enabled)
+    -- CREATE TOGGLES (Capturing the 'SetState' function)
+    local _, _, setPurchase = createSmartToggle(purchaseCard, function(enabled)
         PurchaseGuard = enabled
-        if enabled then
-            createNotification("Purchase Guard Enabled", "Success", 2)
-        else
-            createNotification("Purchase Guard Disabled", "Warn", 2)
-        end
+        if enabled then createNotification("Purchase Guard Enabled", "Success", 2)
+        else createNotification("Purchase Guard Disabled", "Warn", 2) end
     end)
 
-    local _, teleportToggleBg = createToggle(teleportCard, function(enabled)
+    local _, _, setTeleport = createSmartToggle(teleportCard, function(enabled)
         TeleportGuard = enabled
-        if enabled then
-            createNotification("Teleport Guard Enabled", "Success", 2)
-        else
-            createNotification("Teleport Guard Disabled", "Warn", 2)
-        end
+        if enabled then createNotification("Teleport Guard Enabled", "Success", 2)
+        else createNotification("Teleport Guard Disabled", "Warn", 2) end
     end)
 
-    local _, uiClickToggleBg = createToggle(uiClickCard, function(enabled)
+    local _, _, setUIClick = createSmartToggle(uiClickCard, function(enabled)
         UIClickGuard = enabled
-        if ScamProtectionEnabled and enabled then
-            game:GetService("UserInputService").ModalEnabled = true
-        else
-            game:GetService("UserInputService").ModalEnabled = false
-        end
-        
-        if enabled then
-            createNotification("UI Click Guard Enabled", "Success", 2)
-        else
-            createNotification("UI Click Guard Disabled", "Warn", 2)
-        end
+        game:GetService("UserInputService").ModalEnabled = (ScamProtectionEnabled and enabled)
+        if enabled then createNotification("UI Click Guard Enabled", "Success", 2)
+        else createNotification("UI Click Guard Disabled", "Warn", 2) end
     end)
 
-    local _, scriptDetectToggleBg = createToggle(scriptDetectCard, function(enabled)
+    local _, _, setScriptDetect = createSmartToggle(scriptDetectCard, function(enabled)
         ScriptDetection = enabled
-        if enabled then
-            createNotification("Script Detection Enabled", "Success", 2)
-        else
-            createNotification("Script Detection Disabled", "Warn", 2)
-        end
+        if enabled then createNotification("Script Detection Enabled", "Success", 2)
+        else createNotification("Script Detection Disabled", "Warn", 2) end
     end)
 
-    -- STEP 4: Create Advanced Toggle
-    local _, advancedToggleBg = createToggle(advancedCard, function(enabled)
-        ScamAdvancedEnabled = enabled
-        
-        -- Logic: Only control visibility. Protections remain active if Master is ON.
+    -- ADVANCED TOGGLE
+    local _, advancedToggleBg, setAdvanced = createSmartToggle(advancedCard, function(enabled)
         if ScamProtectionEnabled then
             purchaseCard.Visible = enabled
             teleportCard.Visible = enabled
             uiClickCard.Visible = enabled
             scriptDetectCard.Visible = enabled
             
-            if enabled then
-                createNotification("Advanced Settings Shown", "Info", 2)
-                -- Sync visuals just in case (Ensures knobs are Right if they are ON)
-                syncToggleVisual(purchaseToggleBg, PurchaseGuard)
-                syncToggleVisual(teleportToggleBg, TeleportGuard)
-                syncToggleVisual(uiClickToggleBg, UIClickGuard)
-                syncToggleVisual(scriptDetectToggleBg, ScriptDetection)
-            end
+            if enabled then createNotification("Advanced Settings Shown", "Info", 2) end
         else
-            -- Safety: If Master is off, force hide
             purchaseCard.Visible = false
             teleportCard.Visible = false
             uiClickCard.Visible = false
@@ -4672,72 +4691,60 @@ end)
         end
     end)
 
-    -- STEP 5: Create Master Toggle (The Logic Hub)
-    local _, scamToggleBg = createToggle(scamCard, function(enabled)
+    -- MASTER TOGGLE
+    createSmartToggle(scamCard, function(enabled)
         ScamProtectionEnabled = enabled
-        
-        -- Advanced Card visibility follows Master
         advancedCard.Visible = enabled
         
         if enabled then
-            -- [MASTER ON]
             createNotification("Scam Protection Enabled", "Success", 3)
             
-            -- 1. Force Advanced Settings OFF (Visual & Logic)
-            ScamAdvancedEnabled = false
-            syncToggleVisual(advancedToggleBg, false) -- This fixes Image 1 (Grey + Left)
+            -- 1. Reset Advanced Settings to hidden
+            setAdvanced(false, true) -- Silent update (Visual OFF + Internal OFF)
             
-            -- 2. Force Sub-Cards HIDDEN
-            purchaseCard.Visible = false
-            teleportCard.Visible = false
-            uiClickCard.Visible = false
-            scriptDetectCard.Visible = false
+            -- 2. Enable all sub-features (Silently update UI + Internal State)
+            setPurchase(true, true) -- Silent = true (No notification spam)
+            setTeleport(true, true)
+            setUIClick(true, true)
+            setScriptDetect(true, true)
             
-            -- 3. Force Protections ENABLED (Background Mode)
+            -- 3. Manually update logic variables (since we silenced the callback)
             PurchaseGuard = true
             TeleportGuard = true
             UIClickGuard = true
             ScriptDetection = true
             
-            -- 4. Sync Sub-Toggles to ON (Visual & Knob Position)
-            syncToggleVisual(purchaseToggleBg, true) -- This fixes Image 0 (Pink + Right)
-            syncToggleVisual(teleportToggleBg, true)
-            syncToggleVisual(uiClickToggleBg, true)
-            syncToggleVisual(scriptDetectToggleBg, true)
-            
-        else
-            -- [MASTER OFF]
-            createNotification("Scam Protection Disabled", "Info", 3)
-            
-            -- 1. Force Advanced Settings OFF
-            ScamAdvancedEnabled = false
-            syncToggleVisual(advancedToggleBg, false)
-            
-            -- 2. Force Sub-Cards HIDDEN
+            -- 4. Hide them initially (Advanced mode controls visibility)
             purchaseCard.Visible = false
             teleportCard.Visible = false
             uiClickCard.Visible = false
             scriptDetectCard.Visible = false
             
-            -- 3. Force Protections DISABLED
+        else
+            createNotification("Scam Protection Disabled", "Info", 3)
+            
+            -- 1. Reset Advanced
+            setAdvanced(false, true)
+            
+            -- 2. Disable all sub-features
+            setPurchase(false, true)
+            setTeleport(false, true)
+            setUIClick(false, true)
+            setScriptDetect(false, true)
+            
+            -- 3. Update logic variables
             PurchaseGuard = false
             TeleportGuard = false
             UIClickGuard = false
             ScriptDetection = false
             
-            -- 4. Sync Sub-Toggles to OFF
-            syncToggleVisual(purchaseToggleBg, false)
-            syncToggleVisual(teleportToggleBg, false)
-            syncToggleVisual(uiClickToggleBg, false)
-            syncToggleVisual(scriptDetectToggleBg, false)
+            -- 4. Hide cards
+            purchaseCard.Visible = false
+            teleportCard.Visible = false
+            uiClickCard.Visible = false
+            scriptDetectCard.Visible = false
         end
     end)
-
-    -- Initialize all toggles to OFF state on load
-    syncToggleVisual(purchaseToggleBg, false)
-    syncToggleVisual(teleportToggleBg, false)
-    syncToggleVisual(uiClickToggleBg, false)
-    syncToggleVisual(scriptDetectToggleBg, false)
 
     -- Hook Purchase Methods
     for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
@@ -4777,7 +4784,7 @@ end)
                         local success, src = pcall(function() return obj.Source:lower() end)
                         if success and src then
                             if src:find("trade") or src:find("purchase") then
-                                -- Detection logic here
+                                -- Detection logic
                             end
                         end
                     end
@@ -4788,7 +4795,7 @@ end)
 
     -- Disable Robux (Standalone)
     local disableRobuxCard = createCard("Disable Robux", "Completely blocks all Robux spending prompts", -43)
-    createToggle(disableRobuxCard, function(enabled)
+    createSmartToggle(disableRobuxCard, function(enabled)
         if enabled then
             for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
                 if game:GetService("MarketplaceService")[method] then
@@ -4808,7 +4815,7 @@ end)
 
     -- Verify Teleports (Standalone)
     local verifyTeleportCard = createCard("Verify Teleports", "Allows teleports only to current game place", -42)
-    createToggle(verifyTeleportCard, function(enabled)
+    createSmartToggle(verifyTeleportCard, function(enabled)
         if enabled then
             local currentPlaceId = game.PlaceId
             local oldTeleport2
@@ -4828,7 +4835,7 @@ end)
 
     -- Invisible Open Trigger (Moved to bottom of Privacy section)
     local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -41)
-    createToggle(invisCard, function(enabled)
+    createSmartToggle(invisCard, function(enabled)
         InvisTriggerOpen = enabled
         if enabled then
             createNotification('Chat "/e open" to open UI', "Info", 5)
