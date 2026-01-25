@@ -4582,27 +4582,74 @@ uiClickCard.Visible = false
 local scriptDetectCard = createCard("Script Detection", "Warns about suspicious local scripts", -44)
 scriptDetectCard.Visible = false
 
--- STEP 3: NOW create the toggles (cards exist, safe to reference)
+-- Helper function to reset a toggle to OFF state (gray)
+local function resetToggle(toggleBg)
+    if not toggleBg then return end
+    local layout = toggleBg.Parent:FindFirstChild("UIListLayout")
+    if layout then layout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
+    toggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    toggleBg:SetAttribute("IsToggleOn", false)
+end
+
+-- Helper function to enable a toggle to ON state (purple)
+local function enableToggle(toggleBg)
+    if not toggleBg then return end
+    local layout = toggleBg.Parent:FindFirstChild("UIListLayout")
+    if layout then layout.HorizontalAlignment = Enum.HorizontalAlignment.Right end
+    toggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    toggleBg:SetAttribute("IsToggleOn", true)
+end
+
+-- STEP 3: Create main toggles
 local _, scamToggleBg = createToggle(scamCard, function(enabled)
     ScamProtectionEnabled = enabled
     advancedCard.Visible = enabled
     
     if enabled then
         createNotification("Scam Protection Enabled", "Success", 3)
-    else
-        createNotification("Scam Protection Disabled", "Info", 3)
         
-        -- Reset Advanced Settings toggle state
+        -- Keep Advanced OFF (just controls visibility, not functionality)
+        resetToggle(advancedToggleBg)
         ScamAdvancedEnabled = false
-        local advLayout = advancedToggleBg.Parent:FindFirstChild("UIListLayout")
-        if advLayout then advLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
-        advancedToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
         
-        -- Hide all sub-features
+        -- Sub-features are HIDDEN but ENABLED
         purchaseCard.Visible = false
         teleportCard.Visible = false
         uiClickCard.Visible = false
         scriptDetectCard.Visible = false
+        
+        PurchaseGuard = true
+        TeleportGuard = true
+        UIClickGuard = true
+        ScriptDetection = true
+        
+        -- Set toggle UI to show they're enabled (even though hidden)
+        enableToggle(purchaseToggleBg)
+        enableToggle(teleportToggleBg)
+        enableToggle(uiClickToggleBg)
+        enableToggle(scriptDetectToggleBg)
+    else
+        createNotification("Scam Protection Disabled", "Info", 3)
+        
+        -- Reset Advanced Settings toggle
+        resetToggle(advancedToggleBg)
+        ScamAdvancedEnabled = false
+        
+        -- Hide AND disable all sub-features
+        purchaseCard.Visible = false
+        teleportCard.Visible = false
+        uiClickCard.Visible = false
+        scriptDetectCard.Visible = false
+        
+        PurchaseGuard = false
+        TeleportGuard = false
+        UIClickGuard = false
+        ScriptDetection = false
+        
+        resetToggle(purchaseToggleBg)
+        resetToggle(teleportToggleBg)
+        resetToggle(uiClickToggleBg)
+        resetToggle(scriptDetectToggleBg)
     end
 end)
 
@@ -4610,39 +4657,19 @@ local _, advancedToggleBg = createToggle(advancedCard, function(enabled)
     ScamAdvancedEnabled = enabled
     
     if ScamProtectionEnabled then
+        -- Advanced Settings just controls VISIBILITY, not functionality
         purchaseCard.Visible = enabled
         teleportCard.Visible = enabled
         uiClickCard.Visible = enabled
         scriptDetectCard.Visible = enabled
         
-        if not enabled then
-            -- Reset all sub-feature toggles when Advanced is turned OFF
-            PurchaseGuard = false
-            TeleportGuard = false
-            UIClickGuard = false
-            ScriptDetection = false
-            
-            -- Reset Purchase Guard toggle
-            local pLayout = purchaseToggleBg.Parent:FindFirstChild("UIListLayout")
-            if pLayout then pLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
-            purchaseToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-            
-            -- Reset Teleport Guard toggle
-            local tLayout = teleportToggleBg.Parent:FindFirstChild("UIListLayout")
-            if tLayout then tLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
-            teleportToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-            
-            -- Reset UI Click Guard toggle
-            local uLayout = uiClickToggleBg.Parent:FindFirstChild("UIListLayout")
-            if uLayout then uLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
-            uiClickToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-            
-            -- Reset Script Detection toggle
-            local sLayout = scriptDetectToggleBg.Parent:FindFirstChild("UIListLayout")
-            if sLayout then sLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left end
-            scriptDetectToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        if enabled then
+            createNotification("Advanced Settings Shown", "Info", 2)
         end
+        -- Note: We don't touch PurchaseGuard, TeleportGuard, etc. here
+        -- They remain enabled as set by Scam Protection
     else
+        -- If Scam Protection is off, force hide everything
         purchaseCard.Visible = false
         teleportCard.Visible = false
         uiClickCard.Visible = false
@@ -4650,13 +4677,23 @@ local _, advancedToggleBg = createToggle(advancedCard, function(enabled)
     end
 end)
 
--- STEP 4: Create toggles for sub-features
+-- STEP 4: Create toggles for sub-features (these now control individual features)
 local _, purchaseToggleBg = createToggle(purchaseCard, function(enabled)
     PurchaseGuard = enabled
+    if enabled then
+        createNotification("Purchase Guard Enabled", "Success", 2)
+    else
+        createNotification("Purchase Guard Disabled", "Warn", 2)
+    end
 end)
 
 local _, teleportToggleBg = createToggle(teleportCard, function(enabled)
     TeleportGuard = enabled
+    if enabled then
+        createNotification("Teleport Guard Enabled", "Success", 2)
+    else
+        createNotification("Teleport Guard Disabled", "Warn", 2)
+    end
 end)
 
 local _, uiClickToggleBg = createToggle(uiClickCard, function(enabled)
@@ -4666,48 +4703,42 @@ local _, uiClickToggleBg = createToggle(uiClickCard, function(enabled)
     else
         game:GetService("UserInputService").ModalEnabled = false
     end
+    
+    if enabled then
+        createNotification("UI Click Guard Enabled", "Success", 2)
+    else
+        createNotification("UI Click Guard Disabled", "Warn", 2)
+    end
 end)
 
 local _, scriptDetectToggleBg = createToggle(scriptDetectCard, function(enabled)
     ScriptDetection = enabled
-    if not (ScamProtectionEnabled and ScamAdvancedEnabled and enabled) then return end
     
-    for _, obj in ipairs(game:GetDescendants()) do
-        if obj:IsA("LocalScript") then
-            local success, src = pcall(function() return obj.Source:lower() end)
-            if success and src then
-                if src:find("trade") or src:find("gift") or src:find("purchase") or src:find("inventory") then
-                    warn("[Scam Protection] Suspicious script:", obj:GetFullName())
+    if enabled then
+        createNotification("Script Detection Enabled", "Success", 2)
+        
+        if ScamProtectionEnabled and ScamAdvancedEnabled then
+            for _, obj in ipairs(game:GetDescendants()) do
+                if obj:IsA("LocalScript") then
+                    local success, src = pcall(function() return obj.Source:lower() end)
+                    if success and src then
+                        if src:find("trade") or src:find("gift") or src:find("purchase") or src:find("inventory") then
+                            warn("[Scam Protection] Suspicious script:", obj:GetFullName())
+                        end
+                    end
                 end
             end
         end
+    else
+        createNotification("Script Detection Disabled", "Warn", 2)
     end
 end)
 
--- Set default ON for all sub-features
-task.spawn(function()
-    task.wait(0.1)
-    if purchaseToggleBg then
-        purchaseToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-        local circle = purchaseToggleBg.Parent:FindFirstChild("UIListLayout")
-        if circle then circle.HorizontalAlignment = Enum.HorizontalAlignment.Right end
-    end
-    if teleportToggleBg then
-        teleportToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-        local circle = teleportToggleBg.Parent:FindFirstChild("UIListLayout")
-        if circle then circle.HorizontalAlignment = Enum.HorizontalAlignment.Right end
-    end
-    if uiClickToggleBg then
-        uiClickToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-        local circle = uiClickToggleBg.Parent:FindFirstChild("UIListLayout")
-        if circle then circle.HorizontalAlignment = Enum.HorizontalAlignment.Right end
-    end
-    if scriptDetectToggleBg then
-        scriptDetectToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-        local circle = scriptDetectToggleBg.Parent:FindFirstChild("UIListLayout")
-        if circle then circle.HorizontalAlignment = Enum.HorizontalAlignment.Right end
-    end
-end)
+-- Initialize all toggles to OFF state on load
+resetToggle(purchaseToggleBg)
+resetToggle(teleportToggleBg)
+resetToggle(uiClickToggleBg)
+resetToggle(scriptDetectToggleBg)
 
 -- Hook Purchase Methods
 for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
