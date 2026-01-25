@@ -5341,8 +5341,8 @@ game:GetService("Players").PlayerRemoving:Connect(function(plr)
     end)
 end)
 
--- Small Server (Simple & Aggressive)
-    local smallServerCard = createCard("Small Server", "Joins the server with the lowest player count found.", 43)
+-- Small Server (Deep Scan - 100 Pages)
+    local smallServerCard = createCard("Small Server", "Scans up to 100 pages to find an empty server.", 43)
     smallServerCard.Size = UDim2.new(1, 0, 0, 55)
 
     createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
@@ -5352,7 +5352,7 @@ end)
             return
         end
 
-        createNotification("Searching for small server...", "Info", 2)
+        createNotification("Starting Deep Scan...", "Info", 2)
 
         task.spawn(function()
             local HttpService = game:GetService("HttpService")
@@ -5361,40 +5361,58 @@ end)
             local PlaceId = game.PlaceId
             local JobId = game.JobId
             
-            local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+            local cursor = ""
+            local bestServer = nil
+            local pagesScanned = 0
+            local maxPages = 100 -- Scans approx 10,000 servers
             
-            local response = request({Url = url, Method = "GET"})
-            if not response or not response.Body then 
-                createNotification("API Failed", "Error", 3)
-                return 
-            end
-
-            local success, data = pcall(function() return HttpService:JSONDecode(response.Body) end)
-            if not success or not data or not data.data then 
-                createNotification("No servers found", "Error", 3)
-                return 
-            end
-
-            local servers = {}
-            for _, server in ipairs(data.data) do
-                -- Only check if it's not the current server and has space
-                if server.playing < server.maxPlayers and server.id ~= JobId then
-                    table.insert(servers, server)
+            -- Helper to update toast without spamming
+            local function updateStatus(txt)
+                -- Only show status every 5 pages to reduce lag
+                if pagesScanned % 5 == 0 then
+                    createNotification(txt, "Info", 1)
                 end
             end
 
-            if #servers > 0 then
-                -- Sort by lowest player count
-                table.sort(servers, function(a, b) return a.playing < b.playing end)
+            repeat
+                local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100" .. (cursor ~= "" and "&cursor=" .. cursor or "")
                 
-                local target = servers[1]
-                createNotification("Joining server (" .. target.playing .. " players)...", "Success", 3)
-                TeleportService:TeleportToPlaceInstance(PlaceId, target.id, Players.LocalPlayer)
+                local response = request({Url = url, Method = "GET"})
+                if not response or not response.Body then break end
+
+                local success, data = pcall(function() return HttpService:JSONDecode(response.Body) end)
+                if not success or not data or not data.data then break end
+
+                cursor = data.nextPageCursor or ""
+                pagesScanned = pagesScanned + 1
+                updateStatus("Scanning Page " .. pagesScanned .. "...")
+
+                for _, server in ipairs(data.data) do
+                    if server.playing < server.maxPlayers and server.id ~= JobId then
+                        -- Check if this server is better than our current best
+                        if not bestServer or server.playing < bestServer.playing then
+                            bestServer = server
+                        end
+                    end
+                end
+                
+                -- FAST STOP: If we found a server with < 5 players, stop scanning and join immediately.
+                if bestServer and bestServer.playing < 5 then
+                    break 
+                end
+                
+                task.wait(0.25) -- Slight delay to prevent rate limits
+            until cursor == "" or pagesScanned >= maxPages
+
+            if bestServer then
+                createNotification("Found server: " .. bestServer.playing .. " players! Joining...", "Success", 5)
+                TeleportService:TeleportToPlaceInstance(PlaceId, bestServer.id, Players.LocalPlayer)
             else
-                createNotification("No available servers found", "Error", 3)
+                createNotification("Scanned " .. pagesScanned .. " pages. No empty servers found.", "Error", 5)
             end
         end)
     end)
+
 -- Serverhop Button
 local serverhopCard = createCard("Serverhop", "Joins a different public server", 44)
 serverhopCard.Size = UDim2.new(1, 0, 0, 55)
