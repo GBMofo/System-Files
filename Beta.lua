@@ -4556,13 +4556,204 @@ end)
     
     createSectionHeader("🔒 PRIVACY & SECURITY", -50)
     
-    local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -49)
-    createToggle(invisCard, function(enabled)
-        InvisTriggerOpen = enabled
-        if enabled then
-            createNotification('Chat "/e open" to open UI', "Info", 5)
+   -- Scam Protection Variables
+local ScamProtectionEnabled = false
+local ScamAdvancedEnabled = false
+local PurchaseGuard = true
+local TeleportGuard = true
+local UIClickGuard = true
+local ScriptDetection = true
+
+-- Main Scam Protection Toggle
+local scamCard = createCard("Scam Protection", "Blocks common client-side scams and forced actions", -49)
+local _, scamToggleBg = createToggle(scamCard, function(enabled)
+    ScamProtectionEnabled = enabled
+    if enabled then
+        createNotification("Scam Protection Enabled", "Success", 3)
+    else
+        createNotification("Scam Protection Disabled", "Info", 3)
+        -- Hide advanced settings when main toggle is off
+        if advancedCard then advancedCard.Visible = false end
+        ScamAdvancedEnabled = false
+    end
+end)
+
+-- Advanced Settings (Nested under Scam Protection)
+local advancedCard = createCard("Advanced Settings", "Customize Scam Protection behavior for specific game scenarios", -48)
+advancedCard.Visible = false
+local _, advancedToggleBg = createToggle(advancedCard, function(enabled)
+    ScamAdvancedEnabled = enabled
+    -- Show/hide sub-features
+    if purchaseCard then purchaseCard.Visible = enabled end
+    if teleportCard then teleportCard.Visible = enabled end
+    if uiClickCard then uiClickCard.Visible = enabled end
+    if scriptDetectCard then scriptDetectCard.Visible = enabled end
+end)
+
+-- Connect advanced card visibility to main toggle
+scamToggleBg:GetPropertyChangedSignal("BackgroundColor3"):Connect(function()
+    if ScamProtectionEnabled then
+        advancedCard.Visible = true
+    else
+        advancedCard.Visible = false
+    end
+end)
+
+-- Sub-feature: Purchase Guard
+local purchaseCard = createCard("Purchase Guard", "Blocks forced Robux purchase prompts", -47)
+purchaseCard.Visible = false
+local _, purchaseToggleBg = createToggle(purchaseCard, function(enabled)
+    PurchaseGuard = enabled
+end)
+-- Set default ON
+task.spawn(function()
+    task.wait(0.1)
+    if purchaseToggleBg then
+        purchaseToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+        local circle = purchaseToggleBg.Parent:FindFirstChild("UIListLayout")
+        if circle then circle.HorizontalAlignment = Enum.HorizontalAlignment.Right end
+    end
+end)
+
+-- Sub-feature: Teleport Guard
+local teleportCard = createCard("Teleport Guard", "Blocks suspicious forced teleports", -46)
+teleportCard.Visible = false
+local _, teleportToggleBg = createToggle(teleportCard, function(enabled)
+    TeleportGuard = enabled
+end)
+task.spawn(function()
+    task.wait(0.1)
+    if teleportToggleBg then
+        teleportToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+        local circle = teleportToggleBg.Parent:FindFirstChild("UIListLayout")
+        if circle then circle.HorizontalAlignment = Enum.HorizontalAlignment.Right end
+    end
+end)
+
+-- Sub-feature: UI Click Guard
+local uiClickCard = createCard("UI Click Guard", "Prevents scripted auto-click confirmations", -45)
+uiClickCard.Visible = false
+local _, uiClickToggleBg = createToggle(uiClickCard, function(enabled)
+    UIClickGuard = enabled
+    if ScamProtectionEnabled and ScamAdvancedEnabled and enabled then
+        game:GetService("UserInputService").ModalEnabled = true
+    else
+        game:GetService("UserInputService").ModalEnabled = false
+    end
+end)
+task.spawn(function()
+    task.wait(0.1)
+    if uiClickToggleBg then
+        uiClickToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+        local circle = uiClickToggleBg.Parent:FindFirstChild("UIListLayout")
+        if circle then circle.HorizontalAlignment = Enum.HorizontalAlignment.Right end
+    end
+end)
+
+-- Sub-feature: Script Detection
+local scriptDetectCard = createCard("Script Detection", "Warns about suspicious local scripts", -44)
+scriptDetectCard.Visible = false
+local _, scriptDetectToggleBg = createToggle(scriptDetectCard, function(enabled)
+    ScriptDetection = enabled
+    if not (ScamProtectionEnabled and ScamAdvancedEnabled and enabled) then return end
+    
+    for _, obj in ipairs(game:GetDescendants()) do
+        if obj:IsA("LocalScript") then
+            local success, src = pcall(function() return obj.Source:lower() end)
+            if success and src then
+                if src:find("trade") or src:find("gift") or src:find("purchase") or src:find("inventory") then
+                    warn("[Scam Protection] Suspicious script:", obj:GetFullName())
+                end
+            end
         end
-    end)
+    end
+end)
+task.spawn(function()
+    task.wait(0.1)
+    if scriptDetectToggleBg then
+        scriptDetectToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+        local circle = scriptDetectToggleBg.Parent:FindFirstChild("UIListLayout")
+        if circle then circle.HorizontalAlignment = Enum.HorizontalAlignment.Right end
+    end
+end)
+
+-- Hook Purchase Methods
+for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
+    if game:GetService("MarketplaceService")[method] then
+        local old
+        old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
+            if ScamProtectionEnabled and ScamAdvancedEnabled and PurchaseGuard then
+                warn("[Scam Protection] Purchase blocked")
+                createNotification("Purchase Blocked", "Warn", 3)
+                return
+            end
+            return old(...)
+        end)
+    end
+end
+
+-- Hook Teleport
+local allowedPlaceId = game.PlaceId
+local oldTeleport
+oldTeleport = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
+    if ScamProtectionEnabled and ScamAdvancedEnabled and TeleportGuard then
+        if placeId ~= allowedPlaceId then
+            warn("[Scam Protection] Teleport blocked:", placeId)
+            createNotification("Teleport Blocked", "Warn", 3)
+            return
+        end
+    end
+    return oldTeleport(self, placeId, ...)
+end)
+
+-- Disable Robux (Standalone)
+local disableRobuxCard = createCard("Disable Robux", "Completely blocks all Robux spending prompts", -43)
+createToggle(disableRobuxCard, function(enabled)
+    if enabled then
+        for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
+            if game:GetService("MarketplaceService")[method] then
+                local old
+                old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
+                    warn("[Disable Robux] All purchases blocked")
+                    createNotification("Purchase Blocked (Global)", "Error", 3)
+                    return
+                end)
+            end
+        end
+        createNotification("Robux Spending Disabled", "Success", 3)
+    else
+        createNotification("Robux Spending Enabled", "Info", 3)
+    end
+end)
+
+-- Verify Teleports (Standalone)
+local verifyTeleportCard = createCard("Verify Teleports", "Allows teleports only to current game place", -42)
+createToggle(verifyTeleportCard, function(enabled)
+    if enabled then
+        local currentPlaceId = game.PlaceId
+        local oldTeleport2
+        oldTeleport2 = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
+            if placeId ~= currentPlaceId then
+                warn("[Verify Teleports] Blocked teleport to:", placeId)
+                createNotification("Teleport Blocked (Verification)", "Warn", 3)
+                return
+            end
+            return oldTeleport2(self, placeId, ...)
+        end)
+        createNotification("Teleport Verification Enabled", "Success", 3)
+    else
+        createNotification("Teleport Verification Disabled", "Info", 3)
+    end
+end)
+
+-- Invisible Open Trigger (Moved to bottom of Privacy section)
+local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -41)
+createToggle(invisCard, function(enabled)
+    InvisTriggerOpen = enabled
+    if enabled then
+        createNotification('Chat "/e open" to open UI', "Info", 5)
+    end
+end)
     
     -- ========================================
     -- PERFORMANCE SECTION
@@ -5066,7 +5257,124 @@ forceLabel.TextXAlignment = Enum.TextXAlignment.Right
     -- ADVANCED SECTION
     -- ========================================
     
-    createSectionHeader("🔧 ADVANCED", 50)
+createSectionHeader("🌐 ADVANCED / NETWORK", 40)
+
+-- Rejoin Server Button
+local rejoinCard = createCard("Rejoin Server", "Rejoins the current server session", 41)
+rejoinCard.Size = UDim2.new(1, 0, 0, 55)
+createButton(rejoinCard, "REJOIN", Color3.fromRGB(70, 130, 255), function()
+    game:GetService("TeleportService"):TeleportToPlaceInstance(
+        game.PlaceId,
+        game.JobId,
+        game:GetService("Players").LocalPlayer
+    )
+end)
+
+-- Auto Rejoin Toggle
+local autoRejoinEnabled = false
+local queued = false
+local placeId = game.PlaceId
+local jobId = game.JobId
+
+local autoRejoinCard = createCard("Auto Rejoin (Beta)", "Attempts to rejoin after disconnect when supported", 42)
+createToggle(autoRejoinCard, function(enabled)
+    autoRejoinEnabled = enabled
+    
+    if enabled and not queued and queue_on_teleport then
+        queued = true
+        queue_on_teleport(string.format([[
+            task.wait(5)
+            local Players = game:GetService("Players")
+            local TeleportService = game:GetService("TeleportService")
+            local player = Players.LocalPlayer
+            
+            if player then
+                pcall(function()
+                    TeleportService:TeleportToPlaceInstance(%d, "%s", player)
+                end)
+            end
+        ]], placeId, jobId))
+        createNotification("Auto Rejoin Armed", "Success", 3)
+    elseif enabled then
+        createNotification("Auto Rejoin Enabled (Fallback)", "Info", 3)
+    else
+        createNotification("Auto Rejoin Disabled", "Info", 3)
+    end
+end)
+
+game:GetService("Players").PlayerRemoving:Connect(function(plr)
+    if not autoRejoinEnabled then return end
+    if plr ~= game:GetService("Players").LocalPlayer then return end
+    if queue_on_teleport then return end
+    
+    task.delay(3, function()
+        pcall(function()
+            game:GetService("TeleportService"):TeleportToPlaceInstance(placeId, jobId, plr)
+        end)
+    end)
+end)
+
+-- Small Server Button
+local smallServerCard = createCard("Small Server", "Joins a server with fewer players", 43)
+smallServerCard.Size = UDim2.new(1, 0, 0, 55)
+createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
+    local success, data = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(
+            game:HttpGet(
+                "https://games.roblox.com/v1/games/" ..
+                game.PlaceId ..
+                "/servers/Public?sortOrder=Asc&limit=100"
+            )
+        )
+    end)
+    
+    if success and data and data.data then
+        for _, server in ipairs(data.data) do
+            if server.playing and server.playing < 10 then
+                game:GetService("TeleportService"):TeleportToPlaceInstance(
+                    game.PlaceId,
+                    server.id,
+                    game:GetService("Players").LocalPlayer
+                )
+                break
+            end
+        end
+    else
+        createNotification("Failed to find small server", "Error", 3)
+    end
+end)
+
+-- Serverhop Button
+local serverhopCard = createCard("Serverhop", "Joins a different public server", 44)
+serverhopCard.Size = UDim2.new(1, 0, 0, 55)
+createButton(serverhopCard, "HOP", Color3.fromRGB(255, 150, 50), function()
+    local success, data = pcall(function()
+        return game:GetService("HttpService"):JSONDecode(
+            game:HttpGet(
+                "https://games.roblox.com/v1/games/" ..
+                game.PlaceId ..
+                "/servers/Public?limit=100"
+            )
+        )
+    end)
+    
+    if success and data and data.data then
+        for _, server in ipairs(data.data) do
+            if server.id ~= game.JobId then
+                game:GetService("TeleportService"):TeleportToPlaceInstance(
+                    game.PlaceId,
+                    server.id,
+                    game:GetService("Players").LocalPlayer
+                )
+                break
+            end
+        end
+    else
+        createNotification("Failed to serverhop", "Error", 3)
+    end
+end)
+
+createSectionHeader("🔧 ADVANCED", 50)
     
     local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 51)
     resetCard.Size = UDim2.new(1, 0, 0, 55)
