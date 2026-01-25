@@ -4700,66 +4700,70 @@ local function disableFPS()
     FPS.Saved = {}
 end
 
+-- FPS Boost (Grouped: Dropdown + Toggle)
+local fpsCard = createCard("FPS Boost", "Enable performance optimizations", 2)
+fpsCard.Size = UDim2.new(1, 0, 0, 55)
+
 -- FPS Preset Dropdown
-local fpsPresetCard = createCard("FPS Preset", "Choose optimization level", 2)
-fpsPresetCard.Size = UDim2.new(1, 0, 0, 55)
+local fpsDropdown = Instance.new("Frame", fpsCard)
+fpsDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+fpsDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
+fpsDropdown.Position = UDim2.new(0.5, 0, 0.15, 0)
+fpsDropdown.BorderSizePixel = 0
 
-local presetDropdown = Instance.new("Frame", fpsPresetCard)
-presetDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-presetDropdown.Size = UDim2.new(0.3, 0, 0.7, 0)
-presetDropdown.Position = UDim2.new(0.65, 0, 0.15, 0)
-presetDropdown.BorderSizePixel = 0
+local fpsCorner = Instance.new("UICorner", fpsDropdown)
+fpsCorner.CornerRadius = UDim.new(0, 12)
 
-local dropCorner = Instance.new("UICorner", presetDropdown)
-dropCorner.CornerRadius = UDim.new(0, 12)
+local fpsStroke = Instance.new("UIStroke", fpsDropdown)
+fpsStroke.Name = "ThemeStroke"
+fpsStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+fpsStroke.Thickness = 1
+fpsStroke.Transparency = 0.8
 
-local dropStroke = Instance.new("UIStroke", presetDropdown)
-dropStroke.Name = "ThemeStroke"
-dropStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-dropStroke.Thickness = 1
-dropStroke.Transparency = 0.8
+local fpsLabel = Instance.new("TextLabel", fpsDropdown)
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.Size = UDim2.new(0.7, 0, 1, 0)
+fpsLabel.Font = Enum.Font.GothamBold
+fpsLabel.TextSize = 12
+fpsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+fpsLabel.Text = "Light"
+fpsLabel.TextXAlignment = Enum.TextXAlignment.Left
+fpsLabel.Position = UDim2.new(0.15, 0, 0, 0)
 
-local selectedLabel = Instance.new("TextLabel", presetDropdown)
-selectedLabel.BackgroundTransparency = 1
-selectedLabel.Size = UDim2.new(0.8, 0, 1, 0)
-selectedLabel.Font = Enum.Font.GothamBold
-selectedLabel.TextSize = 12
-selectedLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-selectedLabel.Text = "Light"
-selectedLabel.TextXAlignment = Enum.TextXAlignment.Left
-selectedLabel.Position = UDim2.new(0.1, 0, 0, 0)
+local fpsBtn = Instance.new("TextButton", fpsDropdown)
+fpsBtn.BackgroundTransparency = 1
+fpsBtn.Size = UDim2.new(1, 0, 1, 0)
+fpsBtn.Text = ""
 
-local dropBtn = Instance.new("TextButton", presetDropdown)
-dropBtn.BackgroundTransparency = 1
-dropBtn.Size = UDim2.new(1, 0, 1, 0)
-dropBtn.Text = ""
+local fpsList = Instance.new("ScrollingFrame", fpsDropdown)
+fpsList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+fpsList.Size = UDim2.new(1, 0, 0, 0)
+fpsList.Position = UDim2.new(0, 0, 1, 5)
+fpsList.BorderSizePixel = 0
+fpsList.Visible = false
+fpsList.ZIndex = 10
+fpsList.ScrollBarThickness = 4
+fpsList.CanvasSize = UDim2.new(0, 0, 0, 0)
+fpsList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+fpsList.ClipsDescendants = true
 
-local dropList = Instance.new("Frame", presetDropdown)
-dropList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-dropList.Size = UDim2.new(1, 0, 0, 0)
-dropList.Position = UDim2.new(0, 0, 1, 5)
-dropList.BorderSizePixel = 0
-dropList.Visible = false
-dropList.ZIndex = 10
-dropList.ClipsDescendants = true
+local fpsListCorner = Instance.new("UICorner", fpsList)
+fpsListCorner.CornerRadius = UDim.new(0, 12)
 
-local listCorner = Instance.new("UICorner", dropList)
-listCorner.CornerRadius = UDim.new(0, 12)
+local fpsListStroke = Instance.new("UIStroke", fpsList)
+fpsListStroke.Name = "ThemeStroke"
+fpsListStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+fpsListStroke.Thickness = 1
+fpsListStroke.Transparency = 0.8
 
-local listStroke = Instance.new("UIStroke", dropList)
-listStroke.Name = "ThemeStroke"
-listStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-listStroke.Thickness = 1
-listStroke.Transparency = 0.8
+local fpsListLayout = Instance.new("UIListLayout", fpsList)
+fpsListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
-local listLayout = Instance.new("UIListLayout", dropList)
-listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-
-local presets = {"Light", "Medium", "Extreme"}
-for i, preset in ipairs(presets) do
-    local opt = Instance.new("TextButton", dropList)
+local fpsOptions = {"Light", "Medium", "Extreme"}
+for i, preset in ipairs(fpsOptions) do
+    local opt = Instance.new("TextButton", fpsList)
     opt.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-    opt.Size = UDim2.new(1, 0, 0, 30)
+    opt.Size = UDim2.new(1, -8, 0, 28)
     opt.Text = preset
     opt.Font = Enum.Font.Gotham
     opt.TextSize = 11
@@ -4767,7 +4771,7 @@ for i, preset in ipairs(presets) do
     opt.BorderSizePixel = 0
     opt.ZIndex = 11
     
-if i < #presets then
+    if i < #fpsOptions then
         local separator = Instance.new("Frame", opt)
         separator.Name = "ThemeSeparator"
         separator.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
@@ -4779,8 +4783,8 @@ if i < #presets then
     end
     
     opt.MouseButton1Click:Connect(function()
-        selectedLabel.Text = preset
-        dropList.Visible = false
+        fpsLabel.Text = preset
+        fpsList.Visible = false
         if FPS.Enabled then
             disableFPS()
             enableFPS(preset)
@@ -4789,25 +4793,77 @@ if i < #presets then
     end)
 end
 
-dropBtn.MouseButton1Click:Connect(function()
-    dropList.Visible = not dropList.Visible
-    dropList.Size = UDim2.new(1, 0, 0, #presets * 30)
+fpsBtn.MouseButton1Click:Connect(function()
+    fpsList.Visible = not fpsList.Visible
+    fpsList.Size = UDim2.new(1, 0, 0, math.min(#fpsOptions * 28, 140))
 end)
 
--- FPS Boost Toggle
-local fpsCard = createCard("FPS Boost", "Enable performance optimizations", 3)
-createToggle(fpsCard, function(enabled)
-    if enabled then
-        enableFPS(selectedLabel.Text)
-        createNotification("FPS Boost Enabled", "Success", 3)
+-- FPS Toggle
+local fpsToggleContainer = Instance.new("CanvasGroup", fpsCard)
+fpsToggleContainer.BackgroundTransparency = 1
+fpsToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
+fpsToggleContainer.Position = UDim2.new(0.76, 0, 0.15, 0)
+
+local fpsToggleBg = Instance.new("Frame", fpsToggleContainer)
+fpsToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+fpsToggleBg.Size = UDim2.new(1, 0, 1, 0)
+fpsToggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+fpsToggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+fpsToggleBg.BorderSizePixel = 0
+
+local fpsToggleCorner = Instance.new("UICorner", fpsToggleBg)
+fpsToggleCorner.CornerRadius = UDim.new(1, 0)
+
+local fpsToggleBtn = Instance.new("TextButton", fpsToggleBg)
+fpsToggleBtn.BackgroundTransparency = 1
+fpsToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+fpsToggleBtn.Text = ""
+
+local fpsToggleLayout = Instance.new("UIListLayout", fpsToggleBtn)
+fpsToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+fpsToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+fpsToggleLayout.Padding = UDim.new(0, 3)
+
+local fpsTogglePadding = Instance.new("UIPadding", fpsToggleBtn)
+fpsTogglePadding.PaddingLeft = UDim.new(0, 3)
+fpsTogglePadding.PaddingRight = UDim.new(0, 3)
+
+local fpsCircle = Instance.new("ImageLabel", fpsToggleBtn)
+fpsCircle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+fpsCircle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+fpsCircle.Image = "rbxassetid://5552526748"
+fpsCircle.Size = UDim2.new(0, 20, 0, 20)
+fpsCircle.BackgroundTransparency = 1
+fpsCircle.ScaleType = Enum.ScaleType.Fit
+
+local fpsEnabled = false
+fpsToggleBtn.MouseButton1Click:Connect(function()
+    fpsEnabled = not fpsEnabled
+    fpsToggleLayout.HorizontalAlignment = fpsEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+    fpsToggleBg.BackgroundColor3 = fpsEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+    
+    if fpsEnabled then
+        enableFPS(fpsLabel.Text)
+        createNotification("FPS Boost Enabled", "Success", 2)
     else
         disableFPS()
-        createNotification("FPS Boost Disabled", "Info", 3)
+        createNotification("FPS Boost Disabled", "Info", 2)
     end
 end)
 
+-- Force Label
+local fpsForceLabel = Instance.new("TextLabel", fpsCard)
+fpsForceLabel.BackgroundTransparency = 1
+fpsForceLabel.Size = UDim2.new(0.08, 0, 0.5, 0)
+fpsForceLabel.Position = UDim2.new(0.72, 0, 0.25, 0)
+fpsForceLabel.Font = Enum.Font.Gotham
+fpsForceLabel.TextSize = 11
+fpsForceLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+fpsForceLabel.Text = "Enable"
+fpsForceLabel.TextXAlignment = Enum.TextXAlignment.Right
+
 -- Latency Smoothing
-local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 4)
+local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
 createToggle(latencyCard, function(enabled)
     if enabled then
         RunService:BindToRenderStep(
