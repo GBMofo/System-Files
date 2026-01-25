@@ -4600,6 +4600,14 @@ uiClickCard.Visible = false
 local scriptDetectCard = createCard("Script Detection", "Warns about suspicious local scripts", -44)
 scriptDetectCard.Visible = false
 
+-- 🟢 DECLARE TOGGLE VARIABLES FIRST (will be assigned later)
+local scamToggleBg
+local advancedToggleBg
+local purchaseToggleBg
+local teleportToggleBg
+local uiClickToggleBg
+local scriptDetectToggleBg
+
 -- STEP 3: Create main toggles
 local _, scamToggleBg = createToggle(scamCard, function(enabled)
     ScamProtectionEnabled = enabled
@@ -4609,7 +4617,9 @@ local _, scamToggleBg = createToggle(scamCard, function(enabled)
         createNotification("Scam Protection Enabled", "Success", 3)
         
         -- Force Advanced Settings to OFF
-        advancedToggleBg.setState(false, false)
+        if advancedToggleBg and advancedToggleBg.setState then
+            advancedToggleBg.setState(false, false)
+        end
         ScamAdvancedEnabled = false
         
         -- Sub-features HIDDEN but ENABLED
@@ -4623,15 +4633,18 @@ local _, scamToggleBg = createToggle(scamCard, function(enabled)
         UIClickGuard = true
         ScriptDetection = true
         
-        purchaseToggleBg.setState(true, false)
-        teleportToggleBg.setState(true, false)
-        uiClickToggleBg.setState(true, false)
-        scriptDetectToggleBg.setState(true, false)
+        -- Set sub-feature toggle states (only if they exist)
+        if purchaseToggleBg and purchaseToggleBg.setState then purchaseToggleBg.setState(true, false) end
+        if teleportToggleBg and teleportToggleBg.setState then teleportToggleBg.setState(true, false) end
+        if uiClickToggleBg and uiClickToggleBg.setState then uiClickToggleBg.setState(true, false) end
+        if scriptDetectToggleBg and scriptDetectToggleBg.setState then scriptDetectToggleBg.setState(true, false) end
     else
         createNotification("Scam Protection Disabled", "Info", 3)
         
         -- Reset everything
-        advancedToggleBg.setState(false, false)
+        if advancedToggleBg and advancedToggleBg.setState then
+            advancedToggleBg.setState(false, false)
+        end
         ScamAdvancedEnabled = false
         
         purchaseCard.Visible = false
@@ -4644,10 +4657,10 @@ local _, scamToggleBg = createToggle(scamCard, function(enabled)
         UIClickGuard = false
         ScriptDetection = false
         
-        purchaseToggleBg.setState(false, false)
-        teleportToggleBg.setState(false, false)
-        uiClickToggleBg.setState(false, false)
-        scriptDetectToggleBg.setState(false, false)
+        if purchaseToggleBg and purchaseToggleBg.setState then purchaseToggleBg.setState(false, false) end
+        if teleportToggleBg and teleportToggleBg.setState then teleportToggleBg.setState(false, false) end
+        if uiClickToggleBg and uiClickToggleBg.setState then uiClickToggleBg.setState(false, false) end
+        if scriptDetectToggleBg and scriptDetectToggleBg.setState then scriptDetectToggleBg.setState(false, false) end
     end
 end)
 
