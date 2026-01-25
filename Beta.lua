@@ -5341,77 +5341,23 @@ game:GetService("Players").PlayerRemoving:Connect(function(plr)
     end)
 end)
 
--- Small Server (Deep Scan - 100 Pages)
-    local smallServerCard = createCard("Small Server", "Scans up to 100 pages to find an empty server.", 43)
-    smallServerCard.Size = UDim2.new(1, 0, 0, 55)
-
-    createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
-        local request = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
-        if not request then
-            createNotification("Executor not supported", "Error", 3)
-            return
-        end
-
-        createNotification("Starting Deep Scan...", "Info", 2)
-
-        task.spawn(function()
-            local HttpService = game:GetService("HttpService")
-            local TeleportService = game:GetService("TeleportService")
-            local Players = game:GetService("Players")
-            local PlaceId = game.PlaceId
-            local JobId = game.JobId
-            
-            local cursor = ""
-            local bestServer = nil
-            local pagesScanned = 0
-            local maxPages = 100 -- Scans approx 10,000 servers
-            
-            -- Helper to update toast without spamming
-            local function updateStatus(txt)
-                -- Only show status every 5 pages to reduce lag
-                if pagesScanned % 5 == 0 then
-                    createNotification(txt, "Info", 1)
-                end
-            end
-
+-- Scan pages until we find enough candidates or run out
             repeat
-                local url = "https://games.roblox.com/v1/games/" .. PlaceId .. "/servers/Public?sortOrder=Asc&limit=100" .. (cursor ~= "" and "&cursor=" .. cursor or "")
-                
+                local url = "https://games.roblox.com/v1/games/" .. placeId .. "/servers/Public?sortOrder=Asc&limit=100" .. (cursor ~= "" and "&cursor=" .. cursor or "")
                 local response = request({Url = url, Method = "GET"})
+                
                 if not response or not response.Body then break end
-
-                local success, data = pcall(function() return HttpService:JSONDecode(response.Body) end)
-                if not success or not data or not data.data then break end
-
+                
+                local data = HttpService:JSONDecode(response.Body)
                 cursor = data.nextPageCursor or ""
-                pagesScanned = pagesScanned + 1
-                updateStatus("Scanning Page " .. pagesScanned .. "...")
-
-                for _, server in ipairs(data.data) do
-                    if server.playing < server.maxPlayers and server.id ~= JobId then
-                        -- Check if this server is better than our current best
-                        if not bestServer or server.playing < bestServer.playing then
-                            bestServer = server
-                        end
+                
+                for _, server in ipairs(data.data or {}) do
+                    -- Filter: Not full, not current server
+                    if server.playing < server.maxPlayers and server.id ~= currentJobId then
+                        table.insert(servers, server)
                     end
                 end
-                
-                -- FAST STOP: If we found a server with < 5 players, stop scanning and join immediately.
-                if bestServer and bestServer.playing < 5 then
-                    break 
-                end
-                
-                task.wait(0.25) -- Slight delay to prevent rate limits
-            until cursor == "" or pagesScanned >= maxPages
-
-            if bestServer then
-                createNotification("Found server: " .. bestServer.playing .. " players! Joining...", "Success", 5)
-                TeleportService:TeleportToPlaceInstance(PlaceId, bestServer.id, Players.LocalPlayer)
-            else
-                createNotification("Scanned " .. pagesScanned .. " pages. No empty servers found.", "Error", 5)
-            end
-        end)
-    end)
+            until cursor == "" or #servers >= 150
 
 -- Serverhop Button
 local serverhopCard = createCard("Serverhop", "Joins a different public server", 44)
