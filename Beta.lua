@@ -5369,8 +5369,268 @@ createButton(serverhopCard, "HOP", Color3.fromRGB(255, 150, 50), function()
 end)
 
 createSectionHeader("🔧 ADVANCED", 50)
-    
-    local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 51)
+
+    -- [[ PUNK X DEBUGGER LOGIC ]] --
+    local activeDebuggerCleanup = nil
+
+    local function StartDebugger()
+        -- Container for cleanup
+        local Connections = {}
+        local Objects = {}
+
+        -- Services (Local refs)
+        local LogService = game:GetService("LogService")
+        local Players = game:GetService("Players")
+        local CoreGui = game:GetService("CoreGui")
+        local UserInputService = game:GetService("UserInputService")
+        local RunService = game:GetService("RunService")
+        local Stats = game:GetService("Stats")
+        local TweenService = game:GetService("TweenService")
+
+        -- Config
+        local LOG_FILE_NAME = "Punk-X-Files/PunkX_Logs.txt"
+        local MAX_LOGS = 1000
+
+        -- State
+        local isMinimized = false
+        local isFilterActive = true
+        local autoScrollEnabled = true
+        local showTimestamps = true
+        local showLineNumbers = true
+        local logCount = 0
+        local logHistory = {}
+        local virtualLogData = {}
+        local groupedLogs = {}
+        local expandedGroups = {}
+        local pinnedSearchTerms = {}
+        local excludePatterns = {}
+        local currentTheme = "dark"
+        local fontSize = 14
+        local useRegex = false
+        local searchHistory = {}
+        local selectedLogKey = nil
+        local actionBarVisible = false
+        local currentHighlights = {}
+        local highlightConnections = {}
+        local isHighlighting = false
+        local typeFilters = { INFO = true, WARN = true, ERROR = true }
+        
+        -- Performance Vars
+        local fps = 0
+        local memoryUsage = 0
+        local ping = 0
+        local searchDebounce = nil
+
+        -- Themes
+        local themes = {
+            dark = { bg = Color3.fromRGB(20, 20, 20), logBg1 = Color3.fromRGB(35, 35, 35), logBg2 = Color3.fromRGB(45, 45, 45), selected = Color3.fromRGB(65, 65, 65), text = Color3.new(1, 1, 1), search = Color3.fromRGB(50, 50, 50) },
+            light = { bg = Color3.fromRGB(240, 240, 240), logBg1 = Color3.fromRGB(255, 255, 255), logBg2 = Color3.fromRGB(250, 250, 250), selected = Color3.fromRGB(220, 220, 220), text = Color3.new(0, 0, 0), search = Color3.fromRGB(230, 230, 230) },
+            blue = { bg = Color3.fromRGB(15, 25, 35), logBg1 = Color3.fromRGB(25, 35, 50), logBg2 = Color3.fromRGB(30, 45, 60), selected = Color3.fromRGB(50, 70, 90), text = Color3.fromRGB(200, 220, 255), search = Color3.fromRGB(35, 50, 70) }
+        }
+
+        -- GUI Setup
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "PunkX_Debugger"
+        ScreenGui.ResetOnSpawn = false
+        if gethui then ScreenGui.Parent = gethui() else ScreenGui.Parent = CoreGui end
+        table.insert(Objects, ScreenGui)
+
+        local MainFrame = Instance.new("Frame")
+        MainFrame.Size = UDim2.new(0.5, 0, 0.5, 0) -- Smaller default size
+        MainFrame.Position = UDim2.new(0.25, 0, 0.25, 0)
+        MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        MainFrame.BorderSizePixel = 0
+        MainFrame.ClipsDescendants = true
+        MainFrame.Active = true
+        MainFrame.Parent = ScreenGui
+        Instance.new("UICorner", MainFrame).CornerRadius = UDim.new(0, 10)
+
+        local ToastContainer = Instance.new("Frame", MainFrame)
+        ToastContainer.Size = UDim2.new(1, 0, 1, 0)
+        ToastContainer.BackgroundTransparency = 1
+        ToastContainer.ZIndex = 500
+
+        local function showToast(text)
+            local t = Instance.new("TextLabel", ToastContainer)
+            t.Size = UDim2.new(0, 0, 0, 25); t.AutomaticSize = Enum.AutomaticSize.X
+            t.Position = UDim2.new(0.5, 0, 0.95, 0); t.AnchorPoint = Vector2.new(0.5, 1)
+            t.BackgroundColor3 = Color3.fromRGB(40, 40, 40); t.Text = "  " .. text .. "  "
+            t.TextColor3 = Color3.new(1, 1, 1); t.Font = Enum.Font.GothamBold; t.TextSize = 12
+            Instance.new("UICorner", t).CornerRadius = UDim.new(0, 6)
+            TweenService:Create(t, TweenInfo.new(0.3), {Position = UDim2.new(0.5, 0, 0.9, 0)}):Play()
+            task.delay(1.5, function() if t.Parent then t:Destroy() end end)
+        end
+
+        local StatsBar = Instance.new("TextLabel", MainFrame)
+        StatsBar.Size = UDim2.new(1, -20, 0.06, 0); StatsBar.Position = UDim2.new(0, 10, 0, 0)
+        StatsBar.BackgroundTransparency = 1; StatsBar.TextColor3 = Color3.new(1, 1, 1)
+        StatsBar.TextXAlignment = Enum.TextXAlignment.Left; StatsBar.Font = Enum.Font.GothamBold; StatsBar.TextSize = 12
+
+        local TitleBar = Instance.new("TextLabel", MainFrame)
+        TitleBar.Size = UDim2.new(1, -40, 0.06, 0); TitleBar.Position = UDim2.new(0, 0, 0.06, 0)
+        TitleBar.BackgroundTransparency = 1; TitleBar.Text = "  Punk X Debugger"; TitleBar.TextColor3 = Color3.fromRGB(160, 85, 255)
+        TitleBar.TextXAlignment = Enum.TextXAlignment.Left; TitleBar.Font = Enum.Font.GothamBold; TitleBar.TextSize = 16
+
+        -- Performance Loop
+        local lastUpdate = tick(); local frameCount = 0
+        table.insert(Connections, RunService.RenderStepped:Connect(function()
+            frameCount = frameCount + 1
+            local now = tick()
+            if now - lastUpdate >= 1 then
+                fps = frameCount; frameCount = 0; lastUpdate = now
+                memoryUsage = math.floor(Stats:GetTotalMemoryUsageMb())
+                local player = Players.LocalPlayer
+                if player then ping = math.floor(player:GetNetworkPing() * 1000) end
+                StatsBar.Text = string.format("FPS: %d | Memory: %d MB | Ping: %dms | Logs: %d", fps, memoryUsage, ping, #virtualLogData)
+            end
+        end))
+
+        -- Dragging
+        local dragging, dragInput, dragStart, startPos
+        table.insert(Connections, TitleBar.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                dragging = true; dragStart = input.Position; startPos = MainFrame.Position
+                input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then dragging = false end end)
+            end
+        end))
+        table.insert(Connections, TitleBar.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement then dragInput = input end end))
+        table.insert(Connections, UserInputService.InputChanged:Connect(function(input) if input == dragInput and dragging then local delta = input.Position - dragStart; MainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y) end end))
+
+        -- Components
+        local SearchBox = Instance.new("TextBox", MainFrame)
+        SearchBox.Size = UDim2.new(0.86, -5, 0.05, 0); SearchBox.Position = UDim2.new(0.02, 0, 0.13, 0)
+        SearchBox.BackgroundColor3 = Color3.fromRGB(50, 50, 50); SearchBox.PlaceholderText = "Search..."
+        SearchBox.TextColor3 = Color3.new(1, 1, 1); SearchBox.Font = Enum.Font.Gotham; SearchBox.TextSize = 12
+        SearchBox.TextXAlignment = Enum.TextXAlignment.Left; Instance.new("UICorner", SearchBox).CornerRadius = UDim.new(0, 6)
+        Instance.new("UIPadding", SearchBox).PaddingLeft = UDim.new(0, 8)
+
+        local HighlightBtn = Instance.new("TextButton", MainFrame)
+        HighlightBtn.Size = UDim2.new(0.08, 0, 0.05, 0); HighlightBtn.Position = UDim2.new(0.9, 0, 0.13, 0)
+        HighlightBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50); HighlightBtn.Text = "👁️"; HighlightBtn.TextColor3 = Color3.new(1, 1, 1)
+        Instance.new("UICorner", HighlightBtn).CornerRadius = UDim.new(0, 6)
+
+        local ScrollFrame = Instance.new("ScrollingFrame", MainFrame)
+        ScrollFrame.Position = UDim2.new(0.02, 0, 0.19, 0); ScrollFrame.Size = UDim2.new(0.96, 0, 0.51, 0)
+        ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0); ScrollFrame.ScrollBarThickness = 4
+        ScrollFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25); ScrollFrame.BorderSizePixel = 0
+        Instance.new("UICorner", ScrollFrame); local UIListLayout = Instance.new("UIListLayout", ScrollFrame); UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+
+        -- Functions
+        local function sanitize(t) return t:gsub("&", "&amp;"):gsub("<", "&lt;"):gsub(">", "&gt;") end
+        local function highlightText(text, term) if term == "" then return sanitize(text) end; return sanitize(text):gsub("(?i)("..term..")", '<font color="rgb(255,255,0)"><b>%1</b></font>') end
+        
+        local function refreshVirtualScroll()
+            local term = SearchBox.Text
+            for _, c in ipairs(ScrollFrame:GetChildren()) do if c:IsA("TextButton") or c:IsA("Frame") then c:Destroy() end end
+            local displayCount = 0
+            for i, log in ipairs(virtualLogData) do
+                if not typeFilters[log.type] then continue end
+                if term ~= "" and not log.message:lower():find(term:lower(), 1, true) then continue end
+                displayCount = displayCount + 1
+                if displayCount > 100 then break end -- Render limit for lag prevention
+                
+                local btn = Instance.new("TextButton", ScrollFrame)
+                btn.Size = UDim2.new(1, 0, 0, 0); btn.AutomaticSize = Enum.AutomaticSize.Y
+                btn.BackgroundTransparency = 1; btn.TextWrapped = true; btn.RichText = true
+                btn.Font = Enum.Font.Code; btn.TextSize = fontSize; btn.TextXAlignment = Enum.TextXAlignment.Left
+                btn.Text = highlightText(string.format("[%s] %s %s", log.time, log.prefix, log.message), term)
+                btn.TextColor3 = log.color
+                Instance.new("UIPadding", btn).PaddingLeft = UDim.new(0, 5)
+            end
+            ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, UIListLayout.AbsoluteContentSize.Y + 20)
+        end
+
+        local function addLog(msg, type)
+            if #virtualLogData > MAX_LOGS then table.remove(virtualLogData, 1) end
+            local color, prefix, lType = Color3.fromRGB(220, 220, 220), "[INFO]", "INFO"
+            if type == Enum.MessageType.MessageWarning then color, prefix, lType = Color3.fromRGB(255, 200, 0), "[WARN]", "WARN"
+            elseif type == Enum.MessageType.MessageError then color, prefix, lType = Color3.fromRGB(255, 80, 80), "[ERR]", "ERROR" end
+            table.insert(virtualLogData, {time = os.date("%X"), prefix = prefix, message = msg, color = color, type = lType})
+            if autoScrollEnabled then refreshVirtualScroll(); ScrollFrame.CanvasPosition = Vector2.new(0, 99999) end
+        end
+
+        -- Events
+        table.insert(Connections, LogService.MessageOut:Connect(addLog))
+        table.insert(Connections, SearchBox:GetPropertyChangedSignal("Text"):Connect(refreshVirtualScroll))
+        
+        -- Highlighting Logic
+        table.insert(Connections, HighlightBtn.MouseButton1Click:Connect(function()
+            for _, h in ipairs(currentHighlights) do h:Destroy() end; currentHighlights = {}
+            for _, c in ipairs(highlightConnections) do c:Disconnect() end; highlightConnections = {}
+            if isHighlighting then isHighlighting = false; HighlightBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50); return end
+            
+            local term = SearchBox.Text; if term == "" then return end
+            isHighlighting = true; HighlightBtn.BackgroundColor3 = Color3.fromRGB(220, 160, 50)
+            
+            local function hl(v)
+                if (v:IsA("BasePart") or v:IsA("Model")) and v.Name:lower():find(term:lower(), 1, true) then
+                    local h = Instance.new("Highlight", v); h.FillColor = Color3.fromRGB(255,255,0); table.insert(currentHighlights, h)
+                end
+            end
+            for _, v in ipairs(workspace:GetDescendants()) do hl(v) end
+        end))
+
+        -- Toggle Button (Floating)
+        local ToggleIcon = Instance.new("ImageButton", ScreenGui)
+        ToggleIcon.Size = UDim2.new(0, 45, 0, 45); ToggleIcon.Position = UDim2.new(0, 10, 0.5, -22)
+        ToggleIcon.BackgroundColor3 = Color3.fromRGB(30, 30, 30); ToggleIcon.BackgroundTransparency = 0.3
+        ToggleIcon.Image = "rbxthumb://type=Asset&id=121884098955130&w=420&h=420"
+        Instance.new("UICorner", ToggleIcon).CornerRadius = UDim.new(1, 0)
+        
+        table.insert(Connections, ToggleIcon.MouseButton1Click:Connect(function() MainFrame.Visible = not MainFrame.Visible end))
+        
+        -- Drag Toggle
+        local tDragging, tDragStart, tStartPos
+        table.insert(Connections, ToggleIcon.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                tDragging = true; tDragStart = input.Position; tStartPos = ToggleIcon.Position
+                input.Changed:Connect(function() if input.UserInputState == Enum.UserInputState.End then tDragging = false end end)
+            end
+        end))
+        table.insert(Connections, UserInputService.InputChanged:Connect(function(input)
+            if tDragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+                local delta = input.Position - tDragStart
+                ToggleIcon.Position = UDim2.new(tStartPos.X.Scale, tStartPos.X.Offset + delta.X, tStartPos.Y.Scale, tStartPos.Y.Offset + delta.Y)
+            end
+        end))
+
+        -- Populate initial logs
+        task.spawn(function()
+            local ok, h = pcall(LogService.GetLogHistory, LogService)
+            if ok then for _, v in ipairs(h) do addLog(v.message, v.messageType) end end
+            refreshVirtualScroll()
+        end)
+
+        -- Cleanup Function
+        return function()
+            for _, c in ipairs(Connections) do c:Disconnect() end
+            for _, o in ipairs(Objects) do o:Destroy() end
+            for _, h in ipairs(currentHighlights) do h:Destroy() end
+            for _, c in ipairs(highlightConnections) do c:Disconnect() end
+        end
+    end
+
+    -- [[ DEBUGGER CARD ]] --
+    local debugCard = createCard("Punk X Debugger", "Displays real-time logs, errors, and script output for debugging.", 51)
+    debugCard.Size = UDim2.new(1, 0, 0, 55)
+
+    createToggle(debugCard, function(enabled)
+        if enabled then
+            if not activeDebuggerCleanup then
+                activeDebuggerCleanup = StartDebugger()
+                createNotification("Debugger Started", "Success", 3)
+            end
+        else
+            if activeDebuggerCleanup then
+                activeDebuggerCleanup() -- Stops everything and destroys UI
+                activeDebuggerCleanup = nil
+                createNotification("Debugger Stopped", "Info", 3)
+            end
+        end
+    end)
+
+    -- [[ RESET LOADER (Moved Down to 52) ]] --
+    local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 52)
     resetCard.Size = UDim2.new(1, 0, 0, 55)
     
     createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
@@ -5386,9 +5646,9 @@ createSectionHeader("🔧 ADVANCED", 50)
         end
     end)
 
-    -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built (with longer delay)
+    -- 🔴 CRITICAL FIX: Apply theme AFTER UI is built
     task.spawn(function()
-        task.wait(0) -- 🔴 Increased delay to ensure all UI elements exist
+        task.wait(0)
         ApplyTheme(savedTheme)
     end)
 end -- End of InitTabs.Settings
