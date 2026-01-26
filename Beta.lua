@@ -6231,39 +6231,46 @@ InitTabs.Saved = function()
 	InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
-        local EditorFrame = Editor:WaitForChild("Editor"); 
+        local EditorFrame = Editor:WaitForChild("Editor"); -- The ScrollingFrame
         local RealInput = EditorFrame:WaitForChild("Input");
         local Lines = EditorFrame:WaitForChild("Lines");
         
         local Method = "MouseButton1Click"; 
+        local autoSaveDebounce = nil 
 
-        -- Save View-Mode State
+        -- Save original states
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
 
-        -- [[ 🔴 FOCUSED: APPLY IMAGE 2 LAYOUT ]] --
+        -- [[ 🔴 THE FIX: IMAGE 2 LAYOUT TRANSITION ]] --
         RealInput.Focused:Connect(function()
+            -- 1. CLIPPING: Force text to stay inside the box
+            EditorFrame.ClipsDescendants = true 
+            
+            -- 2. HIDE NUMBERS & MOVE TEXT LEFT
             Lines.Visible = false
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- SHRINK & MOVE BOX (Image 2 Position)
+            -- 3. SHRINK BOX (Matches Image 2 Layout)
+            -- Moved down from top (0.22) and made shorter (0.35)
             EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
             EditorFrame.Size = UDim2.new(0.96, 0, 0.35, 0) 
             
-            -- Delta Pattern Stability
+            -- 4. STABILITY (Delta Pattern)
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
             RealInput.Text = raw
         end)
 
-        -- [[ 🟢 FOCUS LOST: RESTORE VIEW MODE ]] --
         RealInput.FocusLost:Connect(function()
+            -- 1. RESTORE ORIGINAL POSITIONS
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
 
+            -- 2. RE-APPLY COLORS
             local raw = RealInput.Text
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
@@ -6273,7 +6280,12 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- Connect Buttons (Restored standard logic)
+        -- SYNC
+        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(RealInput, Lines)
+        end)
+
+        -- [[ 🟢 CONNECT BUTTONS (Pulling from your working Image 1 Panel) ]] --
         Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
         Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
         Panel:WaitForChild("Paste")[Method]:Connect(function()
@@ -6287,10 +6299,6 @@ InitTabs.Saved = function()
             script.Parent.Popups.Main.Input:CaptureFocus()
         end)
         Panel:WaitForChild("ExecuteClipboard")[Method]:Connect(function() UIEvents.Executor.RunCode(safeGetClipboard())() end)
-
-        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-            UpdateLineNumbers(RealInput, Lines)
-        end)
 
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
