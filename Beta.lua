@@ -4125,7 +4125,24 @@ InitTabs.Settings = function()
                 end
             end
         end
-        
+        -- 🟢 NEW: 5.5. UPDATE SEARCH FILTER BUTTONS (ADD THIS WHOLE BLOCK)
+if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
+    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+        if btn:IsA("TextButton") then
+            if btn.Name == Data.Search.CurrentFilter then
+                btn.BackgroundColor3 = color
+                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            else
+                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+            end
+        end
+    end
+    
+    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+    if stroke then stroke.Color = color end
+end
+
       -- 6. UPDATE ICONS
 if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
     local panel = Pages.Editor.Panel
