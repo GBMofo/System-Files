@@ -1399,7 +1399,7 @@ G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- [[ 5. PANEL (RESTORED ORIGINAL ICONS) ]] --
-G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]); -- Parent is the Editor Page
+G2L["89"] = Instance.new("Frame", G2L["7a"]);
 G2L["89"]["Name"] = [[Panel]];
 G2L["89"]["ZIndex"] = 100; -- 🔴 High ZIndex so it's always in front
 G2L["89"]["BorderSizePixel"] = 0;
@@ -6231,46 +6231,45 @@ InitTabs.Saved = function()
 	InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
-        local EditorFrame = Editor:WaitForChild("Editor"); -- The ScrollingFrame
+        local EditorFrame = Editor:WaitForChild("Editor"); 
         local RealInput = EditorFrame:WaitForChild("Input");
         local Lines = EditorFrame:WaitForChild("Lines");
         
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
-        -- Save original states
+        -- Remember original view mode settings
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
 
-        -- [[ 🔴 THE FIX: IMAGE 2 LAYOUT TRANSITION ]] --
+        -- [[ 🔴 FOCUSED: IMAGE 2 LAYOUT ]] --
         RealInput.Focused:Connect(function()
-            -- 1. CLIPPING: Force text to stay inside the box
-            EditorFrame.ClipsDescendants = true 
-            
-            -- 2. HIDE NUMBERS & MOVE TEXT LEFT
+            -- 1. HIDE NUMBERS & MOVE TEXT LEFT
             Lines.Visible = false
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 3. SHRINK BOX (Matches Image 2 Layout)
-            -- Moved down from top (0.22) and made shorter (0.35)
+            -- 2. SHRINK & POSITION BOX (Image 2 style)
+            -- Start at 22%, Height 35%. This is the perfect height.
             EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
             EditorFrame.Size = UDim2.new(0.96, 0, 0.35, 0) 
             
-            -- 4. STABILITY (Delta Pattern)
+            -- 3. ENSURE CLIPPING (Stops text bleeding)
+            EditorFrame.ClipsDescendants = true
+
+            -- 4. STABLE RAW TEXT
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
             RealInput.Text = raw
         end)
 
+        -- [[ 🟢 FOCUS LOST: RESTORE VIEW MODE ]] --
         RealInput.FocusLost:Connect(function()
-            -- 1. RESTORE ORIGINAL POSITIONS
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
 
-            -- 2. RE-APPLY COLORS
             local raw = RealInput.Text
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
@@ -6285,7 +6284,7 @@ InitTabs.Saved = function()
             UpdateLineNumbers(RealInput, Lines)
         end)
 
-        -- [[ 🟢 CONNECT BUTTONS (Pulling from your working Image 1 Panel) ]] --
+        -- CONNECT ORIGINAL BUTTONS (From your Image 1 Panel)
         Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
         Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
         Panel:WaitForChild("Paste")[Method]:Connect(function()
