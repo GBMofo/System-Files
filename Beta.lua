@@ -1332,19 +1332,27 @@ G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
-G2L["82"]["Selectable"] = false; -- Fixes click-through
-G2L["82"]["ZIndex"] = 1; -- Low ZIndex so buttons sit on top
+G2L["82"]["Selectable"] = false;
+G2L["82"]["ZIndex"] = 1; 
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
-G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); -- Controlled by script
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; -- 🟢 AUTO MODE
+G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
 G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; -- Fixes text bleeding
+G2L["82"]["ClipsDescendants"] = true; -- 🟢 FIX 1: STOP BLEEDING
+
+-- 🟢 FIX 2: ADD PADDING (BREATHING ROOM)
+-- This creates a gap so text doesn't touch the edges/tabs
+local EditorPadding = Instance.new("UIPadding", G2L["82"])
+EditorPadding.PaddingTop = UDim.new(0, 10)    -- Gap from top tabs
+EditorPadding.PaddingLeft = UDim.new(0, 5)    -- Gap from left edge
+EditorPadding.PaddingRight = UDim.new(0, 5)   -- Gap from scrollbar
+EditorPadding.PaddingBottom = UDim.new(0, 5)  -- Gap from bottom
 
 -- [[ 2. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
@@ -6253,20 +6261,33 @@ InitTabs.Saved = function()
             script.Parent.Popups.Main.Input:CaptureFocus() 
         end);
 
-        -- [[ EDITOR INPUT HANDLING ]]
+        -- [[ EDITOR INPUT HANDLING (FIXED CURSOR JUMP) ]]
         
-        -- 1. FOCUS GAINED: Turn OFF colors, show raw text
+        -- 🟢 1. FOCUS GAINED: Switch to Editing Mode
         EditorFrame.Input.Focused:Connect(function()
-            local raw = StripSyntax(EditorFrame.Input.Text)
-            EditorFrame.Input.RichText = false
-            EditorFrame.Input.Text = raw
+            -- Only strip if it was previously highlighted to avoid unnecessary updates
+            if EditorFrame.Input.RichText then
+                local raw = StripSyntax(EditorFrame.Input.Text)
+                EditorFrame.Input.RichText = false -- Disable formatting so cursor works
+                EditorFrame.Input.Text = raw       -- Show plain text
+            end
+            -- DO NOT reset text if it's already plain, this stops the cursor jump!
         end)
 
-        -- 2. FOCUS LOST: Turn ON colors, apply highlighting
+        -- 🟢 2. FOCUS LOST: Switch to Viewing Mode (Pretty Colors)
         EditorFrame.Input.FocusLost:Connect(function()
             local raw = EditorFrame.Input.Text
-            EditorFrame.Input.RichText = true
-            EditorFrame.Input.Text = ApplySyntax(raw)
+            -- 🟢 FIX: Ensure we aren't deleting code accidentally
+            if raw and raw ~= "" then
+                EditorFrame.Input.RichText = true
+                EditorFrame.Input.Text = ApplySyntax(raw)
+            end
+        end)
+        
+        -- 🟢 3. SYNC LINE NUMBERS (Fixes Scrolling Issue)
+        EditorFrame.Input:GetPropertyChangedSignal("TextBounds"):Connect(function()
+            -- Force Line Numbers to match Input height
+            EditorFrame.Lines.Size = UDim2.new(0, 50, 0, EditorFrame.Input.TextBounds.Y + 50)
         end)
 
         -- 3. PASTE HANDLING (Fixed)
