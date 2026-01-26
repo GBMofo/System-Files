@@ -1276,7 +1276,7 @@ G2L["7b"]["Position"] = UDim2.new(0.5, 0, 0.0854, 0);
 G2L["7b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["7b"]["ScrollBarThickness"] = 1;
 G2L["7b"]["BackgroundTransparency"] = 1;
-G2L["7b"]["ZIndex"] = 10; -- 🔴 NEW: Force Tabs to stay on top
+G2L["7b"]["ZIndex"] = 50; -- 🔴 CRITICAL: Force Tabs ABOVE the editor
 
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Tabs.UIPadding
@@ -1334,13 +1334,13 @@ G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
 G2L["82"]["Selectable"] = false;
-G2L["82"]["ZIndex"] = 1; 
+G2L["82"]["ZIndex"] = 1; -- Low ZIndex so it stays behind tabs/buttons
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
--- 🟢 RESTORED ORIGINAL SIZE & POSITION
+-- Original Size/Pos (As requested)
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
 
@@ -1348,15 +1348,15 @@ G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0);
 G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
 G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; -- 🟢 CRITICAL: This stops the text bleeding
+G2L["82"]["ClipsDescendants"] = true; -- This handles the clipping
 
--- 🟢 PADDING FIX
--- This pushes the text INWARD so it doesn't touch the edges.
+-- 🔴 PADDING FIX (Breathing Room)
 local EditorPadding = Instance.new("UIPadding", G2L["82"]);
 EditorPadding.Name = "EditorPadding";
-EditorPadding.PaddingTop = UDim.new(0, 5);     -- Space from top tabs
-EditorPadding.PaddingLeft = UDim.new(0, 5);    -- Space from left side
-EditorPadding.PaddingRight = UDim.new(0, 5);   -- Space from right side
+EditorPadding.PaddingTop = UDim.new(0, 10);
+EditorPadding.PaddingLeft = UDim.new(0, 5);
+EditorPadding.PaddingRight = UDim.new(0, 5);
+EditorPadding.PaddingBottom = UDim.new(0.16, 0); -- Keeps text above buttons
 
 -- 🟢 BOTTOM GAP FIX
 -- 0.16 Scale (16%) is just enough to clear the buttons (which are 15% tall)
@@ -1380,7 +1380,7 @@ G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
 
--- [[ 3. INPUT BOX (RICHTEXT ENABLED) ]] --
+-- [[ 3. INPUT BOX ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
@@ -1395,7 +1395,7 @@ G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false; -- Keep false for code editors
+G2L["83"]["TextWrapped"] = false;
 G2L["83"]["TextEditable"] = true;
 G2L["83"]["RichText"] = true; 
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
@@ -1405,9 +1405,7 @@ G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY;
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
-
--- 🔴 FIX: This forces the TextBox to respect the boundaries even when focused
-G2L["83"]["ClipsDescendants"] = true;
+-- 🔴 REMOVED CLIPS DESCENDANTS (Fixes "Can't Click")
 
 -- [[ 4. UICORNER ]] --
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
@@ -1420,9 +1418,9 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
+-- [[ 5. PANEL (BUTTONS) ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
-G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
+G2L["89"]["ZIndex"] = 50; -- 🔴 CRITICAL: Force Buttons ABOVE text
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
