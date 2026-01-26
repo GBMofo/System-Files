@@ -1328,7 +1328,7 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- [[ 1. THE MAIN CONTAINER (FIXED CLIPPING) ]] --
+-- [[ 1. MAIN CONTAINER (FIXED SCROLL & CLIPPING) ]] --
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["ZIndex"] = 1; 
@@ -1337,9 +1337,11 @@ G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); 
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0); 
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; -- 🔴 XY for Horizontal Scroll
+G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY; -- 🔴 Enables Delta-style scroll
 G2L["82"]["ScrollBarThickness"] = 15; 
-G2L["82"]["ClipsDescendants"] = true; -- Stops text from flying out
+G2L["82"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["82"]["ClipsDescendants"] = true; -- 🔴 Prevents text bleeding
 
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
 G2L["86"]["CornerRadius"] = UDim.new(0, 16);
@@ -1350,7 +1352,7 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 2. INPUT BOX (STABLE RAW TEXT) ]] --
+-- [[ 2. THE INPUT BOX ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["ZIndex"] = 3; 
@@ -1364,7 +1366,7 @@ G2L["83"]["ClearTextOnFocus"] = false;
 G2L["83"]["RichText"] = true; 
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["83"]["TextWrapped"] = false;
+G2L["83"]["TextWrapped"] = false; -- 🔴 CRITICAL: Disables wrapping for XY scroll
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
 G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0);
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
@@ -1385,15 +1387,15 @@ G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0);
 G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); 
 G2L["87"]["Text"] = [[1]];
 
--- [[ 4. THE PANEL (FIXED FRAME - NO GREY BUG) ]] --
+-- [[ 4. THE PANEL (FRONT LAYER FRAME) ]] --
 G2L["89"] = Instance.new("Frame", G2L["7a"]); 
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 500; -- 🔴 EXTREMELY HIGH to stay in front
+G2L["89"]["ZIndex"] = 2000; -- 🔴 Set to 2000 to be ABOVE the keyboard and box
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["89"]["BackgroundTransparency"] = 0; 
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["89"]["Size"] = UDim2.new(0, 240, 0, 42); -- 🔴 Fixed pixels for stability
+G2L["89"]["Size"] = UDim2.new(0, 240, 0, 42); 
 G2L["89"]["Position"] = UDim2.new(0.98, 0, 0.98, 0);
 
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
@@ -1406,26 +1408,21 @@ G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 12);
 
--- Spacers
-local s1 = Instance.new("Frame", G2L["89"]); s1.Size = UDim2.new(0,1,0.6,0); s1.BackgroundColor3 = Color3.fromRGB(160,85,255); s1.ZIndex = 501; s1.LayoutOrder = 1;
-local s2 = Instance.new("Frame", G2L["89"]); s2.Size = UDim2.new(0,1,0.6,0); s2.BackgroundColor3 = Color3.fromRGB(160,85,255); s2.ZIndex = 501;
-
--- Manual Button Creation (Matches your Original Assets)
-local function createBtn(name, id, order, color)
+local function createIcon(name, id, order, color)
     local btn = Instance.new("TextButton", G2L["89"]); 
-    btn.Name = name; btn.Size = UDim2.new(0, 32, 0, 32); btn.BackgroundTransparency = 1; btn.Text = ""; btn.LayoutOrder = order; btn.ZIndex = 505;
+    btn.Name = name; btn.Size = UDim2.new(0, 32, 0, 32); btn.BackgroundTransparency = 1; btn.Text = ""; btn.LayoutOrder = order; btn.ZIndex = 2005;
     local icon = Instance.new("ImageLabel", btn); 
-    icon.Name = "Icon"; icon.Size = UDim2.new(0.7,0,0.7,0); icon.Position = UDim2.new(0.5,0,0.5,0); icon.AnchorPoint = Vector2.new(0.5,0.5); icon.BackgroundTransparency = 1; icon.Image = id; icon.ZIndex = 510;
+    icon.Name = "Icon"; icon.Size = UDim2.new(0.7,0,0.7,0); icon.Position = UDim2.new(0.5,0,0.5,0); icon.AnchorPoint = Vector2.new(0.5,0.5); icon.BackgroundTransparency = 1; icon.Image = id; icon.ZIndex = 2010;
     if color then icon.ImageColor3 = color end
     return btn
 end
 
-G2L["90"] = createBtn("Rename", "rbxassetid://80861536658698", -1)
-G2L["92"] = createBtn("Paste", "rbxassetid://88661060655687", 0)
-G2L["94"] = createBtn("ExecuteClipboard", "rbxassetid://74812558983299", 0)
-G2L["96"] = createBtn("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
-G2L["98"] = createBtn("Save", "rbxassetid://81882572588470", -2)
-G2L["9a"] = createBtn("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
+G2L["90"] = createIcon("Rename", "rbxassetid://80861536658698", -1)
+G2L["92"] = createIcon("Paste", "rbxassetid://88661060655687", 0)
+G2L["94"] = createIcon("ExecuteClipboard", "rbxassetid://74812558983299", 0)
+G2L["96"] = createIcon("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
+G2L["98"] = createIcon("Save", "rbxassetid://81882572588470", -2)
+G2L["9a"] = createIcon("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
 
 -- StarterGui.ScreenGui.Main.Pages.Search
 G2L["9c"] = Instance.new("Frame", G2L["78"]);
@@ -6027,36 +6024,40 @@ InitTabs.Saved = function()
         local Lines = EditorFrame:WaitForChild("Lines");
         
         local Method = "MouseButton1Click"; 
-        local autoSaveDebounce = nil 
 
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
         local originalPanelPos = Panel.Position
 
-        -- [[ 🔴 STABLE FOCUS TRANSITION ]] --
+        -- [[ 🔴 FOCUSED: STABLE DELTA ENGINE ]] --
         RealInput.Focused:Connect(function()
-            -- 1. HIDE NUMBERS & SHIFT TEXT LEFT
+            -- 1. HIDE NUMBERS & SHIFT TEXT
             Lines.Visible = false
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 2. SHRINK & MOVE BOX (Centered between tabs and keyboard)
+            -- 2. LOCK SCROLL PROPERTIES (Prevents bleeding)
+            EditorFrame.ClipsDescendants = true
+            EditorFrame.ScrollingDirection = Enum.ScrollingDirection.XY
+            
+            -- 3. SHRINK & POSITION BOX
             EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
             EditorFrame.Size = UDim2.new(0.96, 0, 0.33, 0) 
             
-            -- 3. ALIGN PANEL TO BOTTOM-RIGHT EDGE OF PINK BORDER
-            -- Since box starts at 0.22 and is 0.33 tall, it ends at 0.55
+            -- 4. ALIGN PANEL (FORCE TO FRONT)
+            Panel.ZIndex = 2000 
             Panel.Position = UDim2.new(0.98, 0, 0.55, 0)
-            Panel.ZIndex = 999 
+            Panel.Visible = true
 
-            -- 4. RAW STABILITY
+            -- 5. STABILITY
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
+            RealInput.TextWrapped = false 
             RealInput.Text = raw
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- RESTORE VIEW MODE
+            -- RESTORE
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
@@ -6078,7 +6079,7 @@ InitTabs.Saved = function()
             UpdateLineNumbers(RealInput, Lines)
         end)
 
-        -- CONNECT BUTTONS
+        -- Connect Buttons
         Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
         Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
         Panel:WaitForChild("Paste")[Method]:Connect(function()
