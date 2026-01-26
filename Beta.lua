@@ -1328,7 +1328,7 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- [[ 1. EDITOR SCROLLING FRAME ]] --
+-- [[ 1. EDITOR SCROLLING FRAME (THE MAIN BOX) ]] --
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
@@ -1336,32 +1336,26 @@ G2L["82"]["ZIndex"] = 1;
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["82"]["Size"] = UDim2.new(1, 0, 0.82, 0); -- 🔴 Adjusted height to avoid Tabs
-G2L["82"]["Position"] = UDim2.new(0, 0, 0.18, 0); -- 🔴 Starts lower to avoid overlapping top
+G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); 
+G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0); 
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
 G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
-G2L["82"]["ScrollBarThickness"] = 4;
-G2L["82"]["ClipsDescendants"] = true; -- 🔴 CRITICAL: This stops the bleeding
+G2L["82"]["ScrollBarThickness"] = 15; -- 🔴 DELTA THICKNESS
+G2L["82"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
+G2L["82"]["ClipsDescendants"] = true; -- 🔴 THE "WALL" THAT STOPS BLEEDING
 
--- [[ 2. LINE NUMBERS ]] --
-G2L["87"] = Instance.new("TextLabel", G2L["82"]);
-G2L["87"]["Name"] = [[Lines]];
-G2L["87"]["ZIndex"] = 2; 
-G2L["87"]["BorderSizePixel"] = 0;
-G2L["87"]["TextSize"] = 14;
-G2L["87"]["TextXAlignment"] = Enum.TextXAlignment.Right;
-G2L["87"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["87"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
-G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.SemiBold, Enum.FontStyle.Normal);
-G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
-G2L["87"]["BackgroundTransparency"] = 0.6; 
-G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
-G2L["87"]["Size"] = UDim2.new(0, 50, 0, 1000); 
-G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["87"]["Text"] = [[1]];
-G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
+-- [[ 2. CONTAINER DECORATION ]] --
+G2L["86"] = Instance.new("UICorner", G2L["82"]);
+G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
--- [[ 2. THE INPUT LAYER ]] --
+G2L["88"] = Instance.new("UIStroke", G2L["82"]);
+G2L["88"]["Transparency"] = 0.8;
+G2L["88"]["Thickness"] = 1;
+G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255);
+G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
+
+-- [[ 3. THE INPUT BOX (DELTA SETTINGS) ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["ZIndex"] = 3; 
@@ -1375,14 +1369,27 @@ G2L["83"]["ClearTextOnFocus"] = false;
 G2L["83"]["RichText"] = true; 
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["83"]["Position"] = UDim2.new(0, 55, 0, 5); -- 🔴 Offset 55px from left for line numbers
-G2L["83"]["Size"] = UDim2.new(1, -65, 1, -10); -- 🔴 Fills the space to the right
+G2L["83"]["TextWrapped"] = false; -- 🔴 DELTA: NO WRAPPING
+G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
+G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); -- Fills width minus the scrollbar
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
 G2L["83"]["Text"] = [[]];
 
--- [[ 4. UICORNER ]] --
-G2L["86"] = Instance.new("UICorner", G2L["82"]);
-G2L["86"]["CornerRadius"] = UDim.new(0, 16);
+-- [[ 4. LINE NUMBERS ]] --
+G2L["87"] = Instance.new("TextLabel", G2L["82"]);
+G2L["87"]["Name"] = [[Lines]];
+G2L["87"]["ZIndex"] = 2; 
+G2L["87"]["BorderSizePixel"] = 0;
+G2L["87"]["TextSize"] = 14;
+G2L["87"]["TextXAlignment"] = Enum.TextXAlignment.Right;
+G2L["87"]["TextYAlignment"] = Enum.TextYAlignment.Top;
+G2L["87"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
+G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.SemiBold, Enum.FontStyle.Normal);
+G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
+G2L["87"]["BackgroundTransparency"] = 1; -- Transparent so it doesn't look like a block
+G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
+G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); -- Matches container height
+G2L["87"]["Text"] = [[1]];
 
 -- [[ RESTORED DESIGN: PURPLE BORDER ]] --
 G2L["88"] = Instance.new("UIStroke", G2L["82"]);
@@ -6200,33 +6207,36 @@ InitTabs.Saved = function()
 	InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
-        local EditorFrame = Editor:WaitForChild("Editor");
+        local EditorFrame = Editor:WaitForChild("Editor"); -- The ScrollingFrame
         local RealInput = EditorFrame:WaitForChild("Input");
         
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
+        -- Store original size/pos to restore after editing
+        local originalSize = EditorFrame.Size
+        local originalPos = EditorFrame.Position
+
         -- [[ DELTA STABILITY LOGIC ]] --
         RealInput.Focused:Connect(function()
-            -- 1. Remove color tags for editing
+            -- 1. SHRINK CONTAINER (Your Request): Move it away from headers/borders
+            EditorFrame.Size = UDim2.new(1, -10, 0.75, 0) 
+            EditorFrame.Position = UDim2.new(0, 5, 0.22, 0)
+
+            -- 2. DELTA PATTERN: Remove tags and lock wrapping
             local raw = StripSyntax(RealInput.Text)
-            
-            -- 2. Turn off RichText to keep layout stable while typing
             RealInput.RichText = false 
+            RealInput.TextWrapped = false -- Ensure horizontal scrolling only
             RealInput.Text = raw
-            
-            -- 3. Lock layout during focus to prevent "Bleeding"
-            RealInput.AutomaticSize = Enum.AutomaticSize.None
-            RealInput.Size = UDim2.new(0, RealInput.TextBounds.X + 500, 0, RealInput.TextBounds.Y + 500)
         end)
 
         RealInput.FocusLost:Connect(function()
+            -- 1. RESTORE CONTAINER: Go back to full size
+            EditorFrame.Size = originalSize
+            EditorFrame.Position = originalPos
+
+            -- 2. APPLY COLORS
             local raw = RealInput.Text
-            
-            -- 1. Restore automatic scaling
-            RealInput.AutomaticSize = Enum.AutomaticSize.XY
-            
-            -- 2. Re-apply colors
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
 
@@ -6235,10 +6245,11 @@ InitTabs.Saved = function()
             end
         end)
 
+        -- Sync Line Numbers
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(RealInput, EditorFrame.Lines)
             
-            -- Auto-Save Debounce
+            -- Delta Style Debounced Autosave
             if not Data.Editor.EditingSavedFile then
                 if autoSaveDebounce then task.cancel(autoSaveDebounce) end
                 autoSaveDebounce = task.delay(1, function()
@@ -6248,10 +6259,8 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- Standard Buttons (Keep these as they are)
-        Panel.Execute[Method]:Connect(function()
-            UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))();
-        end)
+        -- Standard Buttons
+        Panel.Execute[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
         Panel.Delete[Method]:Connect(function() RealInput.Text = "" end)
         Panel.Paste[Method]:Connect(function()
             local clip = safeGetClipboard()
