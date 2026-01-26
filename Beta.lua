@@ -3609,6 +3609,14 @@ local function sanitizeFilename(name)
 end
 	-- [[ UPDATED UI EVENTS & LOGIC ]]
 local UIEvents = {};
+
+-- 🟢 PRE-INITIALIZE UIEvents.Search (Prevents nil error)
+UIEvents.Search = {
+    Refresh = function() 
+        -- Placeholder - Will be replaced when Search tab loads
+    end
+}
+
 	UIEvents = {
 		EditorTabs = {
 			getDuplicatedName = function(baseName, existingNames)
