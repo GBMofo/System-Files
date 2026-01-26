@@ -6217,103 +6217,89 @@ InitTabs.Saved = function()
     local TweenService = game:GetService("TweenService")
     local Method = "MouseButton1Click"
 
-    -- [[ 1. SNAPSHOT ORIGINAL STATE ]]
-    -- We save exactly how the UI looks right now so we can revert to it later
-    local OriginalFramePos = EditorFrame.Position
-    local OriginalFrameSize = EditorFrame.Size
+    -- [[ 1. STORE ORIGINAL STATE ]]
+    local OriginalPos = EditorFrame.Position
+    local OriginalSize = EditorFrame.Size
     
-    -- [[ 2. SETUP EDITING VARIABLES ]]
-    -- Moves frame to top (since Header hides) and shrinks height (for keyboard)
-    local FocusedFramePos = UDim2.new(0, 0, 0.02, 0) 
-    local FocusedFrameSize = UDim2.new(1, 0, 0.55, 0) 
+    -- [[ 2. FOCUS VARIABLES (The "Small Box" Mode) ]]
+    -- We make it smaller and move it up, exactly like your request
+    local FocusedPos = UDim2.new(0.05, 0, 0.02, 0) -- Moved to top-left
+    local FocusedSize = UDim2.new(0.9, 0, 0.35, 0) -- Smaller Height (35%) & Width (90%)
 
-    -- [[ 3. LOGIC: FOCUS MODE (EDITING) ]]
+    -- [[ 3. FOCUS EVENT (Clicking the Box) ]]
     Input.Focused:Connect(function()
-        -- A. CLEANUP: Strip syntax for raw editing
+        -- A. CLEAN VISUALS: Remove highlighting for raw editing
         local rawText = StripSyntax(Input.Text)
         Input.RichText = false
         Input.Text = rawText
         
-        -- B. FIX OVERFLOW: Enable Wrapping & Restrict Width
-        Input.TextWrapped = true            -- Forces text to stay inside screen
-        Input.AutomaticSize = Enum.AutomaticSize.Y -- Only grow downwards
-        Input.Size = UDim2.new(1, -10, 0, 0) -- Fill width (minus small margin)
+        -- B. CONTAINER LOGIC: Force text inside
+        Input.TextWrapped = true            -- Wrap text so it doesn't bleed out
+        Input.AutomaticSize = Enum.AutomaticSize.Y -- Grow down, not right
+        Input.Size = UDim2.new(1, 0, 0, 0) -- Fill the box width completely
         
-        -- C. FIX BUTTON OVERLAP: Add Padding
-        -- This pushes text away from the right side where buttons float
-        local pad = Input:FindFirstChild("EditPadding") or Instance.new("UIPadding", Input)
-        pad.Name = "EditPadding"
-        pad.PaddingRight = UDim.new(0, 140) -- ~140px buffer for buttons
+        -- C. REMOVE CLUTTER: Hide everything else to save space
+        if Main:FindFirstChild("Title") then Main.Title.Visible = false end
+        Lines.Visible = false -- Hide lines
+        Panel.Visible = false -- HIDE BUTTONS (Fixes the text disappearing bug)
         
-        -- D. HIDE UI: Make room for code
-        if Main:FindFirstChild("Title") then Main.Title.Visible = false end -- Hide "Hello GBM"
-        Lines.Visible = false -- Hide Line Numbers (as requested)
-        
-        -- E. ANIMATE: Move Editor Up
-        TweenService:Create(EditorFrame, TweenInfo.new(0.3), {
-            Position = FocusedFramePos,
-            Size = FocusedFrameSize
+        -- D. ANIMATE: Shrink and Move Up
+        TweenService:Create(EditorFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = FocusedPos,
+            Size = FocusedSize
         }):Play()
     end)
 
-    -- [[ 4. LOGIC: FOCUS LOST (VIEWING) ]]
+    -- [[ 4. FOCUS LOST EVENT (Closing Keyboard) ]]
     Input.FocusLost:Connect(function()
-        -- A. RESTORE VISUALS: Re-apply Syntax Highlighting
+        -- A. RESTORE VISUALS: Bring back highlighting
         local rawText = Input.Text
         Input.RichText = true
         Input.Text = ApplySyntax(rawText)
         
-        -- B. RESTORE SCROLLING: Revert to "Infinite Scroll" (Your Original Style)
+        -- B. RESTORE SCROLLING: Back to code editor mode
         Input.TextWrapped = false 
         Input.AutomaticSize = Enum.AutomaticSize.XY
-        Input.Size = UDim2.new(0, 1000, 0, 1000) -- Allow horizontal growth again
+        Input.Size = UDim2.new(0, 1000, 0, 0) -- Allow horizontal scroll again
         
-        -- C. REMOVE PADDING: Text can flow behind buttons again (Visual style)
-        if Input:FindFirstChild("EditPadding") then Input.EditPadding:Destroy() end
-        
-        -- D. RESTORE UI: Bring back Header & Lines
+        -- C. RESTORE UI
         if Main:FindFirstChild("Title") then Main.Title.Visible = true end
-        Lines.Visible = true 
+        Lines.Visible = true
+        Panel.Visible = true -- Bring buttons back
         
-        -- E. ANIMATE: Reset Editor Position
-        TweenService:Create(EditorFrame, TweenInfo.new(0.3), {
-            Position = OriginalFramePos,
-            Size = OriginalFrameSize
+        -- D. ANIMATE: Reset to Original
+        TweenService:Create(EditorFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Position = OriginalPos,
+            Size = OriginalSize
         }):Play()
         
-        -- Auto-Save
+        -- Auto-Save Logic
         if not Data.Editor.EditingSavedFile then
              UIEvents.EditorTabs.saveTab(nil, rawText, false)
         end
     end)
 
-    -- [[ 5. BUTTON EVENTS (Unchanged) ]]
-    
-    -- Execute
+    -- [[ 5. BUTTON CONNECTIONS (Standard Logic) ]]
     Panel.Execute[Method]:Connect(function()
         local rawCode = Input.ContentText
         if not rawCode or rawCode == "" then rawCode = StripSyntax(Input.Text) end
         UIEvents.Executor.RunCode(rawCode)()
     end)
 
-    -- Execute Clipboard
     Panel.ExecuteClipboard[Method]:Connect(function()
         local clipCode = safeGetClipboard()
         UIEvents.Executor.RunCode(clipCode)()
     end)
 
-    -- Clear
     Panel.Delete[Method]:Connect(function()
         Input.Text = ""
     end)
 
-    -- Save
     Panel.Save[Method]:Connect(function()
         local cleanText = StripSyntax(Input.Text)
         UIEvents.EditorTabs.saveTab(nil, cleanText, true)
     end)
     
-    -- Rename
     Panel.Rename[Method]:Connect(function()
         script.Parent.Popups.Visible = true
         local current = Data.Editor.CurrentTab or ""
@@ -6321,7 +6307,6 @@ InitTabs.Saved = function()
         script.Parent.Popups.Main.Input:CaptureFocus()
     end)
 
-    -- Paste
     Panel.Paste[Method]:Connect(function()
         local pastedText = safeGetClipboard()
         Input.RichText = false
@@ -6332,7 +6317,7 @@ InitTabs.Saved = function()
         end)
     end)
 
-    -- Line Numbers Update
+    -- Line Numbers Helper
     local function UpdateLines()
         local text = Input.Text
         local _, count = text:gsub("\n", "\n")
@@ -6343,14 +6328,12 @@ InitTabs.Saved = function()
     Input:GetPropertyChangedSignal("Text"):Connect(UpdateLines)
     UpdateLines()
 
-    -- Tab Create
     if Editor.Tabs:FindFirstChild("Create") then
         Editor.Tabs.Create.Activated:Connect(function()
             UIEvents.EditorTabs.createTab("Script", "")
         end)
     end
 
-    -- Popup Logic
     local Buttons = script.Parent.Popups.Main.Button
     Buttons["Confirm"][Method]:Connect(function()
         local newName = script.Parent.Popups.Main.Input.Text
