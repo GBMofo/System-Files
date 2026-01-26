@@ -1398,60 +1398,30 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 5. PANEL (BUTTONS) - GUARANTEED VISIBILITY ]] --
-G2L["89"] = Instance.new("Frame", G2L["7a"]); -- FIXED (was CanvasGroup)
-G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 100;
+-- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
+G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
+G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89"]["BackgroundTransparency"] = 0;
+G2L["89"]["BackgroundTransparency"] = 0; -- 🔴 Change from 0.3 to 0 (Solid)
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["89"]["Position"] = UDim2.new(0.98, 0, 0.98, 0);
-G2L["89"]["Size"] = UDim2.new(0.4, 0, 0.1, 0);
+G2L["89"]["Size"] = UDim2.new(0.42127, 0, 0.15, 0);
+G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
+G2L["89"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["89"]["Name"] = [[Panel]];
 
--- 🟢 NEW: Inner CanvasGroup for proper icon rendering
-local ButtonsContainer = Instance.new("CanvasGroup", G2L["89"])
-ButtonsContainer.Name = "ButtonsContainer"
-ButtonsContainer.Size = UDim2.new(1, 0, 1, 0)
-ButtonsContainer.BackgroundTransparency = 1
-ButtonsContainer.ZIndex = 101
-
-G2L["8a"] = Instance.new("UIListLayout", ButtonsContainer); -- 🔴 PARENT CHANGED
+-- (Standard Panel Contents re-added below to prevent breaking)
+G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
 G2L["8a"]["Padding"] = UDim.new(0, 6);
 G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
+G2L["8a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
-G2L["8b"] = Instance.new("UICorner", G2L["89"]); -- 🟢 STAYS WITH FRAME
+G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
--- [[ RESTORING YOUR ORIGINAL BUTTONS INSIDE ]] --
-local function createIcon(name, image, order, color)
-    local btn = Instance.new("TextButton", ButtonsContainer) -- 🔴 CHANGED PARENT
-    btn.Name = name
-    btn.Size = UDim2.new(0, 34, 0, 34)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
-    btn.LayoutOrder = order
-    local icon = Instance.new("ImageLabel", btn)
-    icon.Name = "Icon"
-    icon.Size = UDim2.new(0.65, 0, 0.65, 0)
-    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    icon.AnchorPoint = Vector2.new(0.5, 0.5)
-    icon.BackgroundTransparency = 1
-    icon.Image = image
-    icon.ImageColor3 = color or Color3.fromRGB(200, 200, 200)
-    return btn
-end
-
-G2L["90"] = createIcon("Rename", "rbxassetid://80861536658698", -1)
-G2L["92"] = createIcon("Paste", "rbxassetid://88661060655687", 0)
-G2L["94"] = createIcon("ExecuteClipboard", "rbxassetid://74812558983299", 0)
-G2L["96"] = createIcon("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
-G2L["98"] = createIcon("Save", "rbxassetid://81882572588470", -2)
-G2L["9a"] = createIcon("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
-
-G2L["8c"] = Instance.new("Frame", ButtonsContainer); -- 🔴 CHANGED PARENT
+G2L["8c"] = Instance.new("Frame", G2L["89"]);
 G2L["8c"]["ZIndex"] = 11;
 G2L["8c"]["BorderSizePixel"] = 0;
 G2L["8c"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
@@ -1464,7 +1434,7 @@ G2L["8c"]["BackgroundTransparency"] = 0.5;
 G2L["8d"] = Instance.new("UICorner", G2L["8c"]);
 G2L["8d"]["CornerRadius"] = UDim.new(1, 0);
 
-G2L["8e"] = Instance.new("Frame", ButtonsContainer); -- 🔴 CHANGED
+G2L["8e"] = Instance.new("Frame", G2L["89"]);
 G2L["8e"]["ZIndex"] = 11;
 G2L["8e"]["BorderSizePixel"] = 0;
 G2L["8e"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
@@ -1476,7 +1446,7 @@ G2L["8e"]["BackgroundTransparency"] = 0.5;
 G2L["8f"] = Instance.new("UICorner", G2L["8e"]);
 G2L["8f"]["CornerRadius"] = UDim.new(1, 0);
 
-G2L["90"] = Instance.new("TextButton", ButtonsContainer); -- 🔴 CHANGED
+G2L["90"] = Instance.new("TextButton", G2L["89"]);
 G2L["90"]["BorderSizePixel"] = 0;
 G2L["90"]["AutoButtonColor"] = false;
 G2L["90"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1504,7 +1474,7 @@ G2L["91"]["BackgroundTransparency"] = 1;
 G2L["91"]["Name"] = [[Icon]];
 G2L["91"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["92"] = Instance.new("TextButton", ButtonsContainer); -- 🔴 CHANGED
+G2L["92"] = Instance.new("TextButton", G2L["89"]);
 G2L["92"]["BorderSizePixel"] = 0;
 G2L["92"]["AutoButtonColor"] = false;
 G2L["92"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1531,7 +1501,7 @@ G2L["93"]["BackgroundTransparency"] = 1;
 G2L["93"]["Name"] = [[Icon]];
 G2L["93"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["94"] = Instance.new("TextButton", ButtonsContainer); -- 🔴 CHANGED
+G2L["94"] = Instance.new("TextButton", G2L["89"]);
 G2L["94"]["BorderSizePixel"] = 0;
 G2L["94"]["AutoButtonColor"] = false;
 G2L["94"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1558,7 +1528,7 @@ G2L["95"]["BackgroundTransparency"] = 1;
 G2L["95"]["Name"] = [[Icon]];
 G2L["95"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["96"] = Instance.new("TextButton", ButtonsContainer); -- 🔴 CHANGED
+G2L["96"] = Instance.new("TextButton", G2L["89"]);
 G2L["96"]["BorderSizePixel"] = 0;
 G2L["96"]["AutoButtonColor"] = false;
 G2L["96"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1586,7 +1556,7 @@ G2L["97"]["BackgroundTransparency"] = 1;
 G2L["97"]["Name"] = [[Icon]];
 G2L["97"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["98"] = Instance.new("TextButton", ButtonsContainer); -- 🔴 CHANGED
+G2L["98"] = Instance.new("TextButton", G2L["89"]);
 G2L["98"]["BorderSizePixel"] = 0;
 G2L["98"]["AutoButtonColor"] = false;
 G2L["98"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -6236,119 +6206,106 @@ InitTabs.Saved = function()
 	end;
 
 	InitTabs.Editor = function()
-    -- 🟢 GUARD: Prevent duplicate initialization
-    if InitTabs._EditorInitialized then 
-        return 
-    end
-    InitTabs._EditorInitialized = true
+        local Editor = Pages:WaitForChild("Editor");
+        local Panel = Editor:WaitForChild("Panel");
+        local EditorFrame = Editor:WaitForChild("Editor"); -- The ScrollingFrame
+        local RealInput = EditorFrame:WaitForChild("Input");
+        local Lines = EditorFrame:WaitForChild("Lines");
+        
+        local Method = "MouseButton1Click"; 
+        local autoSaveDebounce = nil 
 
-    local Editor = Pages:WaitForChild("Editor")
-    local Panel = Editor:WaitForChild("Panel")
-    local EditorFrame = Editor:WaitForChild("Editor")
-    local RealInput = EditorFrame:WaitForChild("Input")
-    local Lines = EditorFrame:WaitForChild("Lines")
+        -- Store original states to restore later
+        local originalSize = EditorFrame.Size
+        local originalPos = EditorFrame.Position
+        local originalTextPos = RealInput.Position
 
-    local Method = "MouseButton1Click"
-    local autoSaveDebounce = nil
-    -- Store original positions
-    local originalSize = EditorFrame.Size
-    local originalPos = EditorFrame.Position
-    local originalTextPos = RealInput.Position
-    local originalPanelPos = Panel.Position
+        -- [[ 🔴 DELTA EDIT MODE LOGIC ]] --
+        RealInput.Focused:Connect(function()
+            -- 1. HIDE LINE NUMBERS
+            Lines.Visible = false
+            
+            -- 2. MOVE TEXT TO THE LEFT (Utilize space)
+            RealInput.Position = UDim2.new(0, 10, 0, 0)
+            
+            -- 3. SHRINK BOX (Prevents cut-off & overlap)
+            -- We make width 0.9 to avoid the right panel buttons
+            -- We make height smaller and move it down to center it
+            EditorFrame.Size = UDim2.new(0.9, 0, 0.65, 0) 
+            EditorFrame.Position = UDim2.new(0.05, 0, 0.25, 0)
+            
+            -- 4. STABILITY RULES
+            local raw = StripSyntax(RealInput.Text)
+            RealInput.RichText = false 
+            RealInput.TextWrapped = false 
+            RealInput.Text = raw
+        end)
 
-    -- [[ :red_circle: REFINED FOCUS TRANSITION ]] --
-    RealInput.Focused:Connect(function()
-        Lines.Visible = false
-        RealInput.Position = UDim2.new(0, 10, 0, 0)
+        RealInput.FocusLost:Connect(function()
+            -- 1. SHOW LINE NUMBERS AGAIN
+            Lines.Visible = true
+            
+            -- 2. RESTORE TEXT POSITION
+            RealInput.Position = originalTextPos
+            
+            -- 3. RESTORE BOX SIZE & POSITION
+            EditorFrame.Size = originalSize
+            EditorFrame.Position = originalPos
 
-        EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0)
-        EditorFrame.Size = UDim2.new(0.96, 0, 0.34, 0)
+            -- 4. RE-APPLY VISUALS
+            local raw = RealInput.Text
+            RealInput.RichText = true
+            RealInput.Text = ApplySyntax(raw)
 
-        Panel.Visible = true
-        Panel.Position = UDim2.new(0.98, 0, 0.56, 0)
+            if not Data.Editor.EditingSavedFile then
+                UIEvents.EditorTabs.saveTab(nil, raw, false)
+            end
+        end)
 
-        local raw = StripSyntax(RealInput.Text)
-        RealInput.RichText = false
-        RealInput.TextWrapped = false
-        RealInput.Text = raw
-    end)
+        -- SYNC LOGIC (Matches typing to line numbers)
+        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(RealInput, Lines)
+            
+            -- Auto-Save Logic
+            if not Data.Editor.EditingSavedFile then
+                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+                autoSaveDebounce = task.delay(1, function()
+                    local cleanText = StripSyntax(RealInput.Text)
+                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+                end)
+            end
+        end)
 
-    RealInput.FocusLost:Connect(function()
-        Lines.Visible = true
-        RealInput.Position = originalTextPos
-        EditorFrame.Size = originalSize
-        EditorFrame.Position = originalPos
-        Panel.Position = originalPanelPos
+        -- Buttons (Execute, Save, etc)
+        Panel.Execute[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
+        Panel.Delete[Method]:Connect(function() RealInput.Text = "" end)
+        Panel.Paste[Method]:Connect(function()
+            local clip = safeGetClipboard()
+            RealInput.Text = clip
+            RealInput.RichText = true
+            RealInput.Text = ApplySyntax(clip)
+        end)
+        Panel.Save[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
+        Panel.Rename[Method]:Connect(function()
+            script.Parent.Popups.Visible = true
+            script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+            script.Parent.Popups.Main.Input:CaptureFocus()
+        end)
+        Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
-        local raw = RealInput.Text
-        RealInput.RichText = true
-        RealInput.Text = ApplySyntax(raw)
+        -- Popup Buttons
+        local Buttons = script.Parent.Popups.Main.Button
+        Buttons["Confirm"][Method]:Connect(function()
+            local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
+            if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
+                UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
+            end
+            script.Parent.Popups.Visible = false
+        end)
+        Buttons["Cancel"][Method]:Connect(function() script.Parent.Popups.Visible = false end)
 
-        if not Data.Editor.EditingSavedFile then
-            UIEvents.EditorTabs.saveTab(nil, raw, false)
-        end
-    end)
-
-    -- Sync logic
-    RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
-        if not Data.Editor.EditingSavedFile then
-            if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-            autoSaveDebounce = task.delay(1, function()
-                local cleanText = StripSyntax(RealInput.Text)
-                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-            end)
-        end
-    end)
-
-    -- Panel buttons (now inside ButtonsContainer)
-local ButtonsContainer = Panel:WaitForChild("ButtonsContainer")
-
-ButtonsContainer.Execute[Method]:Connect(function()
-    UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))()
-end)
-
-ButtonsContainer.Delete[Method]:Connect(function()
-    RealInput.Text = ""
-    UpdateLineNumbers(RealInput, Lines)
-end)
-
-ButtonsContainer.Paste[Method]:Connect(function()
-    local clip = safeGetClipboard()
-    RealInput.Text = clip
-    RealInput.RichText = true
-    RealInput.Text = ApplySyntax(clip)
-end)
-
-ButtonsContainer.Save[Method]:Connect(function()
-    UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true)
-end)
-
-ButtonsContainer.Rename[Method]:Connect(function()
-    script.Parent.Popups.Visible = true
-    script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-    script.Parent.Popups.Main.Input:CaptureFocus()
-end)
-
-    Editor.Tabs.Create.Activated:Connect(function()
-        UIEvents.EditorTabs.createTab("Script", "")
-    end)
-
-    local Buttons = script.Parent.Popups.Main.Button
-    Buttons["Confirm"][Method]:Connect(function()
-        local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
-        if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
-            UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
-        end
-        script.Parent.Popups.Visible = false
-    end)
-
-    Buttons["Cancel"][Method]:Connect(function()
-        script.Parent.Popups.Visible = false
-    end)
-
-    UpdateLineNumbers(RealInput, Lines)
-end
+    end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
