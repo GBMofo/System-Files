@@ -3495,10 +3495,31 @@ end
 		task.spawn(C_6);
 	end
 
--- 🟢 DYNAMIC SYNTAX COLORS (REPLACE THE OLD TABLE WITH THIS FUNCTION)
+-- 🟢 AUTO-GENERATE THEME SHADES (Moved up to fix nil value error)
+local function getThemeShades(baseColor)
+    baseColor = baseColor or Color3.fromRGB(160, 85, 255) -- Default purple
+    
+    local r, g, b = baseColor.R * 255, baseColor.G * 255, baseColor.B * 255
+    
+    return {
+        light = Color3.fromRGB(
+            math.min(255, r * 1.3),
+            math.min(255, g * 1.3),
+            math.min(255, b * 1.3)
+        ),
+        base = baseColor,
+        dark = Color3.fromRGB(
+            math.max(0, r * 0.7),
+            math.max(0, g * 0.7),
+            math.max(0, b * 0.7)
+        )
+    }
+end
+
+-- 🟢 DYNAMIC SYNTAX COLORS
 local function getSyntaxColors()
     local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-    local shades = getThemeShades(currentTheme)
+    local shades = getThemeShades(currentTheme) -- Now works because function is defined above
     
     local function toRGB(color)
         return string.format("rgb(%d,%d,%d)", 
@@ -3542,32 +3563,6 @@ local function getSyntaxColors()
         
         -- Important functions use light shade
         ["loadstring"] = toRGB(shades.light),
-    }
-end
-
--- 🟢 CLEANER
-local function StripSyntax(text)
-    return string.gsub(text, "<[^>]+>", "")
-end
-
--- 🟢 AUTO-GENERATE THEME SHADES (NEW FUNCTION - ADD THIS)
-local function getThemeShades(baseColor)
-    baseColor = baseColor or Color3.fromRGB(160, 85, 255) -- Default purple
-    
-    local r, g, b = baseColor.R * 255, baseColor.G * 255, baseColor.B * 255
-    
-    return {
-        light = Color3.fromRGB(
-            math.min(255, r * 1.3),
-            math.min(255, g * 1.3),
-            math.min(255, b * 1.3)
-        ),
-        base = baseColor,
-        dark = Color3.fromRGB(
-            math.max(0, r * 0.7),
-            math.max(0, g * 0.7),
-            math.max(0, b * 0.7)
-        )
     }
 end
 
