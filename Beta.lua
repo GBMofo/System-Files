@@ -1336,14 +1336,14 @@ G2L["82"]["ZIndex"] = 1;
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); -- Standard View Size
-G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0); -- Standard View Pos
+G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); 
+G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0); 
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
 G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
-G2L["82"]["ScrollBarThickness"] = 15; -- Thick scrollbar
+G2L["82"]["ScrollBarThickness"] = 15; -- 🔴 DELTA THICKNESS
 G2L["82"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true;
+G2L["82"]["ClipsDescendants"] = true; -- 🔴 THE "WALL" THAT STOPS BLEEDING
 
 -- [[ 2. CONTAINER DECORATION ]] --
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
@@ -1369,9 +1369,9 @@ G2L["83"]["ClearTextOnFocus"] = false;
 G2L["83"]["RichText"] = true; 
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["83"]["TextWrapped"] = false; 
+G2L["83"]["TextWrapped"] = false; -- 🔴 DELTA: NO WRAPPING
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); 
+G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); -- Fills width minus the scrollbar
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
 G2L["83"]["Text"] = [[]];
 
@@ -1386,33 +1386,63 @@ G2L["87"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["87"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
 G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.SemiBold, Enum.FontStyle.Normal);
 G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
-G2L["87"]["BackgroundTransparency"] = 1; 
+G2L["87"]["BackgroundTransparency"] = 1; -- Transparent so it doesn't look like a block
 G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
-G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); 
+G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); -- Matches container height
 G2L["87"]["Text"] = [[1]];
 
--- [[ 5. PANEL (BUTTONS) - IMAGE 1 STABLE STYLE ]] --
-G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
+-- [[ RESTORED DESIGN: PURPLE BORDER ]] --
+G2L["88"] = Instance.new("UIStroke", G2L["82"]);
+G2L["88"]["Transparency"] = 0.8;
+G2L["88"]["Thickness"] = 1;
+G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
+G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
+
+-- [[ 5. PANEL (RESTORED ORIGINAL ICONS) ]] --
+G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]); -- Parent is the Editor Page
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 50; -- High priority
+G2L["89"]["ZIndex"] = 100; -- 🔴 High ZIndex so it's always in front
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89"]["BackgroundTransparency"] = 0; 
+G2L["89"]["BackgroundTransparency"] = 0; -- Solid background to hide text behind it
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["89"]["Size"] = UDim2.new(0.42127, 0, 0.15, 0);
-G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
-G2L["89"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0); -- Original bottom-right position
+G2L["89"]["Size"] = UDim2.new(0.421, 0, 0.15, 0); 
 
--- (Standard Panel Contents re-added below to prevent breaking)
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
 G2L["8a"]["Padding"] = UDim.new(0, 6);
 G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
-G2L["8a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
+
+-- [[ RESTORING YOUR ORIGINAL BUTTONS INSIDE ]] --
+local function createIcon(name, image, order, color)
+    local btn = Instance.new("TextButton", G2L["89"])
+    btn.Name = name
+    btn.Size = UDim2.new(0, 34, 0, 34)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.LayoutOrder = order
+    local icon = Instance.new("ImageLabel", btn)
+    icon.Name = "Icon"
+    icon.Size = UDim2.new(0.65, 0, 0.65, 0)
+    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    icon.AnchorPoint = Vector2.new(0.5, 0.5)
+    icon.BackgroundTransparency = 1
+    icon.Image = image
+    icon.ImageColor3 = color or Color3.fromRGB(200, 200, 200)
+    return btn
+end
+
+G2L["90"] = createIcon("Rename", "rbxassetid://80861536658698", -1)
+G2L["92"] = createIcon("Paste", "rbxassetid://88661060655687", 0)
+G2L["94"] = createIcon("ExecuteClipboard", "rbxassetid://74812558983299", 0)
+G2L["96"] = createIcon("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
+G2L["98"] = createIcon("Save", "rbxassetid://81882572588470", -2)
+G2L["9a"] = createIcon("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
 
 G2L["8c"] = Instance.new("Frame", G2L["89"]);
 G2L["8c"]["ZIndex"] = 11;
@@ -6198,7 +6228,7 @@ InitTabs.Saved = function()
 		end)
 	end;
 
-InitTabs.Editor = function()
+	InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
         local EditorFrame = Editor:WaitForChild("Editor"); 
