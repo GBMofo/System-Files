@@ -1328,7 +1328,7 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- [[ 1. MAIN CONTAINER (ENABLES HORIZONTAL SCROLL) ]] --
+-- [[ 1. MAIN CONTAINER (DELTA SCROLLBAR FIX) ]] --
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["ZIndex"] = 1; 
@@ -1337,9 +1337,9 @@ G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); 
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0); 
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; -- 🔴 Enables both directions
-G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY; -- 🔴 The "Delta Scroll" Fix
-G2L["82"]["ScrollBarThickness"] = 15; 
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; -- 🔴 Forces scrollbars in both directions
+G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY; 
+G2L["82"]["ScrollBarThickness"] = 14; 
 G2L["82"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["ClipsDescendants"] = true; 
 
@@ -1349,14 +1349,13 @@ G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 G2L["88"] = Instance.new("UIStroke", G2L["82"]);
 G2L["88"]["Transparency"] = 0.8;
 G2L["88"]["Thickness"] = 1;
-G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255);
+G2L["88"]["Color"] = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 2. INPUT BOX (NO WRAPPING = SCROLL LEFT/RIGHT) ]] --
+-- [[ 2. INPUT BOX (FIXED MARGIN & NO WRAP) ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["ZIndex"] = 3; 
-G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["83"]["BackgroundTransparency"] = 1;
@@ -1366,9 +1365,9 @@ G2L["83"]["ClearTextOnFocus"] = false;
 G2L["83"]["RichText"] = true; 
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["83"]["TextWrapped"] = false; -- 🔴 CRITICAL: Disables wrap so it scrolls right
-G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0);
+G2L["83"]["TextWrapped"] = false; -- 🔴 CRITICAL: NO WRAP = HORIZONTAL SCROLL ENABLED
+G2L["83"]["Position"] = UDim2.new(0, 65, 0, 0); -- 🔴 Moved right for better margin
+G2L["83"]["Size"] = UDim2.new(0, 0, 0, 0); 
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
 
 -- [[ 3. LINE NUMBERS ]] --
@@ -1387,16 +1386,16 @@ G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0);
 G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); 
 G2L["87"]["Text"] = [[1]];
 
--- [[ 4. THE PANEL (RE-ADDED SPACERS) ]] --
+-- [[ 4. PANEL (THEME COMPATIBLE) ]] --
 G2L["89"] = Instance.new("Frame", G2L["7a"]); 
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 5000; 
-G2L["89"]["BorderSizePixel"] = 0;
+G2L["89"]["ZIndex"] = 2000; 
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["89"]["BackgroundTransparency"] = 0; 
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
 G2L["89"]["Size"] = UDim2.new(0.42, 0, 0.15, 0);
 G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
+G2L["89"]["BorderSizePixel"] = 0;
 
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
@@ -1408,20 +1407,21 @@ G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
--- THE TWO VERTICAL LINES (SPACERS)
+-- THE TWO VERTICAL LINES (NAMED FOR THEME SCRIPT)
 G2L["8c"] = Instance.new("Frame", G2L["89"]);
-G2L["8c"]["ZIndex"] = 5001; G2L["8c"]["BorderSizePixel"] = 0; G2L["8c"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255); G2L["8c"]["Size"] = UDim2.new(0, 1, 0.6, 0); G2L["8c"]["LayoutOrder"] = 1; G2L["8c"]["BackgroundTransparency"] = 0.5;
-G2L["8d"] = Instance.new("UICorner", G2L["8c"]); G2L["8d"]["CornerRadius"] = UDim.new(1, 0);
+G2L["8c"]["Name"] = [[ThemeSeparator]]; 
+G2L["8c"]["ZIndex"] = 2001; G2L["8c"]["Size"] = UDim2.new(0, 1, 0.6, 0); G2L["8c"]["LayoutOrder"] = 1; G2L["8c"]["BackgroundColor3"] = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
 
 G2L["8e"] = Instance.new("Frame", G2L["89"]);
-G2L["8e"]["ZIndex"] = 5001; G2L["8e"]["BorderSizePixel"] = 0; G2L["8e"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255); G2L["8e"]["Size"] = UDim2.new(0, 1, 0.6, 0); G2L["8e"]["BackgroundTransparency"] = 0.5;
-G2L["8f"] = Instance.new("UICorner", G2L["8e"]); G2L["8f"]["CornerRadius"] = UDim.new(1, 0);
+G2L["8e"]["Name"] = [[ThemeSeparator]]; 
+G2L["8e"]["ZIndex"] = 2001; G2L["8e"]["Size"] = UDim2.new(0, 1, 0.6, 0); G2L["8e"]["BackgroundColor3"] = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
 
+-- Buttons
 local function createIcon(name, id, order, color)
     local btn = Instance.new("TextButton", G2L["89"]); 
-    btn.Name = name; btn.Size = UDim2.new(0, 32, 0, 32); btn.BackgroundTransparency = 1; btn.Text = ""; btn.LayoutOrder = order; btn.ZIndex = 5005;
+    btn.Name = name; btn.Size = UDim2.new(0, 32, 0, 32); btn.BackgroundTransparency = 1; btn.Text = ""; btn.LayoutOrder = order; btn.ZIndex = 2005;
     local icon = Instance.new("ImageLabel", btn); 
-    icon.Name = "Icon"; icon.Size = UDim2.new(0.65,0,0.65,0); icon.Position = UDim2.new(0.5,0,0.5,0); icon.AnchorPoint = Vector2.new(0.5,0.5); icon.BackgroundTransparency = 1; icon.Image = id; icon.ZIndex = 5010;
+    icon.Name = "Icon"; icon.Size = UDim2.new(0.65,0,0.65,0); icon.Position = UDim2.new(0.5,0,0.5,0); icon.AnchorPoint = Vector2.new(0.5,0.5); icon.BackgroundTransparency = 1; icon.Image = id; icon.ZIndex = 2010;
     if color then icon.ImageColor3 = color end
     return btn
 end
@@ -4105,12 +4105,12 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 13. UPDATE DROPDOWN STROKES & SEPARATORS
-        for _, obj in pairs(Scripts:GetDescendants()) do
-            if obj.Name == "ThemeStroke" and obj:IsA("UIStroke") then
-                obj.Color = color
-            elseif obj.Name == "ThemeSeparator" and obj:IsA("Frame") then
+   -- 13. UPDATE DROPDOWN STROKES & SEPARATORS (FIXED: SEARCHES ENTIRE UI)
+        for _, obj in pairs(Main:GetDescendants()) do
+            if obj.Name == "ThemeSeparator" and obj:IsA("Frame") then
                 obj.BackgroundColor3 = color
+            elseif obj.Name == "ThemeStroke" and obj:IsA("UIStroke") then
+                obj.Color = color
             end
         end
         
@@ -6039,35 +6039,35 @@ InitTabs.Editor = function()
         local originalTextPos = RealInput.Position
         local originalPanelPos = Panel.Position
 
-        -- [[ 🔴 FOCUSED: DELTA TRANSITION ]] --
         RealInput.Focused:Connect(function()
-            -- 1. HIDE NUMBERS & SHIFT TEXT RIGHT (Fixes Left Overlay)
-            Lines.Visible = false
-            RealInput.Position = UDim2.new(0, 15, 0, 0) -- 🔴 Moved to 15 offset for margin
+            -- 1. SAVE CURRENT VIEW POSITION
+            local savedCanvasPos = EditorFrame.CanvasPosition
             
-            -- 2. SHRINK & MOVE BOX (Centered between tabs and keyboard)
+            -- 2. TRANSITION
+            Lines.Visible = false
+            RealInput.Position = UDim2.new(0, 20, 0, 0) -- Margin fix
             EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
             EditorFrame.Size = UDim2.new(0.96, 0, 0.33, 0) 
-            
-            -- 3. ALIGN PANEL & LOCK TO FRONT
             Panel.Position = UDim2.new(0.98, 0, 0.55, 0)
-            Panel.ZIndex = 5000 
-
-            -- 4. STABILITY + HORIZONTAL SCROLL
+            
+            -- 3. RAW MODE + SCROLL LOCK
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
-            RealInput.TextWrapped = false -- 🔴 Enables Left-to-Right scroll
+            RealInput.TextWrapped = false 
             RealInput.Text = raw
+            
+            -- 4. RESTORE VIEW (Ensures text doesn't disappear)
+            task.wait() -- Allow Roblox to calculate new size
+            EditorFrame.CanvasPosition = savedCanvasPos
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- RESTORE
+            -- RESTORE VIEW MODE
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
             Panel.Position = originalPanelPos
-            Panel.ZIndex = 5000
 
             local raw = RealInput.Text
             RealInput.RichText = true
