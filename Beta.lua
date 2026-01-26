@@ -1398,34 +1398,51 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 5. PANEL (BUTTONS) - FIXED PIXEL SIZE ]] --
-G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
+-- [[ 5. PANEL (RESTORED ORIGINAL ICONS) ]] --
+G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]); -- Parent is the Editor Page
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 100; -- High ZIndex to stay on top
+G2L["89"]["ZIndex"] = 100; -- 🔴 High ZIndex so it's always in front
 G2L["89"]["BorderSizePixel"] = 0;
-G2L["89"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 30); -- Slightly lighter for contrast
-G2L["89"]["BackgroundTransparency"] = 0; 
+G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
+G2L["89"]["BackgroundTransparency"] = 0; -- Solid background to hide text behind it
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
--- View Mode Position
-G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0); 
-G2L["89"]["Size"] = UDim2.new(0, 240, 0, 42); -- 🔴 FIXED PIXELS (Guarantees visibility)
+G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0); -- Original bottom-right position
+G2L["89"]["Size"] = UDim2.new(0.421, 0, 0.15, 0); 
 
--- Add a small stroke to the panel so it looks like it belongs to the editor
-local panelStroke = Instance.new("UIStroke", G2L["89"])
-panelStroke.Color = Color3.fromRGB(160, 85, 255)
-panelStroke.Transparency = 0.5
-panelStroke.Thickness = 1
-
--- (Standard Panel Contents re-added below to prevent breaking)
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
 G2L["8a"]["Padding"] = UDim.new(0, 6);
 G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
-G2L["8a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
+
+-- [[ RESTORING YOUR ORIGINAL BUTTONS INSIDE ]] --
+local function createIcon(name, image, order, color)
+    local btn = Instance.new("TextButton", G2L["89"])
+    btn.Name = name
+    btn.Size = UDim2.new(0, 34, 0, 34)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.LayoutOrder = order
+    local icon = Instance.new("ImageLabel", btn)
+    icon.Name = "Icon"
+    icon.Size = UDim2.new(0.65, 0, 0.65, 0)
+    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    icon.AnchorPoint = Vector2.new(0.5, 0.5)
+    icon.BackgroundTransparency = 1
+    icon.Image = image
+    icon.ImageColor3 = color or Color3.fromRGB(200, 200, 200)
+    return btn
+end
+
+G2L["90"] = createIcon("Rename", "rbxassetid://80861536658698", -1)
+G2L["92"] = createIcon("Paste", "rbxassetid://88661060655687", 0)
+G2L["94"] = createIcon("ExecuteClipboard", "rbxassetid://74812558983299", 0)
+G2L["96"] = createIcon("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
+G2L["98"] = createIcon("Save", "rbxassetid://81882572588470", -2)
+G2L["9a"] = createIcon("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
 
 G2L["8c"] = Instance.new("Frame", G2L["89"]);
 G2L["8c"]["ZIndex"] = 11;
@@ -6221,27 +6238,24 @@ InitTabs.Saved = function()
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
-        -- Store original positions
+        -- Store original states
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
-        local originalPanelPos = Panel.Position
 
-        -- [[ 🔴 REFINED FOCUS TRANSITION ]] --
+        -- [[ 🔴 DELTA STABILITY LOGIC ]] --
         RealInput.Focused:Connect(function()
-            -- 1. HIDE NUMBERS & SHIFT TEXT
+            -- 1. HIDE NUMBERS & MOVE TEXT LEFT (Fixes space issue)
             Lines.Visible = false
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 2. ADJUST BOX POSITION (Avoid touching Top Tabs)
-            -- Starts at 22% (Position) and is 34% Tall (Size)
-            -- Total Y-End is 56% (Safe from most keyboards)
-            EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) -- 🔴 Moved down from top
-            EditorFrame.Size = UDim2.new(0.96, 0, 0.34, 0)     -- 🔴 Shorter height
+            -- 2. SHRINK BOX (Fixes keyboard cut-off & Tab overlap)
+            -- Moved down to 0.22, height reduced to 0.38
+            EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+            EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
             
-            -- 3. ALIGN PANEL ICONS (Bottom right of the focused box)
-            Panel.Visible = true
-            Panel.Position = UDim2.new(0.98, 0, 0.56, 0) -- 🔴 Snaps to bottom edge of box
+            -- 3. ICON DEPTH
+            Panel.ZIndex = 100 -- Ensure buttons stay in front of text
 
             -- 4. STABILITY
             local raw = StripSyntax(RealInput.Text)
@@ -6251,12 +6265,11 @@ InitTabs.Saved = function()
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- 1. RESTORE ORIGINAL LAYOUT
+            -- 1. RESTORE LAYOUT
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
-            Panel.Position = originalPanelPos
 
             -- 2. RE-APPLY COLORS
             local raw = RealInput.Text
@@ -6268,7 +6281,7 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- SYNC LOGIC
+        -- Sync Line Numbers
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(RealInput, Lines)
             if not Data.Editor.EditingSavedFile then
@@ -6280,21 +6293,24 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- PANEL BUTTONS
-        Panel.Execute[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
-        Panel.Delete[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
-        Panel.Paste[Method]:Connect(function()
+        -- CONNECT BUTTONS (Pull from Panel)
+        Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
+        Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = "" end)
+        Panel:WaitForChild("Paste")[Method]:Connect(function()
             local clip = safeGetClipboard(); RealInput.Text = clip;
             RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
         end)
-        Panel.Save[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
-        Panel.Rename[Method]:Connect(function()
+        Panel:WaitForChild("Save")[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
+        Panel:WaitForChild("Rename")[Method]:Connect(function()
             script.Parent.Popups.Visible = true
             script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
             script.Parent.Popups.Main.Input:CaptureFocus()
         end)
+        Panel:WaitForChild("ExecuteClipboard")[Method]:Connect(function() UIEvents.Executor.RunCode(safeGetClipboard())() end)
+
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
+        -- Popup Controls
         local Buttons = script.Parent.Popups.Main.Button
         Buttons["Confirm"][Method]:Connect(function()
             local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
