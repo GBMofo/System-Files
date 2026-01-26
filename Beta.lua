@@ -1336,14 +1336,14 @@ G2L["82"]["ZIndex"] = 1;
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); 
-G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0); 
+G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); -- Standard View Size
+G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0); -- Standard View Pos
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
 G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
-G2L["82"]["ScrollBarThickness"] = 15; -- 🔴 DELTA THICKNESS
+G2L["82"]["ScrollBarThickness"] = 15; -- Thick scrollbar
 G2L["82"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; -- 🔴 THE "WALL" THAT STOPS BLEEDING
+G2L["82"]["ClipsDescendants"] = true;
 
 -- [[ 2. CONTAINER DECORATION ]] --
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
@@ -1369,9 +1369,9 @@ G2L["83"]["ClearTextOnFocus"] = false;
 G2L["83"]["RichText"] = true; 
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["83"]["TextWrapped"] = false; -- 🔴 DELTA: NO WRAPPING
+G2L["83"]["TextWrapped"] = false; 
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); -- Fills width minus the scrollbar
+G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); 
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
 G2L["83"]["Text"] = [[]];
 
@@ -1386,29 +1386,22 @@ G2L["87"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["87"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
 G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.SemiBold, Enum.FontStyle.Normal);
 G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
-G2L["87"]["BackgroundTransparency"] = 1; -- Transparent so it doesn't look like a block
+G2L["87"]["BackgroundTransparency"] = 1; 
 G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
-G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); -- Matches container height
+G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); 
 G2L["87"]["Text"] = [[1]];
 
--- [[ RESTORED DESIGN: PURPLE BORDER ]] --
-G2L["88"] = Instance.new("UIStroke", G2L["82"]);
-G2L["88"]["Transparency"] = 0.8;
-G2L["88"]["Thickness"] = 1;
-G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
-G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-
--- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
+-- [[ 5. PANEL (BUTTONS) - IMAGE 1 STABLE STYLE ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
-G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
+G2L["89"]["Name"] = [[Panel]];
+G2L["89"]["ZIndex"] = 50; -- High priority
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89"]["BackgroundTransparency"] = 0; -- 🔴 Change from 0.3 to 0 (Solid)
+G2L["89"]["BackgroundTransparency"] = 0; 
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
 G2L["89"]["Size"] = UDim2.new(0.42127, 0, 0.15, 0);
 G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
 G2L["89"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["89"]["Name"] = [[Panel]];
 
 -- (Standard Panel Contents re-added below to prevent breaking)
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
@@ -6205,54 +6198,42 @@ InitTabs.Saved = function()
 		end)
 	end;
 
-	InitTabs.Editor = function()
+InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
-        local EditorFrame = Editor:WaitForChild("Editor"); -- The ScrollingFrame
+        local EditorFrame = Editor:WaitForChild("Editor"); 
         local RealInput = EditorFrame:WaitForChild("Input");
         local Lines = EditorFrame:WaitForChild("Lines");
         
         local Method = "MouseButton1Click"; 
-        local autoSaveDebounce = nil 
 
-        -- Store original states to restore later
+        -- Save View-Mode State
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
 
-        -- [[ 🔴 DELTA EDIT MODE LOGIC ]] --
+        -- [[ 🔴 FOCUSED: APPLY IMAGE 2 LAYOUT ]] --
         RealInput.Focused:Connect(function()
-            -- 1. HIDE LINE NUMBERS
             Lines.Visible = false
-            
-            -- 2. MOVE TEXT TO THE LEFT (Utilize space)
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 3. SHRINK BOX (Prevents cut-off & overlap)
-            -- We make width 0.9 to avoid the right panel buttons
-            -- We make height smaller and move it down to center it
-            EditorFrame.Size = UDim2.new(0.9, 0, 0.65, 0) 
-            EditorFrame.Position = UDim2.new(0.05, 0, 0.25, 0)
+            -- SHRINK & MOVE BOX (Image 2 Position)
+            EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+            EditorFrame.Size = UDim2.new(0.96, 0, 0.35, 0) 
             
-            -- 4. STABILITY RULES
+            -- Delta Pattern Stability
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
-            RealInput.TextWrapped = false 
             RealInput.Text = raw
         end)
 
+        -- [[ 🟢 FOCUS LOST: RESTORE VIEW MODE ]] --
         RealInput.FocusLost:Connect(function()
-            -- 1. SHOW LINE NUMBERS AGAIN
             Lines.Visible = true
-            
-            -- 2. RESTORE TEXT POSITION
             RealInput.Position = originalTextPos
-            
-            -- 3. RESTORE BOX SIZE & POSITION
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
 
-            -- 4. RE-APPLY VISUALS
             local raw = RealInput.Text
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
@@ -6262,38 +6243,27 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- SYNC LOGIC (Matches typing to line numbers)
-        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-            UpdateLineNumbers(RealInput, Lines)
-            
-            -- Auto-Save Logic
-            if not Data.Editor.EditingSavedFile then
-                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-                autoSaveDebounce = task.delay(1, function()
-                    local cleanText = StripSyntax(RealInput.Text)
-                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-                end)
-            end
+        -- Connect Buttons (Restored standard logic)
+        Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
+        Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
+        Panel:WaitForChild("Paste")[Method]:Connect(function()
+            local clip = safeGetClipboard(); RealInput.Text = clip;
+            RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
         end)
-
-        -- Buttons (Execute, Save, etc)
-        Panel.Execute[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
-        Panel.Delete[Method]:Connect(function() RealInput.Text = "" end)
-        Panel.Paste[Method]:Connect(function()
-            local clip = safeGetClipboard()
-            RealInput.Text = clip
-            RealInput.RichText = true
-            RealInput.Text = ApplySyntax(clip)
-        end)
-        Panel.Save[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
-        Panel.Rename[Method]:Connect(function()
+        Panel:WaitForChild("Save")[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
+        Panel:WaitForChild("Rename")[Method]:Connect(function()
             script.Parent.Popups.Visible = true
             script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
             script.Parent.Popups.Main.Input:CaptureFocus()
         end)
+        Panel:WaitForChild("ExecuteClipboard")[Method]:Connect(function() UIEvents.Executor.RunCode(safeGetClipboard())() end)
+
+        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(RealInput, Lines)
+        end)
+
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
-        -- Popup Buttons
         local Buttons = script.Parent.Popups.Main.Button
         Buttons["Confirm"][Method]:Connect(function()
             local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
