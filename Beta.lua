@@ -6208,87 +6208,91 @@ InitTabs.Saved = function()
 	end;
 
 	InitTabs.Editor = function()
-    local EditorPage = Pages:WaitForChild("Editor") -- Main Frame
-    local Tabs = EditorPage:WaitForChild("Tabs")    -- The Tab Bar
-    local Panel = EditorPage:WaitForChild("Panel")  -- The Buttons
-    local EditorFrame = EditorPage:WaitForChild("Editor") -- The ScrollingFrame
+    local Editor = Pages:WaitForChild("Editor")
+    local Panel = Editor:WaitForChild("Panel")
+    local EditorFrame = Editor:WaitForChild("Editor") -- The ScrollingFrame
     local Input = EditorFrame:WaitForChild("Input")   -- The TextBox
     local Lines = EditorFrame:WaitForChild("Lines")   -- The Line Numbers
     
     local TweenService = game:GetService("TweenService")
     local Method = "MouseButton1Click"
 
-    -- [[ 1. CAPTURE ORIGINAL STATE ]]
+    -- [[ 1. SNAPSHOT ORIGINAL STATE ]]
     local OriginalPos = EditorFrame.Position
     local OriginalSize = EditorFrame.Size
     
-    -- [[ 2. FOCUS STATE VARIABLES ]]
-    -- Moves to top-left, shrinks height to 45% (perfect for mobile keyboard)
+    -- [[ 2. FOCUS STATE (Editing Mode) ]]
     local FocusedPos = UDim2.new(0.02, 0, 0.02, 0)
     local FocusedSize = UDim2.new(0.96, 0, 0.45, 0) 
 
-    -- [[ 3. FOCUS EVENT (EDITING MODE) ]]
+    -- [[ 3. FOCUS EVENT (Start Editing) ]]
     Input.Focused:Connect(function()
-        -- A. HIDE EVERYTHING
+        -- A. CLEAN UP UI
         if Main:FindFirstChild("Title") then Main.Title.Visible = false end
-        Tabs.Visible = false   -- Hide Tabs (Requested)
-        Lines.Visible = false  -- Hide Line Numbers
-        Panel.Visible = false  -- Hide Buttons
+        Lines.Visible = false
+        Panel.Visible = false -- Hide buttons
+        if Editor:FindFirstChild("Tabs") then Editor.Tabs.Visible = false end -- Hide Tabs
+
+        -- B. PREPARE TEXT
+        local rawText = StripSyntax(Input.Text)
+        Input.RichText = false
+        Input.Text = rawText
         
-        -- B. TEXT BEHAVIOR (Wrap Text)
-        Input.RichText = false -- Raw text for editing
-        Input.TextWrapped = true -- Wrap long lines so they stay on screen
-        
-        -- C. SCROLLING FIX (Vertical Only)
+        -- Wait a split second for the UI to clear up before resizing
+        -- This prevents the text from glitching out
+        task.wait() 
+
+        -- C. CONFIGURE FOR WRAPPING (Mobile Style)
+        -- We disable horizontal scroll and force vertical growth
         EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
         EditorFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
         
-        -- D. SIZE FIX (Ensure text is visible)
+        -- Make Input fill the width properly (minus padding)
         Input.AutomaticSize = Enum.AutomaticSize.Y
-        -- Width = 100%, Height = 0 (Auto grows)
-        Input.Size = UDim2.new(1, 0, 0, 0) 
-        Input.Position = UDim2.new(0, 5, 0, 0) -- Slight padding from left edge
+        Input.Size = UDim2.new(1, -10, 0, 0) 
+        Input.Position = UDim2.new(0, 5, 0, 0) 
+        Input.TextWrapped = true
 
-        -- E. ANIMATE
-        TweenService:Create(EditorFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        -- D. ANIMATE FRAME
+        TweenService:Create(EditorFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Position = FocusedPos,
             Size = FocusedSize
         }):Play()
     end)
 
-    -- [[ 4. FOCUS LOST EVENT (VIEWING MODE) ]]
+    -- [[ 4. FOCUS LOST EVENT (Stop Editing) ]]
     Input.FocusLost:Connect(function()
-        -- A. RESTORE TEXT (Syntax Highlight)
-        local raw = Input.Text
+        -- A. RESTORE TEXT STYLE
+        local rawText = Input.Text
         Input.RichText = true
-        Input.Text = ApplySyntax(raw)
+        Input.Text = ApplySyntax(rawText)
         
-        -- B. RESTORE UI
-        if Main:FindFirstChild("Title") then Main.Title.Visible = true end
-        Tabs.Visible = true    -- Show Tabs
-        Lines.Visible = true   -- Show Line Numbers
-        Panel.Visible = true   -- Show Buttons
+        -- B. RESTORE LAYOUT (Code Editor Style)
+        Input.TextWrapped = false 
         
-        -- C. RESTORE SCROLLING (Infinite Horizontal)
-        Input.TextWrapped = false -- Unwrap text (Code style)
-        
-        -- Switch back to 2D scrolling
+        -- Re-enable Infinite Horizontal Scroll
         EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.XY
         
-        -- Restore Size logic for horizontal scrolling
+        -- Restore Input Size for horizontal scrolling
         Input.AutomaticSize = Enum.AutomaticSize.XY
-        Input.Size = UDim2.new(0, 1000, 0, 0) -- Base width to allow growth
-        Input.Position = UDim2.new(0, 40, 0, 0) -- Offset for line numbers
+        Input.Size = UDim2.new(0, 1000, 0, 0) 
+        Input.Position = UDim2.new(0, 38, 0, 0) -- Restore offset for lines
+
+        -- C. RESTORE UI ELEMENTS
+        if Main:FindFirstChild("Title") then Main.Title.Visible = true end
+        Lines.Visible = true
+        Panel.Visible = true
+        if Editor:FindFirstChild("Tabs") then Editor.Tabs.Visible = true end
 
         -- D. ANIMATE BACK
-        TweenService:Create(EditorFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        TweenService:Create(EditorFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Position = OriginalPos,
             Size = OriginalSize
         }):Play()
         
         -- E. AUTO-SAVE
         if not Data.Editor.EditingSavedFile then
-             UIEvents.EditorTabs.saveTab(nil, raw, false)
+             UIEvents.EditorTabs.saveTab(nil, rawText, false)
         end
     end)
 
@@ -6328,7 +6332,7 @@ InitTabs.Saved = function()
         end)
     end)
 
-    -- Line Numbers Update
+    -- Line Numbers
     local function UpdateLines()
         local text = Input.Text
         local _, count = text:gsub("\n", "\n")
@@ -6339,8 +6343,8 @@ InitTabs.Saved = function()
     Input:GetPropertyChangedSignal("Text"):Connect(UpdateLines)
     UpdateLines()
 
-    if EditorPage.Tabs:FindFirstChild("Create") then
-        EditorPage.Tabs.Create.Activated:Connect(function()
+    if Editor.Tabs:FindFirstChild("Create") then
+        Editor.Tabs.Create.Activated:Connect(function()
             UIEvents.EditorTabs.createTab("Script", "")
         end)
     end
