@@ -6208,96 +6208,107 @@ InitTabs.Saved = function()
 	end;
 
 	InitTabs.Editor = function()
-    local Editor = Pages:WaitForChild("Editor")
-    local Panel = Editor:WaitForChild("Panel")
-    local EditorFrame = Editor:WaitForChild("Editor") -- The ScrollingFrame
+    local EditorPage = Pages:WaitForChild("Editor") -- Main Frame
+    local Tabs = EditorPage:WaitForChild("Tabs")    -- The Tab Bar
+    local Panel = EditorPage:WaitForChild("Panel")  -- The Buttons
+    local EditorFrame = EditorPage:WaitForChild("Editor") -- The ScrollingFrame
     local Input = EditorFrame:WaitForChild("Input")   -- The TextBox
     local Lines = EditorFrame:WaitForChild("Lines")   -- The Line Numbers
     
     local TweenService = game:GetService("TweenService")
     local Method = "MouseButton1Click"
 
-    -- [[ 1. STORE ORIGINAL STATE ]]
+    -- [[ 1. CAPTURE ORIGINAL STATE ]]
     local OriginalPos = EditorFrame.Position
     local OriginalSize = EditorFrame.Size
     
-    -- [[ 2. FOCUS VARIABLES (The "Small Box" Mode) ]]
-    -- We make it smaller and move it up, exactly like your request
-    local FocusedPos = UDim2.new(0.05, 0, 0.02, 0) -- Moved to top-left
-    local FocusedSize = UDim2.new(0.9, 0, 0.35, 0) -- Smaller Height (35%) & Width (90%)
+    -- [[ 2. FOCUS STATE VARIABLES ]]
+    -- Moves to top-left, shrinks height to 45% (perfect for mobile keyboard)
+    local FocusedPos = UDim2.new(0.02, 0, 0.02, 0)
+    local FocusedSize = UDim2.new(0.96, 0, 0.45, 0) 
 
-    -- [[ 3. FOCUS EVENT (Clicking the Box) ]]
+    -- [[ 3. FOCUS EVENT (EDITING MODE) ]]
     Input.Focused:Connect(function()
-        -- A. CLEAN VISUALS: Remove highlighting for raw editing
-        local rawText = StripSyntax(Input.Text)
-        Input.RichText = false
-        Input.Text = rawText
-        
-        -- B. CONTAINER LOGIC: Force text inside
-        Input.TextWrapped = true            -- Wrap text so it doesn't bleed out
-        Input.AutomaticSize = Enum.AutomaticSize.Y -- Grow down, not right
-        Input.Size = UDim2.new(1, 0, 0, 0) -- Fill the box width completely
-        
-        -- C. REMOVE CLUTTER: Hide everything else to save space
+        -- A. HIDE EVERYTHING
         if Main:FindFirstChild("Title") then Main.Title.Visible = false end
-        Lines.Visible = false -- Hide lines
-        Panel.Visible = false -- HIDE BUTTONS (Fixes the text disappearing bug)
+        Tabs.Visible = false   -- Hide Tabs (Requested)
+        Lines.Visible = false  -- Hide Line Numbers
+        Panel.Visible = false  -- Hide Buttons
         
-        -- D. ANIMATE: Shrink and Move Up
-        TweenService:Create(EditorFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        -- B. TEXT BEHAVIOR (Wrap Text)
+        Input.RichText = false -- Raw text for editing
+        Input.TextWrapped = true -- Wrap long lines so they stay on screen
+        
+        -- C. SCROLLING FIX (Vertical Only)
+        EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+        EditorFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+        
+        -- D. SIZE FIX (Ensure text is visible)
+        Input.AutomaticSize = Enum.AutomaticSize.Y
+        -- Width = 100%, Height = 0 (Auto grows)
+        Input.Size = UDim2.new(1, 0, 0, 0) 
+        Input.Position = UDim2.new(0, 5, 0, 0) -- Slight padding from left edge
+
+        -- E. ANIMATE
+        TweenService:Create(EditorFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Position = FocusedPos,
             Size = FocusedSize
         }):Play()
     end)
 
-    -- [[ 4. FOCUS LOST EVENT (Closing Keyboard) ]]
+    -- [[ 4. FOCUS LOST EVENT (VIEWING MODE) ]]
     Input.FocusLost:Connect(function()
-        -- A. RESTORE VISUALS: Bring back highlighting
-        local rawText = Input.Text
+        -- A. RESTORE TEXT (Syntax Highlight)
+        local raw = Input.Text
         Input.RichText = true
-        Input.Text = ApplySyntax(rawText)
+        Input.Text = ApplySyntax(raw)
         
-        -- B. RESTORE SCROLLING: Back to code editor mode
-        Input.TextWrapped = false 
-        Input.AutomaticSize = Enum.AutomaticSize.XY
-        Input.Size = UDim2.new(0, 1000, 0, 0) -- Allow horizontal scroll again
-        
-        -- C. RESTORE UI
+        -- B. RESTORE UI
         if Main:FindFirstChild("Title") then Main.Title.Visible = true end
-        Lines.Visible = true
-        Panel.Visible = true -- Bring buttons back
+        Tabs.Visible = true    -- Show Tabs
+        Lines.Visible = true   -- Show Line Numbers
+        Panel.Visible = true   -- Show Buttons
         
-        -- D. ANIMATE: Reset to Original
-        TweenService:Create(EditorFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        -- C. RESTORE SCROLLING (Infinite Horizontal)
+        Input.TextWrapped = false -- Unwrap text (Code style)
+        
+        -- Switch back to 2D scrolling
+        EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.XY
+        
+        -- Restore Size logic for horizontal scrolling
+        Input.AutomaticSize = Enum.AutomaticSize.XY
+        Input.Size = UDim2.new(0, 1000, 0, 0) -- Base width to allow growth
+        Input.Position = UDim2.new(0, 40, 0, 0) -- Offset for line numbers
+
+        -- D. ANIMATE BACK
+        TweenService:Create(EditorFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
             Position = OriginalPos,
             Size = OriginalSize
         }):Play()
         
-        -- Auto-Save Logic
+        -- E. AUTO-SAVE
         if not Data.Editor.EditingSavedFile then
-             UIEvents.EditorTabs.saveTab(nil, rawText, false)
+             UIEvents.EditorTabs.saveTab(nil, raw, false)
         end
     end)
 
-    -- [[ 5. BUTTON CONNECTIONS (Standard Logic) ]]
+    -- [[ 5. BUTTONS (Standard Logic) ]]
     Panel.Execute[Method]:Connect(function()
-        local rawCode = Input.ContentText
-        if not rawCode or rawCode == "" then rawCode = StripSyntax(Input.Text) end
-        UIEvents.Executor.RunCode(rawCode)()
+        local c = Input.ContentText
+        if not c or c == "" then c = StripSyntax(Input.Text) end
+        UIEvents.Executor.RunCode(c)()
     end)
 
     Panel.ExecuteClipboard[Method]:Connect(function()
-        local clipCode = safeGetClipboard()
-        UIEvents.Executor.RunCode(clipCode)()
+        local clip = safeGetClipboard()
+        UIEvents.Executor.RunCode(clip)()
     end)
 
-    Panel.Delete[Method]:Connect(function()
-        Input.Text = ""
-    end)
+    Panel.Delete[Method]:Connect(function() Input.Text = "" end)
 
     Panel.Save[Method]:Connect(function()
-        local cleanText = StripSyntax(Input.Text)
-        UIEvents.EditorTabs.saveTab(nil, cleanText, true)
+        local c = StripSyntax(Input.Text)
+        UIEvents.EditorTabs.saveTab(nil, c, true)
     end)
     
     Panel.Rename[Method]:Connect(function()
@@ -6308,16 +6319,16 @@ InitTabs.Saved = function()
     end)
 
     Panel.Paste[Method]:Connect(function()
-        local pastedText = safeGetClipboard()
+        local pasted = safeGetClipboard()
         Input.RichText = false
-        Input.Text = pastedText
+        Input.Text = pasted
         task.delay(0.05, function()
             Input.RichText = true
-            Input.Text = ApplySyntax(pastedText)
+            Input.Text = ApplySyntax(pasted)
         end)
     end)
 
-    -- Line Numbers Helper
+    -- Line Numbers Update
     local function UpdateLines()
         local text = Input.Text
         local _, count = text:gsub("\n", "\n")
@@ -6328,8 +6339,8 @@ InitTabs.Saved = function()
     Input:GetPropertyChangedSignal("Text"):Connect(UpdateLines)
     UpdateLines()
 
-    if Editor.Tabs:FindFirstChild("Create") then
-        Editor.Tabs.Create.Activated:Connect(function()
+    if EditorPage.Tabs:FindFirstChild("Create") then
+        EditorPage.Tabs.Create.Activated:Connect(function()
             UIEvents.EditorTabs.createTab("Script", "")
         end)
     end
