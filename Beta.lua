@@ -6208,217 +6208,137 @@ InitTabs.Saved = function()
 	end;
 
 	InitTabs.Editor = function()
-    local EditorPage = Pages:WaitForChild("Editor")
-    local TweenService = game:GetService("TweenService")
-    
-    -- [[ 1. CLEANUP OLD UI ]] 
-    -- We remove the old panel and editor frame to build the new stable one
-    for _, child in pairs(EditorPage:GetChildren()) do
-        if child.Name ~= "Tabs" then child:Destroy() end
-    end
-    
-    -- [[ 2. MAIN CONTAINER ]]
-    -- This holds the code editor and handles the expansion animation
-    local Container = Instance.new("Frame", EditorPage)
-    Container.Name = "CodeContainer"
-    Container.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
-    Container.Size = UDim2.new(0.96, 0, 0.66, 0) -- Leaves space for Header & Buttons
-    Container.Position = UDim2.new(0.02, 0, 0.17, 0)
-    Container.BorderSizePixel = 0
-    Container.ZIndex = 1
-    
-    local cCorner = Instance.new("UICorner", Container)
-    cCorner.CornerRadius = UDim.new(0, 10)
-    
-    local cStroke = Instance.new("UIStroke", Container)
-    cStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-    cStroke.Transparency = 0.8
-    cStroke.Thickness = 1
+        local Editor = Pages:WaitForChild("Editor");
+        local Panel = Editor:WaitForChild("Panel");
+        local EditorFrame = Editor:WaitForChild("Editor");
+        local Method = "MouseButton1Click"; 
 
-    -- [[ 3. SCROLLING FRAME (Fixes Infinite Text Glitch) ]]
-    local Scroller = Instance.new("ScrollingFrame", Container)
-    Scroller.Name = "Scroller"
-    Scroller.BackgroundTransparency = 1
-    Scroller.Size = UDim2.new(1, -10, 1, -10)
-    Scroller.Position = UDim2.new(0, 5, 0, 5)
-    Scroller.CanvasSize = UDim2.new(0, 0, 0, 0)
-    Scroller.AutomaticCanvasSize = Enum.AutomaticSize.XY -- Auto-grow logic
-    Scroller.ScrollBarThickness = 4
-    Scroller.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
-    Scroller.ClipsDescendants = true -- Cuts off long text cleanly
-    Scroller.ZIndex = 2
-    
-    -- [[ 4. LINE NUMBERS ]]
-    local Lines = Instance.new("TextLabel", Scroller)
-    Lines.Name = "Lines"
-    Lines.BackgroundTransparency = 1
-    Lines.Size = UDim2.new(0, 30, 1, 0)
-    Lines.AutomaticSize = Enum.AutomaticSize.Y
-    Lines.Font = Enum.Font.RobotoMono
-    Lines.TextSize = 14
-    Lines.TextColor3 = Color3.fromRGB(100, 100, 110)
-    Lines.TextYAlignment = Enum.TextYAlignment.Top
-    Lines.TextXAlignment = Enum.TextXAlignment.Right
-    Lines.Text = "1"
-    Lines.ZIndex = 3
-    
-    -- [[ 5. INPUT BOX ]]
-    local Input = Instance.new("TextBox", Scroller)
-    Input.Name = "Input"
-    Input.BackgroundTransparency = 1
-    Input.Position = UDim2.new(0, 38, 0, 0)
-    Input.Size = UDim2.new(0, 2000, 1, 0) -- Wide enough for long code
-    Input.AutomaticSize = Enum.AutomaticSize.Y
-    Input.Font = Enum.Font.RobotoMono
-    Input.TextSize = 14
-    Input.TextColor3 = Color3.fromRGB(230, 230, 230)
-    Input.TextYAlignment = Enum.TextYAlignment.Top
-    Input.TextXAlignment = Enum.TextXAlignment.Left
-    Input.ClearTextOnFocus = false
-    Input.MultiLine = true
-    Input.TextWrapped = false -- Prevents wrapping (Standard for code editors)
-    Input.RichText = true -- Keeps highlighting
-    Input.Text = "-- Welcome to Punk X"
-    Input.ZIndex = 3
-    
-    -- [[ 6. ACTION PANEL (Docked at Bottom) ]]
-    local Panel = Instance.new("Frame", EditorPage)
-    Panel.Name = "Panel"
-    Panel.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
-    Panel.Size = UDim2.new(0.96, 0, 0.12, 0)
-    Panel.Position = UDim2.new(0.02, 0, 0.86, 0) -- Permanently docked at bottom
-    Panel.BorderSizePixel = 0
-    Panel.ZIndex = 5
-    
-    local pCorner = Instance.new("UICorner", Panel)
-    pCorner.CornerRadius = UDim.new(0, 10)
-    
-    local pLayout = Instance.new("UIListLayout", Panel)
-    pLayout.FillDirection = Enum.FillDirection.Horizontal
-    pLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-    pLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-    pLayout.Padding = UDim.new(0, 8)
-    
-    -- Button Creator
-    local function mkBtn(name, color)
-        local btn = Instance.new("TextButton", Panel)
-        btn.Name = name
-        btn.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
-        btn.Size = UDim2.new(0.22, 0, 0.7, 0)
-        btn.Text = name
-        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-        btn.Font = Enum.Font.GothamBold
-        btn.TextSize = 10
-        btn.AutoButtonColor = false
-        
-        local bc = Instance.new("UICorner", btn)
-        bc.CornerRadius = UDim.new(0, 6)
-        
-        local bs = Instance.new("UIStroke", btn)
-        bs.Color = color
-        bs.Transparency = 0.5
-        bs.Thickness = 1
-        bs.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-        
-        return btn
-    end
-    
-    -- Buttons
-    local ExecBtn = mkBtn("EXECUTE", getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255))
-    local ClearBtn = mkBtn("CLEAR", Color3.fromRGB(255, 80, 80))
-    local CopyBtn = mkBtn("COPY", Color3.fromRGB(100, 100, 100))
-    local SaveBtn = mkBtn("SAVE", Color3.fromRGB(80, 255, 80)) -- Added Save back
-    
-    -- [[ 7. FOCUS MODE ANIMATION VARIABLES ]]
-    local OriginalPos = Container.Position
-    local OriginalSize = Container.Size
-    
-    -- Expanded State (Hides Header/Tabs)
-    local FocusedPos = UDim2.new(0.02, 0, 0.02, 0) 
-    local FocusedSize = UDim2.new(0.96, 0, 0.82, 0)
-    
-    -- Line Updater
-    local function UpdateLines()
-        local t = Input.Text
-        local _, c = t:gsub("\n", "\n")
-        local s = ""
-        for i = 1, c + 1 do s = s .. i .. "\n" end
-        Lines.Text = s
-    end
-    Input:GetPropertyChangedSignal("Text"):Connect(UpdateLines)
-    
-    -- [[ 8. LOGIC: FOCUS MODE ]]
-    -- When you CLICK to type:
-    Input.Focused:Connect(function()
-        -- 1. Hide Header & Tabs (Fixes Keyboard Obstruction)
-        if Main:FindFirstChild("Title") then Main.Title.Visible = false end
-        if EditorPage:FindFirstChild("Tabs") then EditorPage.Tabs.Visible = false end
-        
-        -- 2. Expand Editor Upwards
-        TweenService:Create(Container, TweenInfo.new(0.3), {Position = FocusedPos, Size = FocusedSize}):Play()
-        
-        -- 3. Hide Lines & Move Text Left (Fixes Cramping)
-        TweenService:Create(Lines, TweenInfo.new(0.2), {TextTransparency = 1}):Play()
-        TweenService:Create(Input, TweenInfo.new(0.3), {Position = UDim2.new(0, 5, 0, 0)}):Play()
-        
-        -- 4. Strip Highlighting (Fixes Cursor Glitches)
-        local raw = StripSyntax(Input.Text)
-        Input.RichText = false
-        Input.Text = raw
-    end)
-    
-    -- When you CLOSE Keyboard:
-    Input.FocusLost:Connect(function()
-        -- 1. Shrink back to normal
-        TweenService:Create(Container, TweenInfo.new(0.3), {Position = OriginalPos, Size = OriginalSize}):Play()
-        
-        -- 2. Show Lines
-        TweenService:Create(Lines, TweenInfo.new(0.2), {TextTransparency = 0}):Play()
-        TweenService:Create(Input, TweenInfo.new(0.3), {Position = UDim2.new(0, 38, 0, 0)}):Play()
-        
-        -- 3. Show Header & Tabs
-        if Main:FindFirstChild("Title") then Main.Title.Visible = true end
-        if EditorPage:FindFirstChild("Tabs") then EditorPage.Tabs.Visible = true end
-        
-        -- 4. Re-Apply Syntax
-        local raw = Input.Text
-        Input.RichText = true
-        Input.Text = ApplySyntax(raw)
-        
-        -- Auto-Save
-        if not Data.Editor.EditingSavedFile then
-             UIEvents.EditorTabs.saveTab(nil, raw, false)
-        end
-    end)
-    
-    -- [[ 9. BUTTON EVENTS ]]
-    ExecBtn.MouseButton1Click:Connect(function()
-        local c = Input.ContentText
-        if not c or c == "" then c = StripSyntax(Input.Text) end
-        UIEvents.Executor.RunCode(c)()
-    end)
-    
-    ClearBtn.MouseButton1Click:Connect(function() Input.Text = ""; UpdateLines() end)
-    
-    CopyBtn.MouseButton1Click:Connect(function()
-        if setclipboard then setclipboard(Input.ContentText) end
-        createNotification("Copied to Clipboard", "Success", 2)
-    end)
+   -- [[ EXECUTE ]]
+        Panel.Execute[Method]:Connect(function()
+            -- 🟢 FIX: Ensure we get the ContentText (Raw text without formatting) if available, 
+            -- or strip tags manually if ContentText isn't reliable in your environment.
+            local rawCode = EditorFrame.Input.ContentText -- ContentText ignores RichText tags!
+            
+            -- Fallback: If ContentText is empty (some executors glitch), strip tags manually
+            if not rawCode or rawCode == "" then 
+                rawCode = StripSyntax(EditorFrame.Input.Text)
+            end
+            
+            UIEvents.Executor.RunCode(rawCode)();
+        end);
 
-    SaveBtn.MouseButton1Click:Connect(function()
-         local c = StripSyntax(Input.Text)
-         UIEvents.EditorTabs.saveTab(nil, c, true)
-    end)
-    
-    -- Connect Tab Creation
-    if EditorPage.Tabs:FindFirstChild("Create") then
-        EditorPage.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
-    end
-    
-    -- Initialize
-    UpdateLines()
-    UIEvents.EditorTabs.updateUI()
-end;
+        -- [[ EXECUTE CLIPBOARD ]]
+        Panel.ExecuteClipboard[Method]:Connect(function()
+            local clipCode = safeGetClipboard()
+            UIEvents.Executor.RunCode(clipCode)();
+        end);
+
+        -- [[ CLEAR ]]
+        Panel.Delete[Method]:Connect(function()
+            EditorFrame.Input.Text = "";
+        end);
+
+        -- [[ SAVE (Now includes visual feedback) ]]
+        Panel.Save[Method]:Connect(function()
+            local cleanText = StripSyntax(EditorFrame.Input.Text)
+            UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
+        end);
+
+        -- [[ RENAME START ]]
+        Panel.Rename[Method]:Connect(function()
+            script.Parent.Popups.Visible = true;
+            local current = Data.Editor.CurrentTab or ""
+            script.Parent.Popups.Main.Input.Text = current
+            -- Force focus on the popup input so keyboard appears
+            script.Parent.Popups.Main.Input:CaptureFocus() 
+        end);
+
+        -- [[ EDITOR INPUT HANDLING ]]
+        
+        -- 1. FOCUS GAINED: Turn OFF colors, show raw text
+        EditorFrame.Input.Focused:Connect(function()
+            local raw = StripSyntax(EditorFrame.Input.Text)
+            EditorFrame.Input.RichText = false
+            EditorFrame.Input.Text = raw
+        end)
+
+        -- 2. FOCUS LOST: Turn ON colors, apply highlighting
+        EditorFrame.Input.FocusLost:Connect(function()
+            local raw = EditorFrame.Input.Text
+            EditorFrame.Input.RichText = true
+            EditorFrame.Input.Text = ApplySyntax(raw)
+        end)
+
+        -- 3. PASTE HANDLING (Fixed)
+        Panel.Paste[Method]:Connect(function()
+            local pastedText = safeGetClipboard();
+            
+            EditorFrame.Input.RichText = false
+            EditorFrame.Input.Text = pastedText
+            
+            task.delay(0.05, function()
+                EditorFrame.Input.RichText = true
+                EditorFrame.Input.Text = ApplySyntax(pastedText)
+            end)
+        end);
+
+       -- 4. REAL-TIME UPDATES (Line Numbers & Autosave)
+        local autoSaveDebounce = nil -- Variable to handle the timer
+
+        EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+            
+            -- 🟢 FIX: Save Logic with 1-second delay (Debounce)
+            if not Data.Editor.EditingSavedFile then
+                -- If user types again within 1 second, cancel the previous save timer
+                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+                
+                -- Wait 1 second after typing stops, then save
+                autoSaveDebounce = task.delay(1, function()
+                    local cleanText = StripSyntax(EditorFrame.Input.Text)
+                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+                end)
+            end
+        end)
+        
+        -- 🟢 SAFETY NET: Force save immediately when closing the game
+        game:GetService("Players").PlayerRemoving:Connect(function()
+            if not Data.Editor.EditingSavedFile then
+                local cleanText = StripSyntax(EditorFrame.Input.Text)
+                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+            end
+        end)
+        
+        UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+
+        -- [[ TAB CREATE ]]
+        Editor.Tabs.Create.Activated:Connect(function()
+            UIEvents.EditorTabs.createTab("Script", "");
+        end);
+
+        -- [[ POPUP BUTTONS ]]
+        local Buttons = script.Parent.Popups.Main.Button
+        
+        -- CONFIRM BUTTON
+        Buttons["Confirm"][Method]:Connect(function()
+            local newName = script.Parent.Popups.Main.Input.Text;
+            -- Remove whitespace
+            newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
+            
+            if (#newName == 0 or (newName == Data.Editor.CurrentTab)) then 
+                script.Parent.Popups.Visible = false;
+                return; 
+            end
+
+            UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
+            script.Parent.Popups.Visible = false;
+        end)
+
+        -- CANCEL BUTTON
+        Buttons["Cancel"][Method]:Connect(function()
+            script.Parent.Popups.Visible = false;
+        end)
+    end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
