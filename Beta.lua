@@ -6301,32 +6301,34 @@ InitTabs.Saved = function()
         end
     end)
 
-    -- Panel buttons
-    Panel.Execute[Method]:Connect(function()
-        UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))()
-    end)
+    -- Panel buttons (now inside ButtonsContainer)
+local ButtonsContainer = Panel:WaitForChild("ButtonsContainer")
 
-    Panel.Delete[Method]:Connect(function()
-        RealInput.Text = ""
-        UpdateLineNumbers(RealInput, Lines)
-    end)
+ButtonsContainer.Execute[Method]:Connect(function()
+    UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))()
+end)
 
-    Panel.Paste[Method]:Connect(function()
-        local clip = safeGetClipboard()
-        RealInput.Text = clip
-        RealInput.RichText = true
-        RealInput.Text = ApplySyntax(clip)
-    end)
+ButtonsContainer.Delete[Method]:Connect(function()
+    RealInput.Text = ""
+    UpdateLineNumbers(RealInput, Lines)
+end)
 
-    Panel.Save[Method]:Connect(function()
-        UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true)
-    end)
+ButtonsContainer.Paste[Method]:Connect(function()
+    local clip = safeGetClipboard()
+    RealInput.Text = clip
+    RealInput.RichText = true
+    RealInput.Text = ApplySyntax(clip)
+end)
 
-    Panel.Rename[Method]:Connect(function()
-        script.Parent.Popups.Visible = true
-        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-        script.Parent.Popups.Main.Input:CaptureFocus()
-    end)
+ButtonsContainer.Save[Method]:Connect(function()
+    UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true)
+end)
+
+ButtonsContainer.Rename[Method]:Connect(function()
+    script.Parent.Popups.Visible = true
+    script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+    script.Parent.Popups.Main.Input:CaptureFocus()
+end)
 
     Editor.Tabs.Create.Activated:Connect(function()
         UIEvents.EditorTabs.createTab("Script", "")
