@@ -6654,7 +6654,7 @@ local function Update()
     end
     
     searchDebounce = task.spawn(function()
-        task.wait(0.15)
+        task.wait(0.5)
         
         if isUpdating then return end
         isUpdating = true
