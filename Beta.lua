@@ -1398,17 +1398,17 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 5. PANEL (BUTTONS) - PINNED TO CORNER ]] --
+-- [[ 5. PANEL (BUTTONS) - GUARANTEED VISIBILITY ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 50; -- 🔴 CRITICAL: Higher than everything else to stay in front
+G2L["89"]["ZIndex"] = 100; -- 🔴 CRITICAL: Higher than everything
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89"]["BackgroundTransparency"] = 0; -- 🔴 SOLID BACKGROUND
-G2L["89"]["AnchorPoint"] = Vector2.new(1, 1); -- Bottom Right Anchor
-G2L["89"]["Position"] = UDim2.new(1, 0, 1, 0); -- Snaps to the very bottom-right corner
-G2L["89"]["Size"] = UDim2.new(0.42, 0, 0.12, 0); 
-G2L["89"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["89"]["BackgroundTransparency"] = 0; 
+G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
+-- View Mode Position
+G2L["89"]["Position"] = UDim2.new(0.98, 0, 0.98, 0); 
+G2L["89"]["Size"] = UDim2.new(0.4, 0, 0.1, 0);
 
 -- (Standard Panel Contents re-added below to prevent breaking)
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
@@ -6215,30 +6215,29 @@ InitTabs.Saved = function()
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
-        -- Store original positions to restore them when you finish typing
+        -- Store original positions
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
         local originalPanelPos = Panel.Position
-        local originalPanelSize = Panel.Size
 
-        -- [[ 🔴 THE DELTA "FOCUS" TRANSITION ]] --
+        -- [[ 🔴 REFINED FOCUS TRANSITION ]] --
         RealInput.Focused:Connect(function()
-            -- 1. HIDE NUMBERS & SHIFT TEXT LEFT
+            -- 1. HIDE NUMBERS & SHIFT TEXT
             Lines.Visible = false
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 2. SHRINK & CENTER BOX (To avoid keyboard cut-off)
-            -- Start at 12% height, total height 45%. Ends at 57% (Safe from keyboard)
-            EditorFrame.Size = UDim2.new(0.96, 0, 0.45, 0) 
-            EditorFrame.Position = UDim2.new(0.02, 0, 0.12, 0)
+            -- 2. ADJUST BOX POSITION (Avoid touching Top Tabs)
+            -- Starts at 22% (Position) and is 34% Tall (Size)
+            -- Total Y-End is 56% (Safe from most keyboards)
+            EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) -- 🔴 Moved down from top
+            EditorFrame.Size = UDim2.new(0.96, 0, 0.34, 0)     -- 🔴 Shorter height
             
-            -- 3. SNAP PANEL TO THE NEW BOX CORNER
-            -- This keeps the icons aligned with the bottom-right of the pink border
-            Panel.Size = UDim2.new(0.45, 0, 0.12, 0)
-            Panel.Position = UDim2.new(0.98, 0, 0.57, 0) 
+            -- 3. ALIGN PANEL ICONS (Bottom right of the focused box)
+            Panel.Visible = true
+            Panel.Position = UDim2.new(0.98, 0, 0.56, 0) -- 🔴 Snaps to bottom edge of box
 
-            -- 4. STABILITY MODE
+            -- 4. STABILITY
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
             RealInput.TextWrapped = false 
@@ -6246,13 +6245,12 @@ InitTabs.Saved = function()
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- 1. RESTORE ALL POSITIONS
+            -- 1. RESTORE ORIGINAL LAYOUT
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
             Panel.Position = originalPanelPos
-            Panel.Size = originalPanelSize
 
             -- 2. RE-APPLY COLORS
             local raw = RealInput.Text
@@ -6264,7 +6262,7 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- Sync Logic
+        -- SYNC LOGIC
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(RealInput, Lines)
             if not Data.Editor.EditingSavedFile then
@@ -6276,9 +6274,9 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- Standard Buttons (Execute, Save, etc)
+        -- PANEL BUTTONS
         Panel.Execute[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
-        Panel.Delete[Method]:Connect(function() RealInput.Text = "" end)
+        Panel.Delete[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
         Panel.Paste[Method]:Connect(function()
             local clip = safeGetClipboard(); RealInput.Text = clip;
             RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
