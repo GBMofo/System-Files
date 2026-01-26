@@ -1328,7 +1328,7 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- [[ 1. EDITOR SCROLLING FRAME ]] --
+-- [[ 1. EDITOR SCROLLING FRAME (FIXED) ]] --
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
@@ -1338,23 +1338,26 @@ G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
-G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
+
+-- 🔴 MATH FIX: 
+-- Tabs end at 0.22. We start at 0.23 to leave a gap.
+-- Buttons start at 0.85. 0.23 + 0.60 = 0.83. We end at 0.83 to leave a gap.
+G2L["82"]["Position"] = UDim2.new(0, 0, 0.23, 0); 
+G2L["82"]["Size"] = UDim2.new(1, 0, 0.60, 0); 
+
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
 G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
 G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
+G2L["82"]["ClipsDescendants"] = true; -- Force clipping
 
--- 🔴 FIX 1: STOP BLEEDING (Fixes Ghost Text)
-G2L["82"]["ClipsDescendants"] = true; 
-
--- 🔴 FIX 2: ADD PADDING (Fixes Breathing Room)
+-- 🔴 PADDING FIX (Internal Breathing Room)
 local EditorPadding = Instance.new("UIPadding", G2L["82"]);
 EditorPadding.Name = "EditorPadding";
-EditorPadding.PaddingTop = UDim.new(0, 10);    -- Gap from top tabs
-EditorPadding.PaddingLeft = UDim.new(0, 5);    -- Gap from left edge
-EditorPadding.PaddingRight = UDim.new(0, 5);   -- Gap from scrollbar
-EditorPadding.PaddingBottom = UDim.new(0, 45); -- Large gap so text doesn't touch bottom buttons
+EditorPadding.PaddingTop = UDim.new(0, 5);
+EditorPadding.PaddingLeft = UDim.new(0, 5);
+EditorPadding.PaddingRight = UDim.new(0, 5);
+EditorPadding.PaddingBottom = UDim.new(0, 5);
 
 -- [[ 2. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
