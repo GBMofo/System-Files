@@ -3561,11 +3561,10 @@ local function getSyntaxColors()
         ["pairs"] = toRGB(shades.base),
         ["ipairs"] = toRGB(shades.base),
         
-        -- Important functions use light shade
-        ["loadstring"] = toRGB(shades.light),
+       -- Important functions use DARK shade (as requested)
+        ["loadstring"] = toRGB(shades.dark),
     }
 end
-
 -- 🟢 HELPER: GENERATE SAFE TOKEN (No numbers allowed!)
 local function GenerateToken(i, prefix)
     local s = ""
@@ -3582,19 +3581,27 @@ local function ApplySyntax(text)
     text = StripSyntax(text)
     if #text > 50000 then return text end
 
+    -- 🟢 GET DYNAMIC STRING COLOR (Light Shade)
+    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    local shades = getThemeShades(currentTheme)
+    local stringColor = string.format("rgb(%d,%d,%d)", 
+        math.floor(shades.light.R * 255), 
+        math.floor(shades.light.G * 255), 
+        math.floor(shades.light.B * 255))
+
     -- Highlight strings FIRST (before escaping)
     local strings = {}
     local sCount = 0
     text = text:gsub('(".-")', function(s)
         sCount = sCount + 1
         local token = "XSTRX" .. sCount .. "X"
-        strings[token] = "<font color='rgb(173,216,230)'>" .. s .. "</font>"
+        strings[token] = "<font color='" .. stringColor .. "'>" .. s .. "</font>"
         return token
     end)
     text = text:gsub("('.-')", function(s)
         sCount = sCount + 1
         local token = "XSTRX" .. sCount .. "X"
-        strings[token] = "<font color='rgb(173,216,230)'>" .. s .. "</font>"
+        strings[token] = "<font color='" .. stringColor .. "'>" .. s .. "</font>"
         return token
     end)
 
@@ -4295,12 +4302,23 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 🟢 NEW: Re-highlight editor text with new theme
-        if Pages.Editor and Pages.Editor.Editor and Pages.Editor.Editor.Input then
-            local editor = Pages.Editor.Editor.Input
-            if not editor.Focused then  -- Don't interrupt typing
+       -- 🟢 NEW: Re-highlight editor text with new theme
+        if Pages.Editor and Pages.Editor:FindFirstChild("Editor") then
+            local editor = Pages.Editor.Editor:FindFirstChild("Input")
+            if editor then
+                -- 1. Strip tags to get raw text
                 local raw = StripSyntax(editor.Text)
-                editor.Text = ApplySyntax(raw)
+                
+                -- 2. Toggle RichText to force a visual reset
+                editor.RichText = false
+                editor.Text = raw
+                
+                -- 3. Re-apply syntax with NEW theme colors
+                task.spawn(function()
+                    task.wait() -- Single frame wait to allow renderer to catch up
+                    editor.RichText = true
+                    editor.Text = ApplySyntax(raw)
+                end)
             end
         end
         
