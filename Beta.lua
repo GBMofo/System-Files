@@ -669,7 +669,7 @@ gradient.Rotation = 90; -- Vertical gradient
 
 -- Glowing border (exactly like the image)
 local borderStroke = Instance.new("UIStroke", G2L["3f"]);
-borderStroke.Color = Color3.fromRGB(180, 100, 255); -- Purple glow
+borderstroke.Color = themeData.base3.fromRGB(180, 100, 255); -- Purple glow
 borderStroke.Thickness = 2;
 borderStroke.Transparency = 0.3;
 borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
@@ -3496,21 +3496,60 @@ end
 	end
 
 -- 🟢 DEFINE COLORS
-local SyntaxColors = {
-    ["local"] = "rgb(173, 216, 230)", ["function"] = "rgb(70, 130, 180)", ["end"] = "rgb(70, 130, 180)",
-    ["if"] = "rgb(100, 149, 237)", ["then"] = "rgb(100, 149, 237)", ["else"] = "rgb(100, 149, 237)", 
-    ["elseif"] = "rgb(100, 149, 237)", ["return"] = "rgb(65, 105, 225)", ["while"] = "rgb(70, 130, 180)", 
-    ["for"] = "rgb(70, 130, 180)", ["do"] = "rgb(70, 130, 180)", ["break"] = "rgb(65, 105, 225)", 
-    ["continue"] = "rgb(65, 105, 225)", ["and"] = "rgb(70, 130, 180)", ["or"] = "rgb(70, 130, 180)", 
-    ["not"] = "rgb(70, 130, 180)", ["repeat"] = "rgb(135, 206, 235)", ["until"] = "rgb(135, 206, 235)",
-    ["game"] = "rgb(0, 191, 255)", ["workspace"] = "rgb(0, 191, 255)", ["script"] = "rgb(0, 191, 255)",
-    ["print"] = "rgb(0, 191, 255)", ["wait"] = "rgb(0, 191, 255)", ["task"] = "rgb(0, 191, 255)",
-    ["pairs"] = "rgb(0, 191, 255)", ["ipairs"] = "rgb(0, 191, 255)", ["loadstring"] = "rgb(0, 0, 139)",
-}
-
 -- 🟢 CLEANER
 local function StripSyntax(text)
     return string.gsub(text, "<[^>]+>", "")
+end
+
+-- 🟢 NEW: DYNAMIC SYNTAX COLORS FUNCTION (Add this right after StripSyntax)
+local function getSyntaxColors()
+    local theme = getgenv().CurrentTheme or {
+        light = Color3.fromRGB(195, 140, 255),
+        base = Color3.fromRGB(160, 85, 255),
+        dark = Color3.fromRGB(110, 45, 200)
+    }
+    
+    local function toRGB(color)
+        return string.format("rgb(%d,%d,%d)", 
+            math.floor(color.R * 255), 
+            math.floor(color.G * 255), 
+            math.floor(color.B * 255))
+    end
+    
+    return {
+        -- Keywords (dark shade)
+        ["local"] = toRGB(theme.dark),
+        ["function"] = toRGB(theme.dark),
+        ["end"] = toRGB(theme.dark),
+        ["if"] = toRGB(theme.base),
+        ["then"] = toRGB(theme.base),
+        ["else"] = toRGB(theme.base),
+        ["elseif"] = toRGB(theme.base),
+        ["return"] = toRGB(theme.base),
+        ["while"] = toRGB(theme.dark),
+        ["for"] = toRGB(theme.dark),
+        ["do"] = toRGB(theme.dark),
+        ["break"] = toRGB(theme.base),
+        ["continue"] = toRGB(theme.base),
+        ["and"] = toRGB(theme.dark),
+        ["or"] = toRGB(theme.dark),
+        ["not"] = toRGB(theme.dark),
+        ["repeat"] = toRGB(theme.base),
+        ["until"] = toRGB(theme.base),
+        
+        -- Built-ins (base shade)
+        ["game"] = toRGB(theme.base),
+        ["workspace"] = toRGB(theme.base),
+        ["script"] = toRGB(theme.base),
+        ["print"] = toRGB(theme.base),
+        ["wait"] = toRGB(theme.base),
+        ["task"] = toRGB(theme.base),
+        ["pairs"] = toRGB(theme.base),
+        ["ipairs"] = toRGB(theme.base),
+        
+        -- Important (light shade)
+        ["loadstring"] = toRGB(theme.light),
+    }
 end
 
 -- 🟢 HELPER: GENERATE SAFE TOKEN (No numbers allowed!)
@@ -3548,6 +3587,9 @@ local function ApplySyntax(text)
     -- Escape HTML
     text = text:gsub("<", "&lt;"):gsub(">", "&gt;")
 
+    -- 🟢 CHANGED: Fetch colors dynamically instead of using hardcoded table
+    local SyntaxColors = getSyntaxColors()
+    
     -- Highlight keywords
     for k, c in pairs(SyntaxColors) do
         text = text:gsub("(%f[%w]"..k.."%f[%W])", "<font color='"..c.."'>%1</font>")
@@ -4029,54 +4071,68 @@ InitTabs.Settings = function()
     end
     
     -- 🟢 2. THEME SYSTEM (Root Path)
-    local Themes = {
-        {name = "Neon Purple", color = Color3.fromRGB(160, 85, 255)},
-        {name = "Neon Pink", color = Color3.fromRGB(255, 20, 147)},
-        {name = "Fluorescent Cyan", color = Color3.fromRGB(0, 255, 255)},
-        {name = "Neon Green", color = Color3.fromRGB(57, 255, 20)},
-        {name = "Bright Yellow", color = Color3.fromRGB(255, 255, 0)},
-        {name = "Neon Scarlet", color = Color3.fromRGB(255, 36, 0)},
-        {name = "Vibrant Coral", color = Color3.fromRGB(255, 127, 80)},
-        {name = "Neon Blue", color = Color3.fromRGB(0, 191, 255)}
-    }
+  local Themes = {
+    {name = "Neon Purple", light = Color3.fromRGB(195, 140, 255), base = Color3.fromRGB(160, 85, 255), dark = Color3.fromRGB(110, 45, 200)},
+    {name = "Neon Pink", light = Color3.fromRGB(255, 105, 180), base = Color3.fromRGB(255, 20, 147), dark = Color3.fromRGB(180, 0, 110)},
+    {name = "Fluorescent Cyan", light = Color3.fromRGB(150, 255, 255), base = Color3.fromRGB(0, 255, 255), dark = Color3.fromRGB(0, 170, 170)},
+    {name = "Neon Green", light = Color3.fromRGB(150, 255, 120), base = Color3.fromRGB(57, 255, 20), dark = Color3.fromRGB(30, 180, 0)},
+    {name = "Bright Yellow", light = Color3.fromRGB(255, 255, 150), base = Color3.fromRGB(255, 255, 0), dark = Color3.fromRGB(200, 200, 0)},
+    {name = "Neon Scarlet", light = Color3.fromRGB(255, 100, 80), base = Color3.fromRGB(255, 36, 0), dark = Color3.fromRGB(180, 20, 0)},
+    {name = "Vibrant Coral", light = Color3.fromRGB(255, 170, 130), base = Color3.fromRGB(255, 127, 80), dark = Color3.fromRGB(200, 90, 50)},
+    {name = "Neon Blue", light = Color3.fromRGB(120, 220, 255), base = Color3.fromRGB(0, 191, 255), dark = Color3.fromRGB(0, 130, 180)}
+}
     
     -- 🔴 FIX: Initialize with default first, then load saved
     getgenv().CurrentTheme = Color3.fromRGB(160, 85, 255)
     
     -- 🟢 PATH: Punk-X-Files/theme.json
-    local function LoadTheme()
-        if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
-            local success, data = pcall(function()
-                return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
-            end)
-            if success and data.r and data.g and data.b then
-                local loadedColor = Color3.fromRGB(data.r, data.g, data.b)
-                getgenv().CurrentTheme = loadedColor
-                print("[THEME] Loaded saved theme:", loadedColor)
-                return loadedColor
+   local function LoadTheme()
+    if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
+        local success, data = pcall(function()
+            return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
+        end)
+        if success and data.r and data.g and data.b then
+            local loadedColor = Color3.fromRGB(data.r, data.g, data.b)
+            
+            -- Find matching theme by base color
+            for _, theme in ipairs(Themes) do
+                if theme.base == loadedColor then
+                    getgenv().CurrentTheme = theme
+                    print("[THEME] Loaded saved theme:", theme.name)
+                    return theme
+                end
             end
+            
+            -- Fallback: create shades if no exact match
+            getgenv().CurrentTheme = {
+                light = Color3.fromRGB(195, 140, 255),
+                base = loadedColor,
+                dark = Color3.fromRGB(110, 45, 200)
+            }
+            return getgenv().CurrentTheme
         end
-        print("[THEME] No saved theme, using default purple")
-        return Color3.fromRGB(160, 85, 255)
+    end
+    print("[THEME] No saved theme, using default purple")
+    return Themes[1]  -- Default to first theme
+end
+    
+   local function SaveTheme(baseColor)  -- Still saves just base color for simplicity
+    -- Ensure folder exists
+    if not CLONED_Detectedly.isfolder("Punk-X-Files") then 
+        CLONED_Detectedly.makedir("Punk-X-Files") 
     end
     
-    local function SaveTheme(color)
-        -- Ensure folder exists
-        if not CLONED_Detectedly.isfolder("Punk-X-Files") then 
-            CLONED_Detectedly.makedir("Punk-X-Files") 
-        end
-        
-        CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
-            r = math.floor(color.R * 255),
-            g = math.floor(color.G * 255),
-            b = math.floor(color.B * 255)
-        }))
-    end
+    CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
+        r = math.floor(baseColor.R * 255),
+        g = math.floor(baseColor.G * 255),
+        b = math.floor(baseColor.B * 255)
+    }))
+end
 
- local function ApplyTheme(color)
-        local oldTheme = getgenv().CurrentTheme
-        getgenv().CurrentTheme = color
-        SaveTheme(color)
+ local function ApplyTheme(themeData)
+    local oldTheme = getgenv().CurrentTheme
+    getgenv().CurrentTheme = themeData  -- Now stores {light, base, dark}
+    SaveTheme(themeData.base)  -- File saves just the base color
         
         -- [[ FIX: FORCE SEARCH PAGE TO UPDATE ]]
         if UIEvents.Search and UIEvents.Search.Refresh then
@@ -4100,7 +4156,7 @@ InitTabs.Settings = function()
             for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
                 if card:IsA("Frame") or card:IsA("CanvasGroup") then
                     local stroke = card:FindFirstChild("UIStroke")
-                    if stroke then stroke.Color = color end
+                    if stroke then stroke.Color = themeData.base end
                     local toggleContainer = card:FindFirstChild("ToggleContainer")
                     if toggleContainer then
                         local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
@@ -4121,7 +4177,7 @@ InitTabs.Settings = function()
         
         -- 4. UPDATE ENABLEFRAME
         if Main:FindFirstChild("EnableFrame") then
-            Main.EnableFrame.BackgroundColor3 = color
+           Main.EnableFrame.BackgroundColor3 = themeData.base
             if Main.EnableFrame:FindFirstChild("Glow") then
                 Main.EnableFrame.Glow.BackgroundColor3 = color
                 Main.EnableFrame.Glow.ImageColor3 = color
@@ -4184,7 +4240,7 @@ InitTabs.Settings = function()
         -- 9. UPDATE HOME KEY
         if Pages.Home and Pages.Home:FindFirstChild("Key") then
             local keyBox = Pages.Home.Key
-            if keyBox:FindFirstChild("UIStroke") then keyBox.UIStroke.Color = color end
+            if keyBox:FindFirstChild("UIStroke") then keyBox.UIstroke.Color = themeData.base end
             if keyBox.Folder and keyBox.Folder:FindFirstChild("Background") then
                 keyBox.Folder.Background.ImageColor3 = color
             end
@@ -4242,9 +4298,9 @@ InitTabs.Settings = function()
         print("[THEME] Theme applied successfully!")
     end
     
-    -- 🔴 CRITICAL FIX: Load theme FIRST before building UI
-    local savedTheme = LoadTheme()
-    getgenv().CurrentTheme = savedTheme
+   -- 🔴 FIX: Load theme FIRST before building UI
+local savedTheme = LoadTheme()  -- Now returns a theme object
+getgenv().CurrentTheme = savedTheme
 
     -- Helper Functions (createSectionHeader, createCard, etc. - KEEP AS IS)
     local function createSectionHeader(text, order)
@@ -4499,8 +4555,8 @@ InitTabs.Settings = function()
     pillLayout.Wraps = true
     
     for _, theme in ipairs(Themes) do
-        local pill = Instance.new("TextButton", pillContainer)
-        pill.BackgroundColor3 = theme.color
+    local pill = Instance.new("TextButton", pillContainer)
+    pill.BackgroundColor3 = theme.base  -- Changed from theme.color
         pill.Size = UDim2.new(0, 65, 0, 26)
         pill.Text = ""
         pill.BorderSizePixel = 0
@@ -6253,7 +6309,11 @@ InitTabs.Search = function()
 	local SearchBox = Search.TextBox;  -- 🟢 This should already exist, if not add it
 
   -- 🟢 LOAD THEME FIRST
-    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+   local currentTheme = getgenv().CurrentTheme or {
+    light = Color3.fromRGB(195, 140, 255),
+    base = Color3.fromRGB(160, 85, 255),
+    dark = Color3.fromRGB(110, 45, 200)
+}
 	
 -- 🔴 STATE
 
@@ -6467,7 +6527,7 @@ local function updateUI()
         if btn:IsA("TextButton") then
             if btn.Name == Data.Search.CurrentFilter then
                 -- Use getgenv().CurrentTheme directly to get the latest color
-                btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                btn.BackgroundColor3 = (getgenv().CurrentTheme and getgenv().CurrentTheme.base) or Color3.fromRGB(160, 85, 255)
                 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             else
                 btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
@@ -6793,7 +6853,7 @@ local function onFilterClick(filterName)
     for _, btn in pairs(FilterBar:GetChildren()) do
         if btn:IsA("TextButton") then
             if btn.Name == filterName then
-                btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                btn.BackgroundColor3 = (getgenv().CurrentTheme and getgenv().CurrentTheme.base) or Color3.fromRGB(160, 85, 255)
                 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             else
                 btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
@@ -6886,7 +6946,7 @@ if Name == "Search" and Pages.Search:FindFirstChild("FilterBar") then
     for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
         if btn:IsA("TextButton") then
             if btn.Name == Data.Search.CurrentFilter then
-                btn.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                btn.BackgroundColor3 = (getgenv().CurrentTheme and getgenv().CurrentTheme.base) or Color3.fromRGB(160, 85, 255)
                 btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             else
                 btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
