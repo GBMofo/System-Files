@@ -1398,16 +1398,17 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 5. PANEL (ORIGINAL CODE RESTORED) ]] --
-G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
-G2L["89"]["ZIndex"] = 10; 
+-- [[ 5. PANEL (STABLE FRAME VERSION - NO MORE GREY BOX) ]] --
+G2L["89"] = Instance.new("Frame", G2L["7a"]); -- Changed from CanvasGroup to Frame
+G2L["89"]["Name"] = [[Panel]];
+G2L["89"]["ZIndex"] = 15; -- 🔴 Higher ZIndex to stay on top
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
 G2L["89"]["Size"] = UDim2.new(0.42127, 0, 0.15, 0);
 G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
 G2L["89"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["89"]["Name"] = [[Panel]];
+G2L["89"]["BackgroundTransparency"] = 0; -- Solid background
 
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
