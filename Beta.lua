@@ -1364,30 +1364,42 @@ G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
 
--- [[ 3. INPUT BOX (RICHTEXT ENABLED) ]] --
+-- [[ 3. THE VISUAL LAYER (PUNK X COLORS) ]] --
+G2L["83_Visual"] = Instance.new("TextLabel", G2L["82"]);
+G2L["83_Visual"]["Name"] = [[Visual]];
+G2L["83_Visual"]["ZIndex"] = 2; 
+G2L["83_Visual"]["BorderSizePixel"] = 0;
+G2L["83_Visual"]["TextSize"] = 14;
+G2L["83_Visual"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["83_Visual"]["TextYAlignment"] = Enum.TextYAlignment.Top;
+G2L["83_Visual"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
+G2L["83_Visual"]["BackgroundTransparency"] = 1;
+G2L["83_Visual"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
+G2L["83_Visual"]["RichText"] = true;
+G2L["83_Visual"]["Position"] = UDim2.new(0, 60, 0, 0); 
+G2L["83_Visual"]["Size"] = UDim2.new(0, 1000, 0, 1000); 
+G2L["83_Visual"]["AutomaticSize"] = Enum.AutomaticSize.XY;
+G2L["83_Visual"]["Text"] = [[]];
+
+-- [[ 4. THE INPUT LAYER (DELTA STABILITY) ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
-G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
-G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["83"]["PlaceholderColor3"] = Color3.fromRGB(100, 100, 110);
-G2L["83"]["ZIndex"] = 2; 
+G2L["83"]["ZIndex"] = 3; -- Sits ON TOP of Visual
 G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
 G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
-G2L["83"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
+G2L["83"]["TextTransparency"] = 1; -- 🔴 INVISIBLE TEXT
+G2L["83"]["CursorPosition"] = 1; -- 🟢 BUT CURSOR IS VISIBLE
 G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false;
-G2L["83"]["TextEditable"] = true;
-G2L["83"]["RichText"] = true; -- 🟢 NEW: ENABLE RICHTEXT
-G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
+G2L["83"]["RichText"] = false; -- 🔴 STABLE RAW TEXT ONLY
+G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
+G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
 G2L["83"]["Size"] = UDim2.new(0, 1000, 0, 1000); 
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; -- 🟢 CHANGED: Auto-sizing
-G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
-G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY;
 G2L["83"]["Text"] = [[]];
 
 -- [[ 4. UICORNER ]] --
@@ -6211,130 +6223,96 @@ InitTabs.Saved = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
         local EditorFrame = Editor:WaitForChild("Editor");
+        
+        -- The two layers
+        local RealInput = EditorFrame:WaitForChild("Input");   
+        local VisualLabel = EditorFrame:WaitForChild("Visual"); 
+        
         local Method = "MouseButton1Click"; 
+        local autoSaveDebounce = nil 
 
-   -- [[ EXECUTE ]]
-        Panel.Execute[Method]:Connect(function()
-            -- 🟢 FIX: Ensure we get the ContentText (Raw text without formatting) if available, 
-            -- or strip tags manually if ContentText isn't reliable in your environment.
-            local rawCode = EditorFrame.Input.ContentText -- ContentText ignores RichText tags!
+        -- [[ 1. SYNC LOGIC ]] --
+        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(RealInput, EditorFrame.Lines)
             
-            -- Fallback: If ContentText is empty (some executors glitch), strip tags manually
-            if not rawCode or rawCode == "" then 
-                rawCode = StripSyntax(EditorFrame.Input.Text)
+            -- Sync the background text while typing
+            VisualLabel.Text = RealInput.Text
+
+            -- Auto-Save (Delta style background saving)
+            if not Data.Editor.EditingSavedFile then
+                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+                autoSaveDebounce = task.delay(1, function()
+                    local cleanText = StripSyntax(RealInput.Text)
+                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+                end)
             end
-            
-            UIEvents.Executor.RunCode(rawCode)();
+        end)
+
+        -- [[ 2. FOCUS HANDLING ]] --
+        RealInput.Focused:Connect(function()
+            -- Switch to Raw text view for perfect typing alignment
+            VisualLabel.RichText = false 
+            VisualLabel.TextTransparency = 0.5 -- Feel of "Editing Mode"
+        end)
+
+        RealInput.FocusLost:Connect(function()
+            -- Editing done: Re-apply colors
+            local raw = RealInput.Text
+            VisualLabel.RichText = true
+            VisualLabel.Text = ApplySyntax(raw) 
+            VisualLabel.TextTransparency = 0 
+        end)
+
+        -- [[ 3. PANEL BUTTONS ]] --
+        Panel.Execute[Method]:Connect(function()
+            UIEvents.Executor.RunCode(RealInput.Text)();
         end);
 
-        -- [[ EXECUTE CLIPBOARD ]]
         Panel.ExecuteClipboard[Method]:Connect(function()
             local clipCode = safeGetClipboard()
             UIEvents.Executor.RunCode(clipCode)();
         end);
 
-        -- [[ CLEAR ]]
         Panel.Delete[Method]:Connect(function()
-            EditorFrame.Input.Text = "";
+            RealInput.Text = "";
+            VisualLabel.Text = "";
         end);
 
-        -- [[ SAVE (Now includes visual feedback) ]]
+        Panel.Paste[Method]:Connect(function()
+            local clip = safeGetClipboard();
+            RealInput.Text = clip;
+            VisualLabel.Text = ApplySyntax(clip);
+        end);
+
         Panel.Save[Method]:Connect(function()
-            local cleanText = StripSyntax(EditorFrame.Input.Text)
-            UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
+            UIEvents.EditorTabs.saveTab(nil, RealInput.Text, true); 
         end);
 
-        -- [[ RENAME START ]]
         Panel.Rename[Method]:Connect(function()
             script.Parent.Popups.Visible = true;
-            local current = Data.Editor.CurrentTab or ""
-            script.Parent.Popups.Main.Input.Text = current
-            -- Force focus on the popup input so keyboard appears
+            script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
             script.Parent.Popups.Main.Input:CaptureFocus() 
         end);
 
-        -- [[ EDITOR INPUT HANDLING ]]
-        
-        -- 1. FOCUS GAINED: Turn OFF colors, show raw text
-        EditorFrame.Input.Focused:Connect(function()
-            local raw = StripSyntax(EditorFrame.Input.Text)
-            EditorFrame.Input.RichText = false
-            EditorFrame.Input.Text = raw
-        end)
-
-        -- 2. FOCUS LOST: Turn ON colors, apply highlighting
-        EditorFrame.Input.FocusLost:Connect(function()
-            local raw = EditorFrame.Input.Text
-            EditorFrame.Input.RichText = true
-            EditorFrame.Input.Text = ApplySyntax(raw)
-        end)
-
-        -- 3. PASTE HANDLING (Fixed)
-        Panel.Paste[Method]:Connect(function()
-            local pastedText = safeGetClipboard();
-            
-            EditorFrame.Input.RichText = false
-            EditorFrame.Input.Text = pastedText
-            
-            task.delay(0.05, function()
-                EditorFrame.Input.RichText = true
-                EditorFrame.Input.Text = ApplySyntax(pastedText)
-            end)
-        end);
-
-       -- 4. REAL-TIME UPDATES (Line Numbers & Autosave)
-        local autoSaveDebounce = nil -- Variable to handle the timer
-
-        EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
-            UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
-            
-            -- 🟢 FIX: Save Logic with 1-second delay (Debounce)
-            if not Data.Editor.EditingSavedFile then
-                -- If user types again within 1 second, cancel the previous save timer
-                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-                
-                -- Wait 1 second after typing stops, then save
-                autoSaveDebounce = task.delay(1, function()
-                    local cleanText = StripSyntax(EditorFrame.Input.Text)
-                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-                end)
-            end
-        end)
-        
-        -- 🟢 SAFETY NET: Force save immediately when closing the game
-        game:GetService("Players").PlayerRemoving:Connect(function()
-            if not Data.Editor.EditingSavedFile then
-                local cleanText = StripSyntax(EditorFrame.Input.Text)
-                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-            end
-        end)
-        
-        UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
-
-        -- [[ TAB CREATE ]]
+        -- [[ 4. TAB SYSTEM ]] --
         Editor.Tabs.Create.Activated:Connect(function()
             UIEvents.EditorTabs.createTab("Script", "");
         end);
 
-        -- [[ POPUP BUTTONS ]]
+        -- [[ 5. POPUP BUTTONS ]] --
         local Buttons = script.Parent.Popups.Main.Button
         
-        -- CONFIRM BUTTON
         Buttons["Confirm"][Method]:Connect(function()
             local newName = script.Parent.Popups.Main.Input.Text;
-            -- Remove whitespace
-            newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
-            
+            newName = string.gsub(newName, "^%s*(.-)%s*$", "%1") 
             if (#newName == 0 or (newName == Data.Editor.CurrentTab)) then 
                 script.Parent.Popups.Visible = false;
                 return; 
             end
-
             UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
             script.Parent.Popups.Visible = false;
         end)
 
-        -- CANCEL BUTTON
         Buttons["Cancel"][Method]:Connect(function()
             script.Parent.Popups.Visible = false;
         end)
