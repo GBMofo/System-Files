@@ -1403,6 +1403,7 @@ G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
 G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
+G2L["89"]["BackgroundTransparency"] = 0; -- 🔴 Change from 0.3 to 0 (Solid)
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
 G2L["89"]["Size"] = UDim2.new(0.42127, 0, 0.15, 0);
 G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
@@ -6209,33 +6210,49 @@ InitTabs.Saved = function()
         local Panel = Editor:WaitForChild("Panel");
         local EditorFrame = Editor:WaitForChild("Editor"); -- The ScrollingFrame
         local RealInput = EditorFrame:WaitForChild("Input");
+        local Lines = EditorFrame:WaitForChild("Lines");
         
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
-        -- Store original size/pos to restore after editing
+        -- Store original states to restore later
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
+        local originalTextPos = RealInput.Position
 
-        -- [[ DELTA STABILITY LOGIC ]] --
+        -- [[ 🔴 DELTA EDIT MODE LOGIC ]] --
         RealInput.Focused:Connect(function()
-            -- 1. SHRINK CONTAINER (Your Request): Move it away from headers/borders
-            EditorFrame.Size = UDim2.new(1, -10, 0.75, 0) 
-            EditorFrame.Position = UDim2.new(0, 5, 0.22, 0)
-
-            -- 2. DELTA PATTERN: Remove tags and lock wrapping
+            -- 1. HIDE LINE NUMBERS
+            Lines.Visible = false
+            
+            -- 2. MOVE TEXT TO THE LEFT (Utilize space)
+            RealInput.Position = UDim2.new(0, 10, 0, 0)
+            
+            -- 3. SHRINK BOX (Prevents cut-off & overlap)
+            -- We make width 0.9 to avoid the right panel buttons
+            -- We make height smaller and move it down to center it
+            EditorFrame.Size = UDim2.new(0.9, 0, 0.65, 0) 
+            EditorFrame.Position = UDim2.new(0.05, 0, 0.25, 0)
+            
+            -- 4. STABILITY RULES
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
-            RealInput.TextWrapped = false -- Ensure horizontal scrolling only
+            RealInput.TextWrapped = false 
             RealInput.Text = raw
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- 1. RESTORE CONTAINER: Go back to full size
+            -- 1. SHOW LINE NUMBERS AGAIN
+            Lines.Visible = true
+            
+            -- 2. RESTORE TEXT POSITION
+            RealInput.Position = originalTextPos
+            
+            -- 3. RESTORE BOX SIZE & POSITION
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
 
-            -- 2. APPLY COLORS
+            -- 4. RE-APPLY VISUALS
             local raw = RealInput.Text
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
@@ -6245,11 +6262,11 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- Sync Line Numbers
+        -- SYNC LOGIC (Matches typing to line numbers)
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-            UpdateLineNumbers(RealInput, EditorFrame.Lines)
+            UpdateLineNumbers(RealInput, Lines)
             
-            -- Delta Style Debounced Autosave
+            -- Auto-Save Logic
             if not Data.Editor.EditingSavedFile then
                 if autoSaveDebounce then task.cancel(autoSaveDebounce) end
                 autoSaveDebounce = task.delay(1, function()
@@ -6259,7 +6276,7 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- Standard Buttons
+        -- Buttons (Execute, Save, etc)
         Panel.Execute[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
         Panel.Delete[Method]:Connect(function() RealInput.Text = "" end)
         Panel.Paste[Method]:Connect(function()
@@ -6276,7 +6293,7 @@ InitTabs.Saved = function()
         end)
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
-        -- Popup Controls
+        -- Popup Buttons
         local Buttons = script.Parent.Popups.Main.Button
         Buttons["Confirm"][Method]:Connect(function()
             local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
@@ -6287,7 +6304,7 @@ InitTabs.Saved = function()
         end)
         Buttons["Cancel"][Method]:Connect(function() script.Parent.Popups.Visible = false end)
 
-        UpdateLineNumbers(RealInput, EditorFrame.Lines)
+        UpdateLineNumbers(RealInput, Lines)
     end;
 
 InitTabs.Search = function()
