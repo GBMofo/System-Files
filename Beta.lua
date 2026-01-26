@@ -3500,8 +3500,8 @@ local function getThemeShades(baseColor)
     baseColor = baseColor or Color3.fromRGB(160, 85, 255) -- Default purple
     
     return {
-        -- 🟢 CHANGE: Set to 0.65 (65% White)
-        light = baseColor:Lerp(Color3.new(1, 1, 1), 0.65),
+        -- 🟢 CHANGE: Set to 0.625 (62.5% White)
+        light = baseColor:Lerp(Color3.new(1, 1, 1), 0.625),
         
         base = baseColor,
         
