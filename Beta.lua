@@ -1328,36 +1328,40 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- [[ 1. MAIN CONTAINER (DELTA SCROLLBAR FIX) ]] --
+-- [[ 1. EDITOR SCROLLING FRAME (THE MAIN BOX) ]] --
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
+G2L["82"]["Active"] = true;
 G2L["82"]["ZIndex"] = 1; 
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0); 
 G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0); 
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; -- 🔴 Forces scrollbars in both directions
-G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY; 
-G2L["82"]["ScrollBarThickness"] = 14; 
+G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
+G2L["82"]["ScrollBarThickness"] = 15; -- 🔴 DELTA THICKNESS
 G2L["82"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["82"]["ClipsDescendants"] = true; 
+G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
+G2L["82"]["ClipsDescendants"] = true; -- 🔴 THE "WALL" THAT STOPS BLEEDING
 
+-- [[ 2. CONTAINER DECORATION ]] --
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
 G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
 G2L["88"] = Instance.new("UIStroke", G2L["82"]);
 G2L["88"]["Transparency"] = 0.8;
 G2L["88"]["Thickness"] = 1;
-G2L["88"]["Color"] = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
+G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 2. INPUT BOX (FIXED MARGIN & NO WRAP) ]] --
+-- [[ 3. THE INPUT BOX (DELTA SETTINGS) ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["ZIndex"] = 3; 
+G2L["83"]["BorderSizePixel"] = 0;
 G2L["83"]["TextSize"] = 14;
-G2L["83"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
 G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
@@ -1365,12 +1369,13 @@ G2L["83"]["ClearTextOnFocus"] = false;
 G2L["83"]["RichText"] = true; 
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["83"]["TextWrapped"] = false; -- 🔴 CRITICAL: NO WRAP = HORIZONTAL SCROLL ENABLED
-G2L["83"]["Position"] = UDim2.new(0, 65, 0, 0); -- 🔴 Moved right for better margin
-G2L["83"]["Size"] = UDim2.new(0, 0, 0, 0); 
+G2L["83"]["TextWrapped"] = false; -- 🔴 DELTA: NO WRAPPING
+G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
+G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); -- Fills width minus the scrollbar
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
+G2L["83"]["Text"] = [[]];
 
--- [[ 3. LINE NUMBERS ]] --
+-- [[ 4. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
 G2L["87"]["Name"] = [[Lines]];
 G2L["87"]["ZIndex"] = 2; 
@@ -1381,48 +1386,54 @@ G2L["87"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["87"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); 
 G2L["87"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.SemiBold, Enum.FontStyle.Normal);
 G2L["87"]["TextColor3"] = Color3.fromRGB(80, 80, 90);
-G2L["87"]["BackgroundTransparency"] = 1; 
+G2L["87"]["BackgroundTransparency"] = 1; -- Transparent so it doesn't look like a block
 G2L["87"]["Position"] = UDim2.new(0, 0, 0, 0); 
-G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); 
+G2L["87"]["Size"] = UDim2.new(0, 50, 1, 0); -- Matches container height
 G2L["87"]["Text"] = [[1]];
 
--- [[ 4. PANEL (THEME COMPATIBLE) ]] --
-G2L["89"] = Instance.new("Frame", G2L["7a"]); 
+-- [[ RESTORED DESIGN: PURPLE BORDER ]] --
+G2L["88"] = Instance.new("UIStroke", G2L["82"]);
+G2L["88"]["Transparency"] = 0.8;
+G2L["88"]["Thickness"] = 1;
+G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
+G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
+
+-- [[ 5. PANEL (RESTORED ORIGINAL ICONS) ]] --
+G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]); -- Parent is the Editor Page
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 2000; 
-G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89"]["BackgroundTransparency"] = 0; 
-G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["89"]["Size"] = UDim2.new(0.42, 0, 0.15, 0);
-G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
+G2L["89"]["ZIndex"] = 100; -- 🔴 High ZIndex so it's always in front
 G2L["89"]["BorderSizePixel"] = 0;
+G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
+G2L["89"]["BackgroundTransparency"] = 0; -- Solid background to hide text behind it
+G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
+G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0); -- Original bottom-right position
+G2L["89"]["Size"] = UDim2.new(0.421, 0, 0.15, 0); 
 
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
 G2L["8a"]["Padding"] = UDim.new(0, 6);
 G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
-G2L["8a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
--- THE TWO VERTICAL LINES (NAMED FOR THEME SCRIPT)
-G2L["8c"] = Instance.new("Frame", G2L["89"]);
-G2L["8c"]["Name"] = [[ThemeSeparator]]; 
-G2L["8c"]["ZIndex"] = 2001; G2L["8c"]["Size"] = UDim2.new(0, 1, 0.6, 0); G2L["8c"]["LayoutOrder"] = 1; G2L["8c"]["BackgroundColor3"] = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
-
-G2L["8e"] = Instance.new("Frame", G2L["89"]);
-G2L["8e"]["Name"] = [[ThemeSeparator]]; 
-G2L["8e"]["ZIndex"] = 2001; G2L["8e"]["Size"] = UDim2.new(0, 1, 0.6, 0); G2L["8e"]["BackgroundColor3"] = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
-
--- Buttons
-local function createIcon(name, id, order, color)
-    local btn = Instance.new("TextButton", G2L["89"]); 
-    btn.Name = name; btn.Size = UDim2.new(0, 32, 0, 32); btn.BackgroundTransparency = 1; btn.Text = ""; btn.LayoutOrder = order; btn.ZIndex = 2005;
-    local icon = Instance.new("ImageLabel", btn); 
-    icon.Name = "Icon"; icon.Size = UDim2.new(0.65,0,0.65,0); icon.Position = UDim2.new(0.5,0,0.5,0); icon.AnchorPoint = Vector2.new(0.5,0.5); icon.BackgroundTransparency = 1; icon.Image = id; icon.ZIndex = 2010;
-    if color then icon.ImageColor3 = color end
+-- [[ RESTORING YOUR ORIGINAL BUTTONS INSIDE ]] --
+local function createIcon(name, image, order, color)
+    local btn = Instance.new("TextButton", G2L["89"])
+    btn.Name = name
+    btn.Size = UDim2.new(0, 34, 0, 34)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.LayoutOrder = order
+    local icon = Instance.new("ImageLabel", btn)
+    icon.Name = "Icon"
+    icon.Size = UDim2.new(0.65, 0, 0.65, 0)
+    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    icon.AnchorPoint = Vector2.new(0.5, 0.5)
+    icon.BackgroundTransparency = 1
+    icon.Image = image
+    icon.ImageColor3 = color or Color3.fromRGB(200, 200, 200)
     return btn
 end
 
@@ -1432,6 +1443,198 @@ G2L["94"] = createIcon("ExecuteClipboard", "rbxassetid://74812558983299", 0)
 G2L["96"] = createIcon("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
 G2L["98"] = createIcon("Save", "rbxassetid://81882572588470", -2)
 G2L["9a"] = createIcon("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
+
+G2L["8c"] = Instance.new("Frame", G2L["89"]);
+G2L["8c"]["ZIndex"] = 11;
+G2L["8c"]["BorderSizePixel"] = 0;
+G2L["8c"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
+G2L["8c"]["Size"] = UDim2.new(0, 1, 0.625, 0);
+G2L["8c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["8c"]["Name"] = [[Spacer1]];
+G2L["8c"]["LayoutOrder"] = 1;
+G2L["8c"]["BackgroundTransparency"] = 0.5;
+
+G2L["8d"] = Instance.new("UICorner", G2L["8c"]);
+G2L["8d"]["CornerRadius"] = UDim.new(1, 0);
+
+G2L["8e"] = Instance.new("Frame", G2L["89"]);
+G2L["8e"]["ZIndex"] = 11;
+G2L["8e"]["BorderSizePixel"] = 0;
+G2L["8e"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
+G2L["8e"]["Size"] = UDim2.new(0, 1, 0.625, 0);
+G2L["8e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["8e"]["Name"] = [[Spacer2]];
+G2L["8e"]["BackgroundTransparency"] = 0.5;
+
+G2L["8f"] = Instance.new("UICorner", G2L["8e"]);
+G2L["8f"]["CornerRadius"] = UDim.new(1, 0);
+
+G2L["90"] = Instance.new("TextButton", G2L["89"]);
+G2L["90"]["BorderSizePixel"] = 0;
+G2L["90"]["AutoButtonColor"] = false;
+G2L["90"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["90"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["90"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["90"]["ZIndex"] = 11;
+G2L["90"]["BackgroundTransparency"] = 1;
+G2L["90"]["Size"] = UDim2.new(0, 34, 0, 34);
+G2L["90"]["LayoutOrder"] = -1;
+G2L["90"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["90"]["Text"] = [[]];
+G2L["90"]["Name"] = [[Rename]];
+
+G2L["91"] = Instance.new("ImageLabel", G2L["90"]);
+G2L["91"]["ZIndex"] = 12;
+G2L["91"]["BorderSizePixel"] = 0;
+G2L["91"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["91"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["91"]["ImageColor3"] = Color3.fromRGB(200, 200, 200);
+G2L["91"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["91"]["Image"] = [[rbxassetid://80861536658698]];
+G2L["91"]["Size"] = UDim2.new(0.66667, 0, 0.66667, 0);
+G2L["91"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["91"]["BackgroundTransparency"] = 1;
+G2L["91"]["Name"] = [[Icon]];
+G2L["91"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+G2L["92"] = Instance.new("TextButton", G2L["89"]);
+G2L["92"]["BorderSizePixel"] = 0;
+G2L["92"]["AutoButtonColor"] = false;
+G2L["92"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["92"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["92"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["92"]["ZIndex"] = 11;
+G2L["92"]["BackgroundTransparency"] = 1;
+G2L["92"]["Size"] = UDim2.new(0, 34, 0, 34);
+G2L["92"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["92"]["Text"] = [[]];
+G2L["92"]["Name"] = [[Paste]];
+
+G2L["93"] = Instance.new("ImageLabel", G2L["92"]);
+G2L["93"]["ZIndex"] = 12;
+G2L["93"]["BorderSizePixel"] = 0;
+G2L["93"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["93"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["93"]["ImageColor3"] = Color3.fromRGB(200, 200, 200);
+G2L["93"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["93"]["Image"] = [[rbxassetid://88661060655687]];
+G2L["93"]["Size"] = UDim2.new(0.66667, 0, 0.66667, 0);
+G2L["93"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["93"]["BackgroundTransparency"] = 1;
+G2L["93"]["Name"] = [[Icon]];
+G2L["93"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+G2L["94"] = Instance.new("TextButton", G2L["89"]);
+G2L["94"]["BorderSizePixel"] = 0;
+G2L["94"]["AutoButtonColor"] = false;
+G2L["94"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["94"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["94"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["94"]["ZIndex"] = 11;
+G2L["94"]["BackgroundTransparency"] = 1;
+G2L["94"]["Size"] = UDim2.new(0, 34, 0, 34);
+G2L["94"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["94"]["Text"] = [[]];
+G2L["94"]["Name"] = [[ExecuteClipboard]];
+
+G2L["95"] = Instance.new("ImageLabel", G2L["94"]);
+G2L["95"]["ZIndex"] = 12;
+G2L["95"]["BorderSizePixel"] = 0;
+G2L["95"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["95"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["95"]["ImageColor3"] = Color3.fromRGB(200, 200, 200);
+G2L["95"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["95"]["Image"] = [[rbxassetid://74812558983299]];
+G2L["95"]["Size"] = UDim2.new(0.66667, 0, 0.66667, 0);
+G2L["95"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["95"]["BackgroundTransparency"] = 1;
+G2L["95"]["Name"] = [[Icon]];
+G2L["95"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+G2L["96"] = Instance.new("TextButton", G2L["89"]);
+G2L["96"]["BorderSizePixel"] = 0;
+G2L["96"]["AutoButtonColor"] = false;
+G2L["96"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["96"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["96"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["96"]["ZIndex"] = 11;
+G2L["96"]["BackgroundTransparency"] = 1;
+G2L["96"]["Size"] = UDim2.new(0, 34, 0, 34);
+G2L["96"]["LayoutOrder"] = 1;
+G2L["96"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["96"]["Text"] = [[]];
+G2L["96"]["Name"] = [[Execute]];
+
+G2L["97"] = Instance.new("ImageLabel", G2L["96"]);
+G2L["97"]["ZIndex"] = 12;
+G2L["97"]["BorderSizePixel"] = 0;
+G2L["97"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["97"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["97"]["ImageColor3"] = Color3.fromRGB(160, 85, 255); 
+G2L["97"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["97"]["Image"] = [[rbxassetid://95804011254392]];
+G2L["97"]["Size"] = UDim2.new(0.66667, 0, 0.66667, 0);
+G2L["97"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["97"]["BackgroundTransparency"] = 1;
+G2L["97"]["Name"] = [[Icon]];
+G2L["97"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+G2L["98"] = Instance.new("TextButton", G2L["89"]);
+G2L["98"]["BorderSizePixel"] = 0;
+G2L["98"]["AutoButtonColor"] = false;
+G2L["98"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["98"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["98"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["98"]["ZIndex"] = 11;
+G2L["98"]["BackgroundTransparency"] = 1;
+G2L["98"]["Size"] = UDim2.new(0, 34, 0, 34);
+G2L["98"]["LayoutOrder"] = -2;
+G2L["98"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["98"]["Text"] = [[]];
+G2L["98"]["Name"] = [[Save]];
+
+G2L["99"] = Instance.new("ImageLabel", G2L["98"]);
+G2L["99"]["ZIndex"] = 12;
+G2L["99"]["BorderSizePixel"] = 0;
+G2L["99"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["99"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["99"]["ImageColor3"] = Color3.fromRGB(200, 200, 200);
+G2L["99"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["99"]["Image"] = [[rbxassetid://81882572588470]];
+G2L["99"]["Size"] = UDim2.new(0.645, 0, 0.645, 0);
+G2L["99"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["99"]["BackgroundTransparency"] = 1;
+G2L["99"]["Name"] = [[Icon]];
+G2L["99"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
+G2L["9a"] = Instance.new("TextButton", G2L["89"]);
+G2L["9a"]["BorderSizePixel"] = 0;
+G2L["9a"]["AutoButtonColor"] = false;
+G2L["9a"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["9a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["9a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
+G2L["9a"]["ZIndex"] = 11;
+G2L["9a"]["BackgroundTransparency"] = 1;
+G2L["9a"]["Size"] = UDim2.new(0, 34, 0, 34);
+G2L["9a"]["LayoutOrder"] = -2;
+G2L["9a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["9a"]["Text"] = [[]];
+G2L["9a"]["Name"] = [[Delete]];
+
+G2L["9b"] = Instance.new("ImageLabel", G2L["9a"]);
+G2L["9b"]["ZIndex"] = 12;
+G2L["9b"]["BorderSizePixel"] = 0;
+G2L["9b"]["ScaleType"] = Enum.ScaleType.Fit;
+G2L["9b"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
+G2L["9b"]["ImageColor3"] = Color3.fromRGB(255, 80, 80);
+G2L["9b"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
+G2L["9b"]["Image"] = [[rbxassetid://98690572665832]];
+G2L["9b"]["Size"] = UDim2.new(0.66667, 0, 0.66667, 0);
+G2L["9b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
+G2L["9b"]["BackgroundTransparency"] = 1;
+G2L["9b"]["Name"] = [[Icon]];
+G2L["9b"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
+
 
 -- StarterGui.ScreenGui.Main.Pages.Search
 G2L["9c"] = Instance.new("Frame", G2L["78"]);
@@ -4105,12 +4308,12 @@ InitTabs.Settings = function()
             end
         end
         
-   -- 13. UPDATE DROPDOWN STROKES & SEPARATORS (FIXED: SEARCHES ENTIRE UI)
-        for _, obj in pairs(Main:GetDescendants()) do
-            if obj.Name == "ThemeSeparator" and obj:IsA("Frame") then
-                obj.BackgroundColor3 = color
-            elseif obj.Name == "ThemeStroke" and obj:IsA("UIStroke") then
+        -- 13. UPDATE DROPDOWN STROKES & SEPARATORS
+        for _, obj in pairs(Scripts:GetDescendants()) do
+            if obj.Name == "ThemeStroke" and obj:IsA("UIStroke") then
                 obj.Color = color
+            elseif obj.Name == "ThemeSeparator" and obj:IsA("Frame") then
+                obj.BackgroundColor3 = color
             end
         end
         
@@ -6025,7 +6228,7 @@ InitTabs.Saved = function()
 		end)
 	end;
 
-InitTabs.Editor = function()
+	InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
         local EditorFrame = Editor:WaitForChild("Editor"); 
@@ -6039,23 +6242,22 @@ InitTabs.Editor = function()
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
-        local originalPanelPos = Panel.Position
 
-        -- [[ 🔴 FOCUSED: DELTA TRANSITION ]] --
+        -- [[ 🔴 DELTA STABILITY LOGIC ]] --
         RealInput.Focused:Connect(function()
-            -- 1. HIDE NUMBERS & SHIFT TEXT
+            -- 1. HIDE NUMBERS & MOVE TEXT LEFT (Fixes space issue)
             Lines.Visible = false
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 2. SHRINK & MOVE BOX
+            -- 2. SHRINK BOX (Fixes keyboard cut-off & Tab overlap)
+            -- Moved down to 0.22, height reduced to 0.38
             EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-            EditorFrame.Size = UDim2.new(0.96, 0, 0.33, 0) 
+            EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
             
-            -- 3. ALIGN PANEL & ENSURE IT STAYS ON TOP
-            Panel.Position = UDim2.new(0.98, 0, 0.55, 0)
-            Panel.ZIndex = 5000 
+            -- 3. ICON DEPTH
+            Panel.ZIndex = 100 -- Ensure buttons stay in front of text
 
-            -- 4. STABILITY RULES
+            -- 4. STABILITY
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
             RealInput.TextWrapped = false 
@@ -6063,18 +6265,11 @@ InitTabs.Editor = function()
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- Check if focus was lost intentionally (not due to another UI element stealing it)
-            -- If Roblox is handling focus loss correctly, this check might not be strictly needed,
-            -- but it adds a layer of safety against unexpected focus shifts.
-            -- For now, we trust Roblox's focus management and assume focus is lost intentionally.
-            
-            -- 1. RESTORE VIEW MODE LAYOUT
+            -- 1. RESTORE LAYOUT
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
-            Panel.Position = originalPanelPos
-            Panel.ZIndex = 5000 -- Keep ZIndex high
 
             -- 2. RE-APPLY COLORS
             local raw = RealInput.Text
@@ -6086,14 +6281,21 @@ InitTabs.Editor = function()
             end
         end)
 
-        -- SYNC LOGIC
+        -- Sync Line Numbers
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(RealInput, Lines)
+            if not Data.Editor.EditingSavedFile then
+                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+                autoSaveDebounce = task.delay(1, function()
+                    local cleanText = StripSyntax(RealInput.Text)
+                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+                end)
+            end
         end)
 
-        -- CONNECT BUTTONS
+        -- CONNECT BUTTONS (Pull from Panel)
         Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
-        Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
+        Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = "" end)
         Panel:WaitForChild("Paste")[Method]:Connect(function()
             local clip = safeGetClipboard(); RealInput.Text = clip;
             RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
@@ -6108,6 +6310,7 @@ InitTabs.Editor = function()
 
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
+        -- Popup Controls
         local Buttons = script.Parent.Popups.Main.Button
         Buttons["Confirm"][Method]:Connect(function()
             local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
