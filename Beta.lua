@@ -1332,19 +1332,16 @@ G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
-G2L["82"]["Selectable"] = false; -- Fixes click-through
-G2L["82"]["ZIndex"] = 1; -- Low ZIndex so buttons sit on top
+G2L["82"]["ZIndex"] = 1; 
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
-G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
-G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); -- Controlled by script
-G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; -- 🟢 AUTO MODE
-G2L["82"]["ScrollBarThickness"] = 6;
-G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; -- Fixes text bleeding
+G2L["82"]["Size"] = UDim2.new(1, 0, 0.82, 0); -- 🔴 Adjusted height to avoid Tabs
+G2L["82"]["Position"] = UDim2.new(0, 0, 0.18, 0); -- 🔴 Starts lower to avoid overlapping top
+G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
+G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
+G2L["82"]["ScrollBarThickness"] = 4;
+G2L["82"]["ClipsDescendants"] = true; -- 🔴 CRITICAL: This stops the bleeding
 
 -- [[ 2. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
@@ -1364,7 +1361,7 @@ G2L["87"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["87"]["Text"] = [[1]];
 G2L["87"]["AutomaticSize"] = Enum.AutomaticSize.None; 
 
--- [[ 3. THE SINGLE STABLE INPUT BOX (DELTA STYLE) ]] --
+-- [[ 2. THE INPUT LAYER ]] --
 G2L["83"] = Instance.new("TextBox", G2L["82"]);
 G2L["83"]["Name"] = [[Input]];
 G2L["83"]["ZIndex"] = 3; 
@@ -1374,13 +1371,13 @@ G2L["83"]["TextColor3"] = Color3.fromRGB(235, 235, 235);
 G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
-G2L["83"]["ClearTextOnFocus"] = false; -- 🔴 NEVER TRUE
-G2L["83"]["RichText"] = true; -- Starts with colors on
+G2L["83"]["ClearTextOnFocus"] = false;
+G2L["83"]["RichText"] = true; 
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
-G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
-G2L["83"]["Size"] = UDim2.new(0, 1000, 0, 1000); 
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY;
+G2L["83"]["Position"] = UDim2.new(0, 55, 0, 5); -- 🔴 Offset 55px from left for line numbers
+G2L["83"]["Size"] = UDim2.new(1, -65, 1, -10); -- 🔴 Fills the space to the right
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
 G2L["83"]["Text"] = [[]];
 
 -- [[ 4. UICORNER ]] --
@@ -6209,33 +6206,39 @@ InitTabs.Saved = function()
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
-        -- [[ 1. THE DELTA STABILITY ENGINE ]] --
-        -- This logic ensures the box is "Raw" while editing and "Colored" while viewing
-        
+        -- [[ DELTA STABILITY LOGIC ]] --
         RealInput.Focused:Connect(function()
-            -- When you click, remove all HTML tags so the cursor doesn't jump
+            -- 1. Remove color tags for editing
             local raw = StripSyntax(RealInput.Text)
+            
+            -- 2. Turn off RichText to keep layout stable while typing
             RealInput.RichText = false 
             RealInput.Text = raw
+            
+            -- 3. Lock layout during focus to prevent "Bleeding"
+            RealInput.AutomaticSize = Enum.AutomaticSize.None
+            RealInput.Size = UDim2.new(0, RealInput.TextBounds.X + 500, 0, RealInput.TextBounds.Y + 500)
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- When you finish, apply the colors back
             local raw = RealInput.Text
+            
+            -- 1. Restore automatic scaling
+            RealInput.AutomaticSize = Enum.AutomaticSize.XY
+            
+            -- 2. Re-apply colors
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
 
-            -- Auto-Save after editing
             if not Data.Editor.EditingSavedFile then
                 UIEvents.EditorTabs.saveTab(nil, raw, false)
             end
         end)
 
-        -- This ensures line numbers update and follow the box
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(RealInput, EditorFrame.Lines)
             
-            -- Delta Style Debounced Autosave (saves while typing)
+            -- Auto-Save Debounce
             if not Data.Editor.EditingSavedFile then
                 if autoSaveDebounce then task.cancel(autoSaveDebounce) end
                 autoSaveDebounce = task.delay(1, function()
@@ -6245,63 +6248,36 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- [[ 2. PANEL BUTTONS ]] --
+        -- Standard Buttons (Keep these as they are)
         Panel.Execute[Method]:Connect(function()
-            -- Always use StripSyntax to ensure we run pure Lua, not HTML tags
             UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))();
-        end);
-
-        Panel.ExecuteClipboard[Method]:Connect(function()
-            local clipCode = safeGetClipboard()
-            UIEvents.Executor.RunCode(clipCode)();
-        end);
-
-        Panel.Delete[Method]:Connect(function()
-            RealInput.Text = "";
-        end);
-
+        end)
+        Panel.Delete[Method]:Connect(function() RealInput.Text = "" end)
         Panel.Paste[Method]:Connect(function()
-            local clip = safeGetClipboard();
-            RealInput.RichText = true;
-            RealInput.Text = ApplySyntax(clip);
-        end);
-
-        Panel.Save[Method]:Connect(function()
-            UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true); 
-        end);
-
+            local clip = safeGetClipboard()
+            RealInput.Text = clip
+            RealInput.RichText = true
+            RealInput.Text = ApplySyntax(clip)
+        end)
+        Panel.Save[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
         Panel.Rename[Method]:Connect(function()
-            script.Parent.Popups.Visible = true;
+            script.Parent.Popups.Visible = true
             script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-            script.Parent.Popups.Main.Input:CaptureFocus() 
-        end);
+            script.Parent.Popups.Main.Input:CaptureFocus()
+        end)
+        Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
-        -- [[ 3. TAB SYSTEM ]] --
-        Editor.Tabs.Create.Activated:Connect(function()
-            UIEvents.EditorTabs.createTab("Script", "");
-        end);
-
-        -- [[ 4. POPUP BUTTONS ]] --
+        -- Popup Controls
         local Buttons = script.Parent.Popups.Main.Button
-        
         Buttons["Confirm"][Method]:Connect(function()
-            local newName = script.Parent.Popups.Main.Input.Text;
-            newName = string.gsub(newName, "^%s*(.-)%s*$", "%1") 
-            
-            if (#newName == 0 or (newName == Data.Editor.CurrentTab)) then 
-                script.Parent.Popups.Visible = false;
-                return; 
+            local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
+            if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
+                UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
             end
-
-            UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
-            script.Parent.Popups.Visible = false;
+            script.Parent.Popups.Visible = false
         end)
+        Buttons["Cancel"][Method]:Connect(function() script.Parent.Popups.Visible = false end)
 
-        Buttons["Cancel"][Method]:Connect(function()
-            script.Parent.Popups.Visible = false;
-        end)
-
-        -- Sync initial line numbers
         UpdateLineNumbers(RealInput, EditorFrame.Lines)
     end;
 
