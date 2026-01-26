@@ -6208,163 +6208,137 @@ InitTabs.Saved = function()
 	end;
 
 	InitTabs.Editor = function()
-    local Editor = Pages:WaitForChild("Editor")
-    local Panel = Editor:WaitForChild("Panel")
-    local EditorFrame = Editor:WaitForChild("Editor") -- The ScrollingFrame
-    local Input = EditorFrame:WaitForChild("Input")   -- The TextBox
-    local Lines = EditorFrame:WaitForChild("Lines")   -- The Line Numbers
-    
-    local TweenService = game:GetService("TweenService")
-    local Method = "MouseButton1Click"
+        local Editor = Pages:WaitForChild("Editor");
+        local Panel = Editor:WaitForChild("Panel");
+        local EditorFrame = Editor:WaitForChild("Editor");
+        local Method = "MouseButton1Click"; 
 
-    -- [[ 1. SNAPSHOT ORIGINAL STATE ]]
-    local OriginalPos = EditorFrame.Position
-    local OriginalSize = EditorFrame.Size
-    
-    -- [[ 2. FOCUS STATE (Editing Mode) ]]
-    local FocusedPos = UDim2.new(0.02, 0, 0.02, 0)
-    local FocusedSize = UDim2.new(0.96, 0, 0.45, 0) 
+   -- [[ EXECUTE ]]
+        Panel.Execute[Method]:Connect(function()
+            -- 🟢 FIX: Ensure we get the ContentText (Raw text without formatting) if available, 
+            -- or strip tags manually if ContentText isn't reliable in your environment.
+            local rawCode = EditorFrame.Input.ContentText -- ContentText ignores RichText tags!
+            
+            -- Fallback: If ContentText is empty (some executors glitch), strip tags manually
+            if not rawCode or rawCode == "" then 
+                rawCode = StripSyntax(EditorFrame.Input.Text)
+            end
+            
+            UIEvents.Executor.RunCode(rawCode)();
+        end);
 
-    -- [[ 3. FOCUS EVENT (Start Editing) ]]
-    Input.Focused:Connect(function()
-        -- A. CLEAN UP UI
-        if Main:FindFirstChild("Title") then Main.Title.Visible = false end
-        Lines.Visible = false
-        Panel.Visible = false -- Hide buttons
-        if Editor:FindFirstChild("Tabs") then Editor.Tabs.Visible = false end -- Hide Tabs
+        -- [[ EXECUTE CLIPBOARD ]]
+        Panel.ExecuteClipboard[Method]:Connect(function()
+            local clipCode = safeGetClipboard()
+            UIEvents.Executor.RunCode(clipCode)();
+        end);
 
-        -- B. PREPARE TEXT
-        local rawText = StripSyntax(Input.Text)
-        Input.RichText = false
-        Input.Text = rawText
+        -- [[ CLEAR ]]
+        Panel.Delete[Method]:Connect(function()
+            EditorFrame.Input.Text = "";
+        end);
+
+        -- [[ SAVE (Now includes visual feedback) ]]
+        Panel.Save[Method]:Connect(function()
+            local cleanText = StripSyntax(EditorFrame.Input.Text)
+            UIEvents.EditorTabs.saveTab(nil, cleanText, true); 
+        end);
+
+        -- [[ RENAME START ]]
+        Panel.Rename[Method]:Connect(function()
+            script.Parent.Popups.Visible = true;
+            local current = Data.Editor.CurrentTab or ""
+            script.Parent.Popups.Main.Input.Text = current
+            -- Force focus on the popup input so keyboard appears
+            script.Parent.Popups.Main.Input:CaptureFocus() 
+        end);
+
+        -- [[ EDITOR INPUT HANDLING ]]
         
-        -- Wait a split second for the UI to clear up before resizing
-        -- This prevents the text from glitching out
-        task.wait() 
-
-        -- C. CONFIGURE FOR WRAPPING (Mobile Style)
-        -- We disable horizontal scroll and force vertical growth
-        EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-        EditorFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-        
-        -- Make Input fill the width properly (minus padding)
-        Input.AutomaticSize = Enum.AutomaticSize.Y
-        Input.Size = UDim2.new(1, -10, 0, 0) 
-        Input.Position = UDim2.new(0, 5, 0, 0) 
-        Input.TextWrapped = true
-
-        -- D. ANIMATE FRAME
-        TweenService:Create(EditorFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = FocusedPos,
-            Size = FocusedSize
-        }):Play()
-    end)
-
-    -- [[ 4. FOCUS LOST EVENT (Stop Editing) ]]
-    Input.FocusLost:Connect(function()
-        -- A. RESTORE TEXT STYLE
-        local rawText = Input.Text
-        Input.RichText = true
-        Input.Text = ApplySyntax(rawText)
-        
-        -- B. RESTORE LAYOUT (Code Editor Style)
-        Input.TextWrapped = false 
-        
-        -- Re-enable Infinite Horizontal Scroll
-        EditorFrame.AutomaticCanvasSize = Enum.AutomaticSize.XY
-        
-        -- Restore Input Size for horizontal scrolling
-        Input.AutomaticSize = Enum.AutomaticSize.XY
-        Input.Size = UDim2.new(0, 1000, 0, 0) 
-        Input.Position = UDim2.new(0, 38, 0, 0) -- Restore offset for lines
-
-        -- C. RESTORE UI ELEMENTS
-        if Main:FindFirstChild("Title") then Main.Title.Visible = true end
-        Lines.Visible = true
-        Panel.Visible = true
-        if Editor:FindFirstChild("Tabs") then Editor.Tabs.Visible = true end
-
-        -- D. ANIMATE BACK
-        TweenService:Create(EditorFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            Position = OriginalPos,
-            Size = OriginalSize
-        }):Play()
-        
-        -- E. AUTO-SAVE
-        if not Data.Editor.EditingSavedFile then
-             UIEvents.EditorTabs.saveTab(nil, rawText, false)
-        end
-    end)
-
-    -- [[ 5. BUTTONS (Standard Logic) ]]
-    Panel.Execute[Method]:Connect(function()
-        local c = Input.ContentText
-        if not c or c == "" then c = StripSyntax(Input.Text) end
-        UIEvents.Executor.RunCode(c)()
-    end)
-
-    Panel.ExecuteClipboard[Method]:Connect(function()
-        local clip = safeGetClipboard()
-        UIEvents.Executor.RunCode(clip)()
-    end)
-
-    Panel.Delete[Method]:Connect(function() Input.Text = "" end)
-
-    Panel.Save[Method]:Connect(function()
-        local c = StripSyntax(Input.Text)
-        UIEvents.EditorTabs.saveTab(nil, c, true)
-    end)
-    
-    Panel.Rename[Method]:Connect(function()
-        script.Parent.Popups.Visible = true
-        local current = Data.Editor.CurrentTab or ""
-        script.Parent.Popups.Main.Input.Text = current
-        script.Parent.Popups.Main.Input:CaptureFocus()
-    end)
-
-    Panel.Paste[Method]:Connect(function()
-        local pasted = safeGetClipboard()
-        Input.RichText = false
-        Input.Text = pasted
-        task.delay(0.05, function()
-            Input.RichText = true
-            Input.Text = ApplySyntax(pasted)
+        -- 1. FOCUS GAINED: Turn OFF colors, show raw text
+        EditorFrame.Input.Focused:Connect(function()
+            local raw = StripSyntax(EditorFrame.Input.Text)
+            EditorFrame.Input.RichText = false
+            EditorFrame.Input.Text = raw
         end)
-    end)
 
-    -- Line Numbers
-    local function UpdateLines()
-        local text = Input.Text
-        local _, count = text:gsub("\n", "\n")
-        local s = ""
-        for i = 1, count + 1 do s = s .. i .. "\n" end
-        Lines.Text = s
-    end
-    Input:GetPropertyChangedSignal("Text"):Connect(UpdateLines)
-    UpdateLines()
+        -- 2. FOCUS LOST: Turn ON colors, apply highlighting
+        EditorFrame.Input.FocusLost:Connect(function()
+            local raw = EditorFrame.Input.Text
+            EditorFrame.Input.RichText = true
+            EditorFrame.Input.Text = ApplySyntax(raw)
+        end)
 
-    if Editor.Tabs:FindFirstChild("Create") then
+        -- 3. PASTE HANDLING (Fixed)
+        Panel.Paste[Method]:Connect(function()
+            local pastedText = safeGetClipboard();
+            
+            EditorFrame.Input.RichText = false
+            EditorFrame.Input.Text = pastedText
+            
+            task.delay(0.05, function()
+                EditorFrame.Input.RichText = true
+                EditorFrame.Input.Text = ApplySyntax(pastedText)
+            end)
+        end);
+
+       -- 4. REAL-TIME UPDATES (Line Numbers & Autosave)
+        local autoSaveDebounce = nil -- Variable to handle the timer
+
+        EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+            
+            -- 🟢 FIX: Save Logic with 1-second delay (Debounce)
+            if not Data.Editor.EditingSavedFile then
+                -- If user types again within 1 second, cancel the previous save timer
+                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+                
+                -- Wait 1 second after typing stops, then save
+                autoSaveDebounce = task.delay(1, function()
+                    local cleanText = StripSyntax(EditorFrame.Input.Text)
+                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+                end)
+            end
+        end)
+        
+        -- 🟢 SAFETY NET: Force save immediately when closing the game
+        game:GetService("Players").PlayerRemoving:Connect(function()
+            if not Data.Editor.EditingSavedFile then
+                local cleanText = StripSyntax(EditorFrame.Input.Text)
+                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+            end
+        end)
+        
+        UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
+
+        -- [[ TAB CREATE ]]
         Editor.Tabs.Create.Activated:Connect(function()
-            UIEvents.EditorTabs.createTab("Script", "")
+            UIEvents.EditorTabs.createTab("Script", "");
+        end);
+
+        -- [[ POPUP BUTTONS ]]
+        local Buttons = script.Parent.Popups.Main.Button
+        
+        -- CONFIRM BUTTON
+        Buttons["Confirm"][Method]:Connect(function()
+            local newName = script.Parent.Popups.Main.Input.Text;
+            -- Remove whitespace
+            newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
+            
+            if (#newName == 0 or (newName == Data.Editor.CurrentTab)) then 
+                script.Parent.Popups.Visible = false;
+                return; 
+            end
+
+            UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab);
+            script.Parent.Popups.Visible = false;
         end)
-    end
 
-    local Buttons = script.Parent.Popups.Main.Button
-    Buttons["Confirm"][Method]:Connect(function()
-        local newName = script.Parent.Popups.Main.Input.Text
-        newName = string.gsub(newName, "^%s*(.-)%s*$", "%1")
-        if (#newName == 0 or (newName == Data.Editor.CurrentTab)) then 
-            script.Parent.Popups.Visible = false
-            return 
-        end
-        UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
-        script.Parent.Popups.Visible = false
-    end)
-
-    Buttons["Cancel"][Method]:Connect(function()
-        script.Parent.Popups.Visible = false
-    end)
-end
+        -- CANCEL BUTTON
+        Buttons["Cancel"][Method]:Connect(function()
+            script.Parent.Popups.Visible = false;
+        end)
+    end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
