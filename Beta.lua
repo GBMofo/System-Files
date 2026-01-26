@@ -6135,26 +6135,22 @@ InitTabs.Saved = function()
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
-        -- Remember original states
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
 
-        -- [[ 🔴 STABLE FOCUS LOGIC ]] --
+        -- [[ 🔴 STABLE DELTA FOCUS LOGIC ]] --
         RealInput.Focused:Connect(function()
             -- 1. HIDE NUMBERS & SHIFT TEXT LEFT
             Lines.Visible = false
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 2. SHRINK BOX (Avoid Top Tabs & Keyboard)
-            -- Moved down slightly, height set to 38%
+            -- 2. SHRINK BOX (To avoid Top Tabs and Keyboard)
+            -- Positioned at 22% (Pos) and 38% high (Size)
             EditorFrame.Position = UDim2.new(0, 0, 0.22, 0) 
             EditorFrame.Size = UDim2.new(1, 0, 0.38, 0)
             
-            -- 3. ENSURE BUTTONS STAY IN FRONT
-            Panel.ZIndex = 50 
-
-            -- 4. RAW STABILITY
+            -- 3. RAW STABILITY
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
             RealInput.TextWrapped = false 
@@ -6178,7 +6174,7 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- SYNC LOGIC
+        -- SYNC LINE NUMBERS
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(RealInput, Lines)
             if not Data.Editor.EditingSavedFile then
@@ -6207,6 +6203,7 @@ InitTabs.Saved = function()
 
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
+        -- Popups
         local Buttons = script.Parent.Popups.Main.Button
         Buttons["Confirm"][Method]:Connect(function()
             local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
