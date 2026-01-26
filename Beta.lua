@@ -6033,42 +6033,50 @@ InitTabs.Editor = function()
         local Lines = EditorFrame:WaitForChild("Lines");
         
         local Method = "MouseButton1Click"; 
+        local autoSaveDebounce = nil 
 
+        -- Store original states
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
         local originalPanelPos = Panel.Position
 
+        -- [[ 🔴 FOCUSED: DELTA TRANSITION ]] --
         RealInput.Focused:Connect(function()
-            -- 1. SAVE CURRENT VIEW POSITION
-            local savedCanvasPos = EditorFrame.CanvasPosition
-            
-            -- 2. TRANSITION
+            -- 1. HIDE NUMBERS & SHIFT TEXT
             Lines.Visible = false
-            RealInput.Position = UDim2.new(0, 20, 0, 0) -- Margin fix
+            RealInput.Position = UDim2.new(0, 10, 0, 0)
+            
+            -- 2. SHRINK & MOVE BOX
             EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
             EditorFrame.Size = UDim2.new(0.96, 0, 0.33, 0) 
-            Panel.Position = UDim2.new(0.98, 0, 0.55, 0)
             
-            -- 3. RAW MODE + SCROLL LOCK
+            -- 3. ALIGN PANEL & ENSURE IT STAYS ON TOP
+            Panel.Position = UDim2.new(0.98, 0, 0.55, 0)
+            Panel.ZIndex = 5000 
+
+            -- 4. STABILITY RULES
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
             RealInput.TextWrapped = false 
             RealInput.Text = raw
-            
-            -- 4. RESTORE VIEW (Ensures text doesn't disappear)
-            task.wait() -- Allow Roblox to calculate new size
-            EditorFrame.CanvasPosition = savedCanvasPos
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- RESTORE VIEW MODE
+            -- Check if focus was lost intentionally (not due to another UI element stealing it)
+            -- If Roblox is handling focus loss correctly, this check might not be strictly needed,
+            -- but it adds a layer of safety against unexpected focus shifts.
+            -- For now, we trust Roblox's focus management and assume focus is lost intentionally.
+            
+            -- 1. RESTORE VIEW MODE LAYOUT
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
             Panel.Position = originalPanelPos
+            Panel.ZIndex = 5000 -- Keep ZIndex high
 
+            -- 2. RE-APPLY COLORS
             local raw = RealInput.Text
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
@@ -6078,7 +6086,12 @@ InitTabs.Editor = function()
             end
         end)
 
-        -- Connect Buttons
+        -- SYNC LOGIC
+        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+            UpdateLineNumbers(RealInput, Lines)
+        end)
+
+        -- CONNECT BUTTONS
         Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
         Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
         Panel:WaitForChild("Paste")[Method]:Connect(function()
@@ -6092,10 +6105,6 @@ InitTabs.Editor = function()
             script.Parent.Popups.Main.Input:CaptureFocus()
         end)
         Panel:WaitForChild("ExecuteClipboard")[Method]:Connect(function() UIEvents.Executor.RunCode(safeGetClipboard())() end)
-
-        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-            UpdateLineNumbers(RealInput, Lines)
-        end)
 
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
