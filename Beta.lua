@@ -6262,6 +6262,10 @@ local CachedScripts = {}
 local isUpdating = false
 local searchDebounce = nil
 
+-- 🟢 RATE LIMITING
+local lastRequestTime = 0
+local cooldownTime = 2 -- Seconds between searches
+
 -- 🟢 REMOVED STATIC SETTINGS, REPLACED WITH FUNCTION
 -- 🟢 ADD DYNAMIC FETCH PAGE FUNCTION
 local function getFetchPages()
@@ -6625,6 +6629,18 @@ end
 	end
 	
 local function Update()
+    -- 🟢 RATE LIMIT CHECK
+    local currentTime = tick()
+    local timeSinceLastRequest = currentTime - lastRequestTime
+    
+    if timeSinceLastRequest < cooldownTime then
+        local waitTime = math.ceil(cooldownTime - timeSinceLastRequest)
+        createNotification("Please wait " .. waitTime .. "s before searching again", "Warn", 2)
+        return -- Block the request
+    end
+    
+    lastRequestTime = currentTime -- Update last request time
+    
     -- 🟢 TRENDING SPECIAL CASE
     if Data.Search.CurrentFilter == "Trending" then
         if isUpdating then return end
