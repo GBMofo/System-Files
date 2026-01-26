@@ -3547,6 +3547,8 @@ end
 
 -- 🟢 CLEANER
 local function StripSyntax(text)
+    return string.gsub(text, "<[^>]+>", "")
+end
 
 -- 🟢 AUTO-GENERATE THEME SHADES (NEW FUNCTION - ADD THIS)
 local function getThemeShades(baseColor)
@@ -4295,15 +4297,6 @@ InitTabs.Settings = function()
                 obj.Color = color
             elseif obj.Name == "ThemeSeparator" and obj:IsA("Frame") then
                 obj.BackgroundColor3 = color
-            end
-        end
-        
-        -- 🟢 NEW: Re-highlight editor text with new theme
-        if Pages.Editor and Pages.Editor.Editor and Pages.Editor.Editor.Input then
-            local editor = Pages.Editor.Editor.Input
-            if not editor.Focused then  -- Don't interrupt typing
-                local raw = StripSyntax(editor.Text)
-                editor.Text = ApplySyntax(raw)
             end
         end
         
