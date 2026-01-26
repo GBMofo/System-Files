@@ -4300,6 +4300,15 @@ InitTabs.Settings = function()
             end
         end
         
+        -- 🟢 NEW: Re-highlight editor text with new theme
+        if Pages.Editor and Pages.Editor.Editor and Pages.Editor.Editor.Input then
+            local editor = Pages.Editor.Editor.Input
+            if not editor.Focused then  -- Don't interrupt typing
+                local raw = StripSyntax(editor.Text)
+                editor.Text = ApplySyntax(raw)
+            end
+        end
+        
         print("[THEME] Theme applied successfully!")
     end
     
