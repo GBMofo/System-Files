@@ -1397,52 +1397,64 @@ G2L["88"]["Transparency"] = 0.8;
 G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
-
--- [[ 5. PANEL (RESTORED ORIGINAL ICONS) ]] --
-G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]); -- Parent is the Editor Page
+-- [[ 1. PANEL (THE ICON BAR - FIXED FRAME) ]] --
+G2L["89"] = Instance.new("Frame", G2L["7a"]);
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 100; -- 🔴 High ZIndex so it's always in front
+G2L["89"]["ZIndex"] = 100; 
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89"]["BackgroundTransparency"] = 0; -- Solid background to hide text behind it
+G2L["89"]["BackgroundTransparency"] = 0; 
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0); -- Original bottom-right position
-G2L["89"]["Size"] = UDim2.new(0.421, 0, 0.15, 0); 
+G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0); 
+G2L["89"]["Size"] = UDim2.new(0.42, 0, 0.12, 0); 
 
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
 G2L["8a"]["Padding"] = UDim.new(0, 6);
 G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
+G2L["8a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
--- [[ RESTORING YOUR ORIGINAL BUTTONS INSIDE ]] --
-local function createIcon(name, image, order, color)
-    local btn = Instance.new("TextButton", G2L["89"])
-    btn.Name = name
-    btn.Size = UDim2.new(0, 34, 0, 34)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
-    btn.LayoutOrder = order
-    local icon = Instance.new("ImageLabel", btn)
-    icon.Name = "Icon"
-    icon.Size = UDim2.new(0.65, 0, 0.65, 0)
-    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    icon.AnchorPoint = Vector2.new(0.5, 0.5)
-    icon.BackgroundTransparency = 1
-    icon.Image = image
-    icon.ImageColor3 = color or Color3.fromRGB(200, 200, 200)
-    return btn
-end
+-- [[ 🔴 RESTORE ALL YOUR ORIGINAL BUTTONS 🔴 ]] --
 
-G2L["90"] = createIcon("Rename", "rbxassetid://80861536658698", -1)
-G2L["92"] = createIcon("Paste", "rbxassetid://88661060655687", 0)
-G2L["94"] = createIcon("ExecuteClipboard", "rbxassetid://74812558983299", 0)
-G2L["96"] = createIcon("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
-G2L["98"] = createIcon("Save", "rbxassetid://81882572588470", -2)
-G2L["9a"] = createIcon("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
+-- Rename
+G2L["90"] = Instance.new("TextButton", G2L["89"]);
+G2L["90"]["Name"] = [[Rename]]; G2L["90"]["Size"] = UDim2.new(0, 34, 0, 34); G2L["90"]["BackgroundTransparency"] = 1; G2L["90"]["Text"] = ""; G2L["90"]["LayoutOrder"] = -1;
+G2L["91"] = Instance.new("ImageLabel", G2L["90"]);
+G2L["91"]["Name"] = [[Icon]]; G2L["91"]["Size"] = UDim2.new(0.6, 0, 0.6, 0); G2L["91"]["Position"] = UDim2.new(0.5, 0, 0.5, 0); G2L["91"]["AnchorPoint"] = Vector2.new(0.5, 0.5); G2L["91"]["BackgroundTransparency"] = 1; G2L["91"]["Image"] = [[rbxassetid://80861536658698]]; G2L["91"]["ImageColor3"] = Color3.fromRGB(200, 200, 200);
+
+-- Paste
+G2L["92"] = Instance.new("TextButton", G2L["89"]);
+G2L["92"]["Name"] = [[Paste]]; G2L["92"]["Size"] = UDim2.new(0, 34, 0, 34); G2L["92"]["BackgroundTransparency"] = 1; G2L["92"]["Text"] = "";
+G2L["93"] = Instance.new("ImageLabel", G2L["92"]);
+G2L["93"]["Name"] = [[Icon]]; G2L["93"]["Size"] = UDim2.new(0.6, 0, 0.6, 0); G2L["93"]["Position"] = UDim2.new(0.5, 0, 0.5, 0); G2L["93"]["AnchorPoint"] = Vector2.new(0.5, 0.5); G2L["93"]["BackgroundTransparency"] = 1; G2L["93"]["Image"] = [[rbxassetid://88661060655687]]; G2L["93"]["ImageColor3"] = Color3.fromRGB(200, 200, 200);
+
+-- Execute Clipboard
+G2L["94"] = Instance.new("TextButton", G2L["89"]);
+G2L["94"]["Name"] = [[ExecuteClipboard]]; G2L["94"]["Size"] = UDim2.new(0, 34, 0, 34); G2L["94"]["BackgroundTransparency"] = 1; G2L["94"]["Text"] = "";
+G2L["95"] = Instance.new("ImageLabel", G2L["94"]);
+G2L["95"]["Name"] = [[Icon]]; G2L["95"]["Size"] = UDim2.new(0.6, 0, 0.6, 0); G2L["95"]["Position"] = UDim2.new(0.5, 0, 0.5, 0); G2L["95"]["AnchorPoint"] = Vector2.new(0.5, 0.5); G2L["95"]["BackgroundTransparency"] = 1; G2L["95"]["Image"] = [[rbxassetid://74812558983299]]; G2L["95"]["ImageColor3"] = Color3.fromRGB(200, 200, 200);
+
+-- Execute
+G2L["96"] = Instance.new("TextButton", G2L["89"]);
+G2L["96"]["Name"] = [[Execute]]; G2L["96"]["Size"] = UDim2.new(0, 34, 0, 34); G2L["96"]["BackgroundTransparency"] = 1; G2L["96"]["Text"] = ""; G2L["96"]["LayoutOrder"] = 1;
+G2L["97"] = Instance.new("ImageLabel", G2L["96"]);
+G2L["97"]["Name"] = [[Icon]]; G2L["97"]["Size"] = UDim2.new(0.6, 0, 0.6, 0); G2L["97"]["Position"] = UDim2.new(0.5, 0, 0.5, 0); G2L["97"]["AnchorPoint"] = Vector2.new(0.5, 0.5); G2L["97"]["BackgroundTransparency"] = 1; G2L["97"]["Image"] = [[rbxassetid://95804011254392]]; G2L["97"]["ImageColor3"] = Color3.fromRGB(160, 85, 255);
+
+-- Save
+G2L["98"] = Instance.new("TextButton", G2L["89"]);
+G2L["98"]["Name"] = [[Save]]; G2L["98"]["Size"] = UDim2.new(0, 34, 0, 34); G2L["98"]["BackgroundTransparency"] = 1; G2L["98"]["Text"] = ""; G2L["98"]["LayoutOrder"] = -2;
+G2L["99"] = Instance.new("ImageLabel", G2L["98"]);
+G2L["99"]["Name"] = [[Icon]]; G2L["99"]["Size"] = UDim2.new(0.6, 0, 0.6, 0); G2L["99"]["Position"] = UDim2.new(0.5, 0, 0.5, 0); G2L["99"]["AnchorPoint"] = Vector2.new(0.5, 0.5); G2L["99"]["BackgroundTransparency"] = 1; G2L["99"]["Image"] = [[rbxassetid://81882572588470]]; G2L["99"]["ImageColor3"] = Color3.fromRGB(200, 200, 200);
+
+-- Delete
+G2L["9a"] = Instance.new("TextButton", G2L["89"]);
+G2L["9a"]["Name"] = [[Delete]]; G2L["9a"]["Size"] = UDim2.new(0, 34, 0, 34); G2L["9a"]["BackgroundTransparency"] = 1; G2L["9a"]["Text"] = ""; G2L["9a"]["LayoutOrder"] = -2;
+G2L["9b"] = Instance.new("ImageLabel", G2L["9a"]);
+G2L["9b"]["Name"] = [[Icon]]; G2L["9b"]["Size"] = UDim2.new(0.6, 0, 0.6, 0); G2L["9b"]["Position"] = UDim2.new(0.5, 0, 0.5, 0); G2L["9b"]["AnchorPoint"] = Vector2.new(0.5, 0.5); G2L["9b"]["BackgroundTransparency"] = 1; G2L["9b"]["Image"] = [[rbxassetid://98690572665832]]; G2L["9b"]["ImageColor3"] = Color3.fromRGB(255, 80, 80);
 
 G2L["8c"] = Instance.new("Frame", G2L["89"]);
 G2L["8c"]["ZIndex"] = 11;
@@ -6228,7 +6240,7 @@ InitTabs.Saved = function()
 		end)
 	end;
 
-	InitTabs.Editor = function()
+InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
         local EditorFrame = Editor:WaitForChild("Editor"); 
@@ -6238,24 +6250,24 @@ InitTabs.Saved = function()
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
-        -- Store original states
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
 
-        -- [[ 🔴 DELTA STABILITY LOGIC ]] --
+        -- [[ 🔴 STABLE FOCUS TRANSITION ]] --
         RealInput.Focused:Connect(function()
-            -- 1. HIDE NUMBERS & MOVE TEXT LEFT (Fixes space issue)
+            -- 1. HIDE NUMBERS & SHIFT TEXT
             Lines.Visible = false
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 2. SHRINK BOX (Fixes keyboard cut-off & Tab overlap)
-            -- Moved down to 0.22, height reduced to 0.38
+            -- 2. SHRINK BOX (To avoid Top Tabs and Keyboard)
+            -- Positioned at 22% (Pos) and 34% high (Size)
             EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-            EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
+            EditorFrame.Size = UDim2.new(0.96, 0, 0.36, 0)
             
-            -- 3. ICON DEPTH
-            Panel.ZIndex = 100 -- Ensure buttons stay in front of text
+            -- 3. ENSURE ICONS STAY IN FRONT
+            Panel.ZIndex = 101 
+            Panel.Visible = true
 
             -- 4. STABILITY
             local raw = StripSyntax(RealInput.Text)
@@ -6265,13 +6277,13 @@ InitTabs.Saved = function()
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- 1. RESTORE LAYOUT
+            -- 1. RESTORE
             Lines.Visible = true
             RealInput.Position = originalTextPos
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
 
-            -- 2. RE-APPLY COLORS
+            -- 2. RE-COLOR
             local raw = RealInput.Text
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
@@ -6281,7 +6293,7 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- Sync Line Numbers
+        -- SYNC LINE NUMBERS
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(RealInput, Lines)
             if not Data.Editor.EditingSavedFile then
@@ -6293,9 +6305,9 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- CONNECT BUTTONS (Pull from Panel)
+        -- Connect Buttons (Corrected parenting for your script)
         Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
-        Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = "" end)
+        Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = ""; UpdateLineNumbers(RealInput, Lines) end)
         Panel:WaitForChild("Paste")[Method]:Connect(function()
             local clip = safeGetClipboard(); RealInput.Text = clip;
             RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
@@ -6310,7 +6322,7 @@ InitTabs.Saved = function()
 
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
-        -- Popup Controls
+        -- Popups
         local Buttons = script.Parent.Popups.Main.Button
         Buttons["Confirm"][Method]:Connect(function()
             local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
