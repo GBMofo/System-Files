@@ -1334,33 +1334,31 @@ G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
 G2L["82"]["Selectable"] = false;
-G2L["82"]["ZIndex"] = 1; -- Low ZIndex so it stays behind tabs/buttons
+G2L["82"]["ZIndex"] = 1; 
 G2L["82"]["BorderSizePixel"] = 0;
 G2L["82"]["BackgroundTransparency"] = 0.6;
 G2L["82"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["82"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 
--- Original Size/Pos (As requested)
-G2L["82"]["Size"] = UDim2.new(1, 0, 0.85, 0);
-G2L["82"]["Position"] = UDim2.new(0, 0, 0.15, 0);
+-- 🔴 GEOMETRY FIX: PHYSICAL SEPARATION
+-- Tabs end at ~21%. We start at 23% to leave a gap.
+-- Buttons start at ~83%. We end before that.
+G2L["82"]["Position"] = UDim2.new(0, 0, 0.23, 0); 
+G2L["82"]["Size"] = UDim2.new(1, 0, 0.60, 0); 
 
 G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0); 
 G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
 G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; -- This handles the clipping
+G2L["82"]["ClipsDescendants"] = true; -- This keeps text inside the box
 
--- 🔴 PADDING FIX (Breathing Room)
+-- 🔴 PADDING FIX
 local EditorPadding = Instance.new("UIPadding", G2L["82"]);
 EditorPadding.Name = "EditorPadding";
-EditorPadding.PaddingTop = UDim.new(0, 10);
+EditorPadding.PaddingTop = UDim.new(0, 5);
 EditorPadding.PaddingLeft = UDim.new(0, 5);
 EditorPadding.PaddingRight = UDim.new(0, 5);
-EditorPadding.PaddingBottom = UDim.new(0.16, 0); -- Keeps text above buttons
-
--- 🟢 BOTTOM GAP FIX
--- 0.16 Scale (16%) is just enough to clear the buttons (which are 15% tall)
-EditorPadding.PaddingBottom = UDim.new(0.16, 5);
+EditorPadding.PaddingBottom = UDim.new(0, 5);
 
 -- [[ 2. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
