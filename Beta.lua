@@ -3495,22 +3495,78 @@ end
 		task.spawn(C_6);
 	end
 
--- 🟢 DEFINE COLORS
-local SyntaxColors = {
-    ["local"] = "rgb(173, 216, 230)", ["function"] = "rgb(70, 130, 180)", ["end"] = "rgb(70, 130, 180)",
-    ["if"] = "rgb(100, 149, 237)", ["then"] = "rgb(100, 149, 237)", ["else"] = "rgb(100, 149, 237)", 
-    ["elseif"] = "rgb(100, 149, 237)", ["return"] = "rgb(65, 105, 225)", ["while"] = "rgb(70, 130, 180)", 
-    ["for"] = "rgb(70, 130, 180)", ["do"] = "rgb(70, 130, 180)", ["break"] = "rgb(65, 105, 225)", 
-    ["continue"] = "rgb(65, 105, 225)", ["and"] = "rgb(70, 130, 180)", ["or"] = "rgb(70, 130, 180)", 
-    ["not"] = "rgb(70, 130, 180)", ["repeat"] = "rgb(135, 206, 235)", ["until"] = "rgb(135, 206, 235)",
-    ["game"] = "rgb(0, 191, 255)", ["workspace"] = "rgb(0, 191, 255)", ["script"] = "rgb(0, 191, 255)",
-    ["print"] = "rgb(0, 191, 255)", ["wait"] = "rgb(0, 191, 255)", ["task"] = "rgb(0, 191, 255)",
-    ["pairs"] = "rgb(0, 191, 255)", ["ipairs"] = "rgb(0, 191, 255)", ["loadstring"] = "rgb(0, 0, 139)",
-}
+-- 🟢 DYNAMIC SYNTAX COLORS (REPLACE THE OLD TABLE WITH THIS FUNCTION)
+local function getSyntaxColors()
+    local currentTheme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    local shades = getThemeShades(currentTheme)
+    
+    local function toRGB(color)
+        return string.format("rgb(%d,%d,%d)", 
+            math.floor(color.R * 255), 
+            math.floor(color.G * 255), 
+            math.floor(color.B * 255))
+    end
+    
+    return {
+        -- Keywords use dark shade
+        ["local"] = toRGB(shades.dark),
+        ["function"] = toRGB(shades.dark),
+        ["end"] = toRGB(shades.dark),
+        ["while"] = toRGB(shades.dark),
+        ["for"] = toRGB(shades.dark),
+        ["do"] = toRGB(shades.dark),
+        ["and"] = toRGB(shades.dark),
+        ["or"] = toRGB(shades.dark),
+        ["not"] = toRGB(shades.dark),
+        
+        -- Control flow uses base shade
+        ["if"] = toRGB(shades.base),
+        ["then"] = toRGB(shades.base),
+        ["else"] = toRGB(shades.base),
+        ["elseif"] = toRGB(shades.base),
+        ["return"] = toRGB(shades.base),
+        ["break"] = toRGB(shades.base),
+        ["continue"] = toRGB(shades.base),
+        ["repeat"] = toRGB(shades.base),
+        ["until"] = toRGB(shades.base),
+        
+        -- Built-ins use base shade
+        ["game"] = toRGB(shades.base),
+        ["workspace"] = toRGB(shades.base),
+        ["script"] = toRGB(shades.base),
+        ["print"] = toRGB(shades.base),
+        ["wait"] = toRGB(shades.base),
+        ["task"] = toRGB(shades.base),
+        ["pairs"] = toRGB(shades.base),
+        ["ipairs"] = toRGB(shades.base),
+        
+        -- Important functions use light shade
+        ["loadstring"] = toRGB(shades.light),
+    }
+end
 
 -- 🟢 CLEANER
 local function StripSyntax(text)
-    return string.gsub(text, "<[^>]+>", "")
+
+-- 🟢 AUTO-GENERATE THEME SHADES (NEW FUNCTION - ADD THIS)
+local function getThemeShades(baseColor)
+    baseColor = baseColor or Color3.fromRGB(160, 85, 255) -- Default purple
+    
+    local r, g, b = baseColor.R * 255, baseColor.G * 255, baseColor.B * 255
+    
+    return {
+        light = Color3.fromRGB(
+            math.min(255, r * 1.3),
+            math.min(255, g * 1.3),
+            math.min(255, b * 1.3)
+        ),
+        base = baseColor,
+        dark = Color3.fromRGB(
+            math.max(0, r * 0.7),
+            math.max(0, g * 0.7),
+            math.max(0, b * 0.7)
+        )
+    }
 end
 
 -- 🟢 HELPER: GENERATE SAFE TOKEN (No numbers allowed!)
@@ -3548,6 +3604,9 @@ local function ApplySyntax(text)
     -- Escape HTML
     text = text:gsub("<", "&lt;"):gsub(">", "&gt;")
 
+    -- 🟢 CHANGED: Get fresh colors based on current theme
+    local SyntaxColors = getSyntaxColors()
+    
     -- Highlight keywords
     for k, c in pairs(SyntaxColors) do
         text = text:gsub("(%f[%w]"..k.."%f[%W])", "<font color='"..c.."'>%1</font>")
@@ -4236,6 +4295,15 @@ InitTabs.Settings = function()
                 obj.Color = color
             elseif obj.Name == "ThemeSeparator" and obj:IsA("Frame") then
                 obj.BackgroundColor3 = color
+            end
+        end
+        
+        -- 🟢 NEW: Re-highlight editor text with new theme
+        if Pages.Editor and Pages.Editor.Editor and Pages.Editor.Editor.Input then
+            local editor = Pages.Editor.Editor.Input
+            if not editor.Focused then  -- Don't interrupt typing
+                local raw = StripSyntax(editor.Text)
+                editor.Text = ApplySyntax(raw)
             end
         end
         
