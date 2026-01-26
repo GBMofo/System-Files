@@ -669,7 +669,7 @@ gradient.Rotation = 90; -- Vertical gradient
 
 -- Glowing border (exactly like the image)
 local borderStroke = Instance.new("UIStroke", G2L["3f"]);
-borderstroke.Color = themeData.base.fromRGB(180, 100, 255); -- Purple glow
+borderStroke.Color = Color3.fromRGB(160, 85, 255); -- Default purple (updates when theme loads)
 borderStroke.Thickness = 2;
 borderStroke.Transparency = 0.3;
 borderStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
