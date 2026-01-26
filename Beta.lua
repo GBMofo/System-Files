@@ -3499,20 +3499,14 @@ end
 local function getThemeShades(baseColor)
     baseColor = baseColor or Color3.fromRGB(160, 85, 255) -- Default purple
     
-    local r, g, b = baseColor.R * 255, baseColor.G * 255, baseColor.B * 255
-    
     return {
-        light = Color3.fromRGB(
-            math.min(255, r * 1.3),
-            math.min(255, g * 1.3),
-            math.min(255, b * 1.3)
-        ),
+        -- 🟢 CHANGE: Mix 40% White to get a "Faded/Light" Pastel look
+        light = baseColor:Lerp(Color3.new(1, 1, 1), 0.4),
+        
         base = baseColor,
-        dark = Color3.fromRGB(
-            math.max(0, r * 0.7),
-            math.max(0, g * 0.7),
-            math.max(0, b * 0.7)
-        )
+        
+        -- Mix 30% Black to get a Darker look (Equivalent to * 0.7)
+        dark = baseColor:Lerp(Color3.new(0, 0, 0), 0.3)
     }
 end
 
