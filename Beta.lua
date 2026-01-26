@@ -1398,17 +1398,17 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
+-- [[ 5. PANEL (BUTTONS) - PINNED TO CORNER ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
-G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
+G2L["89"]["Name"] = [[Panel]];
+G2L["89"]["ZIndex"] = 50; -- 🔴 CRITICAL: Higher than everything else to stay in front
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89"]["BackgroundTransparency"] = 0; -- 🔴 Change from 0.3 to 0 (Solid)
-G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["89"]["Size"] = UDim2.new(0.42127, 0, 0.15, 0);
-G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
+G2L["89"]["BackgroundTransparency"] = 0; -- 🔴 SOLID BACKGROUND
+G2L["89"]["AnchorPoint"] = Vector2.new(1, 1); -- Bottom Right Anchor
+G2L["89"]["Position"] = UDim2.new(1, 0, 1, 0); -- Snaps to the very bottom-right corner
+G2L["89"]["Size"] = UDim2.new(0.42, 0, 0.12, 0); 
 G2L["89"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["89"]["Name"] = [[Panel]];
 
 -- (Standard Panel Contents re-added below to prevent breaking)
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
@@ -6208,33 +6208,37 @@ InitTabs.Saved = function()
 	InitTabs.Editor = function()
         local Editor = Pages:WaitForChild("Editor");
         local Panel = Editor:WaitForChild("Panel");
-        local EditorFrame = Editor:WaitForChild("Editor"); -- The ScrollingFrame
+        local EditorFrame = Editor:WaitForChild("Editor"); 
         local RealInput = EditorFrame:WaitForChild("Input");
         local Lines = EditorFrame:WaitForChild("Lines");
         
         local Method = "MouseButton1Click"; 
         local autoSaveDebounce = nil 
 
-        -- Store original states to restore later
+        -- Store original positions to restore them when you finish typing
         local originalSize = EditorFrame.Size
         local originalPos = EditorFrame.Position
         local originalTextPos = RealInput.Position
+        local originalPanelPos = Panel.Position
+        local originalPanelSize = Panel.Size
 
-        -- [[ 🔴 DELTA EDIT MODE LOGIC ]] --
+        -- [[ 🔴 THE DELTA "FOCUS" TRANSITION ]] --
         RealInput.Focused:Connect(function()
-            -- 1. HIDE LINE NUMBERS
+            -- 1. HIDE NUMBERS & SHIFT TEXT LEFT
             Lines.Visible = false
-            
-            -- 2. MOVE TEXT TO THE LEFT (Utilize space)
             RealInput.Position = UDim2.new(0, 10, 0, 0)
             
-            -- 3. SHRINK BOX (Prevents cut-off & overlap)
-            -- We make width 0.9 to avoid the right panel buttons
-            -- We make height smaller and move it down to center it
-            EditorFrame.Size = UDim2.new(0.9, 0, 0.65, 0) 
-            EditorFrame.Position = UDim2.new(0.05, 0, 0.25, 0)
+            -- 2. SHRINK & CENTER BOX (To avoid keyboard cut-off)
+            -- Start at 12% height, total height 45%. Ends at 57% (Safe from keyboard)
+            EditorFrame.Size = UDim2.new(0.96, 0, 0.45, 0) 
+            EditorFrame.Position = UDim2.new(0.02, 0, 0.12, 0)
             
-            -- 4. STABILITY RULES
+            -- 3. SNAP PANEL TO THE NEW BOX CORNER
+            -- This keeps the icons aligned with the bottom-right of the pink border
+            Panel.Size = UDim2.new(0.45, 0, 0.12, 0)
+            Panel.Position = UDim2.new(0.98, 0, 0.57, 0) 
+
+            -- 4. STABILITY MODE
             local raw = StripSyntax(RealInput.Text)
             RealInput.RichText = false 
             RealInput.TextWrapped = false 
@@ -6242,17 +6246,15 @@ InitTabs.Saved = function()
         end)
 
         RealInput.FocusLost:Connect(function()
-            -- 1. SHOW LINE NUMBERS AGAIN
+            -- 1. RESTORE ALL POSITIONS
             Lines.Visible = true
-            
-            -- 2. RESTORE TEXT POSITION
             RealInput.Position = originalTextPos
-            
-            -- 3. RESTORE BOX SIZE & POSITION
             EditorFrame.Size = originalSize
             EditorFrame.Position = originalPos
+            Panel.Position = originalPanelPos
+            Panel.Size = originalPanelSize
 
-            -- 4. RE-APPLY VISUALS
+            -- 2. RE-APPLY COLORS
             local raw = RealInput.Text
             RealInput.RichText = true
             RealInput.Text = ApplySyntax(raw)
@@ -6262,11 +6264,9 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- SYNC LOGIC (Matches typing to line numbers)
+        -- Sync Logic
         RealInput:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(RealInput, Lines)
-            
-            -- Auto-Save Logic
             if not Data.Editor.EditingSavedFile then
                 if autoSaveDebounce then task.cancel(autoSaveDebounce) end
                 autoSaveDebounce = task.delay(1, function()
@@ -6276,14 +6276,12 @@ InitTabs.Saved = function()
             end
         end)
 
-        -- Buttons (Execute, Save, etc)
+        -- Standard Buttons (Execute, Save, etc)
         Panel.Execute[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
         Panel.Delete[Method]:Connect(function() RealInput.Text = "" end)
         Panel.Paste[Method]:Connect(function()
-            local clip = safeGetClipboard()
-            RealInput.Text = clip
-            RealInput.RichText = true
-            RealInput.Text = ApplySyntax(clip)
+            local clip = safeGetClipboard(); RealInput.Text = clip;
+            RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
         end)
         Panel.Save[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
         Panel.Rename[Method]:Connect(function()
@@ -6293,7 +6291,6 @@ InitTabs.Saved = function()
         end)
         Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
 
-        -- Popup Buttons
         local Buttons = script.Parent.Popups.Main.Button
         Buttons["Confirm"][Method]:Connect(function()
             local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
