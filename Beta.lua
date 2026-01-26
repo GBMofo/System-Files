@@ -3500,12 +3500,12 @@ local function getThemeShades(baseColor)
     baseColor = baseColor or Color3.fromRGB(160, 85, 255) -- Default purple
     
     return {
-        -- 🟢 CHANGE: Mix 40% White to get a "Faded/Light" Pastel look
-        light = baseColor:Lerp(Color3.new(1, 1, 1), 0.4),
+        -- 🟢 CHANGE: Increased to 0.6 (60% White) for a VERY faded/pastel look
+        light = baseColor:Lerp(Color3.new(1, 1, 1), 0.6),
         
         base = baseColor,
         
-        -- Mix 30% Black to get a Darker look (Equivalent to * 0.7)
+        -- Mix 30% Black to get a Darker look
         dark = baseColor:Lerp(Color3.new(0, 0, 0), 0.3)
     }
 end
