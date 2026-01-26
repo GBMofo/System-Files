@@ -1276,6 +1276,7 @@ G2L["7b"]["Position"] = UDim2.new(0.5, 0, 0.0854, 0);
 G2L["7b"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["7b"]["ScrollBarThickness"] = 1;
 G2L["7b"]["BackgroundTransparency"] = 1;
+G2L["7b"]["ZIndex"] = 10; -- 🔴 NEW: Force Tabs to stay on top
 
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Tabs.UIPadding
@@ -1394,16 +1395,19 @@ G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["TextWrapped"] = false;
+G2L["83"]["TextWrapped"] = false; -- Keep false for code editors
 G2L["83"]["TextEditable"] = true;
-G2L["83"]["RichText"] = true; -- 🟢 NEW: ENABLE RICHTEXT
+G2L["83"]["RichText"] = true; 
 G2L["83"]["PlaceholderText"] = [[-- Welcome to Punk X]];
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
 G2L["83"]["Size"] = UDim2.new(0, 1000, 0, 1000); 
-G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; -- 🟢 CHANGED: Auto-sizing
+G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
 G2L["83"]["AnchorPoint"] = Vector2.new(0, 0);
 G2L["83"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["83"]["Text"] = [[]];
+
+-- 🔴 FIX: This forces the TextBox to respect the boundaries even when focused
+G2L["83"]["ClipsDescendants"] = true;
 
 -- [[ 4. UICORNER ]] --
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
