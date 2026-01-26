@@ -6282,12 +6282,28 @@ InitTabs.Saved = function()
             end)
         end);
 
-        -- 4. REAL-TIME UPDATES (Line Numbers & Autosave)
+       -- 4. REAL-TIME UPDATES (Line Numbers & Autosave)
+        local autoSaveDebounce = nil -- Variable to handle the timer
+
         EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
             UpdateLineNumbers(EditorFrame.Input, EditorFrame.Lines)
             
-            -- Only auto-save if we aren't editing a saved file AND not actively typing
-            if not Data.Editor.EditingSavedFile and not EditorFrame.Input.Focused then
+            -- 🟢 FIX: Save Logic with 1-second delay (Debounce)
+            if not Data.Editor.EditingSavedFile then
+                -- If user types again within 1 second, cancel the previous save timer
+                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+                
+                -- Wait 1 second after typing stops, then save
+                autoSaveDebounce = task.delay(1, function()
+                    local cleanText = StripSyntax(EditorFrame.Input.Text)
+                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+                end)
+            end
+        end)
+        
+        -- 🟢 SAFETY NET: Force save immediately when closing the game
+        game:GetService("Players").PlayerRemoving:Connect(function()
+            if not Data.Editor.EditingSavedFile then
                 local cleanText = StripSyntax(EditorFrame.Input.Text)
                 UIEvents.EditorTabs.saveTab(nil, cleanText, false)
             end
