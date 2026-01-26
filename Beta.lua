@@ -1398,17 +1398,23 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ 5. PANEL (BUTTONS) - GUARANTEED VISIBILITY ]] --
+-- [[ 5. PANEL (BUTTONS) - FIXED PIXEL SIZE ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
 G2L["89"]["Name"] = [[Panel]];
-G2L["89"]["ZIndex"] = 100; -- 🔴 CRITICAL: Higher than everything
+G2L["89"]["ZIndex"] = 100; -- High ZIndex to stay on top
 G2L["89"]["BorderSizePixel"] = 0;
-G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
+G2L["89"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 30); -- Slightly lighter for contrast
 G2L["89"]["BackgroundTransparency"] = 0; 
 G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
 -- View Mode Position
-G2L["89"]["Position"] = UDim2.new(0.98, 0, 0.98, 0); 
-G2L["89"]["Size"] = UDim2.new(0.4, 0, 0.1, 0);
+G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0); 
+G2L["89"]["Size"] = UDim2.new(0, 240, 0, 42); -- 🔴 FIXED PIXELS (Guarantees visibility)
+
+-- Add a small stroke to the panel so it looks like it belongs to the editor
+local panelStroke = Instance.new("UIStroke", G2L["89"])
+panelStroke.Color = Color3.fromRGB(160, 85, 255)
+panelStroke.Transparency = 0.5
+panelStroke.Thickness = 1
 
 -- (Standard Panel Contents re-added below to prevent breaking)
 G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
