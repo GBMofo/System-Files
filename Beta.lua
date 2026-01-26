@@ -4066,10 +4066,9 @@ InitTabs.Settings = function()
     end
 
     local function ApplyTheme(color)
-        local oldTheme = CurrentTheme
+        local oldTheme = getgenv().CurrentTheme
         getgenv().CurrentTheme = color
         SaveTheme(color)
-        
         
         -- 1. UPDATE STROKES
         for _, obj in pairs(script.Parent:GetDescendants()) do
@@ -4125,72 +4124,71 @@ InitTabs.Settings = function()
                 end
             end
         end
-
-      -- 6. UPDATE ICONS
-if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
-    local panel = Pages.Editor.Panel
-    if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-        panel.Execute.Icon.ImageColor3 = color
-    end
-    if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
-    if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
-end
--- AFTER (Fixed - Updates ALL buttons correctly)
-if Pages.Search and Pages.Search:FindFirstChild("FilterBar") then
-    for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-        if btn:IsA("TextButton") then
-            if btn.Name == Data.Search.CurrentFilter then
-                -- Active Button gets the Theme Color
-                btn.BackgroundColor3 = color
-                btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            else
-                -- Inactive Buttons get Dark Grey
-                btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-            end
-        end
-    end
-    -- Also fix the stroke color if it exists
-    local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
-    if stroke then stroke.Color = color end
-end
--- 🟢 UPDATE SEARCH RESULTS (Execute Icons + Spacers)
-if Pages.Search and Pages.Search:FindFirstChild("Scripts") then
-    for _, card in pairs(Pages.Search.Scripts:GetChildren()) do
-        if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
-            local panel = card.Misc:FindFirstChild("Panel")
-            if panel then
-                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                    panel.Execute.Icon.ImageColor3 = color
-                end
-                if panel:FindFirstChild("Spacer1") then
-                    panel.Spacer1.BackgroundColor3 = color
-                end
-            end
-        end
-    end
-end
-
--- 🟢 UPDATE SAVED SCRIPTS (Execute Icons + Spacers)
-if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
-    for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
-        if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
-            local panel = card.Misc:FindFirstChild("Panel")
-            if panel then
-                if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
-                    panel.Execute.Icon.ImageColor3 = color
-                end
-                if panel:FindFirstChild("Spacer") then
-                    panel.Spacer.BackgroundColor3 = color
-                end
-            end
-        end
-    end
-end
         
--- 7. Search filter buttons are updated by theme pill click handler
+        -- 6. UPDATE EDITOR ICONS
+        if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
+            local panel = Pages.Editor.Panel
+            if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                panel.Execute.Icon.ImageColor3 = color
+            end
+            if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
+            if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
+        end
+
+        -- 7. [[ FIXED ]] UPDATE SEARCH BUTTONS (Runs Unconditionally)
+        if Pages:FindFirstChild("Search") and Pages.Search:FindFirstChild("FilterBar") then
+            for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
+                if btn:IsA("TextButton") then
+                    if btn.Name == Data.Search.CurrentFilter then
+                        -- Active Button gets the Theme Color
+                        btn.BackgroundColor3 = color
+                        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                    else
+                        -- Inactive Buttons get Dark Grey
+                        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                    end
+                end
+            end
+            local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
+            if stroke then stroke.Color = color end
+        end
+
+        -- 8. UPDATE SEARCH RESULTS (Icons + Spacers)
+        if Pages:FindFirstChild("Search") and Pages.Search:FindFirstChild("Scripts") then
+            for _, card in pairs(Pages.Search.Scripts:GetChildren()) do
+                if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+                    local panel = card.Misc:FindFirstChild("Panel")
+                    if panel then
+                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                            panel.Execute.Icon.ImageColor3 = color
+                        end
+                        if panel:FindFirstChild("Spacer1") then
+                            panel.Spacer1.BackgroundColor3 = color
+                        end
+                    end
+                end
+            end
+        end
+
+        -- 9. UPDATE SAVED SCRIPTS (Icons + Spacers)
+        if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
+            for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
+                if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
+                    local panel = card.Misc:FindFirstChild("Panel")
+                    if panel then
+                        if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
+                            panel.Execute.Icon.ImageColor3 = color
+                        end
+                        if panel:FindFirstChild("Spacer") then
+                            panel.Spacer.BackgroundColor3 = color
+                        end
+                    end
+                end
+            end
+        end
         
-        -- 8. UPDATE HOME KEY
+        -- 10. UPDATE HOME KEY
         if Pages.Home and Pages.Home:FindFirstChild("Key") then
             local keyBox = Pages.Home.Key
             if keyBox:FindFirstChild("UIStroke") then keyBox.UIStroke.Color = color end
@@ -4198,6 +4196,7 @@ end
                 keyBox.Folder.Background.ImageColor3 = color
             end
             if keyBox:FindFirstChild("KeyText") then
+                -- Updates RichText Color Code
                 keyBox.KeyText.Text = string.gsub(
                     keyBox.KeyText.Text,
                     '<font color="rgb%(%d+, %d+, %d+%)">',
@@ -4206,12 +4205,12 @@ end
             end
         end
         
-        -- 9. UPDATE CLOSE BTN
+        -- 11. UPDATE CLOSE BTN
         if Leftside and Leftside:FindFirstChild("Close") then
             Leftside.Close.BackgroundColor3 = color
         end
         
-        -- 10. UPDATE NAV
+        -- 12. UPDATE NAV
         if Nav and Nav:FindFirstChild("Page1") then
             for _, btn in pairs(Nav.Page1:GetChildren()) do
                 if btn:IsA("TextButton") and btn.BackgroundColor3 == oldTheme then
@@ -4220,7 +4219,7 @@ end
             end
         end
         
-        -- 11. UPDATE GRADIENT
+        -- 13. UPDATE GRADIENT
         for _, obj in pairs(script.Parent:GetDescendants()) do
             if obj:IsA("UIGradient") and obj.Parent.Name == "Main" then
                 local r1 = math.clamp(math.floor(color.R * 255 * 0.8), 0, 255)
@@ -4239,7 +4238,7 @@ end
             end
         end
         
-     -- 12. UPDATE DROPDOWN STROKES & SEPARATORS
+        -- 14. UPDATE DROPDOWN STROKES & SEPARATORS
         for _, obj in pairs(Scripts:GetDescendants()) do
             if obj.Name == "ThemeStroke" and obj:IsA("UIStroke") then
                 obj.Color = color
