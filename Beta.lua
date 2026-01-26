@@ -4065,12 +4065,38 @@ InitTabs.Settings = function()
         }))
     end
 
-    local function ApplyTheme(color)
+  local function ApplyTheme(color)
+        -- 1. SET GLOBAL THEME
         local oldTheme = getgenv().CurrentTheme
         getgenv().CurrentTheme = color
         SaveTheme(color)
         
-        -- 1. UPDATE STROKES
+        -- [[ PRIORITY FIX: UPDATE SEARCH FILTER BUTTONS FIRST ]]
+        -- We run this first to ensure it never gets skipped by errors below
+        if Pages:FindFirstChild("Search") then
+            local SearchPage = Pages.Search
+            if SearchPage:FindFirstChild("FilterBar") then
+                for _, btn in pairs(SearchPage.FilterBar:GetChildren()) do
+                    if btn:IsA("TextButton") then
+                        if btn.Name == Data.Search.CurrentFilter then
+                            -- Active Button gets the Theme Color
+                            btn.BackgroundColor3 = color
+                            btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        else
+                            -- Inactive Buttons get Dark Grey
+                            btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+                            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                        end
+                    end
+                end
+                
+                local stroke = SearchPage.FilterBar:FindFirstChild("FilterBarStroke")
+                if stroke then stroke.Color = color end
+            end
+        end
+        -- [[ END PRIORITY FIX ]]
+
+        -- 2. UPDATE STROKES (Global)
         for _, obj in pairs(script.Parent:GetDescendants()) do
             if obj:IsA("UIStroke") then
                 local isThemeStroke = (
@@ -4082,8 +4108,8 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 2. UPDATE TOGGLES/CARDS
-        if Pages.Settings and Pages.Settings:FindFirstChild("Scripts") then
+        -- 3. UPDATE TOGGLES/CARDS (Settings Page)
+        if Pages:FindFirstChild("Settings") and Pages.Settings:FindFirstChild("Scripts") then
             for _, card in pairs(Pages.Settings.Scripts:GetChildren()) do
                 if card:IsA("Frame") or card:IsA("CanvasGroup") then
                     local stroke = card:FindFirstChild("UIStroke")
@@ -4100,14 +4126,14 @@ InitTabs.Settings = function()
             end
         end
 
-        -- 3. UPDATE SLIDERS
+        -- 4. UPDATE SLIDERS
         for _, slider in pairs(Scripts:GetDescendants()) do
             if slider.Name == "sliderFill" and slider:IsA("Frame") then
                 slider.BackgroundColor3 = color
             end
         end
         
-        -- 4. UPDATE ENABLEFRAME
+        -- 5. UPDATE ENABLEFRAME (The UI Opener)
         if Main:FindFirstChild("EnableFrame") then
             Main.EnableFrame.BackgroundColor3 = color
             if Main.EnableFrame:FindFirstChild("Glow") then
@@ -4116,8 +4142,8 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 5. UPDATE EDITOR TABS
-        if Pages.Editor and Pages.Editor:FindFirstChild("Tabs") then
+        -- 6. UPDATE EDITOR TABS
+        if Pages:FindFirstChild("Editor") and Pages.Editor:FindFirstChild("Tabs") then
             for _, tab in pairs(Pages.Editor.Tabs:GetChildren()) do
                 if tab:IsA("TextButton") and tab.Name == Data.Editor.CurrentTab then
                     tab.BackgroundColor3 = color
@@ -4125,33 +4151,14 @@ InitTabs.Settings = function()
             end
         end
         
-        -- 6. UPDATE EDITOR ICONS
-        if Pages.Editor and Pages.Editor:FindFirstChild("Panel") then
+        -- 7. UPDATE EDITOR ICONS
+        if Pages:FindFirstChild("Editor") and Pages.Editor:FindFirstChild("Panel") then
             local panel = Pages.Editor.Panel
             if panel:FindFirstChild("Execute") and panel.Execute:FindFirstChild("Icon") then
                 panel.Execute.Icon.ImageColor3 = color
             end
             if panel:FindFirstChild("Spacer1") then panel.Spacer1.BackgroundColor3 = color end
             if panel:FindFirstChild("Spacer2") then panel.Spacer2.BackgroundColor3 = color end
-        end
-
-        -- 7. [[ FIXED ]] UPDATE SEARCH BUTTONS (Runs Unconditionally)
-        if Pages:FindFirstChild("Search") and Pages.Search:FindFirstChild("FilterBar") then
-            for _, btn in pairs(Pages.Search.FilterBar:GetChildren()) do
-                if btn:IsA("TextButton") then
-                    if btn.Name == Data.Search.CurrentFilter then
-                        -- Active Button gets the Theme Color
-                        btn.BackgroundColor3 = color
-                        btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-                    else
-                        -- Inactive Buttons get Dark Grey
-                        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-                        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
-                    end
-                end
-            end
-            local stroke = Pages.Search.FilterBar:FindFirstChild("FilterBarStroke")
-            if stroke then stroke.Color = color end
         end
 
         -- 8. UPDATE SEARCH RESULTS (Icons + Spacers)
@@ -4172,7 +4179,7 @@ InitTabs.Settings = function()
         end
 
         -- 9. UPDATE SAVED SCRIPTS (Icons + Spacers)
-        if Pages.Saved and Pages.Saved:FindFirstChild("Scripts") then
+        if Pages:FindFirstChild("Saved") and Pages.Saved:FindFirstChild("Scripts") then
             for _, card in pairs(Pages.Saved.Scripts:GetChildren()) do
                 if card:IsA("CanvasGroup") and card:FindFirstChild("Misc") then
                     local panel = card.Misc:FindFirstChild("Panel")
@@ -4189,14 +4196,14 @@ InitTabs.Settings = function()
         end
         
         -- 10. UPDATE HOME KEY
-        if Pages.Home and Pages.Home:FindFirstChild("Key") then
+        if Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
             local keyBox = Pages.Home.Key
             if keyBox:FindFirstChild("UIStroke") then keyBox.UIStroke.Color = color end
-            if keyBox.Folder and keyBox.Folder:FindFirstChild("Background") then
+            if keyBox:FindFirstChild("Folder") and keyBox.Folder:FindFirstChild("Background") then
                 keyBox.Folder.Background.ImageColor3 = color
             end
             if keyBox:FindFirstChild("KeyText") then
-                -- Updates RichText Color Code
+                -- Updates RichText Color Code dynamically
                 keyBox.KeyText.Text = string.gsub(
                     keyBox.KeyText.Text,
                     '<font color="rgb%(%d+, %d+, %d+%)">',
