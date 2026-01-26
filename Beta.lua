@@ -1344,15 +1344,17 @@ G2L["82"]["CanvasSize"] = UDim2.new(0, 0, 0, 0);
 G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY; 
 G2L["82"]["ScrollBarThickness"] = 6;
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; -- 🟢 FIX 1: STOP BLEEDING
 
--- 🟢 FIX 2: ADD PADDING (BREATHING ROOM)
--- This creates a gap so text doesn't touch the edges/tabs
-local EditorPadding = Instance.new("UIPadding", G2L["82"])
-EditorPadding.PaddingTop = UDim.new(0, 10)    -- Gap from top tabs
-EditorPadding.PaddingLeft = UDim.new(0, 5)    -- Gap from left edge
-EditorPadding.PaddingRight = UDim.new(0, 5)   -- Gap from scrollbar
-EditorPadding.PaddingBottom = UDim.new(0, 5)  -- Gap from bottom
+-- 🔴 FIX 1: STOP BLEEDING (Fixes Ghost Text)
+G2L["82"]["ClipsDescendants"] = true; 
+
+-- 🔴 FIX 2: ADD PADDING (Fixes Breathing Room)
+local EditorPadding = Instance.new("UIPadding", G2L["82"]);
+EditorPadding.Name = "EditorPadding";
+EditorPadding.PaddingTop = UDim.new(0, 10);    -- Gap from top tabs
+EditorPadding.PaddingLeft = UDim.new(0, 5);    -- Gap from left edge
+EditorPadding.PaddingRight = UDim.new(0, 5);   -- Gap from scrollbar
+EditorPadding.PaddingBottom = UDim.new(0, 45); -- Large gap so text doesn't touch bottom buttons
 
 -- [[ 2. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
