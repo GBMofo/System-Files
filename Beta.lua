@@ -1417,6 +1417,12 @@ G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 G2L["8a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;  -- ✅ ADD THIS LINE
 
+-- 🔍 DEBUG UIListLayout
+print("=== UIListLayout CONFIG ===")
+print("SortOrder = " .. tostring(G2L["8a"].SortOrder))
+print("FillDirection = " .. tostring(G2L["8a"].FillDirection))
+print("===========================")
+
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
