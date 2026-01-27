@@ -1415,6 +1415,7 @@ G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
 G2L["8a"]["Padding"] = UDim.new(0, 6);
 G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
+G2L["8a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;  -- ✅ ADD THIS LINE
 
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
