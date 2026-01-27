@@ -1623,6 +1623,16 @@ G2L["9b"]["BackgroundTransparency"] = 1;
 G2L["9b"]["Name"] = [[Icon]];
 G2L["9b"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
+-- 🔍 PUT THE DEBUG CODE RIGHT HERE ⬇️
+
+-- 🔍 DEBUG: Print actual LayoutOrder values
+print("=== PANEL BUTTON LAYOUT ORDERS ===")
+for _, child in pairs(G2L["89"]:GetChildren()) do
+    if child:IsA("TextButton") or child:IsA("Frame") then
+        print(child.Name .. " = " .. child.LayoutOrder)
+    end
+end
+print("===================================")
 
 -- StarterGui.ScreenGui.Main.Pages.Search
 G2L["9c"] = Instance.new("Frame", G2L["78"]);
