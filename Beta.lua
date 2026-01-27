@@ -1428,7 +1428,8 @@ G2L["8c"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
 G2L["8c"]["Size"] = UDim2.new(0, 1, 0.625, 0);
 G2L["8c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["8c"]["Name"] = [[Spacer1]];
-G2L["8c"]["LayoutOrder"] = 1;
+-- SPACER 1 (already exists)
+G2L["8c"]["LayoutOrder"] = 0;
 G2L["8c"]["BackgroundTransparency"] = 0.5;
 
 G2L["8d"] = Instance.new("UICorner", G2L["8c"]);
@@ -1442,6 +1443,8 @@ G2L["8e"]["Size"] = UDim2.new(0, 1, 0.625, 0);
 G2L["8e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["8e"]["Name"] = [[Spacer2]];
 G2L["8e"]["BackgroundTransparency"] = 0.5;
+-- SPACER 2 (already exists)
+G2L["8e"]["LayoutOrder"] = 3;
 
 G2L["8f"] = Instance.new("UICorner", G2L["8e"]);
 G2L["8f"]["CornerRadius"] = UDim.new(1, 0);
@@ -1455,6 +1458,7 @@ G2L["90"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["90"]["ZIndex"] = 11;
 G2L["90"]["BackgroundTransparency"] = 1;
 G2L["90"]["Size"] = UDim2.new(0, 34, 0, 34);
+-- Rename Button
 G2L["90"]["LayoutOrder"] = -1;
 G2L["90"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["90"]["Text"] = [[]];
@@ -1483,6 +1487,8 @@ G2L["92"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["92"]["ZIndex"] = 11;
 G2L["92"]["BackgroundTransparency"] = 1;
 G2L["92"]["Size"] = UDim2.new(0, 34, 0, 34);
+-- Paste Button
+G2L["92"]["LayoutOrder"] = 1;
 G2L["92"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["92"]["Text"] = [[]];
 G2L["92"]["Name"] = [[Paste]];
@@ -1510,6 +1516,8 @@ G2L["94"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["94"]["ZIndex"] = 11;
 G2L["94"]["BackgroundTransparency"] = 1;
 G2L["94"]["Size"] = UDim2.new(0, 34, 0, 34);
+-- ExecuteClipboard Button
+G2L["94"]["LayoutOrder"] = 2;
 G2L["94"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["94"]["Text"] = [[]];
 G2L["94"]["Name"] = [[ExecuteClipboard]];
@@ -1537,7 +1545,8 @@ G2L["96"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["96"]["ZIndex"] = 11;
 G2L["96"]["BackgroundTransparency"] = 1;
 G2L["96"]["Size"] = UDim2.new(0, 34, 0, 34);
-G2L["96"]["LayoutOrder"] = 1;
+-- Execute Button (RIGHTMOST)
+G2L["96"]["LayoutOrder"] = 4;
 G2L["96"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["96"]["Text"] = [[]];
 G2L["96"]["Name"] = [[Execute]];
@@ -1565,7 +1574,8 @@ G2L["98"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["98"]["ZIndex"] = 11;
 G2L["98"]["BackgroundTransparency"] = 1;
 G2L["98"]["Size"] = UDim2.new(0, 34, 0, 34);
-G2L["98"]["LayoutOrder"] = -2;
+-- Save/Bookmark Button (LEFTMOST)
+G2L["98"]["LayoutOrder"] = -3;
 G2L["98"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["98"]["Text"] = [[]];
 G2L["98"]["Name"] = [[Save]];
@@ -1593,6 +1603,7 @@ G2L["9a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["9a"]["ZIndex"] = 11;
 G2L["9a"]["BackgroundTransparency"] = 1;
 G2L["9a"]["Size"] = UDim2.new(0, 34, 0, 34);
+-- Delete Button 
 G2L["9a"]["LayoutOrder"] = -2;
 G2L["9a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["9a"]["Text"] = [[]];
