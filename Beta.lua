@@ -6264,29 +6264,36 @@ InitTabs.Saved = function()
         end
     end
 
-    -- [[ EDIT MODE - When user taps editor ]]
-    RealInput.Focused:Connect(function()
-        -- 1. Hide line numbers
-        Lines.Visible = false
-        RealInput.Position = UDim2.new(0, 10, 0, 0)
-        
-        -- 2. Shrink editor box
-        EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-        EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
-        
-        -- 3. 🔴 FIX: Move Panel to bottom-right RELATIVE to EditorFrame parent
-        Panel.AnchorPoint = Vector2.new(1, 1)
-        Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
-        Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
-        Panel.Visible = true
-        Panel.ZIndex = 100
-        
-        -- 4. Plain text mode
-        local raw = StripSyntax(RealInput.Text)
-        RealInput.RichText = false 
-        RealInput.TextWrapped = false 
-        RealInput.Text = raw
-    end)
+-- [[ EDIT MODE - When user taps editor ]]
+RealInput.Focused:Connect(function()
+    -- 1. Strip syntax FIRST (get clean text)
+    local raw = StripSyntax(RealInput.Text)
+    
+    -- 2. Clear text temporarily (prevents zoom flicker)
+    RealInput.Text = ""
+    
+    -- 3. Turn off RichText while box is EMPTY (no flicker!)
+    RealInput.RichText = false
+    RealInput.TextWrapped = false
+    
+    -- 4. Set the plain text
+    RealInput.Text = raw
+    
+    -- 5. Hide line numbers
+    Lines.Visible = false
+    RealInput.Position = UDim2.new(0, 10, 0, 0)
+    
+    -- 6. Shrink editor box
+    EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+    EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
+    
+    -- 7. Move Panel to bottom-right
+    Panel.AnchorPoint = Vector2.new(1, 1)
+    Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
+    Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
+    Panel.Visible = true
+    Panel.ZIndex = 100
+end)
 
     -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
