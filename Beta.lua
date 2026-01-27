@@ -1398,29 +1398,53 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- [[ AFTER ]]
-G2L["89"] = Instance.new("Frame", G2L["7a"]); -- Changed to Frame
-G2L["89"]["Name"] = [[PanelAnchor]]; -- RENAME: Frame is now Anchor
-G2L["89"]["ZIndex"] = 10; -- Ensure icons stay physically above text
-G2L["89"]["BackgroundTransparency"] = 1;
+-- [[ 5. PANEL (RESTORED ORIGINAL ICONS) ]] --
+G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]); -- Parent is the Editor Page
+G2L["89"]["Name"] = [[Panel]];
+G2L["89"]["ZIndex"] = 100; -- 🔴 High ZIndex so it's always in front
+G2L["89"]["BorderSizePixel"] = 0;
+G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
+G2L["89"]["BackgroundTransparency"] = 0; -- Solid background to hide text behind it
+G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
+G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0); -- Original bottom-right position
+G2L["89"]["Size"] = UDim2.new(0.421, 0, 0.15, 0); 
 
-G2L["89_Visuals"] = Instance.new("CanvasGroup", G2L["89"]); -- NEW WRAPPER
-G2L["89_Visuals"]["Name"] = [[Panel]]; -- EXACTLY ONE OBJECT NAMED "PANEL"
-G2L["89_Visuals"]["Size"] = UDim2.new(1, 0, 1, 0);
-G2L["89_Visuals"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89_Visuals"]["BorderSizePixel"] = 0;
-G2L["89_Visuals"]["BackgroundTransparency"] = 0;
-
-G2L["8a"] = Instance.new("UIListLayout", G2L["89_Visuals"]); -- PARENTED TO INNER
+G2L["8a"] = Instance.new("UIListLayout", G2L["89"]);
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
 G2L["8a"]["Padding"] = UDim.new(0, 6);
 G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
-G2L["8b"] = Instance.new("UICorner", G2L["89_Visuals"]);     -- PARENTED TO INNER
+G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
-G2L["8c"] = Instance.new("Frame", G2L["89_Visuals"]);        -- PARENTED TO INNER
+-- [[ RESTORING YOUR ORIGINAL BUTTONS INSIDE ]] --
+local function createIcon(name, image, order, color)
+    local btn = Instance.new("TextButton", G2L["89"])
+    btn.Name = name
+    btn.Size = UDim2.new(0, 34, 0, 34)
+    btn.BackgroundTransparency = 1
+    btn.Text = ""
+    btn.LayoutOrder = order
+    local icon = Instance.new("ImageLabel", btn)
+    icon.Name = "Icon"
+    icon.Size = UDim2.new(0.65, 0, 0.65, 0)
+    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    icon.AnchorPoint = Vector2.new(0.5, 0.5)
+    icon.BackgroundTransparency = 1
+    icon.Image = image
+    icon.ImageColor3 = color or Color3.fromRGB(200, 200, 200)
+    return btn
+end
+
+G2L["90"] = createIcon("Rename", "rbxassetid://80861536658698", -1)
+G2L["92"] = createIcon("Paste", "rbxassetid://88661060655687", 0)
+G2L["94"] = createIcon("ExecuteClipboard", "rbxassetid://74812558983299", 0)
+G2L["96"] = createIcon("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
+G2L["98"] = createIcon("Save", "rbxassetid://81882572588470", -2)
+G2L["9a"] = createIcon("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
+
+G2L["8c"] = Instance.new("Frame", G2L["89"]);
 G2L["8c"]["ZIndex"] = 11;
 G2L["8c"]["BorderSizePixel"] = 0;
 G2L["8c"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
@@ -1433,7 +1457,7 @@ G2L["8c"]["BackgroundTransparency"] = 0.5;
 G2L["8d"] = Instance.new("UICorner", G2L["8c"]);
 G2L["8d"]["CornerRadius"] = UDim.new(1, 0);
 
-G2L["8e"] = Instance.new("Frame", G2L["89_Visuals"]);        -- PARENTED TO INNER
+G2L["8e"] = Instance.new("Frame", G2L["89"]);
 G2L["8e"]["ZIndex"] = 11;
 G2L["8e"]["BorderSizePixel"] = 0;
 G2L["8e"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
@@ -1445,7 +1469,7 @@ G2L["8e"]["BackgroundTransparency"] = 0.5;
 G2L["8f"] = Instance.new("UICorner", G2L["8e"]);
 G2L["8f"]["CornerRadius"] = UDim.new(1, 0);
 
-G2L["90"] = Instance.new("TextButton", G2L["89_Visuals"]);   -- PARENTED TO INNER
+G2L["90"] = Instance.new("TextButton", G2L["89"]);
 G2L["90"]["BorderSizePixel"] = 0;
 G2L["90"]["AutoButtonColor"] = false;
 G2L["90"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1473,7 +1497,7 @@ G2L["91"]["BackgroundTransparency"] = 1;
 G2L["91"]["Name"] = [[Icon]];
 G2L["91"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["92"] = Instance.new("TextButton", G2L["89_Visuals"]);   -- PARENTED TO INNER
+G2L["92"] = Instance.new("TextButton", G2L["89"]);
 G2L["92"]["BorderSizePixel"] = 0;
 G2L["92"]["AutoButtonColor"] = false;
 G2L["92"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1500,7 +1524,7 @@ G2L["93"]["BackgroundTransparency"] = 1;
 G2L["93"]["Name"] = [[Icon]];
 G2L["93"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["94"] = Instance.new("TextButton", G2L["89_Visuals"]);   -- PARENTED TO INNER
+G2L["94"] = Instance.new("TextButton", G2L["89"]);
 G2L["94"]["BorderSizePixel"] = 0;
 G2L["94"]["AutoButtonColor"] = false;
 G2L["94"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1527,7 +1551,7 @@ G2L["95"]["BackgroundTransparency"] = 1;
 G2L["95"]["Name"] = [[Icon]];
 G2L["95"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["96"] = Instance.new("TextButton", G2L["89_Visuals"]);   -- PARENTED TO INNER
+G2L["96"] = Instance.new("TextButton", G2L["89"]);
 G2L["96"]["BorderSizePixel"] = 0;
 G2L["96"]["AutoButtonColor"] = false;
 G2L["96"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1555,7 +1579,7 @@ G2L["97"]["BackgroundTransparency"] = 1;
 G2L["97"]["Name"] = [[Icon]];
 G2L["97"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["98"] = Instance.new("TextButton", G2L["89_Visuals"]);   -- PARENTED TO INNER
+G2L["98"] = Instance.new("TextButton", G2L["89"]);
 G2L["98"]["BorderSizePixel"] = 0;
 G2L["98"]["AutoButtonColor"] = false;
 G2L["98"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1583,7 +1607,7 @@ G2L["99"]["BackgroundTransparency"] = 1;
 G2L["99"]["Name"] = [[Icon]];
 G2L["99"]["Position"] = UDim2.new(0.5, 0, 0.5, 0);
 
-G2L["9a"] = Instance.new("TextButton", G2L["89_Visuals"]);   -- PARENTED TO INNER
+G2L["9a"] = Instance.new("TextButton", G2L["89"]);
 G2L["9a"]["BorderSizePixel"] = 0;
 G2L["9a"]["AutoButtonColor"] = false;
 G2L["9a"]["TextColor3"] = Color3.fromRGB(0, 0, 0);
