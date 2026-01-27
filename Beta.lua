@@ -6216,7 +6216,7 @@ InitTabs.Saved = function()
 		end)
 	end;
 
-	InitTabs.Editor = function()
+InitTabs.Editor = function()
     local Editor = Pages:WaitForChild("Editor");
     local Panel = Editor:WaitForChild("Panel");
     local EditorFrame = Editor:WaitForChild("Editor"); 
@@ -6225,7 +6225,6 @@ InitTabs.Saved = function()
     
     local Method = "MouseButton1Click"; 
     local autoSaveDebounce = nil 
-    local isEditMode = false -- ✅ NEW: Track current mode
 
     -- Store original states ONCE
     local originalSize = EditorFrame.Size
@@ -6234,6 +6233,12 @@ InitTabs.Saved = function()
     local originalPanelPos = Panel.Position
     local originalPanelSize = Panel.Size
     local originalPanelAnchor = Panel.AnchorPoint
+
+    -- ✅ CRITICAL FIX: Lock TextSize to prevent zoom
+    local LOCKED_TEXT_SIZE = 14
+    RealInput.TextSize = LOCKED_TEXT_SIZE
+    RealInput.TextScaled = false
+    RealInput.TextWrapped = false
 
     -- Set ZIndex ONCE at initialization
     Panel.ZIndex = 100
@@ -6256,50 +6261,50 @@ InitTabs.Saved = function()
         end
     end
 
-    -- ✅ FIXED: EDIT MODE
+    -- ✅ EDIT MODE - Completely rewritten
     RealInput.Focused:Connect(function()
-        if isEditMode then return end -- Prevent double-trigger
-        isEditMode = true
-        
-        -- 1. Freeze all auto-scaling FIRST
+        -- 1. Lock text properties IMMEDIATELY (before any changes)
+        RealInput.TextSize = LOCKED_TEXT_SIZE
         RealInput.TextScaled = false
         RealInput.TextWrapped = false
         
-        -- 2. Strip syntax and disable RichText
+        -- 2. Get raw text
         local raw = StripSyntax(RealInput.Text)
-        RealInput.RichText = false
         
-        -- 3. Set text immediately (no waiting)
+        -- 3. Turn OFF RichText and set text in ONE step
+        RealInput.RichText = false
         RealInput.Text = raw
         
-        -- 4. Wait ONE frame for text to stabilize
-        game:GetService("RunService").Heartbeat:Wait()
-        
-        -- 5. Now adjust layout
+        -- 4. Hide line numbers and adjust position INSTANTLY (no wait)
         Lines.Visible = false
         RealInput.Position = UDim2.new(0, 10, 0, 0)
         
-        -- 6. Resize editor box
+        -- 5. Resize editor box
         EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
         EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
         
-        -- 7. Move Panel
+        -- 6. Move Panel
         Panel.AnchorPoint = Vector2.new(1, 1)
         Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
         Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
         Panel.Visible = true
         Panel.ZIndex = 100
+        
+        -- 7. Force lock TextSize again (insurance)
+        RealInput.TextSize = LOCKED_TEXT_SIZE
     end)
 
-    -- ✅ FIXED: VIEWING MODE
+    -- ✅ VIEWING MODE - Completely rewritten
     RealInput.FocusLost:Connect(function()
-        if not isEditMode then return end -- Prevent double-trigger
-        isEditMode = false
-        
-        -- 1. Get raw text FIRST
+        -- 1. Get raw text
         local raw = RealInput.Text
         
-        -- 2. Restore layout BEFORE enabling RichText
+        -- 2. Lock text size BEFORE making any changes
+        RealInput.TextSize = LOCKED_TEXT_SIZE
+        RealInput.TextScaled = false
+        RealInput.TextWrapped = false
+        
+        -- 3. Restore ALL layout first (text stays plain)
         Lines.Visible = true
         RealInput.Position = originalTextPos
         EditorFrame.Size = originalSize
@@ -6310,16 +6315,23 @@ InitTabs.Saved = function()
         Panel.Visible = true
         Panel.ZIndex = 100
         
-        -- 3. Wait ONE frame for layout to settle
-        game:GetService("RunService").Heartbeat:Wait()
-        
-        -- 4. NOW enable RichText and apply syntax
+        -- 4. Apply syntax (RichText ON) AFTER layout is restored
         RealInput.RichText = true
         RealInput.Text = ApplySyntax(raw)
+        
+        -- 5. Force lock TextSize again (insurance)
+        RealInput.TextSize = LOCKED_TEXT_SIZE
 
-        -- 5. Auto-save
+        -- 6. Auto-save
         if not Data.Editor.EditingSavedFile then
             UIEvents.EditorTabs.saveTab(nil, raw, false)
+        end
+    end)
+
+    -- ✅ SAFETY: Force lock TextSize whenever it changes
+    RealInput:GetPropertyChangedSignal("TextSize"):Connect(function()
+        if RealInput.TextSize ~= LOCKED_TEXT_SIZE then
+            RealInput.TextSize = LOCKED_TEXT_SIZE
         end
     end)
 
@@ -6356,10 +6368,11 @@ InitTabs.Saved = function()
     safeConnect("Paste", function()
         local clip = safeGetClipboard()
         RealInput.Text = clip
-        if not isEditMode then
-            RealInput.RichText = true
-            RealInput.Text = ApplySyntax(clip)
-        end
+        -- Lock size before applying syntax
+        RealInput.TextSize = LOCKED_TEXT_SIZE
+        RealInput.RichText = true
+        RealInput.Text = ApplySyntax(clip)
+        RealInput.TextSize = LOCKED_TEXT_SIZE -- Lock again
     end)
     
     safeConnect("Save", function() 
