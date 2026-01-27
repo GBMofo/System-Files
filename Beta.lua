@@ -6225,6 +6225,7 @@ InitTabs.Saved = function()
     
     local Method = "MouseButton1Click"; 
     local autoSaveDebounce = nil 
+    local isEditMode = false -- ✅ NEW: Track current mode
 
     -- Store original states ONCE
     local originalSize = EditorFrame.Size
@@ -6234,18 +6235,11 @@ InitTabs.Saved = function()
     local originalPanelSize = Panel.Size
     local originalPanelAnchor = Panel.AnchorPoint
 
-    -- 🔴 CRITICAL FIX: Verify this is the EDITOR panel, not SaveTemplate panel
-    if Panel.Parent ~= Editor then
-        warn("[PunkX] Wrong panel detected!")
-        return
-    end
-
-    -- 🔴 FIX: Set ZIndex ONCE at initialization (no loops, no repeats)
+    -- Set ZIndex ONCE at initialization
     Panel.ZIndex = 100
     Panel.BackgroundTransparency = 0.2
-    Panel.Visible = true -- Ensure it's visible
+    Panel.Visible = true
     
-    -- Set ZIndex for all children ONCE
     for _, child in pairs(Panel:GetChildren()) do
         if child:IsA("TextButton") or child:IsA("ImageButton") then
             child.ZIndex = 101
@@ -6259,63 +6253,67 @@ InitTabs.Saved = function()
             child.ZIndex = 101
             child.Visible = true
             child.BackgroundTransparency = 0.5
-        elseif child:IsA("UIListLayout") or child:IsA("UIPadding") or child:IsA("UICorner") or child:IsA("UIScale") then
-            -- Layout elements, don't modify
         end
     end
 
--- [[ EDIT MODE - When user taps editor ]]
-RealInput.Focused:Connect(function()
-    -- 1. FREEZE LAYOUT FIRST (Prevent visual jumps)
-    RealInput.TextScaled = false
-    RealInput.TextWrapped = false
-    
-    -- 2. Strip syntax
-    local raw = StripSyntax(RealInput.Text)
-    
-    -- 3. Disable RichText
-    RealInput.RichText = false
-    
-    -- 4. IMMEDIATELY set text (no waiting)
-    RealInput.Text = raw
-    
-    -- 5. NOW adjust layout in ONE batch (prevents re-render between steps)
-    Lines.Visible = false
-    RealInput.Position = UDim2.new(0, 10, 0, 0)
-    
-    -- 6. Use RunService to ensure layout updates happen AFTER text is set
-    game:GetService("RunService").Heartbeat:Wait()
-    
-    -- 7. NOW resize (after text is stable)
-    EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-    EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
-    
-    Panel.AnchorPoint = Vector2.new(1, 1)
-    Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
-    Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
-    Panel.Visible = true
-    Panel.ZIndex = 100
-end)
+    -- ✅ FIXED: EDIT MODE
+    RealInput.Focused:Connect(function()
+        if isEditMode then return end -- Prevent double-trigger
+        isEditMode = true
+        
+        -- 1. Freeze all auto-scaling FIRST
+        RealInput.TextScaled = false
+        RealInput.TextWrapped = false
+        
+        -- 2. Strip syntax and disable RichText
+        local raw = StripSyntax(RealInput.Text)
+        RealInput.RichText = false
+        
+        -- 3. Set text immediately (no waiting)
+        RealInput.Text = raw
+        
+        -- 4. Wait ONE frame for text to stabilize
+        game:GetService("RunService").Heartbeat:Wait()
+        
+        -- 5. Now adjust layout
+        Lines.Visible = false
+        RealInput.Position = UDim2.new(0, 10, 0, 0)
+        
+        -- 6. Resize editor box
+        EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+        EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
+        
+        -- 7. Move Panel
+        Panel.AnchorPoint = Vector2.new(1, 1)
+        Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
+        Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
+        Panel.Visible = true
+        Panel.ZIndex = 100
+    end)
 
-    -- [[ VIEWING MODE - When user exits editor ]]
+    -- ✅ FIXED: VIEWING MODE
     RealInput.FocusLost:Connect(function()
-        -- 1. Restore line numbers
+        if not isEditMode then return end -- Prevent double-trigger
+        isEditMode = false
+        
+        -- 1. Get raw text FIRST
+        local raw = RealInput.Text
+        
+        -- 2. Restore layout BEFORE enabling RichText
         Lines.Visible = true
         RealInput.Position = originalTextPos
-        
-        -- 2. Restore editor size/position
         EditorFrame.Size = originalSize
         EditorFrame.Position = originalPos
-        
-        -- 3. 🔴 FIX: Restore Panel to ORIGINAL position
         Panel.AnchorPoint = originalPanelAnchor
         Panel.Position = originalPanelPos
         Panel.Size = originalPanelSize
         Panel.Visible = true
         Panel.ZIndex = 100
         
-        -- 4. Re-apply syntax highlighting
-        local raw = RealInput.Text
+        -- 3. Wait ONE frame for layout to settle
+        game:GetService("RunService").Heartbeat:Wait()
+        
+        -- 4. NOW enable RichText and apply syntax
         RealInput.RichText = true
         RealInput.Text = ApplySyntax(raw)
 
@@ -6337,7 +6335,7 @@ end)
         end
     end)
 
-    -- BUTTON CONNECTIONS - Use WaitForChild to ensure correct panel
+    -- BUTTON CONNECTIONS
     local function safeConnect(buttonName, callback)
         local btn = Panel:FindFirstChild(buttonName)
         if btn then
@@ -6358,8 +6356,10 @@ end)
     safeConnect("Paste", function()
         local clip = safeGetClipboard()
         RealInput.Text = clip
-        RealInput.RichText = true
-        RealInput.Text = ApplySyntax(clip)
+        if not isEditMode then
+            RealInput.RichText = true
+            RealInput.Text = ApplySyntax(clip)
+        end
     end)
     
     safeConnect("Save", function() 
@@ -6411,7 +6411,7 @@ end)
     end
 
     UpdateLineNumbers(RealInput, Lines)
-end;
+end
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
