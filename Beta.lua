@@ -6246,78 +6246,61 @@ InitTabs.Saved = function()
     local originalPanelPos = Panel.Position
     local originalPanelSize = Panel.Size
 
-    -- 🔴 FIX: Ensure all icons have proper ZIndex hierarchy
-    local function ensureIconVisibility()
-        Panel.ZIndex = 100
-        Panel.BackgroundTransparency = 0 -- Keep background solid
-        
-        for _, child in pairs(Panel:GetChildren()) do
-            if child:IsA("TextButton") or child:IsA("ImageButton") then
-                child.ZIndex = 101
-                child.Visible = true
-                
-                -- Ensure icon inside button is visible
-                local icon = child:FindFirstChild("Icon")
-                if icon then
-                    icon.ZIndex = 102
-                    icon.Visible = true
-                end
-            elseif child:IsA("Frame") and (child.Name == "Spacer1" or child.Name == "Spacer2") then
-                -- Keep spacers visible
-                child.ZIndex = 101
-                child.Visible = true
+    -- 🔴 FIX: Set initial ZIndex for panel and all children ONCE
+    Panel.ZIndex = 100
+    Panel.BackgroundTransparency = 0.2
+    
+    for _, child in pairs(Panel:GetChildren()) do
+        if child:IsA("TextButton") or child:IsA("ImageButton") then
+            child.ZIndex = 101
+            local icon = child:FindFirstChild("Icon")
+            if icon then
+                icon.ZIndex = 102
             end
+        elseif child:IsA("Frame") and (child.Name:find("Spacer")) then
+            child.ZIndex = 101
+            child.BackgroundTransparency = 0.5 -- Make spacers visible
         end
     end
 
-    -- Initial visibility setup
-    ensureIconVisibility()
-
-    -- [[ EDIT MODE - When clicking editor ]]
+    -- [[ EDIT MODE ]]
     RealInput.Focused:Connect(function()
-        -- 1. Hide line numbers & move text left
         Lines.Visible = false
         RealInput.Position = UDim2.new(0, 10, 0, 0)
         
-        -- 2. Shrink editor box
+        -- Shrink editor
         EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
         EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
         
-        -- 3. 🔴 FIX: Reposition Panel ABOVE keyboard
-        Panel.Position = UDim2.new(0.575, 0, 0.65, 0) -- Move up
-        Panel.Size = UDim2.new(0.42, 0, 0.12, 0) -- Slightly smaller
+        -- 🔴 FIX: Position panel in BOTTOM RIGHT corner (anchored properly)
+        Panel.AnchorPoint = Vector2.new(1, 1) -- Anchor to bottom-right
+        Panel.Position = UDim2.new(0.99, 0, 0.98, 0) -- Bottom-right position
+        Panel.Size = UDim2.new(0.42, 0, 0.15, 0) -- Correct size
         
-        -- 4. 🔴 FIX: Force icons to stay visible
-        ensureIconVisibility()
-
-        -- 5. Switch to plain text mode
+        -- Stability
         local raw = StripSyntax(RealInput.Text)
         RealInput.RichText = false 
         RealInput.TextWrapped = false 
         RealInput.Text = raw
     end)
 
-    -- [[ VIEWING MODE - When exiting editor ]]
+    -- [[ VIEWING MODE ]]
     RealInput.FocusLost:Connect(function()
-        -- 1. Restore layout
         Lines.Visible = true
         RealInput.Position = originalTextPos
         EditorFrame.Size = originalSize
         EditorFrame.Position = originalPos
         
-        -- 2. 🔴 FIX: Restore Panel to original position
+        -- 🔴 FIX: Restore panel to original position
+        Panel.AnchorPoint = Vector2.new(1, 1) -- Keep same anchor
         Panel.Position = originalPanelPos
         Panel.Size = originalPanelSize
-        
-        -- 3. 🔴 FIX: Force icons to stay visible
-        ensureIconVisibility()
 
-        -- 4. Re-apply syntax highlighting
+        -- Re-apply syntax
         local raw = RealInput.Text
         RealInput.RichText = true
         RealInput.Text = ApplySyntax(raw)
 
-        -- 5. Auto-save if not editing saved file
         if not Data.Editor.EditingSavedFile then
             UIEvents.EditorTabs.saveTab(nil, raw, false)
         end
@@ -6335,31 +6318,39 @@ InitTabs.Saved = function()
         end
     end)
 
-    -- 🔴 FIX: Re-check visibility after any UI update
-    task.spawn(function()
-        while task.wait(0.5) do
-            if Panel and Panel.Parent then
-                ensureIconVisibility()
-            end
-        end
+    -- CONNECT BUTTONS
+    Panel:WaitForChild("Execute")[Method]:Connect(function() 
+        UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() 
     end)
-
-    -- CONNECT BUTTONS (Pull from Panel)
-    Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
-    Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = "" end)
+    
+    Panel:WaitForChild("Delete")[Method]:Connect(function() 
+        RealInput.Text = "" 
+    end)
+    
     Panel:WaitForChild("Paste")[Method]:Connect(function()
-        local clip = safeGetClipboard(); RealInput.Text = clip;
-        RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
+        local clip = safeGetClipboard()
+        RealInput.Text = clip
+        RealInput.RichText = true
+        RealInput.Text = ApplySyntax(clip)
     end)
-    Panel:WaitForChild("Save")[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
+    
+    Panel:WaitForChild("Save")[Method]:Connect(function() 
+        UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) 
+    end)
+    
     Panel:WaitForChild("Rename")[Method]:Connect(function()
         script.Parent.Popups.Visible = true
         script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
         script.Parent.Popups.Main.Input:CaptureFocus()
     end)
-    Panel:WaitForChild("ExecuteClipboard")[Method]:Connect(function() UIEvents.Executor.RunCode(safeGetClipboard())() end)
+    
+    Panel:WaitForChild("ExecuteClipboard")[Method]:Connect(function() 
+        UIEvents.Executor.RunCode(safeGetClipboard())() 
+    end)
 
-    Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
+    Editor.Tabs.Create.Activated:Connect(function() 
+        UIEvents.EditorTabs.createTab("Script", "") 
+    end)
 
     -- Popup Controls
     local Buttons = script.Parent.Popups.Main.Button
@@ -6370,7 +6361,10 @@ InitTabs.Saved = function()
         end
         script.Parent.Popups.Visible = false
     end)
-    Buttons["Cancel"][Method]:Connect(function() script.Parent.Popups.Visible = false end)
+    
+    Buttons["Cancel"][Method]:Connect(function() 
+        script.Parent.Popups.Visible = false 
+    end)
 
     UpdateLineNumbers(RealInput, Lines)
 end;
