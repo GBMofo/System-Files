@@ -6216,7 +6216,7 @@ InitTabs.Saved = function()
 		end)
 	end;
 
-InitTabs.Editor = function()
+	InitTabs.Editor = function()
     local Editor = Pages:WaitForChild("Editor");
     local Panel = Editor:WaitForChild("Panel");
     local EditorFrame = Editor:WaitForChild("Editor"); 
@@ -6226,100 +6226,190 @@ InitTabs.Editor = function()
     local Method = "MouseButton1Click"; 
     local autoSaveDebounce = nil 
 
-    -- Strictly lock text size to prevent font-rendering pops
-    local LOCKED_TEXT_SIZE = 14
-    RealInput.TextSize = LOCKED_TEXT_SIZE
-    RealInput.TextScaled = false
+    -- Store original states ONCE
+    local originalSize = EditorFrame.Size
+    local originalPos = EditorFrame.Position
+    local originalTextPos = RealInput.Position
+    local originalPanelPos = Panel.Position
+    local originalPanelSize = Panel.Size
+    local originalPanelAnchor = Panel.AnchorPoint
+
+    -- 🔴 CRITICAL FIX: Verify this is the EDITOR panel, not SaveTemplate panel
+    if Panel.Parent ~= Editor then
+        warn("[PunkX] Wrong panel detected!")
+        return
+    end
+
+    -- 🔴 FIX: Set ZIndex ONCE at initialization (no loops, no repeats)
+    Panel.ZIndex = 100
+    Panel.BackgroundTransparency = 0.2
+    Panel.Visible = true -- Ensure it's visible
+    
+    -- Set ZIndex for all children ONCE
+    for _, child in pairs(Panel:GetChildren()) do
+        if child:IsA("TextButton") or child:IsA("ImageButton") then
+            child.ZIndex = 101
+            child.Visible = true
+            local icon = child:FindFirstChild("Icon")
+            if icon then
+                icon.ZIndex = 102
+                icon.Visible = true
+            end
+        elseif child:IsA("Frame") and child.Name:match("Spacer") then
+            child.ZIndex = 101
+            child.Visible = true
+            child.BackgroundTransparency = 0.5
+        elseif child:IsA("UIListLayout") or child:IsA("UIPadding") or child:IsA("UICorner") or child:IsA("UIScale") then
+            -- Layout elements, don't modify
+        end
+    end
+
+-- [[ EDIT MODE - When user taps editor ]]
+RealInput.Focused:Connect(function()
+    -- 1. Strip syntax FIRST (get clean text)
+    local raw = StripSyntax(RealInput.Text)
+    
+    -- 2. Clear text temporarily (prevents zoom flicker)
+    RealInput.Text = ""
+    
+    -- 3. Turn off RichText while box is EMPTY (no flicker!)
+    RealInput.RichText = false
     RealInput.TextWrapped = false
+    
+    -- 4. Set the plain text
+    RealInput.Text = raw
+    
+    -- 5. Hide line numbers
+    Lines.Visible = false
+    RealInput.Position = UDim2.new(0, 10, 0, 0)
+    
+    -- 6. Shrink editor box
+    EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+    EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
+    
+    -- 7. Move Panel to bottom-right
+    Panel.AnchorPoint = Vector2.new(1, 1)
+    Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
+    Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
+    Panel.Visible = true
+    Panel.ZIndex = 100
+end)
 
-    -- // THE FIX: FOCUS LOGIC (LAYOUT SAFE) //
-    RealInput.Focused:Connect(function()
-        -- 1. Freeze the current size so it cannot "Snap"
-        local currentAbsSize = RealInput.AbsoluteSize
-        RealInput.AutomaticSize = Enum.AutomaticSize.None 
-        RealInput.Size = UDim2.new(0, currentAbsSize.X, 0, currentAbsSize.Y)
-        
-        -- 2. Strip tags
-        local raw = StripSyntax(RealInput.Text)
-        RealInput.RichText = false
-        RealInput.Text = raw
-        
-        -- 3. Hide lines (Optional, keeps it clean)
-        Lines.Visible = false
-        
-        -- 4. Wait one frame for the engine to settle, then restore growth
-        task.defer(function()
-            RealInput.AutomaticSize = Enum.AutomaticSize.XY
-            RealInput.Size = UDim2.new(1, -70, 1, 0) -- Restores your original G2L size
-        end)
-    end)
-
-    -- // THE FIX: FOCUS LOST LOGIC (LAYOUT SAFE) //
+    -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
-        -- 1. Freeze again before applying RichText
-        local currentAbsSize = RealInput.AbsoluteSize
-        RealInput.AutomaticSize = Enum.AutomaticSize.None
-        RealInput.Size = UDim2.new(0, currentAbsSize.X, 0, currentAbsSize.Y)
-        
-        local raw = RealInput.Text
-        
-        -- 2. Show lines again
+        -- 1. Restore line numbers
         Lines.Visible = true
-
-        -- 3. Apply syntax highlighting
+        RealInput.Position = originalTextPos
+        
+        -- 2. Restore editor size/position
+        EditorFrame.Size = originalSize
+        EditorFrame.Position = originalPos
+        
+        -- 3. 🔴 FIX: Restore Panel to ORIGINAL position
+        Panel.AnchorPoint = originalPanelAnchor
+        Panel.Position = originalPanelPos
+        Panel.Size = originalPanelSize
+        Panel.Visible = true
+        Panel.ZIndex = 100
+        
+        -- 4. Re-apply syntax highlighting
+        local raw = RealInput.Text
         RealInput.RichText = true
         RealInput.Text = ApplySyntax(raw)
-        
-        -- 4. Restore growth
-        task.defer(function()
-            RealInput.AutomaticSize = Enum.AutomaticSize.XY
-            RealInput.Size = UDim2.new(1, -70, 1, 0)
-        end)
 
+        -- 5. Auto-save
         if not Data.Editor.EditingSavedFile then
             UIEvents.EditorTabs.saveTab(nil, raw, false)
         end
     end)
 
-    -- Force text size stay at 14 (prevents mobile 'helpful' zooming)
-    RealInput:GetPropertyChangedSignal("TextSize"):Connect(function()
-        if RealInput.TextSize ~= LOCKED_TEXT_SIZE then
-            RealInput.TextSize = LOCKED_TEXT_SIZE
+    -- Line number sync
+    RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+        UpdateLineNumbers(RealInput, Lines)
+        if not Data.Editor.EditingSavedFile then
+            if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+            autoSaveDebounce = task.delay(1, function()
+                local cleanText = StripSyntax(RealInput.Text)
+                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+            end)
         end
     end)
 
-    -- Line numbering & Auto-save
-    RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-        UpdateLineNumbers(RealInput, Lines)
-    end)
-
-    -- // BUTTON CONNECTIONS (Your original logic) //
+    -- BUTTON CONNECTIONS - Use WaitForChild to ensure correct panel
     local function safeConnect(buttonName, callback)
         local btn = Panel:FindFirstChild(buttonName)
-        if btn then btn[Method]:Connect(callback) end
+        if btn then
+            btn[Method]:Connect(callback)
+        else
+            warn("[PunkX] Button not found: " .. buttonName)
+        end
     end
 
-    safeConnect("Execute", function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
-    safeConnect("Delete", function() RealInput.Text = "" end)
-    safeConnect("Paste", function() 
-        local clip = safeGetClipboard()
-        RealInput.Text = clip 
+    safeConnect("Execute", function() 
+        UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() 
     end)
-    safeConnect("Save", function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
+    
+    safeConnect("Delete", function() 
+        RealInput.Text = "" 
+    end)
+    
+    safeConnect("Paste", function()
+        local clip = safeGetClipboard()
+        RealInput.Text = clip
+        RealInput.RichText = true
+        RealInput.Text = ApplySyntax(clip)
+    end)
+    
+    safeConnect("Save", function() 
+        UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) 
+    end)
+    
     safeConnect("Rename", function()
         script.Parent.Popups.Visible = true
         script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
         script.Parent.Popups.Main.Input:CaptureFocus()
     end)
-    safeConnect("ExecuteClipboard", function() UIEvents.Executor.RunCode(safeGetClipboard())() end)
+    
+    safeConnect("ExecuteClipboard", function() 
+        UIEvents.Executor.RunCode(safeGetClipboard())() 
+    end)
 
+    -- Tab creation
     local createBtn = Editor.Tabs:FindFirstChild("Create")
     if createBtn then
-        createBtn.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
+        createBtn.Activated:Connect(function() 
+            UIEvents.EditorTabs.createTab("Script", "") 
+        end)
+    end
+
+    -- Popup controls
+    local Popups = script.Parent:FindFirstChild("Popups")
+    if Popups and Popups:FindFirstChild("Main") then
+        local Buttons = Popups.Main:FindFirstChild("Button")
+        if Buttons then
+            local confirmBtn = Buttons:FindFirstChild("Confirm")
+            local cancelBtn = Buttons:FindFirstChild("Cancel")
+            
+            if confirmBtn then
+                confirmBtn[Method]:Connect(function()
+                    local newName = string.gsub(Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
+                    if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
+                        UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
+                    end
+                    Popups.Visible = false
+                end)
+            end
+            
+            if cancelBtn then
+                cancelBtn[Method]:Connect(function() 
+                    Popups.Visible = false 
+                end)
+            end
+        end
     end
 
     UpdateLineNumbers(RealInput, Lines)
-end
+end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
