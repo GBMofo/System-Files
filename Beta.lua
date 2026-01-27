@@ -6261,27 +6261,32 @@ InitTabs.Editor = function()
         end
     end
 
--- ✅ EDIT MODE - INVISIBLE TEXT DURING TRANSITION
+-- ✅ EDIT MODE - SIZE LOCK METHOD
 RealInput.Focused:Connect(function()
-    -- 🔴 STEP 1: Make text invisible (but TextBox stays visible/focused)
-    RealInput.TextTransparency = 1
+    -- 🔴 Capture current size
+    local lockedSize = RealInput.AbsoluteSize
     
-    -- 🔴 STEP 2: Wait for render
-    task.wait()
-    
-    -- 3. Lock properties
+    -- Lock properties
     RealInput.TextSize = LOCKED_TEXT_SIZE
     RealInput.TextScaled = false
     RealInput.TextWrapped = false
     
-    -- 4. Get raw text
+    -- Get raw text
     local raw = StripSyntax(RealInput.Text)
     
-    -- 5. Turn OFF RichText and set text
+    -- Turn OFF RichText
     RealInput.RichText = false
+    
+    -- 🔴 Force size to stay locked during text change
+    RealInput.Size = UDim2.new(0, lockedSize.X, 0, lockedSize.Y)
+    
+    -- Set text
     RealInput.Text = raw
     
-    -- 6. Adjust layout
+    -- 🔴 Restore automatic sizing
+    RealInput.Size = UDim2.new(1, -70, 1, 0)
+    
+    -- Adjust layout
     Lines.Visible = false
     RealInput.Position = UDim2.new(0, 10, 0, 0)
     EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
@@ -6292,33 +6297,26 @@ RealInput.Focused:Connect(function()
     Panel.Visible = true
     Panel.ZIndex = 100
     
-    -- 7. Lock again
     RealInput.TextSize = LOCKED_TEXT_SIZE
-    
-    -- 🔴 STEP 8: Wait for layout to settle
-    task.wait()
-    
-    -- 🔴 STEP 9: Make text visible again
-    RealInput.TextTransparency = 0
 end)
 
--- ✅ VIEWING MODE - INVISIBLE TEXT DURING TRANSITION
+-- ✅ VIEWING MODE - SIZE LOCK METHOD
 RealInput.FocusLost:Connect(function()
-    -- 🔴 STEP 1: Make text invisible
-    RealInput.TextTransparency = 1
+    -- 🔴 Capture current size
+    local lockedSize = RealInput.AbsoluteSize
     
-    -- 🔴 STEP 2: Wait for render
-    task.wait()
-    
-    -- 3. Get raw text
+    -- Get raw text
     local raw = RealInput.Text
     
-    -- 4. Lock properties
+    -- Lock properties
     RealInput.TextSize = LOCKED_TEXT_SIZE
     RealInput.TextScaled = false
     RealInput.TextWrapped = false
     
-    -- 5. Restore layout
+    -- 🔴 Force size to stay locked
+    RealInput.Size = UDim2.new(0, lockedSize.X, 0, lockedSize.Y)
+    
+    -- Restore layout
     Lines.Visible = true
     RealInput.Position = originalTextPos
     EditorFrame.Size = originalSize
@@ -6329,25 +6327,20 @@ RealInput.FocusLost:Connect(function()
     Panel.Visible = true
     Panel.ZIndex = 100
     
-    -- 6. Apply syntax
+    -- Turn ON RichText and apply syntax
     RealInput.RichText = true
     RealInput.Text = ApplySyntax(raw)
     
-    -- 7. Lock again
+    -- 🔴 Restore automatic sizing
+    RealInput.Size = UDim2.new(1, -70, 1, 0)
+    
     RealInput.TextSize = LOCKED_TEXT_SIZE
-    
-    -- 🔴 STEP 8: Wait for layout to settle
-    task.wait()
-    
-    -- 🔴 STEP 9: Make text visible again
-    RealInput.TextTransparency = 0
 
     -- Auto-save
     if not Data.Editor.EditingSavedFile then
         UIEvents.EditorTabs.saveTab(nil, raw, false)
     end
 end)
-
     -- ✅ SAFETY: Force lock TextSize whenever it changes
     RealInput:GetPropertyChangedSignal("TextSize"):Connect(function()
         if RealInput.TextSize ~= LOCKED_TEXT_SIZE then
