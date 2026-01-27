@@ -1399,7 +1399,7 @@ G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- [[ 5. PANEL (RESTORED ORIGINAL ICONS) ]] --
-G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]); -- Parent is the Editor Page
+G2L["89"] = Instance.new("Frame", G2L["7a"]); -- Parent is the Editor Page
 G2L["89"]["Name"] = [[Panel]];
 G2L["89"]["ZIndex"] = 100; -- 🔴 High ZIndex so it's always in front
 G2L["89"]["BorderSizePixel"] = 0;
