@@ -6266,28 +6266,30 @@ InitTabs.Saved = function()
 
 -- [[ EDIT MODE - When user taps editor ]]
 RealInput.Focused:Connect(function()
-    -- 1. Strip syntax FIRST
-    local raw = StripSyntax(RealInput.Text)
-    
-    -- 2. Disable RichText immediately
-    RealInput.RichText = false
-    
-    -- 3. Wait one frame for renderer to catch up
-    task.wait()
-    
-    -- 4. NOW set the text (after RichText is fully off)
-    RealInput.Text = raw
+    -- 1. FREEZE LAYOUT FIRST (Prevent visual jumps)
+    RealInput.TextScaled = false
     RealInput.TextWrapped = false
     
-    -- 5. Hide line numbers
+    -- 2. Strip syntax
+    local raw = StripSyntax(RealInput.Text)
+    
+    -- 3. Disable RichText
+    RealInput.RichText = false
+    
+    -- 4. IMMEDIATELY set text (no waiting)
+    RealInput.Text = raw
+    
+    -- 5. NOW adjust layout in ONE batch (prevents re-render between steps)
     Lines.Visible = false
     RealInput.Position = UDim2.new(0, 10, 0, 0)
     
-    -- 6. Shrink editor box
+    -- 6. Use RunService to ensure layout updates happen AFTER text is set
+    game:GetService("RunService").Heartbeat:Wait()
+    
+    -- 7. NOW resize (after text is stable)
     EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
     EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
     
-    -- 7. Move Panel to bottom-right
     Panel.AnchorPoint = Vector2.new(1, 1)
     Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
     Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
