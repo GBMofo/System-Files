@@ -6230,100 +6230,150 @@ InitTabs.Saved = function()
 	end;
 
 	InitTabs.Editor = function()
-        local Editor = Pages:WaitForChild("Editor");
-        local Panel = Editor:WaitForChild("Panel");
-        local EditorFrame = Editor:WaitForChild("Editor"); 
-        local RealInput = EditorFrame:WaitForChild("Input");
-        local Lines = EditorFrame:WaitForChild("Lines");
+    local Editor = Pages:WaitForChild("Editor");
+    local Panel = Editor:WaitForChild("Panel");
+    local EditorFrame = Editor:WaitForChild("Editor"); 
+    local RealInput = EditorFrame:WaitForChild("Input");
+    local Lines = EditorFrame:WaitForChild("Lines");
+    
+    local Method = "MouseButton1Click"; 
+    local autoSaveDebounce = nil 
+
+    -- Store original states
+    local originalSize = EditorFrame.Size
+    local originalPos = EditorFrame.Position
+    local originalTextPos = RealInput.Position
+    local originalPanelPos = Panel.Position
+    local originalPanelSize = Panel.Size
+
+    -- 🔴 FIX: Ensure all icons have proper ZIndex hierarchy
+    local function ensureIconVisibility()
+        Panel.ZIndex = 100
+        Panel.BackgroundTransparency = 0 -- Keep background solid
         
-        local Method = "MouseButton1Click"; 
-        local autoSaveDebounce = nil 
-
-        -- Store original states
-        local originalSize = EditorFrame.Size
-        local originalPos = EditorFrame.Position
-        local originalTextPos = RealInput.Position
-
-        -- [[ 🔴 DELTA STABILITY LOGIC ]] --
-        RealInput.Focused:Connect(function()
-            -- 1. HIDE NUMBERS & MOVE TEXT LEFT (Fixes space issue)
-            Lines.Visible = false
-            RealInput.Position = UDim2.new(0, 10, 0, 0)
-            
-            -- 2. SHRINK BOX (Fixes keyboard cut-off & Tab overlap)
-            -- Moved down to 0.22, height reduced to 0.38
-            EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-            EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
-            
-            -- 3. ICON DEPTH
-            Panel.ZIndex = 100 -- Ensure buttons stay in front of text
-
-            -- 4. STABILITY
-            local raw = StripSyntax(RealInput.Text)
-            RealInput.RichText = false 
-            RealInput.TextWrapped = false 
-            RealInput.Text = raw
-        end)
-
-        RealInput.FocusLost:Connect(function()
-            -- 1. RESTORE LAYOUT
-            Lines.Visible = true
-            RealInput.Position = originalTextPos
-            EditorFrame.Size = originalSize
-            EditorFrame.Position = originalPos
-
-            -- 2. RE-APPLY COLORS
-            local raw = RealInput.Text
-            RealInput.RichText = true
-            RealInput.Text = ApplySyntax(raw)
-
-            if not Data.Editor.EditingSavedFile then
-                UIEvents.EditorTabs.saveTab(nil, raw, false)
+        for _, child in pairs(Panel:GetChildren()) do
+            if child:IsA("TextButton") or child:IsA("ImageButton") then
+                child.ZIndex = 101
+                child.Visible = true
+                
+                -- Ensure icon inside button is visible
+                local icon = child:FindFirstChild("Icon")
+                if icon then
+                    icon.ZIndex = 102
+                    icon.Visible = true
+                end
+            elseif child:IsA("Frame") and (child.Name == "Spacer1" or child.Name == "Spacer2") then
+                -- Keep spacers visible
+                child.ZIndex = 101
+                child.Visible = true
             end
-        end)
+        end
+    end
 
-        -- Sync Line Numbers
-        RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-            UpdateLineNumbers(RealInput, Lines)
-            if not Data.Editor.EditingSavedFile then
-                if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-                autoSaveDebounce = task.delay(1, function()
-                    local cleanText = StripSyntax(RealInput.Text)
-                    UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-                end)
-            end
-        end)
+    -- Initial visibility setup
+    ensureIconVisibility()
 
-        -- CONNECT BUTTONS (Pull from Panel)
-        Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
-        Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = "" end)
-        Panel:WaitForChild("Paste")[Method]:Connect(function()
-            local clip = safeGetClipboard(); RealInput.Text = clip;
-            RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
-        end)
-        Panel:WaitForChild("Save")[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
-        Panel:WaitForChild("Rename")[Method]:Connect(function()
-            script.Parent.Popups.Visible = true
-            script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-            script.Parent.Popups.Main.Input:CaptureFocus()
-        end)
-        Panel:WaitForChild("ExecuteClipboard")[Method]:Connect(function() UIEvents.Executor.RunCode(safeGetClipboard())() end)
+    -- [[ EDIT MODE - When clicking editor ]]
+    RealInput.Focused:Connect(function()
+        -- 1. Hide line numbers & move text left
+        Lines.Visible = false
+        RealInput.Position = UDim2.new(0, 10, 0, 0)
+        
+        -- 2. Shrink editor box
+        EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+        EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
+        
+        -- 3. 🔴 FIX: Reposition Panel ABOVE keyboard
+        Panel.Position = UDim2.new(0.575, 0, 0.65, 0) -- Move up
+        Panel.Size = UDim2.new(0.42, 0, 0.12, 0) -- Slightly smaller
+        
+        -- 4. 🔴 FIX: Force icons to stay visible
+        ensureIconVisibility()
 
-        Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
+        -- 5. Switch to plain text mode
+        local raw = StripSyntax(RealInput.Text)
+        RealInput.RichText = false 
+        RealInput.TextWrapped = false 
+        RealInput.Text = raw
+    end)
 
-        -- Popup Controls
-        local Buttons = script.Parent.Popups.Main.Button
-        Buttons["Confirm"][Method]:Connect(function()
-            local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
-            if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
-                UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
-            end
-            script.Parent.Popups.Visible = false
-        end)
-        Buttons["Cancel"][Method]:Connect(function() script.Parent.Popups.Visible = false end)
+    -- [[ VIEWING MODE - When exiting editor ]]
+    RealInput.FocusLost:Connect(function()
+        -- 1. Restore layout
+        Lines.Visible = true
+        RealInput.Position = originalTextPos
+        EditorFrame.Size = originalSize
+        EditorFrame.Position = originalPos
+        
+        -- 2. 🔴 FIX: Restore Panel to original position
+        Panel.Position = originalPanelPos
+        Panel.Size = originalPanelSize
+        
+        -- 3. 🔴 FIX: Force icons to stay visible
+        ensureIconVisibility()
 
+        -- 4. Re-apply syntax highlighting
+        local raw = RealInput.Text
+        RealInput.RichText = true
+        RealInput.Text = ApplySyntax(raw)
+
+        -- 5. Auto-save if not editing saved file
+        if not Data.Editor.EditingSavedFile then
+            UIEvents.EditorTabs.saveTab(nil, raw, false)
+        end
+    end)
+
+    -- Sync Line Numbers
+    RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
-    end;
+        if not Data.Editor.EditingSavedFile then
+            if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+            autoSaveDebounce = task.delay(1, function()
+                local cleanText = StripSyntax(RealInput.Text)
+                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+            end)
+        end
+    end)
+
+    -- 🔴 FIX: Re-check visibility after any UI update
+    task.spawn(function()
+        while task.wait(0.5) do
+            if Panel and Panel.Parent then
+                ensureIconVisibility()
+            end
+        end
+    end)
+
+    -- CONNECT BUTTONS (Pull from Panel)
+    Panel:WaitForChild("Execute")[Method]:Connect(function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
+    Panel:WaitForChild("Delete")[Method]:Connect(function() RealInput.Text = "" end)
+    Panel:WaitForChild("Paste")[Method]:Connect(function()
+        local clip = safeGetClipboard(); RealInput.Text = clip;
+        RealInput.RichText = true; RealInput.Text = ApplySyntax(clip)
+    end)
+    Panel:WaitForChild("Save")[Method]:Connect(function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
+    Panel:WaitForChild("Rename")[Method]:Connect(function()
+        script.Parent.Popups.Visible = true
+        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+        script.Parent.Popups.Main.Input:CaptureFocus()
+    end)
+    Panel:WaitForChild("ExecuteClipboard")[Method]:Connect(function() UIEvents.Executor.RunCode(safeGetClipboard())() end)
+
+    Editor.Tabs.Create.Activated:Connect(function() UIEvents.EditorTabs.createTab("Script", "") end)
+
+    -- Popup Controls
+    local Buttons = script.Parent.Popups.Main.Button
+    Buttons["Confirm"][Method]:Connect(function()
+        local newName = string.gsub(script.Parent.Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
+        if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
+            UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
+        end
+        script.Parent.Popups.Visible = false
+    end)
+    Buttons["Cancel"][Method]:Connect(function() script.Parent.Popups.Visible = false end)
+
+    UpdateLineNumbers(RealInput, Lines)
+end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
