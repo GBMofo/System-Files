@@ -1398,22 +1398,18 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- PanelAnchor (Frame, dimming-immune)
-G2L["89"] = Instance.new("Frame", G2L["7a"]);
-G2L["89"]["Name"] = [[PanelAnchor]];
-G2L["89"]["ZIndex"] = 1000;
-G2L["89"]["BorderSizePixel"] = 0;
+-- [[ AFTER ]]
+G2L["89"] = Instance.new("Frame", G2L["7a"]); -- Changed to Frame
+G2L["89"]["Name"] = [[PanelAnchor]]; -- RENAME: Frame is now Anchor
+G2L["89"]["ZIndex"] = 10; -- Ensure icons stay physically above text
 G2L["89"]["BackgroundTransparency"] = 1;
-G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
-G2L["89"]["Size"] = UDim2.new(0.421, 0, 0.15, 0);
 
--- Panel (CanvasGroup, visual/render layer)
-G2L["89_Visuals"] = Instance.new("CanvasGroup", G2L["89"]);
-G2L["89_Visuals"]["Name"] = [[Panel]];
+G2L["89_Visuals"] = Instance.new("CanvasGroup", G2L["89"]); -- NEW WRAPPER
+G2L["89_Visuals"]["Name"] = [[Panel]]; -- EXACTLY ONE OBJECT NAMED "PANEL"
 G2L["89_Visuals"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["89_Visuals"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
 G2L["89_Visuals"]["BorderSizePixel"] = 0;
+G2L["89_Visuals"]["BackgroundTransparency"] = 0;
 
 G2L["8a"] = Instance.new("UIListLayout", G2L["89_Visuals"]); -- PARENTED TO INNER
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
