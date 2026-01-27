@@ -6266,18 +6266,18 @@ InitTabs.Saved = function()
 
 -- [[ EDIT MODE - When user taps editor ]]
 RealInput.Focused:Connect(function()
-    -- 1. Strip syntax FIRST (get clean text)
+    -- 1. Strip syntax FIRST
     local raw = StripSyntax(RealInput.Text)
     
-    -- 2. Clear text temporarily (prevents zoom flicker)
-    RealInput.Text = ""
-    
-    -- 3. Turn off RichText while box is EMPTY (no flicker!)
+    -- 2. Disable RichText immediately
     RealInput.RichText = false
-    RealInput.TextWrapped = false
     
-    -- 4. Set the plain text
+    -- 3. Wait one frame for renderer to catch up
+    task.wait()
+    
+    -- 4. NOW set the text (after RichText is fully off)
     RealInput.Text = raw
+    RealInput.TextWrapped = false
     
     -- 5. Hide line numbers
     Lines.Visible = false
