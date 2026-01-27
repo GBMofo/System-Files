@@ -1458,8 +1458,8 @@ G2L["90"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["90"]["ZIndex"] = 11;
 G2L["90"]["BackgroundTransparency"] = 1;
 G2L["90"]["Size"] = UDim2.new(0, 34, 0, 34);
--- Rename Button
-G2L["90"]["LayoutOrder"] = -1;
+-- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Rename Button
+G2L["90"]["LayoutOrder"] = -2;  -- Rename
 G2L["90"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["90"]["Text"] = [[]];
 G2L["90"]["Name"] = [[Rename]];
@@ -1487,8 +1487,8 @@ G2L["92"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["92"]["ZIndex"] = 11;
 G2L["92"]["BackgroundTransparency"] = 1;
 G2L["92"]["Size"] = UDim2.new(0, 34, 0, 34);
--- Paste Button
-G2L["92"]["LayoutOrder"] = 1;
+-- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Paste Button
+G2L["92"]["LayoutOrder"] = -1;  -- Paste
 G2L["92"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["92"]["Text"] = [[]];
 G2L["92"]["Name"] = [[Paste]];
@@ -1516,8 +1516,8 @@ G2L["94"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["94"]["ZIndex"] = 11;
 G2L["94"]["BackgroundTransparency"] = 1;
 G2L["94"]["Size"] = UDim2.new(0, 34, 0, 34);
--- ExecuteClipboard Button
-G2L["94"]["LayoutOrder"] = 2;
+-- StarterGui.ScreenGui.Main.Pages.Editor.Panel.ExecuteClipboard Button
+G2L["94"]["LayoutOrder"] = 0;   -- ExecuteClipboard
 G2L["94"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["94"]["Text"] = [[]];
 G2L["94"]["Name"] = [[ExecuteClipboard]];
@@ -1545,8 +1545,8 @@ G2L["96"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["96"]["ZIndex"] = 11;
 G2L["96"]["BackgroundTransparency"] = 1;
 G2L["96"]["Size"] = UDim2.new(0, 34, 0, 34);
--- Execute Button (RIGHTMOST)
-G2L["96"]["LayoutOrder"] = 4;
+-- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Execute Button (RIGHTMOST)
+G2L["96"]["LayoutOrder"] = 2;   -- Execute (rightmost)
 G2L["96"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["96"]["Text"] = [[]];
 G2L["96"]["Name"] = [[Execute]];
@@ -1574,8 +1574,8 @@ G2L["98"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["98"]["ZIndex"] = 11;
 G2L["98"]["BackgroundTransparency"] = 1;
 G2L["98"]["Size"] = UDim2.new(0, 34, 0, 34);
--- Save/Bookmark Button (LEFTMOST)
-G2L["98"]["LayoutOrder"] = -3;
+-- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Save/Bookmark Button (LEFTMOST)
+G2L["98"]["LayoutOrder"] = -5;  -- Save (leftmost)
 G2L["98"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["98"]["Text"] = [[]];
 G2L["98"]["Name"] = [[Save]];
@@ -1603,8 +1603,8 @@ G2L["9a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["9a"]["ZIndex"] = 11;
 G2L["9a"]["BackgroundTransparency"] = 1;
 G2L["9a"]["Size"] = UDim2.new(0, 34, 0, 34);
--- Delete Button 
-G2L["9a"]["LayoutOrder"] = -2;
+-- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Delete Button 
+G2L["9a"]["LayoutOrder"] = -4;  -- Delete
 G2L["9a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["9a"]["Text"] = [[]];
 G2L["9a"]["Name"] = [[Delete]];
