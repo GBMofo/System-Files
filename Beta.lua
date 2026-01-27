@@ -1429,7 +1429,7 @@ G2L["8c"]["Size"] = UDim2.new(0, 1, 0.625, 0);
 G2L["8c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["8c"]["Name"] = [[Spacer1]];
 -- SPACER 1 (already exists)
-G2L["8c"]["LayoutOrder"] = 0;
+G2L["8c"]["LayoutOrder"] = -3;
 G2L["8c"]["BackgroundTransparency"] = 0.5;
 
 G2L["8d"] = Instance.new("UICorner", G2L["8c"]);
@@ -1442,9 +1442,9 @@ G2L["8e"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
 G2L["8e"]["Size"] = UDim2.new(0, 1, 0.625, 0);
 G2L["8e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["8e"]["Name"] = [[Spacer2]];
-G2L["8e"]["BackgroundTransparency"] = 0.5;
 -- SPACER 2 (already exists)
-G2L["8e"]["LayoutOrder"] = 3;
+G2L["8e"]["LayoutOrder"] = 1;
+G2L["8e"]["BackgroundTransparency"] = 0.5;
 
 G2L["8f"] = Instance.new("UICorner", G2L["8e"]);
 G2L["8f"]["CornerRadius"] = UDim.new(1, 0);
