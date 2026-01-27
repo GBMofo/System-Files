@@ -6261,72 +6261,82 @@ InitTabs.Editor = function()
         end
     end
 
-    -- ✅ EDIT MODE - Completely rewritten
-    RealInput.Focused:Connect(function()
-        -- 1. Lock text properties IMMEDIATELY (before any changes)
-        RealInput.TextSize = LOCKED_TEXT_SIZE
-        RealInput.TextScaled = false
-        RealInput.TextWrapped = false
-        
-        -- 2. Get raw text
-        local raw = StripSyntax(RealInput.Text)
-        
-        -- 3. Turn OFF RichText and set text in ONE step
-        RealInput.RichText = false
-        RealInput.Text = raw
-        
-        -- 4. Hide line numbers and adjust position INSTANTLY (no wait)
-        Lines.Visible = false
-        RealInput.Position = UDim2.new(0, 10, 0, 0)
-        
-        -- 5. Resize editor box
-        EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-        EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
-        
-        -- 6. Move Panel
-        Panel.AnchorPoint = Vector2.new(1, 1)
-        Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
-        Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
-        Panel.Visible = true
-        Panel.ZIndex = 100
-        
-        -- 7. Force lock TextSize again (insurance)
-        RealInput.TextSize = LOCKED_TEXT_SIZE
-    end)
+-- ✅ EDIT MODE (Focused) - MINIMAL FIX
+RealInput.Focused:Connect(function()
+    -- 1. Lock text properties IMMEDIATELY
+    RealInput.TextSize = LOCKED_TEXT_SIZE
+    RealInput.TextScaled = false
+    RealInput.TextWrapped = false
+    
+    -- 2. Get raw text
+    local raw = StripSyntax(RealInput.Text)
+    
+    -- 3. Turn OFF RichText
+    RealInput.RichText = false
+    
+    -- 🔴 NEW: Wait ONE frame for renderer to process
+    task.wait()
+    
+    -- 4. NOW set text (renderer is ready)
+    RealInput.Text = raw
+    
+    -- 5. Hide line numbers and adjust position
+    Lines.Visible = false
+    RealInput.Position = UDim2.new(0, 10, 0, 0)
+    
+    -- 6. Resize editor box
+    EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+    EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
+    
+    -- 7. Move Panel
+    Panel.AnchorPoint = Vector2.new(1, 1)
+    Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
+    Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
+    Panel.Visible = true
+    Panel.ZIndex = 100
+    
+    -- 8. Force lock TextSize again (insurance)
+    RealInput.TextSize = LOCKED_TEXT_SIZE
+end)
 
-    -- ✅ VIEWING MODE - Completely rewritten
-    RealInput.FocusLost:Connect(function()
-        -- 1. Get raw text
-        local raw = RealInput.Text
-        
-        -- 2. Lock text size BEFORE making any changes
-        RealInput.TextSize = LOCKED_TEXT_SIZE
-        RealInput.TextScaled = false
-        RealInput.TextWrapped = false
-        
-        -- 3. Restore ALL layout first (text stays plain)
-        Lines.Visible = true
-        RealInput.Position = originalTextPos
-        EditorFrame.Size = originalSize
-        EditorFrame.Position = originalPos
-        Panel.AnchorPoint = originalPanelAnchor
-        Panel.Position = originalPanelPos
-        Panel.Size = originalPanelSize
-        Panel.Visible = true
-        Panel.ZIndex = 100
-        
-        -- 4. Apply syntax (RichText ON) AFTER layout is restored
-        RealInput.RichText = true
-        RealInput.Text = ApplySyntax(raw)
-        
-        -- 5. Force lock TextSize again (insurance)
-        RealInput.TextSize = LOCKED_TEXT_SIZE
+-- ✅ VIEWING MODE (FocusLost) - MINIMAL FIX
+RealInput.FocusLost:Connect(function()
+    -- 1. Get raw text
+    local raw = RealInput.Text
+    
+    -- 2. Lock text size BEFORE making any changes
+    RealInput.TextSize = LOCKED_TEXT_SIZE
+    RealInput.TextScaled = false
+    RealInput.TextWrapped = false
+    
+    -- 3. Restore ALL layout first (text stays plain)
+    Lines.Visible = true
+    RealInput.Position = originalTextPos
+    EditorFrame.Size = originalSize
+    EditorFrame.Position = originalPos
+    Panel.AnchorPoint = originalPanelAnchor
+    Panel.Position = originalPanelPos
+    Panel.Size = originalPanelSize
+    Panel.Visible = true
+    Panel.ZIndex = 100
+    
+    -- 4. Turn ON RichText
+    RealInput.RichText = true
+    
+    -- 🔴 NEW: Wait ONE frame for renderer to process
+    task.wait()
+    
+    -- 5. Apply syntax (NOW safe)
+    RealInput.Text = ApplySyntax(raw)
+    
+    -- 6. Force lock TextSize again (insurance)
+    RealInput.TextSize = LOCKED_TEXT_SIZE
 
-        -- 6. Auto-save
-        if not Data.Editor.EditingSavedFile then
-            UIEvents.EditorTabs.saveTab(nil, raw, false)
-        end
-    end)
+    -- 7. Auto-save
+    if not Data.Editor.EditingSavedFile then
+        UIEvents.EditorTabs.saveTab(nil, raw, false)
+    end
+end)
 
     -- ✅ SAFETY: Force lock TextSize whenever it changes
     RealInput:GetPropertyChangedSignal("TextSize"):Connect(function()
