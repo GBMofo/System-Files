@@ -1343,7 +1343,7 @@ G2L["82"]["AutomaticCanvasSize"] = Enum.AutomaticSize.XY;
 G2L["82"]["ScrollBarThickness"] = 15; -- 🔴 DELTA THICKNESS
 G2L["82"]["ScrollBarImageColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["82"]["ScrollingDirection"] = Enum.ScrollingDirection.XY;
-G2L["82"]["ClipsDescendants"] = true; -- 🔴 THE "WALL" THAT STOPS BLEEDING
+G2L["82"]["ClipsDescendants"] = true; -- Keeps text from bleeding out
 
 -- [[ 2. CONTAINER DECORATION ]] --
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
@@ -1398,30 +1398,29 @@ G2L["88"]["Thickness"] = 1;
 G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- PanelAnchor (Frame, dimming-immune)
-G2L["89"] = Instance.new("Frame", G2L["7a"]);
+-- [[ AFTER ]]
+G2L["89"] = Instance.new("Frame", G2L["7a"]); -- Changed to Frame for dimming immunity
 G2L["89"]["Name"] = [[PanelAnchor]];
-G2L["89"]["ZIndex"] = 1000;
-G2L["89"]["BorderSizePixel"] = 0;
+G2L["89"]["ZIndex"] = 10; -- Ensure it is above the ScrollingFrame (ZIndex 1)
 G2L["89"]["BackgroundTransparency"] = 1;
-G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
 G2L["89"]["Size"] = UDim2.new(0.421, 0, 0.15, 0);
+G2L["89"]["Position"] = UDim2.new(0.99, 0, 0.98, 0);
+G2L["89"]["AnchorPoint"] = Vector2.new(1, 1);
 
--- Panel (CanvasGroup, visual/render layer)
-G2L["89_Visuals"] = Instance.new("CanvasGroup", G2L["89"]);
-G2L["89_Visuals"]["Name"] = [[Panel]];
-G2L["89_Visuals"]["Size"] = UDim2.new(1, 0, 1, 0);
-G2L["89_Visuals"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["89_Visuals"]["BorderSizePixel"] = 0;
+G2L["Panel_Visuals"] = Instance.new("CanvasGroup", G2L["89"]);
+G2L["Panel_Visuals"]["Name"] = [[Panel]]; -- Named "Panel" so InitTabs.Editor finds it
+G2L["Panel_Visuals"]["Size"] = UDim2.new(1, 0, 1, 0);
+G2L["Panel_Visuals"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
+G2L["Panel_Visuals"]["BorderSizePixel"] = 0;
+G2L["Panel_Visuals"]["BackgroundTransparency"] = 0;
 
-G2L["8a"] = Instance.new("UIListLayout", G2L["89_Visuals"]); -- PARENTED TO INNER
+G2L["8a"] = Instance.new("UIListLayout", G2L["Panel_Visuals"]); -- Parented to Visuals
 G2L["8a"]["HorizontalAlignment"] = Enum.HorizontalAlignment.Center;
 G2L["8a"]["Padding"] = UDim.new(0, 6);
 G2L["8a"]["VerticalAlignment"] = Enum.VerticalAlignment.Center;
 G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
-G2L["8b"] = Instance.new("UICorner", G2L["89_Visuals"]);     -- PARENTED TO INNER
+G2G2L["8b"] = Instance.new("UICorner", G2L["Panel_Visuals"]);     -- Parented to Visuals
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
 G2L["8c"] = Instance.new("Frame", G2L["89_Visuals"]);        -- PARENTED TO INNER
@@ -1431,8 +1430,9 @@ G2L["8c"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255);
 G2L["8c"]["Size"] = UDim2.new(0, 1, 0.625, 0);
 G2L["8c"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["8c"]["Name"] = [[Spacer1]];
-G2L["8c"]["LayoutOrder"] = 1;
+G2L["8c"]["Parent"] = G2L["Panel_Visuals"]; G2L["8c"]["LayoutOrder"] = 4; -- Spacer 1
 G2L["8c"]["BackgroundTransparency"] = 0.5;
+G2L["8c"]["Visible"] = true; -- Ensure visibility
 
 G2L["8d"] = Instance.new("UICorner", G2L["8c"]);
 G2L["8d"]["CornerRadius"] = UDim.new(1, 0);
@@ -1446,7 +1446,8 @@ G2L["8e"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["8e"]["Name"] = [[Spacer2]];
 G2L["8e"]["BackgroundTransparency"] = 0.5;
 
-G2L["8f"] = Instance.new("UICorner", G2L["8e"]);
+
+G2L["8e"]["Parent"] = G2L["Panel_Visuals"]; G2L["8e"]["LayoutOrder"] = 7; -- Spacer 2
 G2L["8f"]["CornerRadius"] = UDim.new(1, 0);
 
 G2L["90"] = Instance.new("TextButton", G2L["89_Visuals"]);   -- PARENTED TO INNER
@@ -1458,7 +1459,7 @@ G2L["90"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["90"]["ZIndex"] = 11;
 G2L["90"]["BackgroundTransparency"] = 1;
 G2L["90"]["Size"] = UDim2.new(0, 34, 0, 34);
-G2L["90"]["LayoutOrder"] = -1;
+G2L["90"]["Parent"] = G2L["Panel_Visuals"]; G2L["90"]["LayoutOrder"] = 3; -- Rename
 G2L["90"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["90"]["Text"] = [[]];
 G2L["90"]["Name"] = [[Rename]];
@@ -1486,6 +1487,7 @@ G2L["92"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["92"]["ZIndex"] = 11;
 G2L["92"]["BackgroundTransparency"] = 1;
 G2L["92"]["Size"] = UDim2.new(0, 34, 0, 34);
+G2L["92"]["Parent"] = G2L["Panel_Visuals"]; G2L["92"]["LayoutOrder"] = 5; -- Paste
 G2L["92"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["92"]["Text"] = [[]];
 G2L["92"]["Name"] = [[Paste]];
@@ -1513,6 +1515,7 @@ G2L["94"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["94"]["ZIndex"] = 11;
 G2L["94"]["BackgroundTransparency"] = 1;
 G2L["94"]["Size"] = UDim2.new(0, 34, 0, 34);
+G2L["94"]["Parent"] = G2L["Panel_Visuals"]; G2L["94"]["LayoutOrder"] = 6; -- ExecuteClipboard
 G2L["94"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["94"]["Text"] = [[]];
 G2L["94"]["Name"] = [[ExecuteClipboard]];
@@ -1540,7 +1543,7 @@ G2L["96"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["96"]["ZIndex"] = 11;
 G2L["96"]["BackgroundTransparency"] = 1;
 G2L["96"]["Size"] = UDim2.new(0, 34, 0, 34);
-G2L["96"]["LayoutOrder"] = 1;
+G2L["Panel_Visuals"]; G2L["96"]["LayoutOrder"] = 8; -- Execute
 G2L["96"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["96"]["Text"] = [[]];
 G2L["96"]["Name"] = [[Execute]];
@@ -1568,7 +1571,7 @@ G2L["98"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["98"]["ZIndex"] = 11;
 G2L["98"]["BackgroundTransparency"] = 1;
 G2L["98"]["Size"] = UDim2.new(0, 34, 0, 34);
-G2L["98"]["LayoutOrder"] = -2;
+G2L["98"]["Parent"] = G2L["Panel_Visuals"]; G2L["98"]["LayoutOrder"] = 1; -- Save
 G2L["98"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["98"]["Text"] = [[]];
 G2L["98"]["Name"] = [[Save]];
@@ -1596,7 +1599,7 @@ G2L["9a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]
 G2L["9a"]["ZIndex"] = 11;
 G2L["9a"]["BackgroundTransparency"] = 1;
 G2L["9a"]["Size"] = UDim2.new(0, 34, 0, 34);
-G2L["9a"]["LayoutOrder"] = -2;
+G2L["9a"]["Parent"] = G2L["Panel_Visuals"]; G2L["9a"]["LayoutOrder"] = 2; -- Delete
 G2L["9a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["9a"]["Text"] = [[]];
 G2L["9a"]["Name"] = [[Delete]];
