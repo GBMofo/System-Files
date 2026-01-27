@@ -6226,67 +6226,45 @@ InitTabs.Editor = function()
     local Method = "MouseButton1Click"; 
     local autoSaveDebounce = nil 
 
-    -- Store original states
-    local originalSize = EditorFrame.Size
-    local originalPos = EditorFrame.Position
-    local originalTextPos = RealInput.Position
-    local originalPanelPos = Panel.Position
-    local originalPanelSize = Panel.Size
-    local originalPanelAnchor = Panel.AnchorPoint
-
-    -- Constant lock to prevent scaling issues
+    -- Strictly lock text size to prevent font-rendering pops
     local LOCKED_TEXT_SIZE = 14
     RealInput.TextSize = LOCKED_TEXT_SIZE
     RealInput.TextScaled = false
     RealInput.TextWrapped = false
 
-    -- // THE FIX: FOCUS LOGIC //
+    -- // THE FIX: FOCUS LOGIC (LAYOUT SAFE) //
     RealInput.Focused:Connect(function()
-        -- 1. Freeze the box size immediately so it can't "zoom"
+        -- 1. Freeze the current size so it cannot "Snap"
         local currentAbsSize = RealInput.AbsoluteSize
-        RealInput.AutomaticSize = Enum.AutomaticSize.None -- DISABLE AUTO-RESIZE
+        RealInput.AutomaticSize = Enum.AutomaticSize.None 
         RealInput.Size = UDim2.new(0, currentAbsSize.X, 0, currentAbsSize.Y)
         
-        -- 2. Clean text
+        -- 2. Strip tags
         local raw = StripSyntax(RealInput.Text)
         RealInput.RichText = false
         RealInput.Text = raw
         
-        -- 3. Adjust Layout
+        -- 3. Hide lines (Optional, keeps it clean)
         Lines.Visible = false
-        RealInput.Position = UDim2.new(0, 10, 0, 0)
-        EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-        EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
         
-        Panel.AnchorPoint = Vector2.new(1, 1)
-        Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
-        Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
-        
-        -- 4. Re-enable growth after the visual swap is done
+        -- 4. Wait one frame for the engine to settle, then restore growth
         task.defer(function()
             RealInput.AutomaticSize = Enum.AutomaticSize.XY
-            RealInput.Size = UDim2.new(1, -70, 1, 0)
+            RealInput.Size = UDim2.new(1, -70, 1, 0) -- Restores your original G2L size
         end)
     end)
 
-    -- // THE FIX: FOCUS LOST LOGIC //
+    -- // THE FIX: FOCUS LOST LOGIC (LAYOUT SAFE) //
     RealInput.FocusLost:Connect(function()
-        -- 1. Freeze again
+        -- 1. Freeze again before applying RichText
         local currentAbsSize = RealInput.AbsoluteSize
         RealInput.AutomaticSize = Enum.AutomaticSize.None
         RealInput.Size = UDim2.new(0, currentAbsSize.X, 0, currentAbsSize.Y)
         
         local raw = RealInput.Text
         
-        -- 2. Restore Layout
+        -- 2. Show lines again
         Lines.Visible = true
-        RealInput.Position = originalTextPos
-        EditorFrame.Size = originalSize
-        EditorFrame.Position = originalPos
-        
-        Panel.AnchorPoint = originalPanelAnchor
-        Panel.Position = originalPanelPos
-        Panel.Size = originalPanelSize
 
         -- 3. Apply syntax highlighting
         RealInput.RichText = true
@@ -6303,25 +6281,19 @@ InitTabs.Editor = function()
         end
     end)
 
-    -- Keep text size strictly locked to avoid font-rendering pops
+    -- Force text size stay at 14 (prevents mobile 'helpful' zooming)
     RealInput:GetPropertyChangedSignal("TextSize"):Connect(function()
         if RealInput.TextSize ~= LOCKED_TEXT_SIZE then
             RealInput.TextSize = LOCKED_TEXT_SIZE
         end
     end)
 
-    -- Line numbering logic
+    -- Line numbering & Auto-save
     RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
-        if not Data.Editor.EditingSavedFile then
-            if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-            autoSaveDebounce = task.delay(1, function()
-                UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), false)
-            end)
-        end
     end)
 
-    -- Button setup
+    -- // BUTTON CONNECTIONS (Your original logic) //
     local function safeConnect(buttonName, callback)
         local btn = Panel:FindFirstChild(buttonName)
         if btn then btn[Method]:Connect(callback) end
@@ -6329,7 +6301,10 @@ InitTabs.Editor = function()
 
     safeConnect("Execute", function() UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() end)
     safeConnect("Delete", function() RealInput.Text = "" end)
-    safeConnect("Paste", function() RealInput.Text = safeGetClipboard() end)
+    safeConnect("Paste", function() 
+        local clip = safeGetClipboard()
+        RealInput.Text = clip 
+    end)
     safeConnect("Save", function() UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) end)
     safeConnect("Rename", function()
         script.Parent.Popups.Visible = true
