@@ -1419,31 +1419,7 @@ G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
 G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
--- [[ RESTORING YOUR ORIGINAL BUTTONS INSIDE ]] --
-local function createIcon(name, image, order, color)
-    local btn = Instance.new("TextButton", G2L["89"])
-    btn.Name = name
-    btn.Size = UDim2.new(0, 34, 0, 34)
-    btn.BackgroundTransparency = 1
-    btn.Text = ""
-    btn.LayoutOrder = order
-    local icon = Instance.new("ImageLabel", btn)
-    icon.Name = "Icon"
-    icon.Size = UDim2.new(0.65, 0, 0.65, 0)
-    icon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    icon.AnchorPoint = Vector2.new(0.5, 0.5)
-    icon.BackgroundTransparency = 1
-    icon.Image = image
-    icon.ImageColor3 = color or Color3.fromRGB(200, 200, 200)
-    return btn
-end
 
-G2L["90"] = createIcon("Rename", "rbxassetid://80861536658698", -1)
-G2L["92"] = createIcon("Paste", "rbxassetid://88661060655687", 0)
-G2L["94"] = createIcon("ExecuteClipboard", "rbxassetid://74812558983299", 0)
-G2L["96"] = createIcon("Execute", "rbxassetid://95804011254392", 1, Color3.fromRGB(160, 85, 255))
-G2L["98"] = createIcon("Save", "rbxassetid://81882572588470", -2)
-G2L["9a"] = createIcon("Delete", "rbxassetid://98690572665832", -2, Color3.fromRGB(255, 80, 80))
 
 G2L["8c"] = Instance.new("Frame", G2L["89"]);
 G2L["8c"]["ZIndex"] = 11;
