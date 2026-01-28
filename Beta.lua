@@ -6293,22 +6293,6 @@ InitTabs.Saved = function()
         RealInput.RichText = false 
         RealInput.Text = StripSyntax(RealInput.Text)
     end)
-    
-    -- 5. Hide line numbers
-    Lines.Visible = false
-    RealInput.Position = UDim2.new(0, 10, 0, 0)
-    
-    -- 6. Shrink editor box
-    EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-    EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
-    
-    -- 7. Move Panel to bottom-right
-    Panel.AnchorPoint = Vector2.new(1, 1)
-    Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
-    Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
-    Panel.Visible = true
-    Panel.ZIndex = 100
-end)
 
   -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
