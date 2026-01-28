@@ -6294,10 +6294,13 @@ InitTabs.Saved = function()
         RealInput.Text = StripSyntax(RealInput.Text)
     end)
 
-  -- [[ VIEWING MODE - When user exits editor ]]
+ -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
-        Data.Editor.IsEditing = false -- Reset state
-        UIEvents.EditorTabs.updateUI() -- Restore all tab buttons
+        -- 🟢 ADD THIS LINE: Wait for button click to finish
+        task.wait(0.1) 
+        
+        Data.Editor.IsEditing = false 
+        UIEvents.EditorTabs.updateUI()
 
         -- 1. Restore line numbers
         Lines.Visible = true
@@ -6355,21 +6358,29 @@ InitTabs.Saved = function()
         RealInput.Text = "" 
     end)
     
-    safeConnect("Paste", function()
+ safeConnect("Paste", function()
         local clip = safeGetClipboard()
-        RealInput.Text = clip
+        -- 🟢 FIX SYNTAX: Turn off RichText before pasting
+        RealInput.RichText = false
+        RealInput.Text = StripSyntax(clip)
         RealInput.RichText = true
-        RealInput.Text = ApplySyntax(clip)
+        RealInput.Text = ApplySyntax(RealInput.Text)
+        
+        -- 🟢 STAY IN EDIT MODE: Re-open keyboard automatically
+        RealInput:CaptureFocus() 
     end)
     
     safeConnect("Save", function() 
         UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) 
     end)
     
-    safeConnect("Rename", function()
+  safeConnect("Rename", function()
         script.Parent.Popups.Visible = true
         script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
         script.Parent.Popups.Main.Input:CaptureFocus()
+        
+        -- 🟢 STAY IN EDIT MODE: Keep editor active
+        RealInput:CaptureFocus()
     end)
     
     safeConnect("ExecuteClipboard", function() 
