@@ -3836,13 +3836,13 @@ UIEvents.Search = {
 				end
 				
 				if Pages.Editor.Tabs:FindFirstChild("Create") then
-					-- Hide "+" button if editing or if modifying a saved file
+					-- Hides "+" button if editing
 					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
 				end
 
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
-					-- Hide other tabs if editing or if modifying a saved file
+					-- Isolation: If editing, only show the active tab
 					if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
 						continue 
 					end
@@ -6271,25 +6271,28 @@ InitTabs.Saved = function()
 
 -- [[ EDIT MODE - When user taps editor ]]
     RealInput.Focused:Connect(function()
-        Data.Editor.IsEditing = true -- Set state
-        UIEvents.EditorTabs.updateUI() -- Refresh tabs to show only active one
+        Data.Editor.IsEditing = true
+        UIEvents.EditorTabs.updateUI() -- Trigger tab isolation
 
         -- 1. Hide line numbers
         Lines.Visible = false
         RealInput.Position = UDim2.new(0, 10, 0, 0)
         
-        -- 2. Shrink editor box
+        -- 2. Position the Code Box
         EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
         EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
         
-        -- 3. Move Panel to TOP-RIGHT (above keyboard)
-        Panel.AnchorPoint = Vector2.new(1, 0) -- Pivot from top-right
-        Panel.Position = UDim2.new(0.99, 0, 0.04, 0) -- Same level as tabs
-        Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
+        -- 3. Move Panel to Top Right (Same level as Trial tab)
+        Panel.AnchorPoint = Vector2.new(1, 0.5) -- Right-center pivot
+        Panel.Position = UDim2.new(0.98, 0, 0.085, 0) -- Level with Trial, Aligned with code box edge
+        Panel.Size = UDim2.new(0.42, 0, 0.12, 0)
         Panel.Visible = true
         Panel.ZIndex = 100
         
-        -- 4. Plain text mode
+        -- 4. FIX SYNTAX BLEED: Disable RichText BEFORE setting stripped text
+        RealInput.RichText = false 
+        RealInput.Text = StripSyntax(RealInput.Text)
+    end)
     
     -- 5. Hide line numbers
     Lines.Visible = false
