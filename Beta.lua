@@ -6358,29 +6358,22 @@ InitTabs.Saved = function()
         RealInput.Text = "" 
     end)
     
- safeConnect("Paste", function()
+safeConnect("Paste", function()
         local clip = safeGetClipboard()
-        -- 🟢 FIX SYNTAX: Turn off RichText before pasting
-        RealInput.RichText = false
+        RealInput.RichText = false -- Clear formatting
         RealInput.Text = StripSyntax(clip)
         RealInput.RichText = true
         RealInput.Text = ApplySyntax(RealInput.Text)
-        
-        -- 🟢 STAY IN EDIT MODE: Re-open keyboard automatically
-        RealInput:CaptureFocus() 
     end)
     
     safeConnect("Save", function() 
         UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) 
     end)
     
-  safeConnect("Rename", function()
+ safeConnect("Rename", function()
         script.Parent.Popups.Visible = true
         script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
         script.Parent.Popups.Main.Input:CaptureFocus()
-        
-        -- 🟢 STAY IN EDIT MODE: Keep editor active
-        RealInput:CaptureFocus()
     end)
     
     safeConnect("ExecuteClipboard", function() 
