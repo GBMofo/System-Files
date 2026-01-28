@@ -3655,7 +3655,8 @@ local Data = {
     Editor = {
         CurrentTab = nil,
         CurrentOrder = 0,
-        Tabs = {}
+        Tabs = {},
+        IsEditing = false -- Added this line
     },
     Saves = {
         Scripts = {}
@@ -3835,12 +3836,16 @@ UIEvents.Search = {
 				end
 				
 				if Pages.Editor.Tabs:FindFirstChild("Create") then
-					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil)
+					-- Hide "+" button if editing or if modifying a saved file
+					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
 				end
 
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
-					if Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile then continue end
+					-- Hide other tabs if editing or if modifying a saved file
+					if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
+						continue 
+					end
 					
 					total = total + 1;
 					local new = script.Yo:Clone();
@@ -6265,19 +6270,26 @@ InitTabs.Saved = function()
     end
 
 -- [[ EDIT MODE - When user taps editor ]]
-RealInput.Focused:Connect(function()
-    -- 1. Strip syntax FIRST (get clean text)
-    local raw = StripSyntax(RealInput.Text)
-    
-    -- 2. Clear text temporarily (prevents zoom flicker)
-    RealInput.Text = ""
-    
-    -- 3. Turn off RichText while box is EMPTY (no flicker!)
-    RealInput.RichText = false
-    RealInput.TextWrapped = false
-    
-    -- 4. Set the plain text
-    RealInput.Text = raw
+    RealInput.Focused:Connect(function()
+        Data.Editor.IsEditing = true -- Set state
+        UIEvents.EditorTabs.updateUI() -- Refresh tabs to show only active one
+
+        -- 1. Hide line numbers
+        Lines.Visible = false
+        RealInput.Position = UDim2.new(0, 10, 0, 0)
+        
+        -- 2. Shrink editor box
+        EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+        EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
+        
+        -- 3. Move Panel to TOP-RIGHT (above keyboard)
+        Panel.AnchorPoint = Vector2.new(1, 0) -- Pivot from top-right
+        Panel.Position = UDim2.new(0.99, 0, 0.04, 0) -- Same level as tabs
+        Panel.Size = UDim2.new(0.42127, 0, 0.15, 0)
+        Panel.Visible = true
+        Panel.ZIndex = 100
+        
+        -- 4. Plain text mode
     
     -- 5. Hide line numbers
     Lines.Visible = false
@@ -6295,8 +6307,11 @@ RealInput.Focused:Connect(function()
     Panel.ZIndex = 100
 end)
 
-    -- [[ VIEWING MODE - When user exits editor ]]
+  -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
+        Data.Editor.IsEditing = false -- Reset state
+        UIEvents.EditorTabs.updateUI() -- Restore all tab buttons
+
         -- 1. Restore line numbers
         Lines.Visible = true
         RealInput.Position = originalTextPos
