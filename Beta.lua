@@ -7292,53 +7292,73 @@ dragify(script.Parent.Open);
 		end
 
 		if key then
-			-- [[ 🔴 DEV BYPASS CHECK ]]
-			if key == "PUNK-X-8B29-4F1A-9C3D-7E11" then
-				print("[PUNK X] 🛠️ Dev Override Accepted")
-				KeyVailded = true
-				
-				-- Clear keys for security
-				getgenv().PUNK_X_KEY = nil
-				_G.PUNK_X_KEY = nil
-				
-				loadUI() -- Load Executor
+	-- [[ 🔴 DEV BYPASS CHECK ]]
+	if key == "PUNK-X-8B29-4F1A-9C3D-7E11" then
+		print("[PUNK X] 🛠️ Dev Override Accepted")
+		KeyVailded = true
+		
+		-- Clear keys for security
+		getgenv().PUNK_X_KEY = nil
+		_G.PUNK_X_KEY = nil
+		
+		loadUI() -- Load Executor
+	else
+		-- [[ 🟢 STANDARD USER VALIDATION ]]
+		local valid, data = KeyLib.Validate(key)
+		if valid then
+			print("[PUNK X] Access Granted.")
+			KeyVailded = true
+			
+			-- 🔴 NEW: Check Premium Status
+			local isPremium = _G.PUNK_X_PREMIUM or getgenv().PUNK_X_PREMIUM or false
+			
+			if isPremium then
+				print("[PUNK X] 🌟 Premium User Detected!")
+				createNotification("Premium Access Granted!", "Success", 5)
 			else
-				-- [[ 🟢 STANDARD USER VALIDATION ]]
-				local valid, data = KeyLib.Validate(key)
-				if valid then
-					print("[PUNK X] Access Granted.")
-					KeyVailded = true
-					
-					-- Clear keys for security
-					getgenv().PUNK_X_KEY = nil
-					_G.PUNK_X_KEY = nil
-					
-					loadUI() -- Load Executor
-					
-					-- Update Expiry Date (Purple Text)
-					if getgenv().PUNK_X_EXPIRY then
-						task.spawn(function()
-							task.wait(1)
-							if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
-								Pages.Home.Key.KeyText.Text = 'Your key is currently <font color="rgb(160, 85, 255)">active</font> and will expire on...'
-								Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
-							end
-							getgenv().PUNK_X_EXPIRY = nil
-						end)
+				print("[PUNK X] ⭐ Free Tier User")
+			end
+			
+			-- Clear keys for security
+			getgenv().PUNK_X_KEY = nil
+			_G.PUNK_X_KEY = nil
+			
+			loadUI() -- Load Executor
+			
+			-- 🔴 UPDATED: Show Premium Badge in UI
+			if isPremium then
+				task.spawn(function()
+					task.wait(1)
+					if Main and Main:FindFirstChild("Title") and Main.Title:FindFirstChild("TextLabel") then
+						Main.Title.TextLabel.Text = Main.Title.TextLabel.Text .. " 🌟"
 					end
-				else
-					warn("[PUNK X] Invalid Key.")
-					if script.Parent then script.Parent:Destroy() end
-				end
+				end)
+			end
+			
+			-- Update Expiry Date (Purple Text)
+			if getgenv().PUNK_X_EXPIRY then
+				task.spawn(function()
+					task.wait(1)
+					if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
+						Pages.Home.Key.KeyText.Text = 'Your key is currently <font color="rgb(160, 85, 255)">active</font> and will expire on...'
+						Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
+					end
+					getgenv().PUNK_X_EXPIRY = nil
+				end)
 			end
 		else
-			warn("⛔ No key provided! Use the Loader.")
-			-- Only destroy if not in Studio (for debugging purposes)
-			if not game:GetService("RunService"):IsStudio() then
-				if script.Parent then script.Parent:Destroy() end
-			end
+			warn("[PUNK X] Invalid Key.")
+			if script.Parent then script.Parent:Destroy() end
 		end
 	end
+else
+	warn("⛔ No key provided! Use the Loader.")
+	-- Only destroy if not in Studio (for debugging purposes)
+	if not game:GetService("RunService"):IsStudio() then
+		if script.Parent then script.Parent:Destroy() end
+	end
+end
+end  -- 🔴 4TH END (closes the outer block, probably "do" from line ~2640)
 	
 	-- [PART 3: UI SCALING]
 	task.defer(function()
