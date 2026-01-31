@@ -7346,17 +7346,25 @@ dragify(script.Parent.Open);
 				end)
 			end
 			
-			-- Update Expiry Date (Purple Text)
-			if getgenv().PUNK_X_EXPIRY then
-				task.spawn(function()
-					task.wait(1)
-					if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
-						Pages.Home.Key.KeyText.Text = 'Your key is currently <font color="rgb(160, 85, 255)">active</font> and will expire on...'
-						Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
-					end
-					getgenv().PUNK_X_EXPIRY = nil
-				end)
-			end
+		-- Update Expiry Date (Dynamic Theme Text)
+if getgenv().PUNK_X_EXPIRY then
+    task.spawn(function()
+        task.wait(1) -- Wait for UI to fully load
+        
+        -- Get current theme or default to purple
+        local theme = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+        local r = math.floor(theme.R * 255)
+        local g = math.floor(theme.G * 255)
+        local b = math.floor(theme.B * 255)
+        
+        if Pages and Pages:FindFirstChild("Home") and Pages.Home:FindFirstChild("Key") then
+            -- Insert the DYNAMIC color string instead of hardcoded purple
+            Pages.Home.Key.KeyText.Text = string.format('Your key is currently <font color="rgb(%d, %d, %d)">active</font> and will expire on...', r, g, b)
+            Pages.Home.Key.Duration.Text = getgenv().PUNK_X_EXPIRY
+        end
+        getgenv().PUNK_X_EXPIRY = nil
+    end)
+end
 		else
 			warn("[PUNK X] Invalid Key.")
 			if script.Parent then script.Parent:Destroy() end
