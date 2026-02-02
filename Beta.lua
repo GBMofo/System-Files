@@ -6301,18 +6301,26 @@ createSectionHeader("🔧 ADVANCED", 50)
             Main.Title.TextLabel.Text = "Hello, User!"
         end
         
-       -- PRIVACY & SECURITY
+  -- PRIVACY & SECURITY
         if PunkXSettings.scamProtection then
-            -- Enable master toggle visually
-            if scamMasterBg then
-                scamMasterBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                if scamMasterToggle:FindFirstChild("UIListLayout") then
-                    scamMasterToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
-                end
-            end
-            
             ScamProtectionEnabled = true
             advancedCard.Visible = true
+            
+            -- Visually restore Scam Protection master toggle
+            task.spawn(function()
+                task.wait(0.1)
+                local masterToggle = scamCard:FindFirstChild("Toggle")
+                if masterToggle then
+                    local toggleBg = masterToggle:FindFirstChild("Background")
+                    if toggleBg then
+                        toggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                        local layout = masterToggle:FindFirstChild("UIListLayout")
+                        if layout then
+                            layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+                        end
+                    end
+                end
+            end)
             
             -- If Advanced Settings is OFF, force all guards to ON
             if not PunkXSettings.advancedSettings then
@@ -6345,13 +6353,21 @@ createSectionHeader("🔧 ADVANCED", 50)
                 UIClickGuard = PunkXSettings.uiClickGuard
                 ScriptDetection = PunkXSettings.scriptDetection
                 
-                -- Show Advanced Settings toggle as ON
-                if advancedToggleBg then
-                    advancedToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                    if advancedCard:FindFirstChild("Toggle") and advancedCard.Toggle:FindFirstChild("UIListLayout") then
-                        advancedCard.Toggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                -- Visually restore Advanced Settings toggle
+                task.spawn(function()
+                    task.wait(0.1)
+                    local advToggle = advancedCard:FindFirstChild("Toggle")
+                    if advToggle then
+                        local toggleBg = advToggle:FindFirstChild("Background")
+                        if toggleBg then
+                            toggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                            local layout = advToggle:FindFirstChild("UIListLayout")
+                            if layout then
+                                layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+                            end
+                        end
                     end
-                end
+                end)
                 
                 -- Show cards
                 purchaseCard.Visible = true
