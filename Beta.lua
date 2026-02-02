@@ -4876,7 +4876,31 @@ end)
             uiClickCard.Visible = enabled
             scriptDetectCard.Visible = enabled
             
-            if enabled then createNotification("Advanced Settings Shown", "Info", 2) end
+            if enabled then
+                createNotification("Advanced Settings Shown", "Info", 2)
+            else
+                -- When turning OFF Advanced Settings, reset all guards to ON
+                createNotification("Guards Reset to Default (All ON)", "Info", 2)
+                
+                -- Silently update visual + internal state
+                setPurchase(true, true)
+                setTeleport(true, true)
+                setUIClick(true, true)
+                setScriptDetect(true, true)
+                
+                -- Manually update logic variables
+                PurchaseGuard = true
+                TeleportGuard = true
+                UIClickGuard = true
+                ScriptDetection = true
+                
+                -- Save to JSON
+                PunkXSettings.purchaseGuard = true
+                PunkXSettings.teleportGuard = true
+                PunkXSettings.uiClickGuard = true
+                PunkXSettings.scriptDetection = true
+                saveSettings(PunkXSettings)
+            end
         else
             purchaseCard.Visible = false
             teleportCard.Visible = false
@@ -4885,13 +4909,12 @@ end)
         end
     end)
 
-  -- MASTER TOGGLE
+-- MASTER TOGGLE
     local scamMasterToggle, scamMasterBg, setScamMaster = createSmartToggle(scamCard, function(enabled)
         ScamProtectionEnabled = enabled
         advancedCard.Visible = enabled
         
         PunkXSettings.scamProtection = enabled
-        saveSettings(PunkXSettings)
         
         if enabled then
             createNotification("Scam Protection Enabled", "Success", 3)
@@ -4911,7 +4934,15 @@ end)
             UIClickGuard = true
             ScriptDetection = true
             
-            -- 4. Hide them initially (Advanced mode controls visibility)
+            -- 4. Save to JSON (since silent mode didn't trigger save)
+            PunkXSettings.advancedSettings = false
+            PunkXSettings.purchaseGuard = true
+            PunkXSettings.teleportGuard = true
+            PunkXSettings.uiClickGuard = true
+            PunkXSettings.scriptDetection = true
+            saveSettings(PunkXSettings)
+            
+            -- 5. Hide them initially (Advanced mode controls visibility)
             purchaseCard.Visible = false
             teleportCard.Visible = false
             uiClickCard.Visible = false
@@ -4935,7 +4966,15 @@ end)
             UIClickGuard = false
             ScriptDetection = false
             
-            -- 4. Hide cards
+            -- 4. Save to JSON
+            PunkXSettings.advancedSettings = false
+            PunkXSettings.purchaseGuard = false
+            PunkXSettings.teleportGuard = false
+            PunkXSettings.uiClickGuard = false
+            PunkXSettings.scriptDetection = false
+            saveSettings(PunkXSettings)
+            
+            -- 5. Hide cards
             purchaseCard.Visible = false
             teleportCard.Visible = false
             uiClickCard.Visible = false
@@ -6262,20 +6301,84 @@ createSectionHeader("🔧 ADVANCED", 50)
             Main.Title.TextLabel.Text = "Hello, User!"
         end
         
-        -- PRIVACY & SECURITY (Option A: Always load sub-toggles)
+       -- PRIVACY & SECURITY
         if PunkXSettings.scamProtection then
-            setScamMaster(true, true)
+            -- Enable master toggle visually
+            if scamMasterBg then
+                scamMasterBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if scamMasterToggle:FindFirstChild("UIListLayout") then
+                    scamMasterToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            
+            ScamProtectionEnabled = true
+            advancedCard.Visible = true
+            
+            -- If Advanced Settings is OFF, force all guards to ON
+            if not PunkXSettings.advancedSettings then
+                -- Force all guards ON
+                setPurchase(true, true)
+                setTeleport(true, true)
+                setUIClick(true, true)
+                setScriptDetect(true, true)
+                
+                PurchaseGuard = true
+                TeleportGuard = true
+                UIClickGuard = true
+                ScriptDetection = true
+                
+                -- Hide cards
+                purchaseCard.Visible = false
+                teleportCard.Visible = false
+                uiClickCard.Visible = false
+                scriptDetectCard.Visible = false
+                
+            else
+                -- Advanced Settings is ON, restore custom states
+                setPurchase(PunkXSettings.purchaseGuard, true)
+                setTeleport(PunkXSettings.teleportGuard, true)
+                setUIClick(PunkXSettings.uiClickGuard, true)
+                setScriptDetect(PunkXSettings.scriptDetection, true)
+                
+                PurchaseGuard = PunkXSettings.purchaseGuard
+                TeleportGuard = PunkXSettings.teleportGuard
+                UIClickGuard = PunkXSettings.uiClickGuard
+                ScriptDetection = PunkXSettings.scriptDetection
+                
+                -- Show Advanced Settings toggle as ON
+                if advancedToggleBg then
+                    advancedToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                    if advancedCard:FindFirstChild("Toggle") and advancedCard.Toggle:FindFirstChild("UIListLayout") then
+                        advancedCard.Toggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                    end
+                end
+                
+                -- Show cards
+                purchaseCard.Visible = true
+                teleportCard.Visible = true
+                uiClickCard.Visible = true
+                scriptDetectCard.Visible = true
+            end
+        else
+            -- Scam Protection is OFF
+            ScamProtectionEnabled = false
+            advancedCard.Visible = false
+            
+            setPurchase(false, true)
+            setTeleport(false, true)
+            setUIClick(false, true)
+            setScriptDetect(false, true)
+            
+            PurchaseGuard = false
+            TeleportGuard = false
+            UIClickGuard = false
+            ScriptDetection = false
+            
+            purchaseCard.Visible = false
+            teleportCard.Visible = false
+            uiClickCard.Visible = false
+            scriptDetectCard.Visible = false
         end
-        
-        if PunkXSettings.advancedSettings and PunkXSettings.scamProtection then
-            setAdvanced(true, true)
-        end
-        
-        -- Always restore sub-toggle states (even if master is OFF)
-        setPurchase(PunkXSettings.purchaseGuard, true)
-        setTeleport(PunkXSettings.teleportGuard, true)
-        setUIClick(PunkXSettings.uiClickGuard, true)
-        setScriptDetect(PunkXSettings.scriptDetection, true)
         
         if PunkXSettings.disableRobux then
             setDisableRobux(true, true)
