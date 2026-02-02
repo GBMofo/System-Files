@@ -4094,6 +4094,82 @@ UIEvents.Search = {
 -- 🟢 REPLACE THE ENTIRE InitTabs.Settings FUNCTION WITH THIS FIXED VERSION
 
 InitTabs.Settings = function()
+    -- 🟢 SETTINGS PERSISTENCE SYSTEM
+    local SETTINGS_FILE = "Punk-X-Files/punk-x-settings.json"
+    
+    -- Default Settings Structure
+    local function getDefaultSettings()
+        return {
+            -- APPEARANCE
+            uiTransparency = 0.3,
+            censorName = false,
+            
+            -- PRIVACY & SECURITY
+            scamProtection = false,
+            advancedSettings = false,
+            purchaseGuard = false,
+            teleportGuard = false,
+            uiClickGuard = false,
+            scriptDetection = false,
+            disableRobux = false,
+            verifyTeleports = false,
+            
+            -- PERFORMANCE
+            antiAFK = false,
+            fpsBoostEnabled = false,
+            fpsBoostPreset = "Light",
+            latencySmoothing = false,
+            forceFOVEnabled = false,
+            fovValue = 70,
+            
+            -- ADVANCED
+            autoRejoin = false
+        }
+    end
+    
+    -- Save Settings to File
+    local function saveSettings(settings)
+        pcall(function()
+            if not CLONED_Detectedly.isfolder("Punk-X-Files") then
+                CLONED_Detectedly.makedir("Punk-X-Files")
+            end
+            CLONED_Detectedly.writefile(SETTINGS_FILE, game.HttpService:JSONEncode(settings))
+        end)
+    end
+    
+    -- Load Settings from File (with corruption protection)
+    local function loadSettings()
+        local success, data = pcall(function()
+            if not CLONED_Detectedly.isfile(SETTINGS_FILE) then
+                return nil
+            end
+            local content = CLONED_Detectedly.readfile(SETTINGS_FILE)
+            return game.HttpService:JSONDecode(content)
+        end)
+        
+        if not success or type(data) ~= "table" then
+            if CLONED_Detectedly.isfile(SETTINGS_FILE) then
+                createNotification("Settings corrupted, resetting to defaults", "Warn", 3)
+            end
+            local defaults = getDefaultSettings()
+            saveSettings(defaults)
+            return defaults
+        end
+        
+        -- Merge with defaults (in case new settings were added)
+        local defaults = getDefaultSettings()
+        for key, value in pairs(defaults) do
+            if data[key] == nil then
+                data[key] = value
+            end
+        end
+        
+        return data
+    end
+    
+    -- Global Settings Table
+    local PunkXSettings = getDefaultSettings()
+    
     -- 🟢 1. CLEANUP (Root Path)
     if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
         -- Don't delete! We need to read it first
@@ -4636,21 +4712,25 @@ pill.MouseButton1Click:Connect(function()
 end)
     end
     
-    -- UI Transparency
+   -- UI Transparency
     local transCard = createCard("UI Transparency", "Adjust background opacity", -98)
     transCard.Size = UDim2.new(1, 0, 0, 55)
-    createSlider(transCard, function(v)
+    local transSlider = createSlider(transCard, function(v)
         script.Parent.Full.Transparency = v
+        PunkXSettings.uiTransparency = v
+        saveSettings(PunkXSettings)
     end)
     
-    -- Censored Name
+-- Censored Name
     local nameCard = createCard("Censor Name", "Hide your username from the UI", -97)
-    createToggle(nameCard, function(enabled)
+    local nameToggle, nameToggleBg = createToggle(nameCard, function(enabled)
         if enabled then
             Main.Title.TextLabel.Text = "Hello, User!"
         else
             Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.DisplayName .. "!"
         end
+        PunkXSettings.censorName = enabled
+        saveSettings(PunkXSettings)
     end)
     
  -- ========================================
@@ -4751,21 +4831,27 @@ end)
     local scriptDetectCard = createCard("Script Detection", "Warns about suspicious local scripts", -44)
     scriptDetectCard.Visible = false
 
-    -- CREATE TOGGLES (Capturing the 'SetState' function)
+  -- CREATE TOGGLES (Capturing the 'SetState' function)
     local _, _, setPurchase = createSmartToggle(purchaseCard, function(enabled)
         PurchaseGuard = enabled
+        PunkXSettings.purchaseGuard = enabled
+        saveSettings(PunkXSettings)
         if enabled then createNotification("Purchase Guard Enabled", "Success", 2)
         else createNotification("Purchase Guard Disabled", "Warn", 2) end
     end)
 
     local _, _, setTeleport = createSmartToggle(teleportCard, function(enabled)
         TeleportGuard = enabled
+        PunkXSettings.teleportGuard = enabled
+        saveSettings(PunkXSettings)
         if enabled then createNotification("Teleport Guard Enabled", "Success", 2)
         else createNotification("Teleport Guard Disabled", "Warn", 2) end
     end)
 
     local _, _, setUIClick = createSmartToggle(uiClickCard, function(enabled)
         UIClickGuard = enabled
+        PunkXSettings.uiClickGuard = enabled
+        saveSettings(PunkXSettings)
         game:GetService("UserInputService").ModalEnabled = (ScamProtectionEnabled and enabled)
         if enabled then createNotification("UI Click Guard Enabled", "Success", 2)
         else createNotification("UI Click Guard Disabled", "Warn", 2) end
@@ -4773,12 +4859,17 @@ end)
 
     local _, _, setScriptDetect = createSmartToggle(scriptDetectCard, function(enabled)
         ScriptDetection = enabled
+        PunkXSettings.scriptDetection = enabled
+        saveSettings(PunkXSettings)
         if enabled then createNotification("Script Detection Enabled", "Success", 2)
         else createNotification("Script Detection Disabled", "Warn", 2) end
     end)
 
-    -- ADVANCED TOGGLE
+-- ADVANCED TOGGLE
     local _, advancedToggleBg, setAdvanced = createSmartToggle(advancedCard, function(enabled)
+        PunkXSettings.advancedSettings = enabled
+        saveSettings(PunkXSettings)
+        
         if ScamProtectionEnabled then
             purchaseCard.Visible = enabled
             teleportCard.Visible = enabled
@@ -4794,10 +4885,13 @@ end)
         end
     end)
 
-    -- MASTER TOGGLE
-    createSmartToggle(scamCard, function(enabled)
+  -- MASTER TOGGLE
+    local scamMasterToggle, scamMasterBg, setScamMaster = createSmartToggle(scamCard, function(enabled)
         ScamProtectionEnabled = enabled
         advancedCard.Visible = enabled
+        
+        PunkXSettings.scamProtection = enabled
+        saveSettings(PunkXSettings)
         
         if enabled then
             createNotification("Scam Protection Enabled", "Success", 3)
@@ -4896,9 +4990,12 @@ end)
         end
     end)
 
-    -- Disable Robux (Standalone)
+-- Disable Robux (Standalone)
     local disableRobuxCard = createCard("Disable Robux", "Completely blocks all Robux spending prompts", -43)
-    createSmartToggle(disableRobuxCard, function(enabled)
+    local disableRobuxToggle, disableRobuxBg, setDisableRobux = createSmartToggle(disableRobuxCard, function(enabled)
+        PunkXSettings.disableRobux = enabled
+        saveSettings(PunkXSettings)
+        
         if enabled then
             for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
                 if game:GetService("MarketplaceService")[method] then
@@ -4916,9 +5013,12 @@ end)
         end
     end)
 
-    -- Verify Teleports (Standalone)
+-- Verify Teleports (Standalone)
     local verifyTeleportCard = createCard("Verify Teleports", "Allows teleports only to current game place", -42)
-    createSmartToggle(verifyTeleportCard, function(enabled)
+    local verifyTeleportToggle, verifyTeleportBg, setVerifyTeleport = createSmartToggle(verifyTeleportCard, function(enabled)
+        PunkXSettings.verifyTeleports = enabled
+        saveSettings(PunkXSettings)
+        
         if enabled then
             local currentPlaceId = game.PlaceId
             local oldTeleport2
@@ -4966,8 +5066,11 @@ end)
         end)
     end
 
-    local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
-    createToggle(afkCard, function(enabled)
+local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
+    local afkToggle, afkToggleBg = createToggle(afkCard, function(enabled)
+        PunkXSettings.antiAFK = enabled
+        saveSettings(PunkXSettings)
+        
         if enabled then
             -- Try to disable Roblox's AFK listeners (executor-supported only)
             if getconnections then
@@ -5131,7 +5234,7 @@ end)
     fpsListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     fpsListLayout.Padding = UDim.new(0, 2)
 
-    local fpsOptions = {"Light", "Medium", "Extreme"}
+local fpsOptions = {"Light", "Medium", "Extreme"}
     for i, preset in ipairs(fpsOptions) do
         local opt = Instance.new("TextButton", fpsList)
         opt.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
@@ -5148,7 +5251,12 @@ end)
         
         opt.MouseButton1Click:Connect(function()
             fpsLabel.Text = preset
+            currentFOV = FOV_PRESETS[fov]
             fpsList.Visible = false
+            
+            PunkXSettings.fpsBoostPreset = preset
+            saveSettings(PunkXSettings)
+            
             if FPS.Enabled then
                 disableFPS()
                 enableFPS(preset)
@@ -5201,11 +5309,14 @@ end)
     fpsCircle.BackgroundTransparency = 1
     fpsCircle.ScaleType = Enum.ScaleType.Fit
 
-    local fpsEnabled = false
+   local fpsEnabled = false
     fpsToggleBtn.MouseButton1Click:Connect(function()
         fpsEnabled = not fpsEnabled
         fpsToggleLayout.HorizontalAlignment = fpsEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
         fpsToggleBg.BackgroundColor3 = fpsEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        
+        PunkXSettings.fpsBoostEnabled = fpsEnabled
+        saveSettings(PunkXSettings)
         
         if fpsEnabled then
             enableFPS(fpsLabel.Text)
@@ -5216,9 +5327,12 @@ end)
         end
     end)
 
-    -- Latency Smoothing
+ -- Latency Smoothing
     local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
-    createToggle(latencyCard, function(enabled)
+    local latencyToggle, latencyToggleBg = createToggle(latencyCard, function(enabled)
+        PunkXSettings.latencySmoothing = enabled
+        saveSettings(PunkXSettings)
+        
         if enabled then
             RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
                 local cam = workspace.CurrentCamera; if cam then cam.CFrame = cam.CFrame end
@@ -5299,7 +5413,7 @@ end)
     fovListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     fovListLayout.Padding = UDim.new(0, 2)
 
-    local fovOptions = {"40", "60", "70", "80", "90", "100", "120"}
+   local fovOptions = {"40", "60", "70", "80", "90", "100", "120"}
     for i, fov in ipairs(fovOptions) do
         local opt = Instance.new("TextButton", fovList)
         opt.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
@@ -5318,6 +5432,9 @@ end)
             fovLabel.Text = fov
             currentFOV = FOV_PRESETS[fov]
             fovList.Visible = false
+            
+            PunkXSettings.fovValue = tonumber(fov)
+            saveSettings(PunkXSettings)
         end)
     end
 
@@ -5365,11 +5482,14 @@ end)
     fovCircle.BackgroundTransparency = 1
     fovCircle.ScaleType = Enum.ScaleType.Fit
 
-    local fovEnabled = false
+  local fovEnabled = false
     fovToggleBtn.MouseButton1Click:Connect(function()
         fovEnabled = not fovEnabled
         fovToggleLayout.HorizontalAlignment = fovEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
         fovToggleBg.BackgroundColor3 = fovEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        
+        PunkXSettings.forceFOVEnabled = fovEnabled
+        saveSettings(PunkXSettings)
         
         if fovEnabled then
             fovConn = RunService.RenderStepped:Connect(function()
@@ -5407,8 +5527,11 @@ local placeId = game.PlaceId
 local jobId = game.JobId
 
 local autoRejoinCard = createCard("Auto Rejoin (Beta)", "Attempts to rejoin after disconnect when supported", 42)
-createToggle(autoRejoinCard, function(enabled)
+local autoRejoinToggle, autoRejoinBg = createToggle(autoRejoinCard, function(enabled)
     autoRejoinEnabled = enabled
+    
+    PunkXSettings.autoRejoin = enabled
+    saveSettings(PunkXSettings)
     
     if enabled and not queued and queue_on_teleport then
         queued = true
@@ -6125,6 +6248,149 @@ createSectionHeader("🔧 ADVANCED", 50)
     task.spawn(function()
         task.wait(0)
         ApplyTheme(savedTheme)
+    end)
+    
+    -- 🟢 LOAD AND APPLY SAVED SETTINGS
+    task.spawn(function()
+        task.wait(0.5) -- Wait for UI to fully initialize
+        
+        PunkXSettings = loadSettings()
+        
+        -- APPEARANCE
+        script.Parent.Full.Transparency = PunkXSettings.uiTransparency
+        if PunkXSettings.censorName then
+            Main.Title.TextLabel.Text = "Hello, User!"
+        end
+        
+        -- PRIVACY & SECURITY (Option A: Always load sub-toggles)
+        if PunkXSettings.scamProtection then
+            setScamMaster(true, true)
+        end
+        
+        if PunkXSettings.advancedSettings and PunkXSettings.scamProtection then
+            setAdvanced(true, true)
+        end
+        
+        -- Always restore sub-toggle states (even if master is OFF)
+        setPurchase(PunkXSettings.purchaseGuard, true)
+        setTeleport(PunkXSettings.teleportGuard, true)
+        setUIClick(PunkXSettings.uiClickGuard, true)
+        setScriptDetect(PunkXSettings.scriptDetection, true)
+        
+        if PunkXSettings.disableRobux then
+            setDisableRobux(true, true)
+        end
+        
+        if PunkXSettings.verifyTeleports then
+            setVerifyTeleport(true, true)
+        end
+        
+        -- PERFORMANCE
+        if PunkXSettings.antiAFK then
+            -- Trigger the toggle visually
+            if afkToggleBg then
+                afkToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if afkToggle:FindFirstChild("UIListLayout") then
+                    afkToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            
+            -- Enable logic
+            if getconnections then
+                for _, c in pairs(getconnections(Players.LocalPlayer.Idled)) do
+                    pcall(function()
+                        if c.Disable then c:Disable()
+                        elseif c.Disconnect then c:Disconnect() end
+                    end)
+                end
+            end
+            armAntiAFK()
+            if not charConn then
+                charConn = Players.LocalPlayer.CharacterAdded:Connect(function()
+                    task.wait(1)
+                    armAntiAFK()
+                end)
+            end
+        end
+        
+        -- FPS Boost
+        if fpsLabel then
+            fpsLabel.Text = PunkXSettings.fpsBoostPreset
+        end
+        
+        if PunkXSettings.fpsBoostEnabled then
+            if fpsToggleBg then
+                fpsToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if fpsToggleBtn:FindFirstChild("UIListLayout") then
+                    fpsToggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            enableFPS(PunkXSettings.fpsBoostPreset)
+            fpsEnabled = true
+        end
+        
+        -- Latency Smoothing
+        if PunkXSettings.latencySmoothing then
+            if latencyToggleBg then
+                latencyToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if latencyToggle:FindFirstChild("UIListLayout") then
+                    latencyToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
+                local cam = workspace.CurrentCamera
+                if cam then cam.CFrame = cam.CFrame end
+            end)
+        end
+        
+        -- FOV
+        if fovLabel then
+            fovLabel.Text = tostring(PunkXSettings.fovValue)
+            currentFOV = PunkXSettings.fovValue
+        end
+        
+        if PunkXSettings.forceFOVEnabled then
+            if fovToggleBg then
+                fovToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if fovToggleBtn:FindFirstChild("UIListLayout") then
+                    fovToggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            fovConn = RunService.RenderStepped:Connect(function()
+                local cam = workspace.CurrentCamera
+                if cam then cam.FieldOfView = currentFOV end
+            end)
+            fovEnabled = true
+        end
+        
+        -- Auto Rejoin
+        if PunkXSettings.autoRejoin then
+            if autoRejoinBg then
+                autoRejoinBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if autoRejoinToggle:FindFirstChild("UIListLayout") then
+                    autoRejoinToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            autoRejoinEnabled = true
+            
+            if not queued and queue_on_teleport then
+                queued = true
+                queue_on_teleport(string.format([[
+                    task.wait(5)
+                    local Players = game:GetService("Players")
+                    local TeleportService = game:GetService("TeleportService")
+                    local player = Players.LocalPlayer
+                    
+                    if player then
+                        pcall(function()
+                            TeleportService:TeleportToPlaceInstance(%d, "%s", player)
+                        end)
+                    end
+                ]], game.PlaceId, game.JobId))
+            end
+        end
+        
+        print("[PunkX] Settings loaded successfully")
     end)
 end -- End of InitTabs.Settings
 
