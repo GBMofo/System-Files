@@ -6301,29 +6301,16 @@ createSectionHeader("🔧 ADVANCED", 50)
             Main.Title.TextLabel.Text = "Hello, User!"
         end
         
-  -- PRIVACY & SECURITY
+-- PRIVACY & SECURITY
         if PunkXSettings.scamProtection then
-            ScamProtectionEnabled = true
-            advancedCard.Visible = true
-            
-            -- Visually restore Scam Protection master toggle
-            task.spawn(function()
-                task.wait(0.1)
-                local masterToggle = scamCard:FindFirstChild("Toggle")
-                if masterToggle then
-                    local toggleBg = masterToggle:FindFirstChild("Background")
-                    if toggleBg then
-                        toggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                        local layout = masterToggle:FindFirstChild("UIListLayout")
-                        if layout then
-                            layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-                        end
-                    end
-                end
-            end)
+            -- Restore Scam Protection master toggle (visual + internal state, no callback)
+            setScamMaster(true, true)
             
             -- If Advanced Settings is OFF, force all guards to ON
             if not PunkXSettings.advancedSettings then
+                -- Advanced Settings OFF (keep visual OFF)
+                setAdvanced(false, true)
+                
                 -- Force all guards ON
                 setPurchase(true, true)
                 setTeleport(true, true)
@@ -6342,7 +6329,9 @@ createSectionHeader("🔧 ADVANCED", 50)
                 scriptDetectCard.Visible = false
                 
             else
-                -- Advanced Settings is ON, restore custom states
+                -- Advanced Settings ON, restore custom states
+                setAdvanced(true, true)
+                
                 setPurchase(PunkXSettings.purchaseGuard, true)
                 setTeleport(PunkXSettings.teleportGuard, true)
                 setUIClick(PunkXSettings.uiClickGuard, true)
@@ -6353,22 +6342,6 @@ createSectionHeader("🔧 ADVANCED", 50)
                 UIClickGuard = PunkXSettings.uiClickGuard
                 ScriptDetection = PunkXSettings.scriptDetection
                 
-                -- Visually restore Advanced Settings toggle
-                task.spawn(function()
-                    task.wait(0.1)
-                    local advToggle = advancedCard:FindFirstChild("Toggle")
-                    if advToggle then
-                        local toggleBg = advToggle:FindFirstChild("Background")
-                        if toggleBg then
-                            toggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                            local layout = advToggle:FindFirstChild("UIListLayout")
-                            if layout then
-                                layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-                            end
-                        end
-                    end
-                end)
-                
                 -- Show cards
                 purchaseCard.Visible = true
                 teleportCard.Visible = true
@@ -6377,8 +6350,7 @@ createSectionHeader("🔧 ADVANCED", 50)
             end
         else
             -- Scam Protection is OFF
-            ScamProtectionEnabled = false
-            advancedCard.Visible = false
+            setScamMaster(false, true)
             
             setPurchase(false, true)
             setTeleport(false, true)
