@@ -6305,6 +6305,8 @@ createSectionHeader("🔧 ADVANCED", 50)
         if PunkXSettings.scamProtection then
             -- Restore Scam Protection master toggle (visual + internal state, no callback)
             setScamMaster(true, true)
+            ScamProtectionEnabled = true
+            advancedCard.Visible = true  -- Always show Advanced Settings card when Scam Protection is ON
             
             -- If Advanced Settings is OFF, force all guards to ON
             if not PunkXSettings.advancedSettings then
@@ -6351,6 +6353,8 @@ createSectionHeader("🔧 ADVANCED", 50)
         else
             -- Scam Protection is OFF
             setScamMaster(false, true)
+            ScamProtectionEnabled = false
+            advancedCard.Visible = false  -- Hide Advanced Settings card when Scam Protection is OFF
             
             setPurchase(false, true)
             setTeleport(false, true)
