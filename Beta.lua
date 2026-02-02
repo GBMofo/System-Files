@@ -4637,33 +4637,21 @@ end)
     end
     
     -- UI Transparency
-local transCard = createCard("UI Transparency", "Adjust background opacity", -98)
-transCard.Size = UDim2.new(1, 0, 0, 55)
-local savedSettings = LoadSettings() -- 🟢 Load saved value
-local transSlider = createSlider(transCard, function(v)
-    script.Parent.Full.Transparency = v
-    savedSettings.uiTransparency = v -- 🟢 Update value
-    SaveSettings(savedSettings) -- 🟢 Save immediately
-end)
-
--- 🟢 Apply saved transparency on load
-script.Parent.Full.Transparency = savedSettings.uiTransparency
+    local transCard = createCard("UI Transparency", "Adjust background opacity", -98)
+    transCard.Size = UDim2.new(1, 0, 0, 55)
+    createSlider(transCard, function(v)
+        script.Parent.Full.Transparency = v
+    end)
     
     -- Censored Name
-local nameCard = createCard("Censor Name", "Hide your username from the UI", -97)
-local savedSettings = LoadSettings() -- 🟢 Load saved state
-local _, nameBg, setNameToggle = createSmartToggle(nameCard, function(enabled)
-    if enabled then
-        Main.Title.TextLabel.Text = "Hello, User!"
-    else
-        Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.DisplayName .. "!"
-    end
-    savedSettings.censorName = enabled -- 🟢 Update value
-    SaveSettings(savedSettings) -- 🟢 Save immediately
-end)
-
--- 🟢 Apply saved state on load
-setNameToggle(savedSettings.censorName, true) -- silent = true (no callback)
+    local nameCard = createCard("Censor Name", "Hide your username from the UI", -97)
+    createToggle(nameCard, function(enabled)
+        if enabled then
+            Main.Title.TextLabel.Text = "Hello, User!"
+        else
+            Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.DisplayName .. "!"
+        end
+    end)
     
  -- ========================================
     -- PRIVACY SECTION (FIXED SYNC)
@@ -4764,18 +4752,12 @@ setNameToggle(savedSettings.censorName, true) -- silent = true (no callback)
     scriptDetectCard.Visible = false
 
     -- CREATE TOGGLES (Capturing the 'SetState' function)
-local _, _, setPurchase = createSmartToggle(purchaseCard, function(enabled)
-    PurchaseGuard = enabled
-    if enabled then createNotification("Purchase Guard Enabled", "Success", 2)
-    else createNotification("Purchase Guard Disabled", "Warn", 2) end
-    savedSettings.purchaseGuard = enabled -- 🟢 Save
-    SaveSettings(savedSettings)
-end)
+    local _, _, setPurchase = createSmartToggle(purchaseCard, function(enabled)
+        PurchaseGuard = enabled
+        if enabled then createNotification("Purchase Guard Enabled", "Success", 2)
+        else createNotification("Purchase Guard Disabled", "Warn", 2) end
+    end)
 
--- 🟢 Apply saved state
-if savedSettings.scamProtection and savedSettings.advancedSettings then
-    setPurchase(savedSettings.purchaseGuard, true)
-end
     local _, _, setTeleport = createSmartToggle(teleportCard, function(enabled)
         TeleportGuard = enabled
         if enabled then createNotification("Teleport Guard Enabled", "Success", 2)
@@ -4796,87 +4778,76 @@ end
     end)
 
     -- ADVANCED TOGGLE
-local _, advancedToggleBg, setAdvanced = createSmartToggle(advancedCard, function(enabled)
-    if ScamProtectionEnabled then
-        purchaseCard.Visible = enabled
-        teleportCard.Visible = enabled
-        uiClickCard.Visible = enabled
-        scriptDetectCard.Visible = enabled
-        
-        if enabled then createNotification("Advanced Settings Shown", "Info", 2) end
-    else
-        purchaseCard.Visible = false
-        teleportCard.Visible = false
-        uiClickCard.Visible = false
-        scriptDetectCard.Visible = false
-    end
-    
-    savedSettings.advancedSettings = enabled -- 🟢 Save state
-    SaveSettings(savedSettings)
-end)
+    local _, advancedToggleBg, setAdvanced = createSmartToggle(advancedCard, function(enabled)
+        if ScamProtectionEnabled then
+            purchaseCard.Visible = enabled
+            teleportCard.Visible = enabled
+            uiClickCard.Visible = enabled
+            scriptDetectCard.Visible = enabled
+            
+            if enabled then createNotification("Advanced Settings Shown", "Info", 2) end
+        else
+            purchaseCard.Visible = false
+            teleportCard.Visible = false
+            uiClickCard.Visible = false
+            scriptDetectCard.Visible = false
+        end
+    end)
 
--- 🟢 Apply saved state (only if scam protection is on)
-if savedSettings.scamProtection then
-    setAdvanced(savedSettings.advancedSettings, true)
-end
-		
--- MASTER TOGGLE
-local savedSettings = LoadSettings() -- 🟢 Load saved state
-local _, scamBg, setScamToggle = createSmartToggle(scamCard, function(enabled)
-    ScamProtectionEnabled = enabled
-    advancedCard.Visible = enabled
-    
-    if enabled then
-        createNotification("Scam Protection Enabled", "Success", 3)
+    -- MASTER TOGGLE
+    createSmartToggle(scamCard, function(enabled)
+        ScamProtectionEnabled = enabled
+        advancedCard.Visible = enabled
         
-        setAdvanced(false, true)
-        setPurchase(true, true)
-        setTeleport(true, true)
-        setUIClick(true, true)
-        setScriptDetect(true, true)
-        
-        PurchaseGuard = true
-        TeleportGuard = true
-        UIClickGuard = true
-        ScriptDetection = true
-        
-        purchaseCard.Visible = false
-        teleportCard.Visible = false
-        uiClickCard.Visible = false
-        scriptDetectCard.Visible = false
-        
-    else
-        createNotification("Scam Protection Disabled", "Info", 3)
-        
-        setAdvanced(false, true)
-        setPurchase(false, true)
-        setTeleport(false, true)
-        setUIClick(false, true)
-        setScriptDetect(false, true)
-        
-        PurchaseGuard = false
-        TeleportGuard = false
-        UIClickGuard = false
-        ScriptDetection = false
-        
-        purchaseCard.Visible = false
-        teleportCard.Visible = false
-        uiClickCard.Visible = false
-        scriptDetectCard.Visible = false
-    end
-    
-    -- 🟢 Save all related settings
-    savedSettings.scamProtection = enabled
-    savedSettings.advancedSettings = false
-    savedSettings.purchaseGuard = enabled
-    savedSettings.teleportGuard = enabled
-    savedSettings.uiClickGuard = enabled
-    savedSettings.scriptDetection = enabled
-    SaveSettings(savedSettings)
-end)
-
--- 🟢 Apply saved state on load
-setScamToggle(savedSettings.scamProtection, true)
+        if enabled then
+            createNotification("Scam Protection Enabled", "Success", 3)
+            
+            -- 1. Reset Advanced Settings to hidden
+            setAdvanced(false, true) -- Silent update (Visual OFF + Internal OFF)
+            
+            -- 2. Enable all sub-features (Silently update UI + Internal State)
+            setPurchase(true, true) -- Silent = true (No notification spam)
+            setTeleport(true, true)
+            setUIClick(true, true)
+            setScriptDetect(true, true)
+            
+            -- 3. Manually update logic variables (since we silenced the callback)
+            PurchaseGuard = true
+            TeleportGuard = true
+            UIClickGuard = true
+            ScriptDetection = true
+            
+            -- 4. Hide them initially (Advanced mode controls visibility)
+            purchaseCard.Visible = false
+            teleportCard.Visible = false
+            uiClickCard.Visible = false
+            scriptDetectCard.Visible = false
+            
+        else
+            createNotification("Scam Protection Disabled", "Info", 3)
+            
+            -- 1. Reset Advanced
+            setAdvanced(false, true)
+            
+            -- 2. Disable all sub-features
+            setPurchase(false, true)
+            setTeleport(false, true)
+            setUIClick(false, true)
+            setScriptDetect(false, true)
+            
+            -- 3. Update logic variables
+            PurchaseGuard = false
+            TeleportGuard = false
+            UIClickGuard = false
+            ScriptDetection = false
+            
+            -- 4. Hide cards
+            purchaseCard.Visible = false
+            teleportCard.Visible = false
+            uiClickCard.Visible = false
+            scriptDetectCard.Visible = false
+        end
+    end)
 
     -- Hook Purchase Methods
     for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
@@ -4926,56 +4897,44 @@ setScamToggle(savedSettings.scamProtection, true)
     end)
 
     -- Disable Robux (Standalone)
-local disableRobuxCard = createCard("Disable Robux", "Completely blocks all Robux spending prompts", -43)
-local savedSettings = LoadSettings()
-local _, _, setDisableRobux = createSmartToggle(disableRobuxCard, function(enabled)
-    if enabled then
-        for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
-            if game:GetService("MarketplaceService")[method] then
-                local old
-                old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
-                    warn("[Disable Robux] All purchases blocked")
-                    createNotification("Purchase Blocked (Global)", "Error", 3)
-                    return
-                end)
+    local disableRobuxCard = createCard("Disable Robux", "Completely blocks all Robux spending prompts", -43)
+    createSmartToggle(disableRobuxCard, function(enabled)
+        if enabled then
+            for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
+                if game:GetService("MarketplaceService")[method] then
+                    local old
+                    old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
+                        warn("[Disable Robux] All purchases blocked")
+                        createNotification("Purchase Blocked (Global)", "Error", 3)
+                        return
+                    end)
+                end
             end
+            createNotification("Robux Spending Disabled", "Success", 3)
+        else
+            createNotification("Robux Spending Enabled", "Info", 3)
         end
-        createNotification("Robux Spending Disabled", "Success", 3)
-    else
-        createNotification("Robux Spending Enabled", "Info", 3)
-    end
-    savedSettings.disableRobux = enabled -- 🟢 Save
-    SaveSettings(savedSettings)
-end)
-
--- 🟢 Apply saved state
-setDisableRobux(savedSettings.disableRobux, true)
+    end)
 
     -- Verify Teleports (Standalone)
-local verifyTeleportCard = createCard("Verify Teleports", "Allows teleports only to current game place", -42)
-local savedSettings = LoadSettings()
-local _, _, setVerifyTeleport = createSmartToggle(verifyTeleportCard, function(enabled)
-    if enabled then
-        local currentPlaceId = game.PlaceId
-        local oldTeleport2
-        oldTeleport2 = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
-            if placeId ~= currentPlaceId then
-                warn("[Verify Teleports] Blocked teleport to:", placeId)
-                createNotification("Teleport Blocked (Verification)", "Warn", 3)
-                return
-            end
-            return oldTeleport2(self, placeId, ...)
-        end)
-        createNotification("Teleport Verification Enabled", "Success", 3)
-    else
-        createNotification("Teleport Verification Disabled", "Info", 3)
-    end
-    savedSettings.verifyTeleports = enabled -- 🟢 Save
-    SaveSettings(savedSettings)
-end)
-
--- 🟢 Apply saved state
-setVerifyTeleport(savedSettings.verifyTeleports, true)
+    local verifyTeleportCard = createCard("Verify Teleports", "Allows teleports only to current game place", -42)
+    createSmartToggle(verifyTeleportCard, function(enabled)
+        if enabled then
+            local currentPlaceId = game.PlaceId
+            local oldTeleport2
+            oldTeleport2 = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
+                if placeId ~= currentPlaceId then
+                    warn("[Verify Teleports] Blocked teleport to:", placeId)
+                    createNotification("Teleport Blocked (Verification)", "Warn", 3)
+                    return
+                end
+                return oldTeleport2(self, placeId, ...)
+            end)
+            createNotification("Teleport Verification Enabled", "Success", 3)
+        else
+            createNotification("Teleport Verification Disabled", "Info", 3)
+        end
+    end)
 
     -- Invisible Open Trigger (Moved to bottom of Privacy section)
     local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -41)
@@ -5007,45 +4966,43 @@ setVerifyTeleport(savedSettings.verifyTeleports, true)
         end)
     end
 
-  local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
-local savedSettings = LoadSettings()
-local _, afkBg, setAFKToggle = createToggle(afkCard, function(enabled)
-    if enabled then
-        if getconnections then
-            for _, c in pairs(getconnections(player.Idled)) do
-                pcall(function()
-                    if c.Disable then c:Disable()
-                    elseif c.Disconnect then c:Disconnect() end
+    local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
+    createToggle(afkCard, function(enabled)
+        if enabled then
+            -- Try to disable Roblox's AFK listeners (executor-supported only)
+            if getconnections then
+                for _, c in pairs(getconnections(player.Idled)) do
+                    pcall(function()
+                        if c.Disable then c:Disable()
+                        elseif c.Disconnect then c:Disconnect() end
+                    end)
+                end
+            end
+
+            -- Arm immediately
+            armAntiAFK()
+
+            -- Auto-rearm after character respawn
+            if not charConn then
+                charConn = player.CharacterAdded:Connect(function()
+                    task.wait(1) -- wait for Roblox to fully rebuild character
+                    armAntiAFK()
                 end)
             end
+            createNotification("Anti AFK Enabled", "Success", 3)
+        else
+            -- Cleanup
+            if antiAFKConn then
+                antiAFKConn:Disconnect()
+                antiAFKConn = nil
+            end
+            if charConn then
+                charConn:Disconnect()
+                charConn = nil
+            end
+            createNotification("Anti AFK Disabled", "Info", 3)
         end
-
-        armAntiAFK()
-
-        if not charConn then
-            charConn = player.CharacterAdded:Connect(function()
-                task.wait(1)
-                armAntiAFK()
-            end)
-        end
-        createNotification("Anti AFK Enabled", "Success", 3)
-    else
-        if antiAFKConn then
-            antiAFKConn:Disconnect()
-            antiAFKConn = nil
-        end
-        if charConn then
-            charConn:Disconnect()
-            charConn = nil
-        end
-        createNotification("Anti AFK Disabled", "Info", 3)
-    end
-    savedSettings.antiAFK = enabled -- 🟢 Save
-    SaveSettings(savedSettings)
-end)
-
--- 🟢 Apply saved state
-setAFKToggle(savedSettings.antiAFK, true)
+    end)
 
     -- FPS Boost System logic
     local FPS = { Enabled = false, Preset = "Light", Saved = {}, Connections = {} }
@@ -5197,8 +5154,6 @@ setAFKToggle(savedSettings.antiAFK, true)
                 enableFPS(preset)
                 createNotification("FPS Preset: " .. preset, "Info", 2)
             end
-					 savedSettings.fpsBoostPreset = preset -- 🟢 Save preset change
-    SaveSettings(savedSettings)
         end)
     end
 
@@ -5246,56 +5201,34 @@ setAFKToggle(savedSettings.antiAFK, true)
     fpsCircle.BackgroundTransparency = 1
     fpsCircle.ScaleType = Enum.ScaleType.Fit
 
-   local savedSettings = LoadSettings()
-local fpsEnabled = false
-fpsToggleBtn.MouseButton1Click:Connect(function()
-    fpsEnabled = not fpsEnabled
-    fpsToggleLayout.HorizontalAlignment = fpsEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-    fpsToggleBg.BackgroundColor3 = fpsEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-    
-    if fpsEnabled then
-        enableFPS(fpsLabel.Text)
-        createNotification("FPS Boost Enabled", "Success", 2)
-    else
-        disableFPS()
-        createNotification("FPS Boost Disabled", "Info", 2)
-    end
-    
-    savedSettings.fpsBoostEnabled = fpsEnabled -- 🟢 Save
-    savedSettings.fpsBoostPreset = fpsLabel.Text -- 🟢 Save preset
-    SaveSettings(savedSettings)
-end)
-
--- 🟢 Apply saved preset to dropdown
-fpsLabel.Text = savedSettings.fpsBoostPreset
-
--- 🟢 Apply saved state
-if savedSettings.fpsBoostEnabled then
-    fpsEnabled = true
-    fpsToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    fpsToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-    enableFPS(savedSettings.fpsBoostPreset)
-end
+    local fpsEnabled = false
+    fpsToggleBtn.MouseButton1Click:Connect(function()
+        fpsEnabled = not fpsEnabled
+        fpsToggleLayout.HorizontalAlignment = fpsEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+        fpsToggleBg.BackgroundColor3 = fpsEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        
+        if fpsEnabled then
+            enableFPS(fpsLabel.Text)
+            createNotification("FPS Boost Enabled", "Success", 2)
+        else
+            disableFPS()
+            createNotification("FPS Boost Disabled", "Info", 2)
+        end
+    end)
 
     -- Latency Smoothing
-   local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
-local savedSettings = LoadSettings()
-local _, latencyBg, setLatencyToggle = createToggle(latencyCard, function(enabled)
-    if enabled then
-        RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
-            local cam = workspace.CurrentCamera; if cam then cam.CFrame = cam.CFrame end
-        end)
-        createNotification("Latency Smoothing Enabled", "Success", 3)
-    else
-        RunService:UnbindFromRenderStep("LatencySmoothing")
-        createNotification("Latency Smoothing Disabled", "Info", 3)
-    end
-    savedSettings.latencySmoothing = enabled -- 🟢 Save
-    SaveSettings(savedSettings)
-end)
-
--- 🟢 Apply saved state
-setLatencyToggle(savedSettings.latencySmoothing, true)
+    local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
+    createToggle(latencyCard, function(enabled)
+        if enabled then
+            RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
+                local cam = workspace.CurrentCamera; if cam then cam.CFrame = cam.CFrame end
+            end)
+            createNotification("Latency Smoothing Enabled", "Success", 3)
+        else
+            RunService:UnbindFromRenderStep("LatencySmoothing")
+            createNotification("Latency Smoothing Disabled", "Info", 3)
+        end
+    end)
 
     -- FOV Control
     local FOV_PRESETS = { ["40"]=40, ["60"]=60, ["70"]=70, ["80"]=80, ["90"]=90, ["100"]=100, ["120"]=120 }
@@ -5381,13 +5314,11 @@ setLatencyToggle(savedSettings.latencySmoothing, true)
         local optCorner = Instance.new("UICorner", opt)
         optCorner.CornerRadius = UDim.new(0, 6)
         
-       opt.MouseButton1Click:Connect(function()
-    fovLabel.Text = fov
-    currentFOV = FOV_PRESETS[fov]
-    fovList.Visible = false
-    savedSettings.fovValue = currentFOV -- 🟢 Save FOV change
-    SaveSettings(savedSettings)
-end)
+        opt.MouseButton1Click:Connect(function()
+            fovLabel.Text = fov
+            currentFOV = FOV_PRESETS[fov]
+            fovList.Visible = false
+        end)
     end
 
     fovBtn.MouseButton1Click:Connect(function()
@@ -5434,42 +5365,23 @@ end)
     fovCircle.BackgroundTransparency = 1
     fovCircle.ScaleType = Enum.ScaleType.Fit
 
-    local savedSettings = LoadSettings()
-local fovEnabled = false
-currentFOV = savedSettings.fovValue -- 🟢 Load saved FOV value
-fovLabel.Text = tostring(savedSettings.fovValue) -- 🟢 Set dropdown label
-
-fovToggleBtn.MouseButton1Click:Connect(function()
-    fovEnabled = not fovEnabled
-    fovToggleLayout.HorizontalAlignment = fovEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
-    fovToggleBg.BackgroundColor3 = fovEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-    
-    if fovEnabled then
-        fovConn = RunService.RenderStepped:Connect(function()
-            local cam = workspace.CurrentCamera
-            if cam then cam.FieldOfView = currentFOV end
-        end)
-        createNotification("Force FOV Enabled", "Success", 2)
-    else
-        if fovConn then fovConn:Disconnect(); fovConn = nil end
-        createNotification("Force FOV Disabled", "Info", 2)
-    end
-    
-    savedSettings.fovEnabled = fovEnabled -- 🟢 Save
-    savedSettings.fovValue = currentFOV -- 🟢 Save FOV value
-    SaveSettings(savedSettings)
-end)
-
--- 🟢 Apply saved state
-if savedSettings.fovEnabled then
-    fovEnabled = true
-    fovToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
-    fovToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-    fovConn = RunService.RenderStepped:Connect(function()
-        local cam = workspace.CurrentCamera
-        if cam then cam.FieldOfView = currentFOV end
+    local fovEnabled = false
+    fovToggleBtn.MouseButton1Click:Connect(function()
+        fovEnabled = not fovEnabled
+        fovToggleLayout.HorizontalAlignment = fovEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+        fovToggleBg.BackgroundColor3 = fovEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        
+        if fovEnabled then
+            fovConn = RunService.RenderStepped:Connect(function()
+                local cam = workspace.CurrentCamera
+                if cam then cam.FieldOfView = currentFOV end
+            end)
+            createNotification("Force FOV Enabled", "Success", 2)
+        else
+            if fovConn then fovConn:Disconnect(); fovConn = nil end
+            createNotification("Force FOV Disabled", "Info", 2)
+        end
     end)
-end
     
     -- ========================================
     -- ADVANCED SECTION
@@ -5495,8 +5407,7 @@ local placeId = game.PlaceId
 local jobId = game.JobId
 
 local autoRejoinCard = createCard("Auto Rejoin (Beta)", "Attempts to rejoin after disconnect when supported", 42)
-local savedSettings = LoadSettings()
-local _, autoRejoinBg, setAutoRejoinToggle = createToggle(autoRejoinCard, function(enabled)
+createToggle(autoRejoinCard, function(enabled)
     autoRejoinEnabled = enabled
     
     if enabled and not queued and queue_on_teleport then
@@ -5519,13 +5430,7 @@ local _, autoRejoinBg, setAutoRejoinToggle = createToggle(autoRejoinCard, functi
     else
         createNotification("Auto Rejoin Disabled", "Info", 3)
     end
-    
-    savedSettings.autoRejoin = enabled -- 🟢 Save
-    SaveSettings(savedSettings)
 end)
-
--- 🟢 Apply saved state
-setAutoRejoinToggle(savedSettings.autoRejoin, true)
 
 game:GetService("Players").PlayerRemoving:Connect(function(plr)
     if not autoRejoinEnabled then return end
@@ -6223,63 +6128,6 @@ createSectionHeader("🔧 ADVANCED", 50)
     end)
 end -- End of InitTabs.Settings
 
-	-- 🟢 SETTINGS SAVE/LOAD SYSTEM
-local DEFAULT_SETTINGS = {
-    uiTransparency = 0,
-    censorName = false,
-    scamProtection = false,
-    advancedSettings = false,
-    purchaseGuard = false,
-    teleportGuard = false,
-    uiClickGuard = false,
-    scriptDetection = false,
-    disableRobux = false,
-    verifyTeleports = false,
-    antiAFK = false,
-    fpsBoostEnabled = false,
-    fpsBoostPreset = "Light",
-    latencySmoothing = false,
-    fovEnabled = false,
-    fovValue = 70,
-    autoRejoin = false
-}
-
-local function SaveSettings(settings)
-    if not CLONED_Detectedly.isfolder("Punk-X-Files") then 
-        CLONED_Detectedly.makedir("Punk-X-Files") 
-    end
-    
-    local success, err = pcall(function()
-        CLONED_Detectedly.writefile("Punk-X-Files/punk-x-settings.json", 
-            game.HttpService:JSONEncode(settings))
-    end)
-    
-    if success then
-        print("[PunkX] Settings saved successfully")
-    else
-        warn("[PunkX] Failed to save settings:", err)
-    end
-end
-
-local function LoadSettings()
-    if CLONED_Detectedly.isfile("Punk-X-Files/punk-x-settings.json") then
-        local success, data = pcall(function()
-            return game.HttpService:JSONDecode(
-                CLONED_Detectedly.readfile("Punk-X-Files/punk-x-settings.json")
-            )
-        end)
-        
-        if success and data then
-            print("[PunkX] Settings loaded successfully")
-            return data
-        else
-            warn("[PunkX] Failed to load settings, using defaults")
-        end
-    end
-    
-    return DEFAULT_SETTINGS
-end
-	
 InitTabs.TabsData = function()
 		-- 🟢 ENSURE FOLDERS EXIST
 		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
