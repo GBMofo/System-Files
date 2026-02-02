@@ -4637,7 +4637,6 @@ end)
     end
     
     -- UI Transparency
-    -- UI Transparency
 local transCard = createCard("UI Transparency", "Adjust background opacity", -98)
 transCard.Size = UDim2.new(1, 0, 0, 55)
 local savedSettings = LoadSettings() -- 🟢 Load saved value
@@ -4650,7 +4649,7 @@ end)
 -- 🟢 Apply saved transparency on load
 script.Parent.Full.Transparency = savedSettings.uiTransparency
     
--- Censored Name
+    -- Censored Name
 local nameCard = createCard("Censor Name", "Hide your username from the UI", -97)
 local savedSettings = LoadSettings() -- 🟢 Load saved state
 local _, nameBg, setNameToggle = createSmartToggle(nameCard, function(enabled)
@@ -4777,7 +4776,6 @@ end)
 if savedSettings.scamProtection and savedSettings.advancedSettings then
     setPurchase(savedSettings.purchaseGuard, true)
 end
-
     local _, _, setTeleport = createSmartToggle(teleportCard, function(enabled)
         TeleportGuard = enabled
         if enabled then createNotification("Teleport Guard Enabled", "Success", 2)
@@ -4797,7 +4795,7 @@ end
         else createNotification("Script Detection Disabled", "Warn", 2) end
     end)
 
-  -- ADVANCED TOGGLE
+    -- ADVANCED TOGGLE
 local _, advancedToggleBg, setAdvanced = createSmartToggle(advancedCard, function(enabled)
     if ScamProtectionEnabled then
         purchaseCard.Visible = enabled
@@ -4821,61 +4819,53 @@ end)
 if savedSettings.scamProtection then
     setAdvanced(savedSettings.advancedSettings, true)
 end
-
-    -- MASTER TOGGLE
-    createSmartToggle(scamCard, function(enabled)
-        ScamProtectionEnabled = enabled
-        advancedCard.Visible = enabled
+		
+-- MASTER TOGGLE
+local savedSettings = LoadSettings() -- 🟢 Load saved state
+local _, scamBg, setScamToggle = createSmartToggle(scamCard, function(enabled)
+    ScamProtectionEnabled = enabled
+    advancedCard.Visible = enabled
+    
+    if enabled then
+        createNotification("Scam Protection Enabled", "Success", 3)
         
-        if enabled then
-            createNotification("Scam Protection Enabled", "Success", 3)
-            
-            -- 1. Reset Advanced Settings to hidden
-            setAdvanced(false, true) -- Silent update (Visual OFF + Internal OFF)
-            
-            -- 2. Enable all sub-features (Silently update UI + Internal State)
-            setPurchase(true, true) -- Silent = true (No notification spam)
-            setTeleport(true, true)
-            setUIClick(true, true)
-            setScriptDetect(true, true)
-            
-            -- 3. Manually update logic variables (since we silenced the callback)
-            PurchaseGuard = true
-            TeleportGuard = true
-            UIClickGuard = true
-            ScriptDetection = true
-            
-            -- 4. Hide them initially (Advanced mode controls visibility)
-            purchaseCard.Visible = false
-            teleportCard.Visible = false
-            uiClickCard.Visible = false
-            scriptDetectCard.Visible = false
-            
-        else
-            createNotification("Scam Protection Disabled", "Info", 3)
-            
-            -- 1. Reset Advanced
-            setAdvanced(false, true)
-            
-            -- 2. Disable all sub-features
-            setPurchase(false, true)
-            setTeleport(false, true)
-            setUIClick(false, true)
-            setScriptDetect(false, true)
-            
-            -- 3. Update logic variables
-            PurchaseGuard = false
-            TeleportGuard = false
-            UIClickGuard = false
-            ScriptDetection = false
-            
-            -- 4. Hide cards
-            purchaseCard.Visible = false
-            teleportCard.Visible = false
-            uiClickCard.Visible = false
-            scriptDetectCard.Visible = false
-        end
-	-- 🟢 Save all related settings
+        setAdvanced(false, true)
+        setPurchase(true, true)
+        setTeleport(true, true)
+        setUIClick(true, true)
+        setScriptDetect(true, true)
+        
+        PurchaseGuard = true
+        TeleportGuard = true
+        UIClickGuard = true
+        ScriptDetection = true
+        
+        purchaseCard.Visible = false
+        teleportCard.Visible = false
+        uiClickCard.Visible = false
+        scriptDetectCard.Visible = false
+        
+    else
+        createNotification("Scam Protection Disabled", "Info", 3)
+        
+        setAdvanced(false, true)
+        setPurchase(false, true)
+        setTeleport(false, true)
+        setUIClick(false, true)
+        setScriptDetect(false, true)
+        
+        PurchaseGuard = false
+        TeleportGuard = false
+        UIClickGuard = false
+        ScriptDetection = false
+        
+        purchaseCard.Visible = false
+        teleportCard.Visible = false
+        uiClickCard.Visible = false
+        scriptDetectCard.Visible = false
+    end
+    
+    -- 🟢 Save all related settings
     savedSettings.scamProtection = enabled
     savedSettings.advancedSettings = false
     savedSettings.purchaseGuard = enabled
@@ -5017,41 +5007,38 @@ setVerifyTeleport(savedSettings.verifyTeleports, true)
         end)
     end
 
-    local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
-    createToggle(afkCard, function(enabled)
-        if enabled then
-            -- Try to disable Roblox's AFK listeners (executor-supported only)
-            if getconnections then
-                for _, c in pairs(getconnections(player.Idled)) do
-                    pcall(function()
-                        if c.Disable then c:Disable()
-                        elseif c.Disconnect then c:Disconnect() end
-                    end)
-                end
-            end
-
-            -- Arm immediately
-            armAntiAFK()
-
-            -- Auto-rearm after character respawn
-            if not charConn then
-                charConn = player.CharacterAdded:Connect(function()
-                    task.wait(1) -- wait for Roblox to fully rebuild character
-                    armAntiAFK()
+  local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
+local savedSettings = LoadSettings()
+local _, afkBg, setAFKToggle = createToggle(afkCard, function(enabled)
+    if enabled then
+        if getconnections then
+            for _, c in pairs(getconnections(player.Idled)) do
+                pcall(function()
+                    if c.Disable then c:Disable()
+                    elseif c.Disconnect then c:Disconnect() end
                 end)
             end
-            createNotification("Anti AFK Enabled", "Success", 3)
-        else
-            -- Cleanup
-            if antiAFKConn then
-                antiAFKConn:Disconnect()
-                antiAFKConn = nil
-            end
-            if charConn then
-                charConn:Disconnect()
-                charConn = nil
-            end
-           createNotification("Anti AFK Disabled", "Info", 3)
+        end
+
+        armAntiAFK()
+
+        if not charConn then
+            charConn = player.CharacterAdded:Connect(function()
+                task.wait(1)
+                armAntiAFK()
+            end)
+        end
+        createNotification("Anti AFK Enabled", "Success", 3)
+    else
+        if antiAFKConn then
+            antiAFKConn:Disconnect()
+            antiAFKConn = nil
+        end
+        if charConn then
+            charConn:Disconnect()
+            charConn = nil
+        end
+        createNotification("Anti AFK Disabled", "Info", 3)
     end
     savedSettings.antiAFK = enabled -- 🟢 Save
     SaveSettings(savedSettings)
@@ -5203,16 +5190,16 @@ setAFKToggle(savedSettings.antiAFK, true)
         optCorner.CornerRadius = UDim.new(0, 6)
         
         opt.MouseButton1Click:Connect(function()
-    fpsLabel.Text = preset
-    fpsList.Visible = false
-    if FPS.Enabled then
-        disableFPS()
-        enableFPS(preset)
-        createNotification("FPS Preset: " .. preset, "Info", 2)
-    end
-    savedSettings.fpsBoostPreset = preset -- 🟢 Save preset change
+            fpsLabel.Text = preset
+            fpsList.Visible = false
+            if FPS.Enabled then
+                disableFPS()
+                enableFPS(preset)
+                createNotification("FPS Preset: " .. preset, "Info", 2)
+            end
+					 savedSettings.fpsBoostPreset = preset -- 🟢 Save preset change
     SaveSettings(savedSettings)
-end)
+        end)
     end
 
     fpsBtn.MouseButton1Click:Connect(function()
@@ -5259,7 +5246,7 @@ end)
     fpsCircle.BackgroundTransparency = 1
     fpsCircle.ScaleType = Enum.ScaleType.Fit
 
-    local savedSettings = LoadSettings()
+   local savedSettings = LoadSettings()
 local fpsEnabled = false
 fpsToggleBtn.MouseButton1Click:Connect(function()
     fpsEnabled = not fpsEnabled
@@ -5291,7 +5278,7 @@ if savedSettings.fpsBoostEnabled then
 end
 
     -- Latency Smoothing
-local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
+   local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
 local savedSettings = LoadSettings()
 local _, latencyBg, setLatencyToggle = createToggle(latencyCard, function(enabled)
     if enabled then
@@ -5447,7 +5434,7 @@ end)
     fovCircle.BackgroundTransparency = 1
     fovCircle.ScaleType = Enum.ScaleType.Fit
 
-local savedSettings = LoadSettings()
+    local savedSettings = LoadSettings()
 local fovEnabled = false
 currentFOV = savedSettings.fovValue -- 🟢 Load saved FOV value
 fovLabel.Text = tostring(savedSettings.fovValue) -- 🟢 Set dropdown label
@@ -6236,9 +6223,7 @@ createSectionHeader("🔧 ADVANCED", 50)
     end)
 end -- End of InitTabs.Settings
 
--- Theme code ends here
-
--- 🟢 NEW: SETTINGS SAVE/LOAD SYSTEM
+	-- 🟢 SETTINGS SAVE/LOAD SYSTEM
 local DEFAULT_SETTINGS = {
     uiTransparency = 0,
     censorName = false,
@@ -6294,7 +6279,7 @@ local function LoadSettings()
     
     return DEFAULT_SETTINGS
 end
-
+	
 InitTabs.TabsData = function()
 		-- 🟢 ENSURE FOLDERS EXIST
 		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
