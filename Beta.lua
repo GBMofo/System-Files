@@ -4115,7 +4115,6 @@ InitTabs.Settings = function()
             antiAFK = false,
             fpsBoostEnabled = false,
             fpsBoostPreset = "Light",
-            latencySmoothing = false,
             forceFOVEnabled = false,
             fovValue = 70,
             
@@ -5373,23 +5372,6 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         end
     end)
 
-local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
-    local latencyToggle, latencyToggleBg = createToggle(latencyCard, function(enabled)
-        PunkXSettings.latencySmoothing = enabled
-        saveSettings(PunkXSettings)
-        
-        if enabled then
-         RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
-                local cam = workspace.CurrentCamera; if cam then cam.CFrame = cam.CFrame end
-            end)
-            createNotification("Latency Smoothing Enabled", "Success", 3)
-        else
-            -- Safe cleanup attempt
-            pcall(function() RunService:UnbindFromRenderStep("LatencySmoothing") end)
-            createNotification("Latency Smoothing Disabled", "Info", 3)
-        end
-    end)
-
     -- FOV Control
     local FOV_PRESETS = { ["40"]=40, ["60"]=60, ["70"]=70, ["80"]=80, ["90"]=90, ["100"]=100, ["120"]=120 }
     local currentFOV = 70; local fovConn
@@ -5538,7 +5520,7 @@ local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
         saveSettings(PunkXSettings)
         
         if fovEnabled then
-            fovConn = RunService.Heartbeat:Connect(function()
+            fovConn = RunService.RenderStepped:Connect(function()
                 local cam = workspace.CurrentCamera
                 if cam then cam.FieldOfView = currentFOV end
             end)
@@ -5819,24 +5801,27 @@ createSectionHeader("🔧 ADVANCED", 50)
         TitleBar.TextSize = 16
         TitleBar.Parent = MainFrame
 
-        -- Performance Loop
-        local lastUpdate = tick()
-        local frameCount = 0
-        Track(RunService.Heartbeat:Connect(function()
-            frameCount = frameCount + 1
-            local now = tick()
-            if now - lastUpdate >= 1 then
-                fps = frameCount
-                frameCount = 0
-                lastUpdate = now
-                memoryUsage = math.floor(Stats:GetTotalMemoryUsageMb())
-                local player = Players.LocalPlayer
-                if player then ping = math.floor(player:GetNetworkPing() * 1000) end
-                local width = MainFrame.AbsoluteSize.X
-                if width < 450 then StatsBar.Text = string.format("FPS:%d | Mem:%d | P:%d | L:%d", fps, memoryUsage, ping, #virtualLogData)
-                else StatsBar.Text = string.format("FPS: %d | Memory: %d MB | Ping: %dms | Logs: %d", fps, memoryUsage, ping, #virtualLogData) end
-            end
-        end))
+ -- Performance Loop
+local lastUpdate = tick()
+local frameCount = 0
+Track(RunService.RenderStepped:Connect(function()  -- CHANGED: Heartbeat → RenderStepped
+    frameCount = frameCount + 1
+    local now = tick()
+    if now - lastUpdate >= 1 then
+        fps = frameCount
+        frameCount = 0
+        lastUpdate = now
+        memoryUsage = math.floor(Stats:GetTotalMemoryUsageMb())
+        local player = Players.LocalPlayer
+        if player then ping = math.floor(player:GetNetworkPing() * 1000) end
+        local width = MainFrame.AbsoluteSize.X
+        if width < 450 then 
+            StatsBar.Text = string.format("FPS:%d | Mem:%d | P:%d | L:%d", fps, memoryUsage, ping, #virtualLogData)
+        else 
+            StatsBar.Text = string.format("FPS: %d | Memory: %d MB | Ping: %dms | Logs: %d", fps, memoryUsage, ping, #virtualLogData) 
+        end
+    end
+end))
 
         -- Main Frame Drag
         local dragging, dragInput, dragStart, startPos
@@ -6431,20 +6416,6 @@ createSectionHeader("🔧 ADVANCED", 50)
             fpsEnabled = true
         end
         
-        -- Latency Smoothing
-        if PunkXSettings.latencySmoothing then
-            if latencyToggleBg then
-                latencyToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                if latencyToggle:FindFirstChild("UIListLayout") then
-                    latencyToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
-                end
-            end
-            RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
-                local cam = workspace.CurrentCamera
-                if cam then cam.CFrame = cam.CFrame end
-            end)
-        end
-        
         -- FOV
         if fovLabel then
             fovLabel.Text = tostring(PunkXSettings.fovValue)
@@ -6458,7 +6429,7 @@ createSectionHeader("🔧 ADVANCED", 50)
                     fovToggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
                 end
             end
-            fovConn = RunService.Heartbeat:Connect(function()
+            fovConn = RunService.RenderStepped:Connect(function()
                 local cam = workspace.CurrentCamera
                 if cam then cam.FieldOfView = currentFOV end
             end)
