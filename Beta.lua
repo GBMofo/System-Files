@@ -5089,12 +5089,13 @@ end)
     createSectionHeader("⚡ PERFORMANCE", 0)
     
     -- Anti AFK (Hybrid + Auto-Rearm)
-    local VirtualUser = game:GetService("VirtualUser")
+    -- Anti AFK (Passive Mode - Stealth)
+    -- VirtualUser variable removed to fix BAC-3205
     local player = Players.LocalPlayer
     local antiAFKConn
     local charConn
 
- local function armAntiAFK()
+    local function armAntiAFK()
         -- 🛡️ STEALTH ANTI-AFK: PASSIVE SIGNAL DISABLE
         -- Instead of faking inputs (Detected), we just cut the wire.
         if antiAFKConn then antiAFKConn:Disconnect() end
@@ -5110,7 +5111,7 @@ end)
         antiAFKConn = player.Idled:Connect(function() end)
     end
 
-local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
+    local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
     local afkToggle, afkToggleBg = createToggle(afkCard, function(enabled)
         PunkXSettings.antiAFK = enabled
         saveSettings(PunkXSettings)
@@ -5150,6 +5151,7 @@ local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
             createNotification("Anti AFK Disabled", "Info", 3)
         end
     end)
+
 
     -- FPS Boost System logic
     local FPS = { Enabled = false, Preset = "Light", Saved = {}, Connections = {} }
@@ -5371,19 +5373,19 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         end
     end)
 
- -- Latency Smoothing
-    local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
+local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
     local latencyToggle, latencyToggleBg = createToggle(latencyCard, function(enabled)
         PunkXSettings.latencySmoothing = enabled
         saveSettings(PunkXSettings)
         
         if enabled then
-            RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
-                local cam = workspace.CurrentCamera; if cam then cam.CFrame = cam.CFrame end
-            end)
-            createNotification("Latency Smoothing Enabled", "Success", 3)
+            -- 🛡️ DISABLED FOR SAFETY (Fixes BAC-10203)
+            -- The anti-cheat detects BindToRenderStep injections.
+            -- This feature is disabled to prevent you from getting kicked.
+            createNotification("Latency Smoothing is currently patched.", "Warn", 3)
         else
-            RunService:UnbindFromRenderStep("LatencySmoothing")
+            -- Safe cleanup attempt
+            pcall(function() RunService:UnbindFromRenderStep("LatencySmoothing") end)
             createNotification("Latency Smoothing Disabled", "Info", 3)
         end
     end)
@@ -5536,7 +5538,7 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         saveSettings(PunkXSettings)
         
         if fovEnabled then
-            fovConn = RunService.RenderStepped:Connect(function()
+            fovConn = RunService.Heartbeat:Connect(function()
                 local cam = workspace.CurrentCamera
                 if cam then cam.FieldOfView = currentFOV end
             end)
@@ -6456,7 +6458,7 @@ createSectionHeader("🔧 ADVANCED", 50)
                     fovToggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
                 end
             end
-            fovConn = RunService.RenderStepped:Connect(function()
+            fovConn = RunService.Heartbeat:Connect(function()
                 local cam = workspace.CurrentCamera
                 if cam then cam.FieldOfView = currentFOV end
             end)
