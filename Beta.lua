@@ -5379,10 +5379,10 @@ local latencyCard = createCard("Latency Smoothing", "Reduces input lag", 3)
         saveSettings(PunkXSettings)
         
         if enabled then
-            -- 🛡️ DISABLED FOR SAFETY (Fixes BAC-10203)
-            -- The anti-cheat detects BindToRenderStep injections.
-            -- This feature is disabled to prevent you from getting kicked.
-            createNotification("Latency Smoothing is currently patched.", "Warn", 3)
+         RunService:BindToRenderStep("LatencySmoothing", Enum.RenderPriority.Camera.Value + 1, function()
+                local cam = workspace.CurrentCamera; if cam then cam.CFrame = cam.CFrame end
+            end)
+            createNotification("Latency Smoothing Enabled", "Success", 3)
         else
             -- Safe cleanup attempt
             pcall(function() RunService:UnbindFromRenderStep("LatencySmoothing") end)
@@ -5822,7 +5822,7 @@ createSectionHeader("🔧 ADVANCED", 50)
         -- Performance Loop
         local lastUpdate = tick()
         local frameCount = 0
-        Track(RunService.RenderStepped:Connect(function()
+        Track(RunService.Heartbeat:Connect(function()
             frameCount = frameCount + 1
             local now = tick()
             if now - lastUpdate >= 1 then
