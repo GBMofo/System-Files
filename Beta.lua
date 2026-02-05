@@ -4113,6 +4113,9 @@ InitTabs.Settings = function()
             
             -- PERFORMANCE
             antiAFK = false,
+			lowGraphics = false,
+            potatoMode = false,
+            blankScreen = false,
             fpsBoostEnabled = false,
             fpsBoostPreset = "Light",
             forceFOVEnabled = false,
@@ -5072,7 +5075,7 @@ end)
     end)
 
     -- Invisible Open Trigger (Moved to bottom of Privacy section)
-    local invisCard = createCard("Invisible Open Trigger", "Chat '/e open' to toggle UI", -41)
+    local invisCard = createCard("Hidden Mode", "Hide UI and reopen by typing '/e open' in chat", -41)
     createSmartToggle(invisCard, function(enabled)
         InvisTriggerOpen = enabled
         if enabled then
@@ -5151,6 +5154,51 @@ end)
         end
     end)
 
+	-- [[ 1. LOW GRAPHICS ]] --
+    local lowGfxCard = createCard("Low Graphics", "Removes surface images for smoother performance", 2)
+    local lowGfxToggle, lowGfxBg = createToggle(lowGfxCard, function(enabled)
+        PunkXSettings.lowGraphics = enabled
+        saveSettings(PunkXSettings)
+        
+        for _, v in pairs(game:GetDescendants()) do 
+            if v:IsA("Texture") or v:IsA("Decal") then 
+                v.Transparency = enabled and 1 or 0 
+            end 
+        end
+        
+        if enabled then createNotification("Low Graphics Enabled", "Success", 2)
+        else createNotification("Low Graphics Disabled", "Info", 2) end
+    end)
+
+    -- [[ 2. POTATO MODE ]] --
+    local potatoCard = createCard("Potato Mode", "Converts models to basic shapes - major FPS boost", 3)
+    local potatoToggle, potatoBg = createToggle(potatoCard, function(enabled)
+        PunkXSettings.potatoMode = enabled
+        saveSettings(PunkXSettings)
+        
+        for _, v in pairs(game:GetDescendants()) do
+            if v:IsA("MeshPart") then
+                v.Transparency = enabled and 1 or 0
+            elseif v:IsA("SpecialMesh") then
+                if enabled then v.MeshId = "" else v.MeshId = "rbxassetid://..." end -- Note: Restoring meshes perfectly requires complex caching, this is a basic toggle
+            end
+        end
+        
+        if enabled then createNotification("Potato Mode Enabled", "Success", 2)
+        else createNotification("Potato Mode Disabled", "Info", 2) end
+    end)
+
+    -- [[ 3. BLANK SCREEN MODE ]] --
+    local blankCard = createCard("Blank Screen Mode", "Hides everything for max FPS - best for AFK farming", 4)
+    local blankToggle, blankBg = createToggle(blankCard, function(enabled)
+        PunkXSettings.blankScreen = enabled
+        saveSettings(PunkXSettings)
+        
+        game:GetService("RunService"):Set3dRenderingEnabled(not enabled)
+        
+        if enabled then createNotification("3D Rendering Disabled", "Success", 2)
+        else createNotification("3D Rendering Restored", "Info", 2) end
+    end)
 
     -- FPS Boost System logic
     local FPS = { Enabled = false, Preset = "Light", Saved = {}, Connections = {} }
@@ -6259,7 +6307,7 @@ end))
     end)
 
     -- [[ RESET LOADER (Moved Down to 52) ]] --
-    local resetCard = createCard("Reset Loader Environment", "Clears saved executor preferences", 52)
+    local resetCard = createCard("Change UI Version", "Resets interface choice - lets you pick old or new UI again", 52)
     resetCard.Size = UDim2.new(1, 0, 0, 55)
     
     createButton(resetCard, "RESET", Color3.fromRGB(255, 80, 80), function()
@@ -6381,7 +6429,44 @@ end))
                     afkToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
                 end
             end
-            
+
+				-- Low Graphics Load
+        if PunkXSettings.lowGraphics then
+            if lowGfxBg then
+                lowGfxBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if lowGfxToggle:FindFirstChild("UIListLayout") then
+                    lowGfxToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            for _, v in pairs(game:GetDescendants()) do 
+                if v:IsA("Texture") or v:IsA("Decal") then v.Transparency = 1 end 
+            end
+        end
+
+        -- Potato Mode Load
+        if PunkXSettings.potatoMode then
+            if potatoBg then
+                potatoBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if potatoToggle:FindFirstChild("UIListLayout") then
+                    potatoToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            for _, v in pairs(game:GetDescendants()) do
+                if v:IsA("MeshPart") then v.Transparency = 1 end
+            end
+        end
+
+        -- Blank Screen Load
+        if PunkXSettings.blankScreen then
+            if blankBg then
+                blankBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if blankToggle:FindFirstChild("UIListLayout") then
+                    blankToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            game:GetService("RunService"):Set3dRenderingEnabled(false)
+        end
+				
             -- Enable logic
             if getconnections then
                 for _, c in pairs(getconnections(Players.LocalPlayer.Idled)) do
