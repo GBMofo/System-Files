@@ -1,3 +1,11 @@
+-- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
+if getgenv then
+    getgenv().print = function(...) end
+    getgenv().warn = function(...) end
+end
+local print = function(...) end
+local warn = function(...) end
+
 -- Decryption function
 local function decrypt(str)
     local result = ""
@@ -12,21 +20,13 @@ local SECRET_DEV_KEY = decrypt("\x2b\x2e\x35\x30\x56\x23\x56\x43\x39\x49\x42\x56
 local G2L = {};
 
 -- StarterGui.ScreenGui
--- // 🛡️ SECURITY: SAFE PARENTING LOGIC //
 local function GetSafeParent()
-    -- 1. BEST: Modern Hidden UI (Invisible to Games)
+    -- 🛡️ STRICT STEALTH: ONLY ALLOW HIDDEN UI
     if gethui then 
         return gethui()
     end
-    
-    -- 2. GOOD: CoreGui (Hard to detect)
-    local CoreGui = game:GetService("CoreGui")
-    if CoreGui:FindFirstChild("RobloxGui") then 
-        return CoreGui 
-    end
-    
-    -- 3. RISKY: PlayerGui (Visible, fallback)
-    return game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    -- If gethui is missing, we return nil to prevent unsafe loading
+    return nil 
 end
 
 -- // 🛡️ SECURITY: RANDOM NAME //
@@ -3164,15 +3164,14 @@ local function deepCopy(tbl)
 		end
 		return copy;
 	end
+	-- 🛡️ STEALTH: FORCED CLONEREF
+	local cloneref = cloneref or function(o) return o end
 	local Services = setmetatable({}, {
     __index = function(self, name)
-        local service
-        if cloneref then
-            local success, result = pcall(function()
-                return cloneref(game:GetService(name))
-            end)
-            service = success and result or game:GetService(name)
-        else
+        local success, service = pcall(function()
+            return cloneref(game:GetService(name))
+        end)
+        if not success or not service then
             service = game:GetService(name)
         end
         rawset(self, name, service)
@@ -3223,10 +3222,8 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 	end
-	hideUI(false);
-	pcall(function()
-		getgenv()._PULL_INT();
-	end);
+hideUI(false);
+	-- 🛡️ REMOVED: _PULL_INT (Detected Trigger)
 
 -- 🟢 FIX: Connect to Real Executor Functions
 	local CLONED_Detectedly = {}
@@ -5097,12 +5094,20 @@ end)
     local antiAFKConn
     local charConn
 
-    local function armAntiAFK()
+ local function armAntiAFK()
+        -- 🛡️ STEALTH ANTI-AFK: PASSIVE SIGNAL DISABLE
+        -- Instead of faking inputs (Detected), we just cut the wire.
         if antiAFKConn then antiAFKConn:Disconnect() end
-        antiAFKConn = player.Idled:Connect(function()
-            VirtualUser:CaptureController()
-            VirtualUser:ClickButton2(Vector2.new())
-        end)
+        
+        -- Loop through connections and disable them
+        if getconnections then
+            for _, conn in pairs(getconnections(player.Idled)) do
+                pcall(function() conn:Disable() end)
+            end
+        end
+        
+        -- Fallback: Create a dummy connection that does nothing
+        antiAFKConn = player.Idled:Connect(function() end)
     end
 
 local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
