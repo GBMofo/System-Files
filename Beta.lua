@@ -3538,7 +3538,7 @@ end
 					if not TypeData then
 						TypeData = Types['Info'];
 					end
-					scaleUIElement(Noification.e);
+				scaleUIElement(Noification.e);
 					Noification["7"].GroupColor3 = Color3.fromHex(TypeData[1]);
 					Noification.a.Icon.Image = TypeData[2];
 					Noification.a.Title.Text = text;
@@ -3547,21 +3547,32 @@ end
 						Noification["7"].GroupTransparency = math.clamp(1 - Noification.Animator.Scale, 0, 1);
 					end);
 					Noification.Animator.Scale = 0;
-					local ATween = game.TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
-						Scale = 1
-					});
-					ATween:Play();
-					ATween.Completed:Wait();
-					ATween = game.TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
-						Size = UDim2.new(0, 0, 0, 4)
-					});
-					ATween:Play();
-					ATween.Completed:Wait();
-					ATween = game.TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
-						Scale = 0
-					});
-					ATween:Play();
-					ATween.Completed:Wait();
+					
+					-- Safety check for TweenService
+					if TweenService then
+						local ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+							Scale = 1
+						});
+						ATween:Play();
+						ATween.Completed:Wait();
+						ATween = TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
+							Size = UDim2.new(0, 0, 0, 4)
+						});
+						ATween:Play();
+						ATween.Completed:Wait();
+						ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
+							Scale = 0
+						});
+						ATween:Play();
+						ATween.Completed:Wait();
+					else
+						-- Fallback: Show notification without animations
+						warn("[PUNK X] TweenService unavailable - notification shown without animation")
+						Noification.Animator.Scale = 1
+						task.wait(dur)
+						Noification.Animator.Scale = 0
+					end
+					
 					Noification["7"]:Destroy();
 					table.clear(Noification);
 				end);
