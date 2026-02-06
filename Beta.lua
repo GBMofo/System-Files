@@ -1,11 +1,3 @@
--- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
-if getgenv then
-    getgenv().print = function(...) end
-    getgenv().warn = function(...) end
-end
-local print = function(...) end
-local warn = function(...) end
-
 -- // 🛡️ DELTA PROTECTION SUITE (FIXED & STABLE) //
 
 -- [1] FUNCTION CLONING
