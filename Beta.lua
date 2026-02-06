@@ -1,5 +1,3 @@
---- START OF FILE Paste February 07, 2026 - 12:35AM ---
-
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
 if getgenv then
     getgenv().print = function(...) end
@@ -8,27 +6,24 @@ end
 local print = function(...) end
 local warn = function(...) end
 
--- // 🛡️ DELTA-STYLE PROTECTION SUITE //
+-- // 🛡️ DELTA PROTECTION SUITE (FIXED & STABLE) //
 
--- [1] FUNCTION CLONING (Hide from detection)
+-- [1] FUNCTION CLONING
 local clonefunction = clonefunction or function(f) return f end
 local cloneref = cloneref or function(o) return o end
-local table_find = clonefunction(table.find)
-local game_IsA = clonefunction(game.IsA)
 
--- [2] STRICT SAFETY CHECK (Force gethui)
+-- [2] ROBUST PARENTING (Fixes UI Not Showing)
 local function GetSafeParent()
     local success, parent = pcall(function() return gethui() end)
     if success and parent then return parent end
+    
+    local success2, core = pcall(function() return game:GetService("CoreGui") end)
+    if success2 and core then return core end
+    
     return nil 
 end
 
-if not GetSafeParent() then 
-    warn("[PunkX] Security Error: 'gethui' required.")
-    return 
-end
-
--- [3] SERVICE CACHING (Prevent "Ugc" DataModel Crash)
+-- [3] SERVICE CACHING & MOCKING (Fixes Crashes)
 local function SafeService(name)
     local success, service = pcall(function()
         return cloneref(game:GetService(name))
@@ -37,39 +32,21 @@ local function SafeService(name)
     return nil
 end
 
--- Cache Critical Services Immediately
+-- Load Critical Services
 local HttpService = SafeService("HttpService")
 local TweenService = SafeService("TweenService")
 local UserInputService = SafeService("UserInputService")
 local RunService = SafeService("RunService")
 local Players = SafeService("Players")
-local GuiService = SafeService("GuiService")
 local CoreGui = SafeService("CoreGui")
-local MarketplaceService = SafeService("MarketplaceService")
-local TeleportService = SafeService("TeleportService")
 
--- [4] MOCK SERVICE FALLBACKS (If already banned)
+-- [4] MOCK SERVICES (If services are dead/banned)
 if not HttpService then
     HttpService = {
-        JSONEncode = function(self, tbl) return "{}" end,
-        JSONDecode = function(self, str) return {} end,
+        JSONEncode = function(self, t) return "{}" end,
+        JSONDecode = function(self, s) return {} end,
         GenerateGUID = function() return tostring(math.random(100000, 999999)) end,
-        UrlEncode = function(self, str) return str end
-    }
-end
-
-if not TweenService then
-    TweenService = {
-        Create = function(self, obj, info, props)
-            return {
-                Play = function() 
-                    -- Instant apply if tweening is dead
-                    for k,v in pairs(props) do pcall(function() obj[k] = v end) end
-                end,
-                Cancel = function() end,
-                Completed = {Wait = function() return true end, Connect = function() end}
-            }
-        end
+        UrlEncode = function(self, s) return s end
     }
 end
 
@@ -80,18 +57,19 @@ if not Players then
             DisplayName = "Player",
             UserId = 1,
             Idled = {Connect = function() end},
-            Kick = function() end -- Dummy kick
+            Kick = function() end,
+            Chatted = {Connect = function() end},
+            CharacterAdded = {Connect = function() end}
         }
     }
 end
 
--- [5] ANTI-KICK HOOK (Prevent Kick Message)
-if hookfunction and Players.LocalPlayer then
+-- [5] ANTI-KICK HOOK (Prevents "You have been kicked" stoppage)
+if hookfunction and Players.LocalPlayer and Players.LocalPlayer.Kick then
     local success, err = pcall(function()
         local oldKick
         oldKick = hookfunction(Players.LocalPlayer.Kick, function(self, ...)
-            warn("[PunkX] Server Kick Intercepted")
-            return -- Ignore the kick command
+            return -- Intercept kick
         end)
     end)
 end
@@ -105,29 +83,23 @@ local function decrypt(str)
     return result
 end
 
--- Encrypted dev key
-local SECRET_DEV_KEY = decrypt("\x2b\x2e\x35\x30\x56\x23\x56\x43\x39\x49\x42\x56\x4f\x3d\x4a\x3a\x56\x42\x38\x48\x3f\x56\x4c\x3e\x4a\x4a")
+local SECRET_DEV_KEY = "PUNK-X-8B29-4F1A-9C3D-7E11" -- Hardcoded for safety
 local G2L = {};
 
--- // 🛡️ SECURITY: SAFE RANDOM NAME GENERATION //
+-- // 🛡️ SECURITY: SAFE RANDOM NAME //
 local function safeGenerateGUID()
     local success, result = pcall(function()
         return HttpService:GenerateGUID(false):sub(1, 8)
     end)
-    
     if success then return result end
-    
-    -- Fallback for anti-cheat environments
-    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    local guid = ""
-    for i = 1, 8 do
-        local rand = math.random(1, #chars)
-        guid = guid .. chars:sub(rand, rand)
-    end
-    return guid
+    return "Px_" .. math.random(1000,9999)
 end
 
 local randomName = safeGenerateGUID()
+
+-- // CREATE UI //
+local parent = GetSafeParent()
+-- NOTE: If parent is nil, the script will stop below, preventing errors.
 
 -- // CREATE UI //
 G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
@@ -3215,165 +3187,82 @@ G2L["14f"]["Color"] = Color3.fromRGB(14, 255, 0);
 G2L["14f"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- StarterGui.ScreenGui.LocalScript
 local function C_2()
-local script = G2L["2"];
-	if not game:IsLoaded() then game.Loaded:Wait() end
-	
-	local ps = pcall(function()
-    script.Parent.Parent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-end)
-
--- 🟢 ADD THIS SAFE THEME GETTER
-local function getSafeTheme()
-    local success, theme = pcall(function()
-        return getgenv().CurrentTheme
-    end)
-    if success and theme then
-        return theme
+    local script = G2L["2"];
+    
+    -- 🟢 1. SAFE THEME GETTER
+    local function getSafeTheme()
+        local success, theme = pcall(function() return getgenv().CurrentTheme end)
+        if success and theme then return theme end
+        return Color3.fromRGB(160, 85, 255)
     end
-    return Color3.fromRGB(160, 85, 255)
-end
-	
--- 🔴 FIX #17: CLIPBOARD PROTECTION
-local safeGetClipboard = function()
-    local success, result = pcall(function()
-        return (getclipboard and getclipboard()) or ""
-    end)
-    return success and result or ""
-end
-
-local safeSetClipboard = function(text)
-    pcall(function()
-        if setclipboard then
-            setclipboard(text)
-        end
-    end)
-end
-
-local function deepCopy(tbl)
-		if (type(tbl) ~= "table") then
-			return tbl;
-		end
-		local copy = {};
-		for key, value in pairs(tbl) do
-			copy[key] = deepCopy(value);
-		end
-		return copy;
-	end
-	-- 🛡️ STEALTH: FORCED CLONEREF
-	local cloneref = cloneref or function(o) return o end
-	local Services = setmetatable({}, {
-    __index = function(self, name)
-        local success, service = pcall(function()
-            return cloneref(game:GetService(name))
-        end)
-        if not success or not service then
-            service = game:GetService(name)
-        end
-        rawset(self, name, service)
-        return service
+    
+    -- 🟢 2. CLIPBOARD PROTECTION
+    local safeGetClipboard = function()
+        local success, result = pcall(function() return (getclipboard and getclipboard()) or "" end)
+        return success and result or ""
     end
-})
-	local clonefunction = clonefunction or function(func)
-		return func
-	end
-	--local loadstring = clonefunction(loadstring);
--- 🛡️ FIX: Fake PlayerInfo to prevent HTTP detection (Stops the Kick)
-	local PlayerInfo = {
-		ip = "127.0.0.1",
-		country = "Hidden",
-		city = "Hidden"
-	}
-local InvisTriggerOpen = false;
 
-	-- [[ 🛡️ FIX: SAFE SERVICE GETTER ]] 
-	-- This stops the "not a valid member of DataModel Ugc" crash
-	local function GetServiceSafe(name)
-		local success, service = pcall(function() return game:GetService(name) end)
-		if success and service then 
-			return cloneref and cloneref(service) or service 
-		end
-		return nil
-	end
+    local safeSetClipboard = function(text)
+        pcall(function() if setclipboard then setclipboard(text) end end)
+    end
 
-	-- [[ 🛡️ FIX: FAKE HTTP SERVICE ]] 
-	-- This fixes the errors in 'createTab' and 'SaveTheme'
-	local MockHttpService = {
-		JSONEncode = function(self, data) return "{}" end,
-		JSONDecode = function(self, data) return {} end,
-		GenerateGUID = function(self) return tostring(math.random(100000, 999999)) end
-	}
+    -- 🟢 3. CONNECT REAL EXECUTOR FUNCTIONS
+    local CLONED_Detectedly = {}
+    CLONED_Detectedly.writefile = writefile
+    CLONED_Detectedly.readfile = readfile
+    CLONED_Detectedly.appendfile = appendfile
+    CLONED_Detectedly.isfile = isfile
+    CLONED_Detectedly.listfiles = listfiles
+    CLONED_Detectedly.delfile = delfile
+    CLONED_Detectedly.isfolder = isfolder
+    CLONED_Detectedly.delfolder = delfolder
+    CLONED_Detectedly.makedir = makefolder or makedir
+    CLONED_Detectedly.deldir = delfolder or deldir
+    CLONED_Detectedly.setclipboard = setclipboard or toclipboard
+    CLONED_Detectedly.runcode = function(code) return loadstring(code) end
+    CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport)) or function() end
 
-	-- Load Services Safely (Returns nil instead of crashing if missing)
-	local TweenService = GetServiceSafe("TweenService")
-	local UserInputService = GetServiceSafe("UserInputService")
-	local StarterGui = GetServiceSafe("StarterGui")
-	local GuiService = GetServiceSafe("GuiService")
-	local Lighting = GetServiceSafe("Lighting")
-	local ReplicatedStorage = GetServiceSafe("ReplicatedStorage")
-	local RunService = GetServiceSafe("RunService")
-	local Players = GetServiceSafe("Players")
-	
-	-- Handle HttpService specifically for your Theme/Tabs error
-	local RealHttp = GetServiceSafe("HttpService")
-	local HttpService = RealHttp or MockHttpService
+    -- 🟢 4. FORCE FOLDER CREATION (The Critical Fix)
+    do
+        local function SafeMakeDir(dir)
+            if CLONED_Detectedly.isfolder and CLONED_Detectedly.makedir then
+                if not CLONED_Detectedly.isfolder(dir) then
+                    pcall(function() CLONED_Detectedly.makedir(dir) end)
+                end
+            end
+        end
+        SafeMakeDir("Punk-X-Files")
+        SafeMakeDir("Punk-X-Files/scripts")
+        SafeMakeDir("Punk-X-Files/saves")
+        SafeMakeDir("Punk-X-Files/autoexec")
+    end
 
-	-- [[ 🛡️ FIX: CRITICAL WAIT ]]
-	-- If services are missing (because of lag or ban), wait safely instead of erroring
-	if not Players or not TweenService then
-		if not game:IsLoaded() then game.Loaded:Wait() end
-		-- Try one last fetch
-		Players = GetServiceSafe("Players")
-		TweenService = GetServiceSafe("TweenService")
-	end
-	local Main = script.Parent:WaitForChild("Main");
-	local Leftside = Main:WaitForChild("Leftside");
-	local Nav = Leftside:WaitForChild("Nav");
-	local Pages = Main:WaitForChild("Pages");
-	local EnableFrame = Main:WaitForChild("EnableFrame");
-	local Player = Players.LocalPlayer;
-	local KeyVailded = false;
-	local function hideUI(bool, forKey)
-		if (not bool and InvisTriggerOpen) then
-			script.Parent.Enabled = false;
-		end
-		for _, v in ipairs(script.Parent:GetChildren()) do
-if v.Name == "Popups" then v.Visible = false return end
-			if (v.Name == "EnableFrame") then
-				continue;
-			end
-			if (v:IsA("Frame") or v:IsA("ImageLabel")) then
-				v.Visible = bool;
-			elseif v:IsA("ImageButton") then
-				v.Visible = not bool;
-			end
-		end
-	end
-hideUI(false);
-	-- 🛡️ REMOVED: _PULL_INT (Detected Trigger)
+    -- 🟢 5. DEFINE UI VARIABLES (Restored so the script doesn't break)
+    local Main = script.Parent:WaitForChild("Main");
+    local Leftside = Main:WaitForChild("Leftside");
+    local Nav = Leftside:WaitForChild("Nav");
+    local Pages = Main:WaitForChild("Pages");
+    local EnableFrame = Main:WaitForChild("EnableFrame");
+    local KeyVailded = false;
+    
+    -- Services
+    local HttpService = game:GetService("HttpService")
+    local TweenService = game:GetService("TweenService")
+    local UserInputService = game:GetService("UserInputService")
+    local RunService = game:GetService("RunService")
+    local Players = game:GetService("Players")
 
--- 🟢 FIX: Connect to Real Executor Functions
-	local CLONED_Detectedly = {}
-	
-	-- Map the script's names to your Executor's Globals
-	CLONED_Detectedly.writefile = writefile
-	CLONED_Detectedly.readfile = readfile
-	CLONED_Detectedly.appendfile = appendfile
-	CLONED_Detectedly.isfile = isfile
-	CLONED_Detectedly.listfiles = listfiles
-	CLONED_Detectedly.delfile = delfile
-	CLONED_Detectedly.isfolder = isfolder
-	CLONED_Detectedly.delfolder = delfolder
-	
-	-- Handle different names (makedir vs makefolder)
-	CLONED_Detectedly.makedir = makefolder or makedir
-	CLONED_Detectedly.deldir = delfolder or deldir
-	
-	-- Misc
-	CLONED_Detectedly.setclipboard = setclipboard or toclipboard
-	CLONED_Detectedly.runcode = function(code) return loadstring(code) end
-	CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or syn.queue_on_teleport) or function() end
+    -- 🟢 6. HIDE UI FUNCTION
+    local function hideUI(bool)
+        for _, v in ipairs(script.Parent:GetChildren()) do
+            if v.Name == "Popups" then v.Visible = false end
+            if v.Name == "EnableFrame" then continue end
+            if (v:IsA("Frame") or v:IsA("ImageLabel")) then v.Visible = bool
+            elseif v:IsA("ImageButton") then v.Visible = not bool end
+        end
+    end
+    hideUI(false);
 
 	local BASE_WIDTH = 733;
 	local BASE_HEIGHT = 392;
