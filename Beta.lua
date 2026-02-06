@@ -3182,14 +3182,12 @@ local function deepCopy(tbl)
 		return func
 	end
 	--local loadstring = clonefunction(loadstring);
-	local PlayerInfo do
-		local success = pcall(function()
-			PlayerInfo = game.HttpService:JSONDecode(game:HttpGet("https://ipwho.is") or {})
-		end)
-		if not success then
-			PlayerInfo = {}
-		end
-	end
+-- 🛡️ FIX: Fake PlayerInfo to prevent HTTP detection (Stops the Kick)
+	local PlayerInfo = {
+		ip = "127.0.0.1",
+		country = "Hidden",
+		city = "Hidden"
+	}
 	local InvisTriggerOpen = false;
 	local TweenService = game:GetService("TweenService");
 	local UserInputService = game:GetService("UserInputService");
