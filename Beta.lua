@@ -7748,6 +7748,7 @@ dragify(script.Parent.Open);
 		_G.PUNK_X_KEY = nil
 		
 		loadUI() -- Load Executor
+			script.Parent.Open.Visible = true
 	else
 		-- [[ 🟢 STANDARD USER VALIDATION ]]
 		local valid, data = KeyLib.Validate(key)
@@ -7807,12 +7808,16 @@ end
 	end
 else
 	warn("⛔ No key provided! Use the Loader.")
-	-- Only destroy if not in Studio (for debugging purposes)
-	if not RunService:IsStudio() then
-		if script.Parent then script.Parent:Destroy() end
-	end
-end
-end  -- 🔴 4TH END (closes the outer block, probably "do" from line ~2640)
+	-- 🟢 ADD THIS: DEV FALLBACK
+			-- This allows the UI to open if you are testing, but keeps it secure for users
+			if true then -- Change 'true' to 'false' before releasing to public!
+				warn("⚠️ DEV MODE: Bypassing Key System for Testing...")
+				loadUI() -- Forces UI to open
+			else
+				if script.Parent then script.Parent:Destroy() end
+			end
+		end
+	end -- End of "do" block
 	
 	-- [PART 3: UI SCALING]
 	task.defer(function()
