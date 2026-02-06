@@ -32,7 +32,7 @@ end
 -- // 🛡️ SECURITY: SAFE RANDOM NAME GENERATION //
 local function safeGenerateGUID()
     local success, result = pcall(function()
-        return game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
+        return HttpService:GenerateGUID(false):sub(1, 8)
     end)
     
     if success then return result end
@@ -3537,17 +3537,17 @@ end
 						Noification["7"].GroupTransparency = math.clamp(1 - Noification.Animator.Scale, 0, 1);
 					end);
 					Noification.Animator.Scale = 0;
-					local ATween = game.TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+					local ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
 						Scale = 1
 					});
 					ATween:Play();
 					ATween.Completed:Wait();
-					ATween = game.TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
+					ATween = TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
 						Size = UDim2.new(0, 0, 0, 4)
 					});
 					ATween:Play();
 					ATween.Completed:Wait();
-					ATween = game.TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
+					ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
 						Scale = 0
 					});
 					ATween:Play();
@@ -3820,7 +3820,7 @@ end
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
 						-- 🟢 PATH: Punk-X-Files/scripts/
-						CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+						CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", HttpService:JSONEncode({
 							Name = tabName, Content = Content, Order = TabData[2]
 						}));
 						Data.Editor.Tabs[tabName] = { Content, TabData[2] };
@@ -3956,7 +3956,7 @@ end
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab] end
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
+					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", HttpService:JSONEncode({
 						Name = NewName, Content = Data.Editor.Tabs[TargetTab][1], Order = Data.Editor.Tabs[TargetTab][2]
 					}));
 					CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. TargetTab .. ".lua");
@@ -3974,7 +3974,7 @@ end
 					Name = UIEvents.EditorTabs.getDuplicatedName(Name, Data.Saves.Scripts or {}); 
 				end
 				-- 🟢 PATH: Punk-X-Files/saves/
-				CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
+				CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", HttpService:JSONEncode({
 					Name = Name, Content = Content
 				}));
 				Data.Saves.Scripts[Name] = Content;
@@ -4190,7 +4190,7 @@ InitTabs.Settings = function()
             if not CLONED_Detectedly.isfolder("Punk-X-Files") then
                 CLONED_Detectedly.makedir("Punk-X-Files")
             end
-            CLONED_Detectedly.writefile(SETTINGS_FILE, game.HttpService:JSONEncode(settings))
+            CLONED_Detectedly.writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
         end)
     end
     
@@ -4262,7 +4262,7 @@ InitTabs.Settings = function()
     local function LoadTheme()
         if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
             local success, data = pcall(function()
-                return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
+                return HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
             end)
             if success and data.r and data.g and data.b then
                 local loadedColor = Color3.fromRGB(data.r, data.g, data.b)
@@ -4281,7 +4281,7 @@ InitTabs.Settings = function()
             CLONED_Detectedly.makedir("Punk-X-Files") 
         end
         
-        CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
+        CLONED_Detectedly.writefile("Punk-X-Files/theme.json", HttpService:JSONEncode({
             r = math.floor(color.R * 255),
             g = math.floor(color.G * 255),
             b = math.floor(color.B * 255)
@@ -5706,7 +5706,7 @@ local smallServerCard = createCard("Small Server", "Joins a server with fewer pl
 smallServerCard.Size = UDim2.new(1, 0, 0, 55)
 createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
     local success, data = pcall(function()
-        return game:GetService("HttpService"):JSONDecode(
+        return HttpService:JSONDecode(
             game:HttpGet(
                 "https://games.roblox.com/v1/games/" ..
                 game.PlaceId ..
@@ -5736,7 +5736,7 @@ local serverhopCard = createCard("Serverhop", "Joins a different public server",
 serverhopCard.Size = UDim2.new(1, 0, 0, 55)
 createButton(serverhopCard, "HOP", Color3.fromRGB(255, 150, 50), function()
     local success, data = pcall(function()
-        return game:GetService("HttpService"):JSONDecode(
+        return HttpService:JSONDecode(
             game:HttpGet(
                 "https://games.roblox.com/v1/games/" ..
                 game.PlaceId ..
@@ -5786,7 +5786,7 @@ createSectionHeader("🔧 ADVANCED", 50)
         local UserInputService = game:GetService("UserInputService")
         local RunService = game:GetService("RunService")
         local Stats = game:GetService("Stats")
-        local HttpService = game:GetService("HttpService")
+        local HttpService = HttpService
         local TweenService = game:GetService("TweenService")
 
         -- Config
@@ -6967,7 +6967,7 @@ local function fetchWithRetry(url, retries)
 end
 
 -- 🔴 SERVICES
-local HttpService = game:GetService("HttpService")
+local HttpService = HttpService
 	local MarketplaceService = game:GetService("MarketplaceService")
 	
 	-- 🔴 HELPER: FORMAT NUMBERS
