@@ -1,3 +1,110 @@
+--[[
+    🛡️ PEROXIDE ANTI-CHEAT PROTECTION
+    Caches services before Peroxide can replace game object
+]]--
+
+-- Cache the REAL game object before anti-cheat replaces it
+local RealGame = game
+local ServiceCache = {}
+
+-- Safe service fetcher with caching
+local function GetSafeService(serviceName)
+    -- Return cached service if available
+    if ServiceCache[serviceName] then
+        return ServiceCache[serviceName]
+    end
+    
+    -- Try to get the service
+    local success, service = pcall(function()
+        return RealGame:GetService(serviceName)
+    end)
+    
+    if success and service then
+        -- Verify it's real
+        local isReal = pcall(function() 
+            local _ = service.ClassName 
+        end)
+        
+        if isReal then
+            ServiceCache[serviceName] = service
+            return service
+        end
+    end
+    
+    -- Fallback: Create mock service
+    warn("[PunkX] Service blocked: " .. serviceName)
+    
+    local mockService = setmetatable({}, {
+        __index = function(_, key)
+            if key == "GenerateGUID" then
+                return function()
+                    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+                    local guid = ""
+                    for i = 1, 36 do
+                        guid = guid .. chars:sub(math.random(1, #chars), math.random(1, #chars))
+                    end
+                    return guid
+                end
+            elseif key == "Create" then
+                return function(obj, tweenInfo, props)
+                    -- Mock tween that does nothing
+                    return {
+                        Play = function() end,
+                        Cancel = function() end,
+                        Pause = function() end
+                    }
+                end
+            elseif key == "Teleport" then
+                return function() warn("[PunkX] Teleport blocked") end
+            elseif key == "Set3dRenderingEnabled" then
+                return function() end
+            elseif key == "IsStudio" then
+                return function() return false end
+            else
+                -- Return dummy function for everything else
+                return function() end
+            end
+        end,
+        __newindex = function() end
+    })
+    
+    ServiceCache[serviceName] = mockService
+    return mockService
+end
+
+-- Override game:GetService to use our safe version
+local GameMetatable = getrawmetatable(game)
+local OldNamecall = GameMetatable.__namecall
+local OldIndex = GameMetatable.__index
+
+setreadonly(GameMetatable, false)
+
+GameMetatable.__namecall = function(self, ...)
+    local args = {...}
+    local method = getnamecallmethod()
+    
+    if method == "GetService" and self == game then
+        return GetSafeService(args[1])
+    end
+    
+    return OldNamecall(self, ...)
+end
+
+GameMetatable.__index = function(self, key)
+    if self == game and key == "GetService" then
+        return GetSafeService
+    end
+    
+    return OldIndex(self, key)
+end
+
+setreadonly(GameMetatable, true)
+
+print("[🛡️ PunkX Protection] Peroxide bypass active!")
+
+--[[
+    ⬇️ YOUR ORIGINAL SCRIPT STARTS BELOW ⬇️
+]]--
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
 if getgenv then
     getgenv().print = function(...) end
