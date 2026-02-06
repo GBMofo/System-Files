@@ -51,14 +51,34 @@ end
 local SECRET_DEV_KEY = decrypt("\x2b\x2e\x35\x30\x56\x23\x56\x43\x39\x49\x42\x56\x4f\x3d\x4a\x3a\x56\x42\x38\x48\x3f\x56\x4c\x3e\x4a\x4a")
 local G2L = {};
 
--- StarterGui.ScreenGui
+-- ✅ FIXED: GetSafeParent with fallbacks
 local function GetSafeParent()
-    -- 🛡️ STRICT STEALTH: ONLY ALLOW HIDDEN UI
+    -- Try gethui first (best for hiding)
     if gethui then 
-        return gethui()
+        local success, result = pcall(gethui)
+        if success and result then
+            return result
+        end
     end
-    -- If gethui is missing, we return nil to prevent unsafe loading
-    return nil 
+    
+    -- Fallback 1: CoreGui (hidden from game)
+    local success1, coreGui = pcall(function()
+        return GetServiceSafe("CoreGui")
+    end)
+    if success1 and coreGui then
+        return coreGui
+    end
+    
+    -- Fallback 2: PlayerGui (visible but works)
+    local success2, playerGui = pcall(function()
+        return Players.LocalPlayer:WaitForChild("PlayerGui")
+    end)
+    if success2 and playerGui then
+        return playerGui
+    end
+    
+    -- Last resort
+    return game:GetService("CoreGui")
 end
 
 -- // 🛡️ SECURITY: SAFE RANDOM NAME GENERATION //
