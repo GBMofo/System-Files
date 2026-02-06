@@ -4,7 +4,7 @@
 ]]--
 local function GetServiceSafe(serviceName)
     local success, service = pcall(function()
-        return GetServiceSafe(serviceName)
+        return game:GetService(serviceName)  -- ✅ CALLS ROBLOX API
     end)
     
     if success and service then
