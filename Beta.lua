@@ -3207,15 +3207,23 @@ local function deepCopy(tbl)
 	}
 local InvisTriggerOpen = false;
 
-	-- [[ 🛡️ FIX: SAFE SERVICE GETTER ]] 
-	-- This stops the "not a valid member of DataModel Ugc" crash
-	local function GetServiceSafe(name)
-		local success, service = pcall(function() return game:GetService(name) end)
-		if success and service then 
-			return cloneref and cloneref(service) or service 
-		end
-		return nil
-	end
+	-- [[ 🛡️ FIX: SAFE SERVICE GETTER WITH ANTI-HOOK CHECK ]] 
+local function GetServiceSafe(name)
+    local success, service = pcall(function() return game:GetService(name) end)
+    
+    if not success then
+        warn("[PUNK X] Failed to get service:", name)
+        return nil
+    end
+    
+    -- Verify it's a real service (detects anti-cheat hooks)
+    if typeof(service) ~= "Instance" then
+        warn("[PUNK X] Service returned invalid type:", name)
+        return nil
+    end
+    
+    return cloneref and cloneref(service) or service
+end
 
 	-- [[ 🛡️ FIX: FAKE HTTP SERVICE ]] 
 	-- This fixes the errors in 'createTab' and 'SaveTheme'
@@ -3327,8 +3335,8 @@ CLONED_Detectedly.setclipboard = setclipboard or toclipboard
 CLONED_Detectedly.runcode = function(code) return loadstring(code) end
 CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport)) or function() end
 
--- 🟢 3. FORCE FOLDER CREATION (IMMEDIATELY)
-do
+-- 🟢 3. DELAYED FOLDER CREATION (Called after key validation)
+local function initializeFileSystem()
     local function SafeMakeDir(dir)
         if CLONED_Detectedly.isfolder and CLONED_Detectedly.makedir then
             if not CLONED_Detectedly.isfolder(dir) then
@@ -3342,7 +3350,9 @@ do
     SafeMakeDir("Punk-X-Files/saves")
     SafeMakeDir("Punk-X-Files/autoexec")
     SafeMakeDir("Punk-X-Files/rconsole")
+    print("[PUNK X] File system initialized")
 end
+-- Note: This function is called later, NOT immediately
 	local OriginalProperties = {};
 	local function scaleUIElement(element, storeOnly)
 		if not OriginalProperties[element] then
@@ -4265,18 +4275,26 @@ InitTabs.Settings = function()
         return Color3.fromRGB(160, 85, 255)
     end
     
-    local function SaveTheme(color)
-        -- Ensure folder exists
-        if not CLONED_Detectedly.isfolder("Punk-X-Files") then 
-            CLONED_Detectedly.makedir("Punk-X-Files") 
-        end
-        
-        CLONED_Detectedly.writefile("Punk-X-Files/theme.json", game.HttpService:JSONEncode({
+   local function SaveTheme(color)
+    -- Ensure folder exists
+    if not CLONED_Detectedly.isfolder("Punk-X-Files") then 
+        CLONED_Detectedly.makedir("Punk-X-Files") 
+    end
+    
+    -- ✅ ADD SAFETY CHECK
+    if not HttpService then
+        warn("[PUNK X] Cannot save theme - HttpService unavailable")
+        return
+    end
+    
+    pcall(function()
+        CLONED_Detectedly.writefile("Punk-X-Files/theme.json", HttpService:JSONEncode({
             r = math.floor(color.R * 255),
             g = math.floor(color.G * 255),
             b = math.floor(color.B * 255)
         }))
-    end
+    end)
+end
 
  local function ApplyTheme(color)
         local oldTheme = getgenv().CurrentTheme
@@ -6612,17 +6630,24 @@ InitTabs.TabsData = function()
 		local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
 		
 		for index, Nextpath in ipairs(scripts) do
-			-- 🟢 ROBUST FILENAME EXTRACTION
-			-- Gets "MyScript.lua" from "any/long/path/MyScript.lua"
-			local filename = Nextpath:match("([^/\\]+)$");
-			
-			if filename and filename ~= "recently.data" then
-				local success, Loadedscript = pcall(function()
-					-- 🟢 FORCE CORRECT READ PATH
-					local cleanPath = "Punk-X-Files/scripts/" .. filename
-					local content = CLONED_Detectedly.readfile(cleanPath)
-					return game.HttpService:JSONDecode(content)
-				end)
+    -- 🟢 ROBUST FILENAME EXTRACTION
+    -- Gets "MyScript.lua" from "any/long/path/MyScript.lua"
+    local filename = Nextpath:match("([^/\\]+)$");
+    
+    if filename and filename ~= "recently.data" then
+        local success, Loadedscript = pcall(function()
+            -- 🟢 FORCE CORRECT READ PATH
+            local cleanPath = "Punk-X-Files/scripts/" .. filename
+            
+            -- ✅ ADD THIS CHECK:
+            if not HttpService then
+                warn("[PUNK X] HttpService not available")
+                return nil
+            end
+            
+            local content = CLONED_Detectedly.readfile(cleanPath)
+            return HttpService:JSONDecode(content)
+        end)
 
 				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
 					-- Clean corruption if present
@@ -7604,12 +7629,15 @@ end
     task.wait(1);
     goTo("Home", true);
 end;
-	InitTabs.Autoexecute = function()
-		local request = request or http_request or (syn and syn.request) or (http and http.request)
-		
-		-- 🟢 PATH: Punk-X-Files/autoexec
-		if CLONED_Detectedly.isfolder("Punk-X-Files/autoexec") then
-			local files = CLONED_Detectedly.listfiles("Punk-X-Files/autoexec")
+InitTabs.Autoexecute = function()
+    -- ✅ ADD DELAY TO AVOID DETECTION
+    task.wait(3) -- Wait 3 seconds before auto-executing
+    
+    local request = request or http_request or (syn and syn.request) or (http and http.request)
+    
+    -- 🟢 PATH: Punk-X-Files/autoexec
+    if CLONED_Detectedly.isfolder("Punk-X-Files/autoexec") then
+        local files = CLONED_Detectedly.listfiles("Punk-X-Files/autoexec")
 			if files then
 				for _, path in pairs(files) do
 					if path:match("%.lua$") then
@@ -7789,24 +7817,30 @@ dragify(script.Parent.Open);
 		-- [[ 🟢 STANDARD USER VALIDATION ]]
 		local valid, data = KeyLib.Validate(key)
 		if valid then
-			print("[PUNK X] Access Granted.")
-			KeyVailded = true
-			
-			-- 🔴 NEW: Check Premium Status
-			local isPremium = _G.PUNK_X_PREMIUM or getgenv().PUNK_X_PREMIUM or false
-			
-			if isPremium then
-				print("[PUNK X] 🌟 Premium User Detected!")
-				createNotification("Premium Access Granted!", "Success", 5)
-			else
-				print("[PUNK X] ⭐ Free Tier User")
-			end
-			
-			-- Clear keys for security
-			getgenv().PUNK_X_KEY = nil
-			_G.PUNK_X_KEY = nil
-			
-			loadUI() -- Load Executor
+    print("[PUNK X] Access Granted.")
+    KeyVailded = true
+    
+    -- 🔴 NEW: Check Premium Status
+    local isPremium = _G.PUNK_X_PREMIUM or getgenv().PUNK_X_PREMIUM or false
+    
+    if isPremium then
+        print("[PUNK X] 🌟 Premium User Detected!")
+        createNotification("Premium Access Granted!", "Success", 5)
+    else
+        print("[PUNK X] ⭐ Free Tier User")
+    end
+    
+    -- Clear keys for security
+    getgenv().PUNK_X_KEY = nil
+    _G.PUNK_X_KEY = nil
+    
+    -- ✅ INITIALIZE FILE SYSTEM AFTER DELAY
+    task.spawn(function()
+        task.wait(2) -- Wait 2 seconds after UI loads
+        initializeFileSystem()
+    end)
+    
+    loadUI() -- Load Executor
 			
 			-- 🔴 UPDATED: Show Premium Badge in UI
 			if isPremium then
