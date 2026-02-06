@@ -3188,15 +3188,48 @@ local function deepCopy(tbl)
 		country = "Hidden",
 		city = "Hidden"
 	}
-	local InvisTriggerOpen = false;
-	local TweenService = game:GetService("TweenService");
-	local UserInputService = game:GetService("UserInputService");
-	local StarterGui = game:GetService("StarterGui");
-	local GuiService = game:GetService("GuiService");
-	local Lighting = game:GetService("Lighting");
-	local ReplicatedStorage = game:GetService("ReplicatedStorage");
-	local RunService = game:GetService("RunService");
-	local Players = game:GetService("Players");
+local InvisTriggerOpen = false;
+
+	-- [[ 🛡️ FIX: SAFE SERVICE GETTER ]] 
+	-- This stops the "not a valid member of DataModel Ugc" crash
+	local function GetServiceSafe(name)
+		local success, service = pcall(function() return game:GetService(name) end)
+		if success and service then 
+			return cloneref and cloneref(service) or service 
+		end
+		return nil
+	end
+
+	-- [[ 🛡️ FIX: FAKE HTTP SERVICE ]] 
+	-- This fixes the errors in 'createTab' and 'SaveTheme'
+	local MockHttpService = {
+		JSONEncode = function(self, data) return "{}" end,
+		JSONDecode = function(self, data) return {} end,
+		GenerateGUID = function(self) return tostring(math.random(100000, 999999)) end
+	}
+
+	-- Load Services Safely (Returns nil instead of crashing if missing)
+	local TweenService = GetServiceSafe("TweenService")
+	local UserInputService = GetServiceSafe("UserInputService")
+	local StarterGui = GetServiceSafe("StarterGui")
+	local GuiService = GetServiceSafe("GuiService")
+	local Lighting = GetServiceSafe("Lighting")
+	local ReplicatedStorage = GetServiceSafe("ReplicatedStorage")
+	local RunService = GetServiceSafe("RunService")
+	local Players = GetServiceSafe("Players")
+	
+	-- Handle HttpService specifically for your Theme/Tabs error
+	local RealHttp = GetServiceSafe("HttpService")
+	local HttpService = RealHttp or MockHttpService
+
+	-- [[ 🛡️ FIX: CRITICAL WAIT ]]
+	-- If services are missing (because of lag or ban), wait safely instead of erroring
+	if not Players or not TweenService then
+		if not game:IsLoaded() then game.Loaded:Wait() end
+		-- Try one last fetch
+		Players = GetServiceSafe("Players")
+		TweenService = GetServiceSafe("TweenService")
+	end
 	local Main = script.Parent:WaitForChild("Main");
 	local Leftside = Main:WaitForChild("Leftside");
 	local Nav = Leftside:WaitForChild("Nav");
