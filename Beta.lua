@@ -3188,6 +3188,8 @@ local function deepCopy(tbl)
 		country = "Hidden",
 		city = "Hidden"
 	}
+end
+end
 local InvisTriggerOpen = false;
 
 	-- [[ 🛡️ FIX: SAFE SERVICE GETTER ]] 
