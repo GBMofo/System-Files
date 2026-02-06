@@ -29,8 +29,25 @@ local function GetSafeParent()
     return nil 
 end
 
--- // 🛡️ SECURITY: RANDOM NAME //
-local randomName = game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
+-- // 🛡️ SECURITY: SAFE RANDOM NAME GENERATION //
+local function safeGenerateGUID()
+    local success, result = pcall(function()
+        return game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
+    end)
+    
+    if success then return result end
+    
+    -- Fallback for anti-cheat environments
+    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    local guid = ""
+    for i = 1, 8 do
+        local rand = math.random(1, #chars)
+        guid = guid .. chars:sub(rand, rand)
+    end
+    return guid
+end
+
+local randomName = safeGenerateGUID()
 
 -- // CREATE UI //
 G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
