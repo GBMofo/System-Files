@@ -3769,9 +3769,14 @@ UIEvents.Search = {
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
-						Name = TabName, Content = Content, Order = (HighestOrder + 1)
-					}));
+				local success, encoded = pcall(function()
+    return HttpService:JSONEncode({
+        Name = TabName, Content = Content, Order = (HighestOrder + 1)
+    })
+end)
+if success then
+    CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", encoded)
+end
 				end
 
 				if Data.Editor.Tabs then
@@ -3794,9 +3799,14 @@ UIEvents.Search = {
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
 							-- 🟢 PATH: Punk-X-Files/scripts/
-							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-								Name = tabName, Content = Content, Order = TabData[2]
-							}));
+							local success, encoded = pcall(function()
+    return HttpService:JSONEncode({
+        Name = tabName, Content = Content, Order = TabData[2]
+    })
+end)
+if success then
+    CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", encoded)
+end
 							Data.Editor.Tabs[tabName] = { Content, TabData[2] };
 						end
 					end
@@ -4191,7 +4201,7 @@ InitTabs.Settings = function()
                 return nil
             end
             local content = CLONED_Detectedly.readfile(SETTINGS_FILE)
-            return game.HttpService:JSONDecode(content)
+        return HttpService:JSONDecode(content)
         end)
         
         if not success or type(data) ~= "table" then
@@ -6621,7 +6631,7 @@ InitTabs.TabsData = function()
 					-- 🟢 FORCE CORRECT READ PATH
 					local cleanPath = "Punk-X-Files/scripts/" .. filename
 					local content = CLONED_Detectedly.readfile(cleanPath)
-					return game.HttpService:JSONDecode(content)
+					return HttpService:JSONDecode(content)
 				end)
 
 				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content and Loadedscript.Order then
@@ -6672,7 +6682,7 @@ InitTabs.Saved = function()
 					-- 🟢 FORCE CORRECT READ PATH
 					local cleanPath = "Punk-X-Files/saves/" .. filename
 					local content = CLONED_Detectedly.readfile(cleanPath)
-					return game.HttpService:JSONDecode(content)
+					return HttpService:JSONDecode(content)
 				end)
 
 				if success and Loadedscript and Loadedscript.Name and Loadedscript.Content then
