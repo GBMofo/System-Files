@@ -4206,23 +4206,36 @@ InitTabs.Settings = function()
     end
     
     -- Load Settings from File (with corruption protection)
-    local function loadSettings()
-        local success, data = pcall(function()
-            if not CLONED_Detectedly.isfile(SETTINGS_FILE) then
-                return nil
-            end
-            local content = CLONED_Detectedly.readfile(SETTINGS_FILE)
-            return game.HttpService:JSONDecode(content)
-        end)
-        
-        if not success or type(data) ~= "table" then
-            if CLONED_Detectedly.isfile(SETTINGS_FILE) then
-                createNotification("Settings corrupted, resetting to defaults", "Warn", 3)
-            end
-            local defaults = getDefaultSettings()
-            saveSettings(defaults)
-            return defaults
+local function loadSettings()
+    -- ✅ Wait for file system to initialize
+    local maxWait = 5
+    local waited = 0
+    while not CLONED_Detectedly.isfolder("Punk-X-Files") and waited < maxWait do
+        task.wait(0.1)
+        waited = waited + 0.1
+    end
+    
+    local success, data = pcall(function()
+        if not CLONED_Detectedly.isfile(SETTINGS_FILE) then
+            return nil
         end
+        if not HttpService then
+            warn("[PUNK X] HttpService unavailable for settings loading")
+            return nil
+        end
+        local content = CLONED_Detectedly.readfile(SETTINGS_FILE)
+        return HttpService:JSONDecode(content)
+    end)
+    
+    if not success or type(data) ~= "table" then
+        -- Only show "corrupted" warning if file exists but failed to load
+        if CLONED_Detectedly.isfile(SETTINGS_FILE) then
+            createNotification("Settings corrupted, resetting to defaults", "Warn", 3)
+        end
+        local defaults = getDefaultSettings()
+        saveSettings(defaults)
+        return defaults
+    end
         
         -- Merge with defaults (in case new settings were added)
         local defaults = getDefaultSettings()
@@ -4270,21 +4283,33 @@ InitTabs.Settings = function()
     getgenv().CurrentTheme = Color3.fromRGB(160, 85, 255)
     
     -- 🟢 PATH: Punk-X-Files/theme.json
-    local function LoadTheme()
-        if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
-            local success, data = pcall(function()
-                return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
-            end)
-            if success and data.r and data.g and data.b then
-                local loadedColor = Color3.fromRGB(data.r, data.g, data.b)
-                getgenv().CurrentTheme = loadedColor
-                print("[THEME] Loaded saved theme:", loadedColor)
-                return loadedColor
-            end
-        end
-        print("[THEME] No saved theme, using default purple")
-        return Color3.fromRGB(160, 85, 255)
+  local function LoadTheme()
+    -- ✅ Wait for file system to initialize
+    local maxWait = 5
+    local waited = 0
+    while not CLONED_Detectedly.isfolder("Punk-X-Files") and waited < maxWait do
+        task.wait(0.1)
+        waited = waited + 0.1
     end
+    
+    if CLONED_Detectedly.isfile("Punk-X-Files/theme.json") then
+        local success, data = pcall(function()
+            if not HttpService then
+                warn("[PUNK X] HttpService unavailable for theme loading")
+                return nil
+            end
+            return HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/theme.json"))
+        end)
+        if success and data and data.r and data.g and data.b then
+            local loadedColor = Color3.fromRGB(data.r, data.g, data.b)
+            getgenv().CurrentTheme = loadedColor
+            print("[THEME] ✅ Loaded saved theme:", loadedColor)
+            return loadedColor
+        end
+    end
+    print("[THEME] No saved theme, using default purple")
+    return Color3.fromRGB(160, 85, 255)
+end
     
    local function SaveTheme(color)
     -- Ensure folder exists
