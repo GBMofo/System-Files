@@ -1,3 +1,35 @@
+--[[
+    🛡️ SERVICE PROTECTION
+    Cache services before anti-cheat blocks them
+]]--
+local function GetServiceSafe(serviceName)
+    local success, service = pcall(function()
+        return GetServiceSafe(serviceName)
+    end)
+    
+    if success and service then
+        return service
+    end
+    
+    -- Return mock service if blocked
+    warn("[BLOCKED] " .. serviceName)
+    return setmetatable({}, {
+        __index = function(_, key)
+            return function() end
+        end
+    })
+end
+
+-- Cache critical services IMMEDIATELY
+local HttpService = GetServiceSafe("HttpService")
+local TweenService = GetServiceSafe("TweenService")
+local Players = GetServiceSafe("Players")
+local RunService = GetServiceSafe("RunService")
+local UserInputService = GetServiceSafe("UserInputService")
+local TextService = GetServiceSafe("TextService")
+local TeleportService = GetServiceSafe("TeleportService")
+local Stats = GetServiceSafe("Stats")  -- ADD THIS
+local MarketplaceService = GetServiceSafe("MarketplaceService")  -- ADD THIS
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
 if getgenv then
     getgenv().print = function(...) end
@@ -3141,7 +3173,7 @@ local script = G2L["2"];
 	if not game:IsLoaded() then game.Loaded:Wait() end
 	
 	local ps = pcall(function()
-    script.Parent.Parent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    script.Parent.Parent = gethui and gethui() or Players.LocalPlayer:WaitForChild("PlayerGui")
 end)
 
 -- 🟢 ADD THIS SAFE THEME GETTER
@@ -3186,10 +3218,10 @@ local function deepCopy(tbl)
 	local Services = setmetatable({}, {
     __index = function(self, name)
         local success, service = pcall(function()
-            return cloneref(game:GetService(name))
+            return cloneref(GetServiceSafe(name))
         end)
         if not success or not service then
-            service = game:GetService(name)
+            service = GetServiceSafe(name)
         end
         rawset(self, name, service)
         return service
@@ -3210,7 +3242,7 @@ local InvisTriggerOpen = false;
 	-- [[ 🛡️ FIX: SAFE SERVICE GETTER ]] 
 	-- This stops the "not a valid member of DataModel Ugc" crash
 	local function GetServiceSafe(name)
-		local success, service = pcall(function() return game:GetService(name) end)
+		local success, service = pcall(function() return GetServiceSafe(name) end)
 		if success and service then 
 			return cloneref and cloneref(service) or service 
 		end
@@ -4128,7 +4160,7 @@ end
 					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition
 					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y)
 					
-					local TweenService = game:GetService("TweenService")
+					local TweenService = TweenService
 					TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 						Position = TargetPos, Size = TargetSize, BackgroundTransparency = 0
 					}):Play()
@@ -4659,7 +4691,7 @@ InitTabs.Settings = function()
         btnCorner.CornerRadius = UDim.new(0, 4)
         
         local dragging = false
-        local UIS = game:GetService("UserInputService")
+        local UIS = UserInputService
         
         sliderBtn.MouseButton1Down:Connect(function() dragging = true end)
         
@@ -4784,7 +4816,7 @@ end)
         if enabled then
             Main.Title.TextLabel.Text = "Hello, User!"
         else
-            Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.DisplayName .. "!"
+            Main.Title.TextLabel.Text = "Hello, " .. Players.LocalPlayer.DisplayName .. "!"
         end
         PunkXSettings.censorName = enabled
         saveSettings(PunkXSettings)
@@ -4909,7 +4941,7 @@ end)
         UIClickGuard = enabled
         PunkXSettings.uiClickGuard = enabled
         saveSettings(PunkXSettings)
-        game:GetService("UserInputService").ModalEnabled = (ScamProtectionEnabled and enabled)
+        UserInputService.ModalEnabled = (ScamProtectionEnabled and enabled)
         if enabled then createNotification("UI Click Guard Enabled", "Success", 2)
         else createNotification("UI Click Guard Disabled", "Warn", 2) end
     end)
@@ -5041,9 +5073,9 @@ end)
 
     -- Hook Purchase Methods
     for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
-        if game:GetService("MarketplaceService")[method] then
+        if MarketplaceService[method] then
             local old
-            old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
+            old = hookfunction(MarketplaceService[method], function(...)
                 if ScamProtectionEnabled and PurchaseGuard then
                     warn("[Scam Protection] Purchase blocked")
                     createNotification("Purchase Blocked", "Warn", 3)
@@ -5057,7 +5089,7 @@ end)
     -- Hook Teleport
     local allowedPlaceId = game.PlaceId
     local oldTeleport
-    oldTeleport = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
+    oldTeleport = hookfunction(TeleportService.Teleport, function(self, placeId, ...)
         if ScamProtectionEnabled and TeleportGuard then
             if placeId ~= allowedPlaceId then
                 warn("[Scam Protection] Teleport blocked:", placeId)
@@ -5094,9 +5126,9 @@ end)
         
         if enabled then
             for _, method in ipairs({"PromptPurchase", "PromptProductPurchase", "PromptGamePassPurchase", "PromptPremiumPurchase"}) do
-                if game:GetService("MarketplaceService")[method] then
+                if MarketplaceService[method] then
                     local old
-                    old = hookfunction(game:GetService("MarketplaceService")[method], function(...)
+                    old = hookfunction(MarketplaceService[method], function(...)
                         warn("[Disable Robux] All purchases blocked")
                         createNotification("Purchase Blocked (Global)", "Error", 3)
                         return
@@ -5118,7 +5150,7 @@ end)
         if enabled then
             local currentPlaceId = game.PlaceId
             local oldTeleport2
-            oldTeleport2 = hookfunction(game:GetService("TeleportService").Teleport, function(self, placeId, ...)
+            oldTeleport2 = hookfunction(TeleportService.Teleport, function(self, placeId, ...)
                 if placeId ~= currentPlaceId then
                     warn("[Verify Teleports] Blocked teleport to:", placeId)
                     createNotification("Teleport Blocked (Verification)", "Warn", 3)
@@ -5252,7 +5284,7 @@ end)
         PunkXSettings.blankScreen = enabled
         saveSettings(PunkXSettings)
         
-        game:GetService("RunService"):Set3dRenderingEnabled(not enabled)
+        RunService:Set3dRenderingEnabled(not enabled)
         
         if enabled then createNotification("3D Rendering Disabled", "Success", 2)
         else createNotification("3D Rendering Restored", "Info", 2) end
@@ -5647,10 +5679,10 @@ createSectionHeader("🌐 ADVANCED / NETWORK", 40)
 local rejoinCard = createCard("Rejoin Server", "Rejoins the current server session", 41)
 rejoinCard.Size = UDim2.new(1, 0, 0, 55)
 createButton(rejoinCard, "REJOIN", Color3.fromRGB(70, 130, 255), function()
-    game:GetService("TeleportService"):TeleportToPlaceInstance(
+    TeleportService:TeleportToPlaceInstance(
         game.PlaceId,
         game.JobId,
-        game:GetService("Players").LocalPlayer
+        Players.LocalPlayer
     )
 end)
 
@@ -5671,8 +5703,8 @@ local autoRejoinToggle, autoRejoinBg = createToggle(autoRejoinCard, function(ena
         queued = true
         queue_on_teleport(string.format([[
             task.wait(5)
-            local Players = game:GetService("Players")
-            local TeleportService = game:GetService("TeleportService")
+            local Players = Players
+            local TeleportService = TeleportService
             local player = Players.LocalPlayer
             
             if player then
@@ -5689,14 +5721,14 @@ local autoRejoinToggle, autoRejoinBg = createToggle(autoRejoinCard, function(ena
     end
 end)
 
-game:GetService("Players").PlayerRemoving:Connect(function(plr)
+Players.PlayerRemoving:Connect(function(plr)
     if not autoRejoinEnabled then return end
-    if plr ~= game:GetService("Players").LocalPlayer then return end
+    if plr ~= Players.LocalPlayer then return end
     if queue_on_teleport then return end
     
     task.delay(3, function()
         pcall(function()
-            game:GetService("TeleportService"):TeleportToPlaceInstance(placeId, jobId, plr)
+            TeleportService:TeleportToPlaceInstance(placeId, jobId, plr)
         end)
     end)
 end)
@@ -5718,10 +5750,10 @@ createButton(smallServerCard, "JOIN", Color3.fromRGB(70, 200, 120), function()
     if success and data and data.data then
         for _, server in ipairs(data.data) do
             if server.playing and server.playing < 10 then
-                game:GetService("TeleportService"):TeleportToPlaceInstance(
+                TeleportService:TeleportToPlaceInstance(
                     game.PlaceId,
                     server.id,
-                    game:GetService("Players").LocalPlayer
+                    Players.LocalPlayer
                 )
                 break
             end
@@ -5748,10 +5780,10 @@ createButton(serverhopCard, "HOP", Color3.fromRGB(255, 150, 50), function()
     if success and data and data.data then
         for _, server in ipairs(data.data) do
             if server.id ~= game.JobId then
-                game:GetService("TeleportService"):TeleportToPlaceInstance(
+                TeleportService:TeleportToPlaceInstance(
                     game.PlaceId,
                     server.id,
-                    game:GetService("Players").LocalPlayer
+                    Players.LocalPlayer
                 )
                 break
             end
@@ -5780,14 +5812,14 @@ createSectionHeader("🔧 ADVANCED", 50)
         --========================================
 
         -- Services
-        local LogService = game:GetService("LogService")
-        local Players = game:GetService("Players")
-        local CoreGui = game:GetService("CoreGui")
-        local UserInputService = game:GetService("UserInputService")
-        local RunService = game:GetService("RunService")
-        local Stats = game:GetService("Stats")
+        local LogService = GetServiceSafe("LogService")
+        local Players = Players
+        local CoreGui = GetServiceSafe("CoreGui")
+        local UserInputService = UserInputService
+        local RunService = RunService
+        local Stats = Stats
         local HttpService = HttpService
-        local TweenService = game:GetService("TweenService")
+        local TweenService = TweenService
 
         -- Config
         local LOG_FILE_NAME = "Punk-X-Files/PunkX_Logs.txt"
@@ -6522,7 +6554,7 @@ end))
                     blankToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
                 end
             end
-            game:GetService("RunService"):Set3dRenderingEnabled(false)
+            RunService:Set3dRenderingEnabled(false)
         end
 				
             -- Enable logic
@@ -6593,8 +6625,8 @@ end))
                 queued = true
                 queue_on_teleport(string.format([[
                     task.wait(5)
-                    local Players = game:GetService("Players")
-                    local TeleportService = game:GetService("TeleportService")
+                    local Players = Players
+                    local TeleportService = TeleportService
                     local player = Players.LocalPlayer
                     
                     if player then
@@ -6968,7 +7000,7 @@ end
 
 -- 🔴 SERVICES
 local HttpService = HttpService
-	local MarketplaceService = game:GetService("MarketplaceService")
+	local MarketplaceService = MarketplaceService
 	
 	-- 🔴 HELPER: FORMAT NUMBERS
 	local function formatNumber(n)
@@ -7590,7 +7622,7 @@ end
             return;
         end
         
-        local TweenService = game:GetService("TweenService")
+        local TweenService = TweenService
         TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
             Position = TargetPos,
             Size = TargetSize,
@@ -7646,7 +7678,7 @@ end;
 		end
 		Loaded = true;
 	end
-	print("Welcome, " .. game.Players.LocalPlayer.DisplayName .. "!")
+	print("Welcome, " .. Players.LocalPlayer.DisplayName .. "!")
 	
 	local Stored = {};
 	local function closeUI()
@@ -7703,7 +7735,7 @@ local function dragify(Frame)
         -- Convert back to UDim2 with 0 Scale to prevent snapping
         local finalPos = UDim2.new(0, clampedX, 0, clampedY)
         
-        game:GetService("TweenService"):Create(Frame, TweenInfo.new(0.05), {
+        TweenService:Create(Frame, TweenInfo.new(0.05), {
             Position = finalPos
         }):Play()
     end
@@ -7729,7 +7761,7 @@ local function dragify(Frame)
         end
     end)
 
-    game:GetService("UserInputService").InputChanged:Connect(function(input)
+    UserInputService.InputChanged:Connect(function(input)
         if dragging and input == dragInput then
             update(input)
         end
@@ -7740,9 +7772,9 @@ dragify(script.Parent.Open);
 	-- [PART 1: UI SETUP AFTER LOAD]
 	task.spawn(function()
 		local command = "/e open";
-		repeat task.wait(0.1) until game.Players.LocalPlayer
+		repeat task.wait(0.1) until Players.LocalPlayer
 		
-		game.Players.LocalPlayer.Chatted:Connect(function(m)
+		Players.LocalPlayer.Chatted:Connect(function(m)
 			if ((m:sub(1, #command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
 				script.Parent.Enabled = true;
 				if Main:FindFirstChild("EnableFrame") then
@@ -7760,7 +7792,7 @@ dragify(script.Parent.Open);
 		
 		if KeyVailded then
 			if Main and Main:FindFirstChild("Title") and Main.Title:FindFirstChild("TextLabel") then
-				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.DisplayName .. "!";
+				Main.Title.TextLabel.Text = "Hello, " .. Players.LocalPlayer.DisplayName .. "!";
 			end
 		end
 	end);
@@ -7855,7 +7887,7 @@ end
 else
 	warn("⛔ No key provided! Use the Loader.")
 	-- Only destroy if not in Studio (for debugging purposes)
-	if not game:GetService("RunService"):IsStudio() then
+	if not RunService:IsStudio() then
 		if script.Parent then script.Parent:Destroy() end
 	end
 end
