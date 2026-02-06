@@ -7869,7 +7869,12 @@ dragify(script.Parent.Open);
 			_G.PUNK_X_KEY = nil
 			
 			loadUI() -- Load Executor
-			
+		
+			  -- ✅ ADD THESE LINES TO SHOW THE UI:
+    task.wait(0.5)
+    hideUI(true)
+    Main.Visible = true
+		
 			-- 🔴 UPDATED: Show Premium Badge in UI
 			if isPremium then
 				task.spawn(function()
