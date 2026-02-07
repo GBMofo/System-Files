@@ -5577,17 +5577,13 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         end
    end)
 
-    -- ✅ FPS CAP FEATURE (LOGIC FIXED)
-    -- FPS Cap Card
-    local fpsCapCard = createCard("FPS Cap", "Sets a maximum frame rate for smoother and more stable performance", 3)
+   -- ✅ FPS CAP FEATURE (DIRECT GLOBAL ACCESS)
+    local fpsCapCard = createCard("FPS Cap", "Sets a maximum frame rate", 3)
     fpsCapCard.Size = UDim2.new(1, 0, 0, 55)
-
-    -- Ensure we get the global function correctly
-    local setfpscap = setfpscap or getgenv().setfpscap
 
     local fpsCapEnabled = false
 
-    -- FPS Cap Dropdown
+    -- Dropdown Setup
     local fpsCapDropdown = Instance.new("Frame", fpsCapCard)
     fpsCapDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
     fpsCapDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
@@ -5618,13 +5614,14 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
     fpsCapBtn.Size = UDim2.new(1, 0, 1, 0)
     fpsCapBtn.Text = ""
 
+    -- Dropdown List
     local fpsCapList = Instance.new("ScrollingFrame", fpsCapDropdown)
     fpsCapList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
     fpsCapList.Size = UDim2.new(1, 0, 0, 0)
     fpsCapList.Position = UDim2.new(0, 0, 1, 5)
     fpsCapList.BorderSizePixel = 0
     fpsCapList.Visible = false
-    fpsCapList.ZIndex = 10
+    fpsCapList.ZIndex = 20
     fpsCapList.ScrollBarThickness = 2
     fpsCapList.CanvasSize = UDim2.new(0, 0, 0, 0)
     fpsCapList.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -5639,62 +5636,17 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
     fpsCapListStroke.Thickness = 1
     fpsCapListStroke.Transparency = 0.8
     
+    local fpsCapListLayout = Instance.new("UIListLayout", fpsCapList)
+    fpsCapListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    fpsCapListLayout.Padding = UDim.new(0, 2)
+
     local fpsCapListPadding = Instance.new("UIPadding", fpsCapList)
     fpsCapListPadding.PaddingTop = UDim.new(0, 4)
     fpsCapListPadding.PaddingBottom = UDim.new(0, 4)
     fpsCapListPadding.PaddingLeft = UDim.new(0, 4)
     fpsCapListPadding.PaddingRight = UDim.new(0, 4)
 
-    local fpsCapListLayout = Instance.new("UIListLayout", fpsCapList)
-    fpsCapListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    fpsCapListLayout.Padding = UDim.new(0, 2)
-
-    -- Helper Function to Apply Cap
-    local function ApplyCap(val)
-        if setfpscap then
-            if val == "Max" then val = 0 end
-            setfpscap(tonumber(val))
-        end
-    end
-
-    -- Dropdown Logic
-    local fpsCapOptions = {"60", "120", "Max"}
-    for i, capValue in ipairs(fpsCapOptions) do
-        local opt = Instance.new("TextButton", fpsCapList)
-        opt.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-        opt.Size = UDim2.new(1, 0, 0, 26)
-        opt.Text = capValue
-        opt.Font = Enum.Font.Gotham
-        opt.TextSize = 11
-        opt.TextColor3 = Color3.fromRGB(200, 200, 200)
-        opt.BorderSizePixel = 0
-        opt.ZIndex = 11
-        
-        local optCorner = Instance.new("UICorner", opt)
-        optCorner.CornerRadius = UDim.new(0, 6)
-        
-        opt.MouseButton1Click:Connect(function()
-            fpsCapLabel.Text = capValue
-            fpsCapList.Visible = false
-            
-            PunkXSettings.fpsCapValue = capValue
-            saveSettings(PunkXSettings)
-            
-            -- 🟢 FIXED: Only apply immediately IF the toggle is already ON
-            -- If toggle is OFF, this just saves the preference for later.
-            if fpsCapEnabled then
-                ApplyCap(capValue)
-                createNotification("FPS Cap Updated: " .. capValue, "Info", 2)
-            end
-        end)
-    end
-
-    fpsCapBtn.MouseButton1Click:Connect(function()
-        fpsCapList.Visible = not fpsCapList.Visible
-        fpsCapList.Size = UDim2.new(1, 0, 0, math.min(#fpsCapOptions * 30 + 10, 140))
-    end)
-
-    -- FPS Cap Toggle Definitions
+    -- Toggle Setup
     local fpsCapToggleContainer = Instance.new("CanvasGroup", fpsCapCard)
     fpsCapToggleContainer.BackgroundTransparency = 1
     fpsCapToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
@@ -5719,7 +5671,7 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
     fpsCapToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
     fpsCapToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
     fpsCapToggleLayout.Padding = UDim.new(0, 3)
-
+    
     local fpsCapTogglePadding = Instance.new("UIPadding", fpsCapToggleBtn)
     fpsCapTogglePadding.PaddingLeft = UDim.new(0, 3)
     fpsCapTogglePadding.PaddingRight = UDim.new(0, 3)
@@ -5732,29 +5684,88 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
     fpsCapCircle.BackgroundTransparency = 1
     fpsCapCircle.ScaleType = Enum.ScaleType.Fit
 
+    -- 🔴 HELPER FUNCTION (Modified to use getgenv directly)
+    local function ApplyCap(val)
+        local func = getgenv().setfpscap
+        if not func then 
+            warn("[PUNK X] setfpscap not found in global env")
+            return 
+        end
+        
+        local num = tonumber(val)
+        if val == "Max" then num = 9999 end -- Force high number for max
+        
+        if num then
+            func(num)
+            -- Debug print to check if it actually runs
+            print("[PUNK X] FPS set to:", num) 
+        end
+    end
+
+    -- Dropdown Logic
+    local fpsCapOptions = {"60", "120", "Max"}
+    for i, capValue in ipairs(fpsCapOptions) do
+        local opt = Instance.new("TextButton", fpsCapList)
+        opt.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        opt.Size = UDim2.new(1, 0, 0, 26)
+        opt.Text = capValue
+        opt.Font = Enum.Font.Gotham
+        opt.TextSize = 11
+        opt.TextColor3 = Color3.fromRGB(200, 200, 200)
+        opt.BorderSizePixel = 0
+        opt.ZIndex = 21
+        
+        local optCorner = Instance.new("UICorner", opt)
+        optCorner.CornerRadius = UDim.new(0, 6)
+        
+        opt.MouseButton1Click:Connect(function()
+            fpsCapLabel.Text = capValue
+            fpsCapList.Visible = false
+            
+            PunkXSettings.fpsCapValue = capValue
+            saveSettings(PunkXSettings)
+            
+            -- Only apply if toggle is ON
+            if fpsCapEnabled then
+                ApplyCap(capValue)
+                createNotification("FPS Cap: " .. capValue, "Info", 2)
+            end
+        end)
+    end
+
+    fpsCapBtn.MouseButton1Click:Connect(function()
+        fpsCapList.Visible = not fpsCapList.Visible
+        fpsCapList.Size = UDim2.new(1, 0, 0, math.min(#fpsCapOptions * 30 + 10, 140))
+    end)
+
+    -- Toggle Logic
     fpsCapToggleBtn.MouseButton1Click:Connect(function()
         fpsCapEnabled = not fpsCapEnabled
+        
+        -- Update Visuals
         fpsCapToggleLayout.HorizontalAlignment = fpsCapEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
         fpsCapToggleBg.BackgroundColor3 = fpsCapEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
         
         PunkXSettings.fpsCapEnabled = fpsCapEnabled
         saveSettings(PunkXSettings)
         
+        -- Logic
         if fpsCapEnabled then
-            if setfpscap then
-                -- 🟢 ON: Apply whatever value is currently in the label
+            if getgenv().setfpscap then
                 ApplyCap(fpsCapLabel.Text)
-                createNotification("FPS Cap Enabled: " .. fpsCapLabel.Text, "Success", 2)
+                createNotification("FPS Cap Enabled", "Success", 2)
             else
-                warn("[PUNK X] Executor does not support setfpscap")
-                createNotification("Not Supported", "Error", 3)
+                createNotification("Not Supported", "Error", 2)
+                -- Revert
                 fpsCapEnabled = false
                 fpsCapToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
                 fpsCapToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
             end
         else
-            -- 🔴 OFF: Remove the cap
-            if setfpscap then setfpscap(0) end 
+            -- 🔴 When disabled, set to unlimited (9999) or back to default (0)
+            -- Different executors handle '0' differently. '9999' is safer for uncap.
+            local func = getgenv().setfpscap
+            if func then func(9999) end 
             createNotification("FPS Cap Disabled", "Info", 2)
         end
     end)
