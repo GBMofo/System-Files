@@ -3226,7 +3226,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 	end
-	hideUI(false);
+hideUI(false);
 	-- 🛡️ REMOVED: _PULL_INT (Detected Trigger)
 
 -- 🟢 FIX: Connect to Real Executor Functions
