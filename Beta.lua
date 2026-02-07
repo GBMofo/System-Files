@@ -5225,10 +5225,10 @@ end)
         end
     end)
 
-  -- Invisible Open Trigger (Moved to bottom of Privacy section)
+-- Invisible Open Trigger (Moved to bottom of Privacy section)
 local invisCard = createCard("Hidden Mode", "Hide UI and reopen by typing '/e open' in chat", -41)
--- ✅ FIXED: Store toggle reference so we can update it later
-local hiddenModeToggle = createSmartToggle(invisCard, function(enabled)
+-- ✅ FIXED: Store all three return values (especially setState)
+local hiddenModeToggle, hiddenModeBg, setHiddenModeState = createSmartToggle(invisCard, function(enabled)
     InvisTriggerOpen = enabled
     if enabled then
         createNotification('Chat "/e open" to open UI', "Info", 5)
@@ -7856,16 +7856,9 @@ task.spawn(function()
             -- ✅ FIXED: Reset Hidden Mode when UI reopens
             InvisTriggerOpen = false
             
-            -- Update toggle visual state to OFF
-            if hiddenModeToggle then
-                local toggleContainer = hiddenModeToggle:FindFirstChild("ToggleContainer")
-                if toggleContainer then
-                    local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
-                    if toggleBg then
-                        toggleBg:SetAttribute("IsToggleOn", false)
-                        toggleBg.BackgroundColor3 = Color3.fromRGB(60, 60, 60) -- Grey OFF state
-                    end
-                end
+            -- Use setState function to update toggle (silent = true means no callback)
+            if setHiddenModeState then
+                setHiddenModeState(false, true)
             end
             
             createNotification("UI Reopened - Hidden Mode Disabled", "Info", 3)
