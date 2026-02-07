@@ -5684,22 +5684,34 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
     fpsCapCircle.BackgroundTransparency = 1
     fpsCapCircle.ScaleType = Enum.ScaleType.Fit
 
-    -- 🔴 HELPER FUNCTION (Modified to use getgenv directly)
+ -- 🟢 ROBUST FPS SETTER
+    -- Checks for multiple function names and tries safe values
     local function ApplyCap(val)
-        local func = getgenv().setfpscap
+        -- Find the function dynamically (supports setfpscap and SetFPS)
+        local func = getgenv().setfpscap or getgenv().SetFPS
+        
         if not func then 
-            warn("[PUNK X] setfpscap not found in global env")
+            warn("[PUNK X] No FPS function found in executor!")
             return 
         end
         
-        local num = tonumber(val)
-        if val == "Max" then num = 9999 end -- Force high number for max
+        local num = 60
         
-        if num then
-            func(num)
-            -- Debug print to check if it actually runs
-            print("[PUNK X] FPS set to:", num) 
+        if val == "Max" or val == "120" then
+            -- Try 9999 first (standard uncap)
+            -- If your executor ignores 0, 9999 forces it to try max
+            num = 9999 
+        elseif val == "60" then
+            num = 60
         end
+
+        -- Execute safely
+        pcall(function()
+            func(num)
+        end)
+        
+        -- Debug print to prove the UI sent the command
+        print("[PUNK X] Attempted to set FPS to:", num)
     end
 
     -- Dropdown Logic
@@ -5738,7 +5750,7 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         fpsCapList.Size = UDim2.new(1, 0, 0, math.min(#fpsCapOptions * 30 + 10, 140))
     end)
 
-    -- Toggle Logic
+-- 🟢 TOGGLE LOGIC (UPDATED)
     fpsCapToggleBtn.MouseButton1Click:Connect(function()
         fpsCapEnabled = not fpsCapEnabled
         
@@ -5749,24 +5761,18 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         PunkXSettings.fpsCapEnabled = fpsCapEnabled
         saveSettings(PunkXSettings)
         
-        -- Logic
         if fpsCapEnabled then
-            if getgenv().setfpscap then
-                ApplyCap(fpsCapLabel.Text)
-                createNotification("FPS Cap Enabled", "Success", 2)
-            else
-                createNotification("Not Supported", "Error", 2)
-                -- Revert
-                fpsCapEnabled = false
-                fpsCapToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-                fpsCapToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-            end
+            -- Apply the selected value
+            ApplyCap(fpsCapLabel.Text)
+            createNotification("FPS Target: " .. fpsCapLabel.Text, "Success", 2)
         else
-            -- 🔴 When disabled, set to unlimited (9999) or back to default (0)
-            -- Different executors handle '0' differently. '9999' is safer for uncap.
-            local func = getgenv().setfpscap
-            if func then func(9999) end 
-            createNotification("FPS Cap Disabled", "Info", 2)
+            -- 🔴 OFF: Try to reset to 9999 (Unlimited) or 60 depending on preference
+            -- Usually turning "Off" a cap means "Unlimited"
+            local func = getgenv().setfpscap or getgenv().SetFPS
+            if func then 
+                pcall(function() func(9999) end) -- Uncap when disabled
+            end
+            createNotification("FPS Cap Disabled (Unlocked)", "Info", 2)
         end
     end)
 
