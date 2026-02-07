@@ -3202,11 +3202,6 @@ end
 		TweenService = GetServiceSafe("TweenService")
 	end
 	
-	-- 🛑 CRITICAL ABORT: If these are STILL missing, stop execution
-	if not TweenService or not Players then
-		warn("[PUNK X] Critical services unavailable - script paused to prevent kick")
-		return
-	end
 	local Main = script.Parent:WaitForChild("Main");
 	local Leftside = Main:WaitForChild("Leftside");
 	local Nav = Leftside:WaitForChild("Nav");
