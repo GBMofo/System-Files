@@ -5723,7 +5723,7 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
     fpsCapCircle.BackgroundTransparency = 1
     fpsCapCircle.ScaleType = Enum.ScaleType.Fit
 
-    fpsCapEnabled = false
+    local fpsCapEnabled = false  -- ✅ FIXED - Declared as local!
     fpsCapToggleBtn.MouseButton1Click:Connect(function()
         fpsCapEnabled = not fpsCapEnabled
         fpsCapToggleLayout.HorizontalAlignment = fpsCapEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
