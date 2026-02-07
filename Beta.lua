@@ -4133,18 +4133,21 @@ UIEvents.Search = {
 			end
 		},
 
-		Executor = {
-			RunCode = function(content)
-				createNotification("Executed!", "Success", 5);
-				local func, x = loadstring(content);
-				if not func then
-					task.spawn(function() error(x) end);
-					return function() end;
-				end
-				-- 🟢 STANDARD EXECUTION (Executed scripts land in Workspace Root)
-				return func
-			end
-		},
+Executor = {
+    RunCode = function(content)
+        local func, x = loadstring(content);
+        if not func then
+            -- ✅ FIXED: Silent error handling, no console spam
+            createNotification("Syntax Error: " .. tostring(x), "Error", 5);
+            warn("[PUNK X] Script error:", x)
+            return function() end;
+        end
+        -- Show success notification only if code is valid
+        createNotification("Executed!", "Success", 5);
+        -- 🟢 STANDARD EXECUTION (Executed scripts land in Workspace Root)
+        return func
+    end
+},
 		Key = {
 			Save = function(Key)
 				-- 🟢 PATH: Punk-X-Files/punk-x-key.txt
