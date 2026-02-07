@@ -3790,9 +3790,16 @@ UIEvents.Search = {
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
-						Name = TabName, Content = Content, Order = (HighestOrder + 1)
-					}));
+					-- ✅ FIXED: Use safe HttpService
+					if HttpService then
+						pcall(function()
+							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
+								Name = TabName, Content = Content, Order = (HighestOrder + 1)
+							}));
+						end)
+					else
+						warn("[PUNK X] Cannot save tab - HttpService unavailable")
+					end
 				end
 
 				if Data.Editor.Tabs then
@@ -3815,9 +3822,16 @@ UIEvents.Search = {
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
 							-- 🟢 PATH: Punk-X-Files/scripts/
-							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-								Name = tabName, Content = Content, Order = TabData[2]
-							}));
+							-- ✅ FIXED: Use safe HttpService
+							if HttpService then
+								pcall(function()
+									CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", HttpService:JSONEncode({
+										Name = tabName, Content = Content, Order = TabData[2]
+									}));
+								end)
+							else
+								warn("[PUNK X] Cannot save tab - HttpService unavailable")
+							end
 							Data.Editor.Tabs[tabName] = { Content, TabData[2] };
 						end
 					end
@@ -3831,9 +3845,16 @@ UIEvents.Search = {
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
 						-- 🟢 PATH: Punk-X-Files/scripts/
-						CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
-							Name = tabName, Content = Content, Order = TabData[2]
-						}));
+						-- ✅ FIXED: Use safe HttpService
+						if HttpService then
+							pcall(function()
+								CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", HttpService:JSONEncode({
+									Name = tabName, Content = Content, Order = TabData[2]
+								}));
+							end)
+						else
+							warn("[PUNK X] Cannot save tab - HttpService unavailable")
+						end
 						Data.Editor.Tabs[tabName] = { Content, TabData[2] };
 					end
 				end
@@ -3967,9 +3988,16 @@ UIEvents.Search = {
 				if not Data.Editor.Tabs[NewName] then
 					if Data.Editor.Tabs then Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab] end
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
-						Name = NewName, Content = Data.Editor.Tabs[TargetTab][1], Order = Data.Editor.Tabs[TargetTab][2]
-					}));
+					-- ✅ FIXED: Use safe HttpService
+					if HttpService then
+						pcall(function()
+							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", HttpService:JSONEncode({
+								Name = NewName, Content = Data.Editor.Tabs[TargetTab][1], Order = Data.Editor.Tabs[TargetTab][2]
+							}));
+						end)
+					else
+						warn("[PUNK X] Cannot rename file - HttpService unavailable")
+					end
 					CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. TargetTab .. ".lua");
 					Data.Editor.Tabs[TargetTab] = nil
 					Data.Editor.CurrentTab = NewName
@@ -3985,9 +4013,17 @@ UIEvents.Search = {
 					Name = UIEvents.EditorTabs.getDuplicatedName(Name, Data.Saves.Scripts or {}); 
 				end
 				-- 🟢 PATH: Punk-X-Files/saves/
-				CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
-					Name = Name, Content = Content
-				}));
+				-- ✅ FIXED: Use safe HttpService
+				if HttpService then
+					pcall(function()
+						CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", HttpService:JSONEncode({
+							Name = Name, Content = Content
+						}));
+					end)
+				else
+					warn("[PUNK X] Cannot save file - HttpService unavailable")
+					return
+				end
 				Data.Saves.Scripts[Name] = Content;
 				UIEvents.Saved.UpdateUI();
 				if not Overwrite then createNotification("Saved to: " .. Name, "Success", 3) end
@@ -4115,37 +4151,39 @@ UIEvents.Search = {
 				CLONED_Detectedly.writefile("Punk-X-Files/punk-x-key.txt", Key);
 			end
 		},
-		Nav = {
-			goTo = function(Name)
-				for _, page in pairs(Pages:GetChildren()) do
-					if page:IsA("Frame") and page ~= Pages.UIPageLayout then page.Visible = false end
-				end
-				if Pages:FindFirstChild(Name) then
-					Pages[Name].Visible = true
-					Pages.UIPageLayout:JumpTo(Pages[Name])
-				end
-				local Button = nil
-				for _, frame in ipairs(Nav:GetChildren()) do
-					if frame:IsA("Frame") then
-						for _, btn in ipairs(frame:GetChildren()) do
-							if btn.Name == Name then Button = btn; break; end
-						end
-					end
-				end
-				if Button then
-					EnableFrame.Visible = true
-					Pages.Visible = true 
-					local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y)
-					local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition
-					local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y)
-					
-					local TweenService = game:GetService("TweenService")
-					TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-						Position = TargetPos, Size = TargetSize, BackgroundTransparency = 0
-					}):Play()
-				end
-			end
-		}
+	Nav = {
+    goTo = function(Name)
+        for _, page in pairs(Pages:GetChildren()) do
+            if page:IsA("Frame") and page ~= Pages.UIPageLayout then page.Visible = false end
+        end
+        if Pages:FindFirstChild(Name) then
+            Pages[Name].Visible = true
+            Pages.UIPageLayout:JumpTo(Pages[Name])
+        end
+        local Button = nil
+        for _, frame in ipairs(Nav:GetChildren()) do
+            if frame:IsA("Frame") then
+                for _, btn in ipairs(frame:GetChildren()) do
+                    if btn.Name == Name then Button = btn; break; end
+                end
+            end
+        end
+        if Button then
+            EnableFrame.Visible = true
+            Pages.Visible = true 
+            local TargetSize = UDim2.new(0, Button.AbsoluteSize.X, 0, Button.AbsoluteSize.Y)
+            local TargetPosition = Button.AbsolutePosition - EnableFrame.Parent.AbsolutePosition
+            local TargetPos = UDim2.new(0, TargetPosition.X, 0, TargetPosition.Y)
+            
+            -- ✅ FIXED: Use safe TweenService variable
+            if TweenService then
+                TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+                    Position = TargetPos, Size = TargetSize, BackgroundTransparency = 0
+                }):Play()
+            end
+        end
+    end
+}
 	};
 
  -- 🟢 UI FIX: PREVENT CLICK-THROUGH
@@ -4196,14 +4234,22 @@ InitTabs.Settings = function()
     end
     
     -- Save Settings to File
-    local function saveSettings(settings)
-        pcall(function()
-            if not CLONED_Detectedly.isfolder("Punk-X-Files") then
-                CLONED_Detectedly.makedir("Punk-X-Files")
-            end
-            CLONED_Detectedly.writefile(SETTINGS_FILE, game.HttpService:JSONEncode(settings))
-        end)
-    end
+   local function saveSettings(settings)
+    pcall(function()
+        if not CLONED_Detectedly.isfolder("Punk-X-Files") then
+            CLONED_Detectedly.makedir("Punk-X-Files")
+        end
+        
+        -- ✅ Use safe HttpService variable
+        if not HttpService then
+            warn("[PUNK X] Cannot save settings - HttpService unavailable")
+            return
+        end
+        
+        CLONED_Detectedly.writefile(SETTINGS_FILE, HttpService:JSONEncode(settings))
+        print("[SETTINGS] ✅ Settings saved successfully")
+    end)
+end
     
     -- Load Settings from File (with corruption protection)
 local function loadSettings()
