@@ -5225,14 +5225,15 @@ end)
         end
     end)
 
-    -- Invisible Open Trigger (Moved to bottom of Privacy section)
-    local invisCard = createCard("Hidden Mode", "Hide UI and reopen by typing '/e open' in chat", -41)
-    createSmartToggle(invisCard, function(enabled)
-        InvisTriggerOpen = enabled
-        if enabled then
-            createNotification('Chat "/e open" to open UI', "Info", 5)
-        end
-    end)
+  -- Invisible Open Trigger (Moved to bottom of Privacy section)
+local invisCard = createCard("Hidden Mode", "Hide UI and reopen by typing '/e open' in chat", -41)
+-- ✅ FIXED: Store toggle reference so we can update it later
+local hiddenModeToggle = createSmartToggle(invisCard, function(enabled)
+    InvisTriggerOpen = enabled
+    if enabled then
+        createNotification('Chat "/e open" to open UI', "Info", 5)
+    end
+end)
     
 
     -- ========================================
@@ -7841,18 +7842,35 @@ end
 dragify(script.Parent.Open);
 	
 	-- [PART 1: UI SETUP AFTER LOAD]
-	task.spawn(function()
-		local command = "/e open";
-		repeat task.wait(0.1) until game.Players.LocalPlayer
-		
-		game.Players.LocalPlayer.Chatted:Connect(function(m)
-			if ((m:sub(1, #command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
-				script.Parent.Enabled = true;
-				if Main:FindFirstChild("EnableFrame") then
-					Main.EnableFrame.Visible = true;
-				end
-			end
-		end);
+task.spawn(function()
+    local command = "/e open";
+    repeat task.wait(0.1) until game.Players.LocalPlayer
+    
+    game.Players.LocalPlayer.Chatted:Connect(function(m)
+        if ((m:sub(1, #command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
+            script.Parent.Enabled = true;
+            if Main:FindFirstChild("EnableFrame") then
+                Main.EnableFrame.Visible = true;
+            end
+            
+            -- ✅ FIXED: Reset Hidden Mode when UI reopens
+            InvisTriggerOpen = false
+            
+            -- Update toggle visual state to OFF
+            if hiddenModeToggle then
+                local toggleContainer = hiddenModeToggle:FindFirstChild("ToggleContainer")
+                if toggleContainer then
+                    local toggleBg = toggleContainer:FindFirstChild("ToggleBg")
+                    if toggleBg then
+                        toggleBg:SetAttribute("IsToggleOn", false)
+                        toggleBg.BackgroundColor3 = Color3.fromRGB(60, 60, 60) -- Grey OFF state
+                    end
+                end
+            end
+            
+            createNotification("UI Reopened - Hidden Mode Disabled", "Info", 3)
+        end
+    end);
 
 		-- Wait for Key Validation before modifying UI text
 		local maxWait = 20
