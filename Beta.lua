@@ -1,3 +1,12 @@
+-- FORCE UNLOCK FPS (Override executor limits)
+task.spawn(function()
+    while task.wait(0.5) do
+        pcall(function()
+            setfpscap(999) -- Set absurdly high
+            settings().Rendering.QualityLevel = Enum.QualityLevel.Level21
+        end)
+    end
+end)
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
 if getgenv then
     getgenv().print = function(...) end
@@ -4205,36 +4214,38 @@ InitTabs.Settings = function()
     local SETTINGS_FILE = "Punk-X-Files/punk-x-settings.json"
     
     -- Default Settings Structure
-    local function getDefaultSettings()
-        return {
-            -- APPEARANCE
-            uiTransparency = 0.3,
-            censorName = false,
-            
-            -- PRIVACY & SECURITY
-            scamProtection = false,
-            advancedSettings = false,
-            purchaseGuard = false,
-            teleportGuard = false,
-            uiClickGuard = false,
-            scriptDetection = false,
-            disableRobux = false,
-            verifyTeleports = false,
-            
-            -- PERFORMANCE
-            antiAFK = false,
-			lowGraphics = false,
-            potatoMode = false,
-            blankScreen = false,
-            fpsBoostEnabled = false,
-            fpsBoostPreset = "Light",
-            forceFOVEnabled = false,
-            fovValue = 70,
-            
-            -- ADVANCED
-            autoRejoin = false
-        }
-    end
+local function getDefaultSettings()
+    return {
+        -- APPEARANCE
+        uiTransparency = 0.3,
+        censorName = false,
+        
+        -- PRIVACY & SECURITY
+        scamProtection = false,
+        advancedSettings = false,
+        purchaseGuard = false,
+        teleportGuard = false,
+        uiClickGuard = false,
+        scriptDetection = false,
+        disableRobux = false,
+        verifyTeleports = false,
+        
+        -- PERFORMANCE
+        antiAFK = false,
+        lowGraphics = false,
+        potatoMode = false,
+        blankScreen = false,
+        fpsBoostEnabled = false,
+        fpsBoostPreset = "Light",
+        fpsCapEnabled = false,          -- ✅ NEW
+        fpsCapValue = "60",              -- ✅ NEW
+        forceFOVEnabled = false,
+        fovValue = 70,
+        
+        -- ADVANCED
+        autoRejoin = false
+    }
+end
     
     -- Save Settings to File
    local function saveSettings(settings)
@@ -5573,6 +5584,189 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
             disableFPS()
             createNotification("FPS Boost Disabled", "Info", 2)
         end
+   end)
+
+    -- ✅ FPS CAP FEATURE (NEW)
+    -- FPS Cap Card
+    local fpsCapCard = createCard("FPS Cap", "Sets a maximum frame rate for smoother and more stable performance", 3)
+    fpsCapCard.Size = UDim2.new(1, 0, 0, 55)
+
+    -- ✅ DECLARE THIS EARLY (before dropdown and toggle)
+    local fpsCapEnabled = false
+
+    -- FPS Cap Dropdown
+    local fpsCapDropdown = Instance.new("Frame", fpsCapCard)
+    fpsCapDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    fpsCapDropdown.Size = UDim2.new(0.2, 0, 0.7, 0)
+    fpsCapDropdown.Position = UDim2.new(0.65, 0, 0.15, 0)
+    fpsCapDropdown.BorderSizePixel = 0
+
+    local fpsCapCorner = Instance.new("UICorner", fpsCapDropdown)
+    fpsCapCorner.CornerRadius = UDim.new(0, 12)
+
+    local fpsCapStroke = Instance.new("UIStroke", fpsCapDropdown)
+    fpsCapStroke.Name = "ThemeStroke"
+    fpsCapStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    fpsCapStroke.Thickness = 1
+    fpsCapStroke.Transparency = 0.8
+
+    local fpsCapLabel = Instance.new("TextLabel", fpsCapDropdown)
+    fpsCapLabel.BackgroundTransparency = 1
+    fpsCapLabel.Size = UDim2.new(0.7, 0, 1, 0)
+    fpsCapLabel.Font = Enum.Font.GothamBold
+    fpsCapLabel.TextSize = 12
+    fpsCapLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    fpsCapLabel.Text = "60"
+    fpsCapLabel.TextXAlignment = Enum.TextXAlignment.Left
+    fpsCapLabel.Position = UDim2.new(0.15, 0, 0, 0)
+
+    local fpsCapBtn = Instance.new("TextButton", fpsCapDropdown)
+    fpsCapBtn.BackgroundTransparency = 1
+    fpsCapBtn.Size = UDim2.new(1, 0, 1, 0)
+    fpsCapBtn.Text = ""
+
+    local fpsCapList = Instance.new("ScrollingFrame", fpsCapDropdown)
+    fpsCapList.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    fpsCapList.Size = UDim2.new(1, 0, 0, 0)
+    fpsCapList.Position = UDim2.new(0, 0, 1, 5)
+    fpsCapList.BorderSizePixel = 0
+    fpsCapList.Visible = false
+    fpsCapList.ZIndex = 10
+    fpsCapList.ScrollBarThickness = 2
+    fpsCapList.CanvasSize = UDim2.new(0, 0, 0, 0)
+    fpsCapList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    fpsCapList.ClipsDescendants = true
+
+    local fpsCapListCorner = Instance.new("UICorner", fpsCapList)
+    fpsCapListCorner.CornerRadius = UDim.new(0, 10)
+
+    local fpsCapListStroke = Instance.new("UIStroke", fpsCapList)
+    fpsCapListStroke.Name = "ThemeStroke"
+    fpsCapListStroke.Color = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+    fpsCapListStroke.Thickness = 1
+    fpsCapListStroke.Transparency = 0.8
+    
+    local fpsCapListPadding = Instance.new("UIPadding", fpsCapList)
+    fpsCapListPadding.PaddingTop = UDim.new(0, 4)
+    fpsCapListPadding.PaddingBottom = UDim.new(0, 4)
+    fpsCapListPadding.PaddingLeft = UDim.new(0, 4)
+    fpsCapListPadding.PaddingRight = UDim.new(0, 4)
+
+    local fpsCapListLayout = Instance.new("UIListLayout", fpsCapList)
+    fpsCapListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    fpsCapListLayout.Padding = UDim.new(0, 2)
+
+    local fpsCapOptions = {"60", "120", "Max"}
+    for i, capValue in ipairs(fpsCapOptions) do
+        local opt = Instance.new("TextButton", fpsCapList)
+        opt.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+        opt.Size = UDim2.new(1, 0, 0, 26)
+        opt.Text = capValue
+        opt.Font = Enum.Font.Gotham
+        opt.TextSize = 11
+        opt.TextColor3 = Color3.fromRGB(200, 200, 200)
+        opt.BorderSizePixel = 0
+        opt.ZIndex = 11
+        
+        local optCorner = Instance.new("UICorner", opt)
+        optCorner.CornerRadius = UDim.new(0, 6)
+        
+        opt.MouseButton1Click:Connect(function()
+            fpsCapLabel.Text = capValue
+            fpsCapList.Visible = false
+            
+            PunkXSettings.fpsCapValue = capValue
+            saveSettings(PunkXSettings)
+            
+            -- Apply FPS cap if enabled
+            if fpsCapEnabled and setfpscap then
+                if capValue == "60" then
+                    setfpscap(60)
+                elseif capValue == "120" then
+                    setfpscap(120)
+                elseif capValue == "Max" then
+                    setfpscap(0) -- 0 = unlimited
+                end
+                createNotification("FPS Cap: " .. capValue, "Info", 2)
+            end
+        end)
+    end
+
+    fpsCapBtn.MouseButton1Click:Connect(function()
+        fpsCapList.Visible = not fpsCapList.Visible
+        fpsCapList.Size = UDim2.new(1, 0, 0, math.min(#fpsCapOptions * 30 + 10, 140))
+    end)
+
+    -- FPS Cap Toggle
+    local fpsCapToggleContainer = Instance.new("CanvasGroup", fpsCapCard)
+    fpsCapToggleContainer.BackgroundTransparency = 1
+    fpsCapToggleContainer.Size = UDim2.new(0.12, 0, 0.7, 0)
+    fpsCapToggleContainer.Position = UDim2.new(0.88, 0, 0.15, 0)
+
+    local fpsCapToggleBg = Instance.new("Frame", fpsCapToggleContainer)
+    fpsCapToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    fpsCapToggleBg.Size = UDim2.new(1, 0, 1, 0)
+    fpsCapToggleBg.AnchorPoint = Vector2.new(0.5, 0.5)
+    fpsCapToggleBg.Position = UDim2.new(0.5, 0, 0.5, 0)
+    fpsCapToggleBg.BorderSizePixel = 0
+
+    local fpsCapToggleCorner = Instance.new("UICorner", fpsCapToggleBg)
+    fpsCapToggleCorner.CornerRadius = UDim.new(1, 0)
+
+    local fpsCapToggleBtn = Instance.new("TextButton", fpsCapToggleBg)
+    fpsCapToggleBtn.BackgroundTransparency = 1
+    fpsCapToggleBtn.Size = UDim2.new(1, 0, 1, 0)
+    fpsCapToggleBtn.Text = ""
+
+    local fpsCapToggleLayout = Instance.new("UIListLayout", fpsCapToggleBtn)
+    fpsCapToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+    fpsCapToggleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+    fpsCapToggleLayout.Padding = UDim.new(0, 3)
+
+    local fpsCapTogglePadding = Instance.new("UIPadding", fpsCapToggleBtn)
+    fpsCapTogglePadding.PaddingLeft = UDim.new(0, 3)
+    fpsCapTogglePadding.PaddingRight = UDim.new(0, 3)
+
+    local fpsCapCircle = Instance.new("ImageLabel", fpsCapToggleBtn)
+    fpsCapCircle.BackgroundColor3 = Color3.fromRGB(194, 194, 194)
+    fpsCapCircle.ImageColor3 = Color3.fromRGB(232, 229, 255)
+    fpsCapCircle.Image = "rbxassetid://5552526748"
+    fpsCapCircle.Size = UDim2.new(0, 20, 0, 20)
+    fpsCapCircle.BackgroundTransparency = 1
+    fpsCapCircle.ScaleType = Enum.ScaleType.Fit
+
+    fpsCapToggleBtn.MouseButton1Click:Connect(function()
+        fpsCapEnabled = not fpsCapEnabled
+        fpsCapToggleLayout.HorizontalAlignment = fpsCapEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
+        fpsCapToggleBg.BackgroundColor3 = fpsCapEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
+        
+        PunkXSettings.fpsCapEnabled = fpsCapEnabled
+        saveSettings(PunkXSettings)
+        
+        if fpsCapEnabled then
+            if setfpscap then
+                local capValue = fpsCapLabel.Text
+                if capValue == "60" then
+                    setfpscap(60)
+                elseif capValue == "120" then
+                    setfpscap(120)
+                elseif capValue == "Max" then
+                    setfpscap(0)
+                end
+                createNotification("FPS Cap Enabled: " .. capValue, "Success", 2)
+            else
+                warn("[PUNK X] Your executor does not support setfpscap!")
+                createNotification("FPS Cap Not Supported", "Error", 3)
+                fpsCapEnabled = false
+                fpsCapToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
+                fpsCapToggleBg.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            end
+        else
+            if setfpscap then
+                setfpscap(0) -- Remove cap (unlimited)
+            end
+            createNotification("FPS Cap Disabled", "Info", 2)
+        end
     end)
 
     -- FOV Control
@@ -6654,6 +6848,42 @@ end))
             end
             enableFPS(PunkXSettings.fpsBoostPreset)
             fpsEnabled = true
+        end
+
+if PunkXSettings.fpsBoostEnabled then
+            if fpsToggleBg then
+                fpsToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if fpsToggleBtn:FindFirstChild("UIListLayout") then
+                    fpsToggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            enableFPS(PunkXSettings.fpsBoostPreset)
+            fpsEnabled = true
+        end
+        
+        -- ✅ FPS Cap Restoration (NEW)
+        if fpsCapLabel then
+            fpsCapLabel.Text = PunkXSettings.fpsCapValue
+        end
+        
+        if PunkXSettings.fpsCapEnabled then
+            if fpsCapToggleBg then
+                fpsCapToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                if fpsCapToggleBtn:FindFirstChild("UIListLayout") then
+                    fpsCapToggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
+            end
+            if setfpscap then
+                local capValue = PunkXSettings.fpsCapValue
+                if capValue == "60" then
+                    setfpscap(60)
+                elseif capValue == "120" then
+                    setfpscap(120)
+                elseif capValue == "Max" then
+                    setfpscap(0)
+                end
+            end
+            fpsCapEnabled = true
         end
         
         -- FOV
