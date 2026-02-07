@@ -19,16 +19,6 @@ end
 local SECRET_DEV_KEY = decrypt("\x2b\x2e\x35\x30\x56\x23\x56\x43\x39\x49\x42\x56\x4f\x3d\x4a\x3a\x56\x42\x38\x48\x3f\x56\x4c\x3e\x4a\x4a")
 local G2L = {};
 
--- 🛡️ EARLY SAFE SERVICE LOADING (needed for UI creation)
-local cloneref = cloneref or function(o) return o end
-local HttpService = (function()
-	local success, service = pcall(function() return game:GetService("HttpService") end)
-	if success and service and typeof(service) == "Instance" then
-		return cloneref(service)
-	end
-	return nil
-end)()
-
 -- StarterGui.ScreenGui
 -- // 🛡️ SECURITY: STRICT STEALTH PARENTING //
 local function GetSafeParent()
@@ -2879,7 +2869,7 @@ G2L["123"]["BackgroundTransparency"] = 0.3;
 -- StarterGui.ScreenGui.Open
 G2L["138"] = Instance.new("ImageButton", G2L["1"]);
 G2L["138"]["BorderSizePixel"] = 0;
-G2L["138"]["Visible"] = true -- ✅ FIXED: Changed from false to true;
+G2L["138"]["Visible"] = true -- ✅ FIXED;
 G2L["138"]["BackgroundTransparency"] = 1;
 G2L["138"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
 G2L["138"]["ImageColor3"] = Color3.fromRGB(26, 27, 32);
@@ -3202,7 +3192,7 @@ end
 		TweenService = GetServiceSafe("TweenService")
 	end
 	
-	local Main = script.Parent:WaitForChild("Main");
+	-- 🛑 CRITICAL ABORT: If these are STILL missing, stop execution
 	local Leftside = Main:WaitForChild("Leftside");
 	local Nav = Leftside:WaitForChild("Nav");
 	local Pages = Main:WaitForChild("Pages");
