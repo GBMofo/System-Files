@@ -5227,8 +5227,11 @@ end)
 
 -- Invisible Open Trigger (Moved to bottom of Privacy section)
 local invisCard = createCard("Hidden Mode", "Hide UI and reopen by typing '/e open' in chat", -41)
--- ✅ FIXED: Store all three return values (especially setState)
-local hiddenModeToggle, hiddenModeBg, setHiddenModeState = createSmartToggle(invisCard, function(enabled)
+-- ✅ FIXED: Make it global so /e open handler can access it
+local hiddenModeToggle, hiddenModeBg
+_G.setHiddenModeState = nil  -- Initialize global variable
+
+hiddenModeToggle, hiddenModeBg, _G.setHiddenModeState = createSmartToggle(invisCard, function(enabled)
     InvisTriggerOpen = enabled
     if enabled then
         createNotification('Chat "/e open" to open UI', "Info", 5)
@@ -7856,9 +7859,12 @@ task.spawn(function()
             -- ✅ FIXED: Reset Hidden Mode when UI reopens
             InvisTriggerOpen = false
             
-            -- Use setState function to update toggle (silent = true means no callback)
-            if setHiddenModeState then
-                setHiddenModeState(false, true)
+            -- Use GLOBAL setState function to update toggle
+            if _G.setHiddenModeState then
+                _G.setHiddenModeState(false, true)  -- false = OFF, true = silent
+                print("[DEBUG] Hidden Mode toggle updated to OFF")  -- Debug print
+            else
+                warn("[DEBUG] setHiddenModeState not found!")  -- Debug warning
             end
             
             createNotification("UI Reopened - Hidden Mode Disabled", "Info", 3)
