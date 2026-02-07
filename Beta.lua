@@ -5662,25 +5662,34 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         local optCorner = Instance.new("UICorner", opt)
         optCorner.CornerRadius = UDim.new(0, 6)
         
-        opt.MouseButton1Click:Connect(function()
-            fpsCapLabel.Text = capValue
-            fpsCapList.Visible = false
-            
-            PunkXSettings.fpsCapValue = capValue
-            saveSettings(PunkXSettings)
-            
-            -- Apply FPS cap if enabled
-            if fpsCapEnabled and setfpscap then
-                if capValue == "60" then
-                    setfpscap(60)
-                elseif capValue == "120" then
-                    setfpscap(120)
-                elseif capValue == "Max" then
-                    setfpscap(0) -- 0 = unlimited
-                end
-                createNotification("FPS Cap: " .. capValue, "Info", 2)
+     opt.MouseButton1Click:Connect(function()
+    fpsCapLabel.Text = capValue
+    fpsCapList.Visible = false
+    
+    createNotification("DEBUG: Dropdown clicked - " .. capValue, "Warn", 2)
+    wait(0.5)
+    
+    PunkXSettings.fpsCapValue = capValue
+    saveSettings(PunkXSettings)
+    
+    -- Apply FPS cap if enabled
+    if fpsCapEnabled then
+        createNotification("DEBUG: Toggle is ON, applying...", "Info", 2)
+        wait(0.5)
+        if setfpscap then
+            if capValue == "60" then
+                setfpscap(60)
+            elseif capValue == "120" then
+                setfpscap(120)
+            elseif capValue == "Max" then
+                setfpscap(0)
             end
-        end)
+            createNotification("FPS Cap: " .. capValue, "Success", 2)
+        end
+    else
+        createNotification("DEBUG: Toggle is OFF, not applying", "Warn", 2)
+    end
+end)
     end
 
     fpsCapBtn.MouseButton1Click:Connect(function()
@@ -5733,18 +5742,25 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
         
         PunkXSettings.fpsCapEnabled = fpsCapEnabled
         saveSettings(PunkXSettings)
+
+if fpsCapEnabled then
+    if setfpscap then
+        local capValue = fpsCapLabel.Text
+        createNotification("DEBUG: Dropdown = " .. capValue, "Info", 2)
+        wait(0.5)
         
-        if fpsCapEnabled then
-            if setfpscap then
-                local capValue = fpsCapLabel.Text
-                if capValue == "60" then
-                    setfpscap(60)
-                elseif capValue == "120" then
-                    setfpscap(120)
-                elseif capValue == "Max" then
-                    setfpscap(0)
-                end
-                createNotification("FPS Cap Enabled: " .. capValue, "Success", 2)
+        if capValue == "60" then
+            setfpscap(60)
+            createNotification("DEBUG: Called setfpscap(60)", "Info", 2)
+        elseif capValue == "120" then
+            setfpscap(120)
+            createNotification("DEBUG: Called setfpscap(120)", "Info", 2)
+        elseif capValue == "Max" then
+            setfpscap(0)
+            createNotification("DEBUG: Called setfpscap(0)", "Info", 2)
+        end
+        wait(0.5)
+        createNotification("FPS Cap Enabled: " .. capValue, "Success", 2)
             else
                 warn("[PUNK X] Your executor does not support setfpscap!")
                 createNotification("FPS Cap Not Supported", "Error", 3)
