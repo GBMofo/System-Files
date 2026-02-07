@@ -5582,6 +5582,9 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
     local fpsCapCard = createCard("FPS Cap", "Sets a maximum frame rate for smoother and more stable performance", 3)
     fpsCapCard.Size = UDim2.new(1, 0, 0, 55)
 
+    -- ✅ DECLARE THIS EARLY (before dropdown and toggle)
+    local fpsCapEnabled = false
+
     -- FPS Cap Dropdown
     local fpsCapDropdown = Instance.new("Frame", fpsCapCard)
     fpsCapDropdown.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
@@ -5723,7 +5726,6 @@ local fpsOptions = {"Light", "Medium", "Extreme"}
     fpsCapCircle.BackgroundTransparency = 1
     fpsCapCircle.ScaleType = Enum.ScaleType.Fit
 
-    local fpsCapEnabled = false  -- ✅ FIXED - Declared as local!
     fpsCapToggleBtn.MouseButton1Click:Connect(function()
         fpsCapEnabled = not fpsCapEnabled
         fpsCapToggleLayout.HorizontalAlignment = fpsCapEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
