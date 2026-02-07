@@ -36,11 +36,8 @@ local function GetSafeParent()
     if gethui then 
         return gethui()
     end
-    -- ✅ FIXED: Fallback to CoreGui if gethui is missing
-    if game:GetService("CoreGui") then
-        return game:GetService("CoreGui")
-    end
-    return game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+    -- ✅ FIX: Fallback to CoreGui instead of returning nil
+    return game:GetService("CoreGui")
 end
 
 -- // 🛡️ SECURITY: SAFE RANDOM NAME GENERATION //
@@ -76,37 +73,16 @@ G2L["1"]["ResetOnSpawn"] = false
 -- StarterGui.ScreenGui.LocalScript
 G2L["2"] = Instance.new("LocalScript", G2L["1"]);
 
--- ✅ FIXED: Create the "Open" toggle button FIRST (parented to ScreenGui, not LocalScript)
-G2L["Open"] = Instance.new("TextButton", G2L["1"]);
-G2L["Open"]["Active"] = true;
-G2L["Open"]["BorderSizePixel"] = 0;
-G2L["Open"]["BackgroundColor3"] = Color3.fromRGB(44, 46, 54);
-G2L["Open"]["Selectable"] = true;
-G2L["Open"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
-G2L["Open"]["Size"] = UDim2.new(0, 100, 0, 40);
-G2L["Open"]["Position"] = UDim2.new(0.5, 0, 0.1, 0);
-G2L["Open"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
-G2L["Open"]["Text"] = "Open UI";
-G2L["Open"]["Name"] = "Open";
-G2L["Open"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["Open"]["Font"] = Enum.Font.GothamBold;
-G2L["Open"]["TextSize"] = 14;
 
--- Add UICorner to Open button
-G2L["OpenCorner"] = Instance.new("UICorner", G2L["Open"]);
-G2L["OpenCorner"]["CornerRadius"] = UDim.new(0, 9);
-
--- Add UIStroke to Open button
-G2L["OpenStroke"] = Instance.new("UIStroke", G2L["Open"]);
-G2L["OpenStroke"]["Transparency"] = 0.95;
-G2L["OpenStroke"]["Thickness"] = 3;
-G2L["OpenStroke"]["Color"] = Color3.fromRGB(232, 229, 255);
-G2L["OpenStroke"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
 -- StarterGui.ScreenGui.LocalScript.Yo
--- ✅ FIXED: Changed parent from G2L["2"] (LocalScript) to G2L["1"] (ScreenGui)
-G2L["3"] = Instance.new("TextButton", G2L["1"]);
+G2L["3"] = Instance.new("TextButton", G2L["2"]);
+G2L["3"]["Active"] = false;
+G2L["3"]["BorderSizePixel"] = 0;
+G2L["3"]["BackgroundColor3"] = Color3.fromRGB(44, 46, 54);
+G2L["3"]["Selectable"] = false;
+G2L["3"]["AutomaticSize"] = Enum.AutomaticSize.X;
 G2L["3"]["Size"] = UDim2.new(0, 0, 1, 0);
 G2L["3"]["ClipsDescendants"] = true;
 G2L["3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
