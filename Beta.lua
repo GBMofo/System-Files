@@ -3425,17 +3425,17 @@ if v.Name == "Popups" then v.Visible = false return end
 						Noification["7"].GroupTransparency = math.clamp(1 - Noification.Animator.Scale, 0, 1);
 					end);
 					Noification.Animator.Scale = 0;
-					local ATween = game.TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+					local ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
 						Scale = 1
 					});
 					ATween:Play();
 					ATween.Completed:Wait();
-					ATween = game.TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
+					ATween = TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
 						Size = UDim2.new(0, 0, 0, 4)
 					});
 					ATween:Play();
 					ATween.Completed:Wait();
-					ATween = game.TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
+					ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
 						Scale = 0
 					});
 					ATween:Play();
