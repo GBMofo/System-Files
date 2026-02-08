@@ -1,10 +1,13 @@
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
+-- ⚠️ TEMPORARILY DISABLED FOR DEBUGGING
+--[[
 if getgenv then
     getgenv().print = function(...) end
     getgenv().warn = function(...) end
 end
 local print = function(...) end
 local warn = function(...) end
+--]]
 
 -- Decryption function
 local function decrypt(str)
@@ -62,13 +65,18 @@ end
 local randomName = safeGenerateGUID()
 
 -- // CREATE UI //
-G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
+print("[DEBUG] Creating ScreenGui...")
+local parent = GetSafeParent()
+print("[DEBUG] GetSafeParent returned:", parent and parent:GetFullName() or "NIL")
+G2L["1"] = Instance.new("ScreenGui", parent)
+print("[DEBUG] ScreenGui created, parent is:", G2L["1"].Parent and G2L["1"].Parent:GetFullName() or "NIL")
 G2L["1"].Name = randomName
 G2L["1"]["IgnoreGuiInset"] = true
 G2L["1"]["DisplayOrder"] = 999
 G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets
 G2L["1"]["ClipToDeviceSafeArea"] = false
 G2L["1"]["ResetOnSpawn"] = false
+print("[DEBUG] ScreenGui.Enabled:", G2L["1"].Enabled)
 
 
 -- StarterGui.ScreenGui.LocalScript
@@ -3210,22 +3218,32 @@ end
 	local KeyVailded = false;
 	local highlighter = nil;
 	local function hideUI(bool, forKey)
+		print("[DEBUG] hideUI called with bool =", bool, "InvisTriggerOpen =", InvisTriggerOpen)
 		if (not bool and InvisTriggerOpen) then
 			script.Parent.Enabled = false;
+			print("[DEBUG] Disabled ScreenGui because InvisTriggerOpen")
 		end
 		for _, v in ipairs(script.Parent:GetChildren()) do
-if v.Name == "Popups" then v.Visible = false return end
+if v.Name == "Popups" then 
+	print("[DEBUG] Found Popups, setting Visible = false and returning")
+	v.Visible = false 
+	return 
+end
 			if (v.Name == "EnableFrame") then
 				continue;
 			end
 			if (v:IsA("Frame") or v:IsA("ImageLabel")) then
 				v.Visible = bool;
+				print("[DEBUG] Set", v.Name, "Visible =", bool)
 			elseif v:IsA("ImageButton") then
 				v.Visible = not bool;
+				print("[DEBUG] Set", v.Name, "ImageButton Visible =", not bool)
 			end
 		end
+		print("[DEBUG] hideUI finished")
 	end
 	hideUI(false);
+	print("[DEBUG] hideUI(false) completed")
 	-- 🛡️ REMOVED: _PULL_INT (Detected Trigger)
 
 -- 🟢 FIX: Connect to Real Executor Functions
@@ -5854,3 +5872,38 @@ end
 	end);
 end;
 C_2()
+
+-- [DEBUG] Final check
+task.spawn(function()
+	task.wait(1)
+	print("[DEBUG] === FINAL CHECK ===")
+	local screenGui = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):FindFirstChild(randomName)
+	if not screenGui then
+		local success, gethui_result = pcall(function() return gethui() end)
+		if success and gethui_result then
+			screenGui = gethui_result:FindFirstChild(randomName)
+		end
+		if not screenGui then
+			screenGui = game:GetService("CoreGui"):FindFirstChild(randomName)
+		end
+	end
+	if screenGui then
+		print("[DEBUG] ScreenGui found:", screenGui:GetFullName())
+		print("[DEBUG] ScreenGui.Enabled:", screenGui.Enabled)
+		local openBtn = screenGui:FindFirstChild("Open")
+		if openBtn then
+			print("[DEBUG] Open button found!")
+			print("[DEBUG] Open button Visible:", openBtn.Visible)
+			print("[DEBUG] Open button Parent:", openBtn.Parent and openBtn.Parent:GetFullName() or "NIL")
+		else
+			warn("[DEBUG] Open button NOT FOUND in ScreenGui!")
+			print("[DEBUG] Children count:", #screenGui:GetChildren())
+			for i, child in ipairs(screenGui:GetChildren()) do
+				print("[DEBUG] Child", i, ":", child.Name, child.ClassName)
+			end
+		end
+	else
+		warn("[DEBUG] ScreenGui NOT FOUND anywhere!")
+		warn("[DEBUG] randomName was:", randomName)
+	end
+end)
