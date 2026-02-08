@@ -5381,20 +5381,39 @@ if v.Name == "Popups" then v.Visible = false return end
 			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
 		end);
 		
-		if not highlighter then
-			highlighter = load_highlighter();
-			print("int");
-		end
-		
-		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
-			update_lines(EditorFrame.Input, EditorFrame.Lines);
-			if not Data.Editor.EditingSavedFile then
-				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
+		-- ✅ PROTECTED HIGHLIGHTER INITIALIZATION
+		pcall(function()
+			if not highlighter then
+				highlighter = load_highlighter();
+				print("[PUNK X] Highlighter loaded");
 			end
-		end);
+		end)
 		
-		update_lines(EditorFrame.Input, EditorFrame.Lines);
-		highlighter.highlight({ textObject = EditorFrame.Input });
+		-- ✅ PROTECTED TEXT CHANGE HANDLER
+		pcall(function()
+			EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
+				pcall(function()
+					update_lines(EditorFrame.Input, EditorFrame.Lines);
+				end)
+				if not Data.Editor.EditingSavedFile then
+					pcall(function()
+						UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
+					end)
+				end
+			end);
+		end)
+		
+		-- ✅ PROTECTED LINE UPDATE
+		pcall(function()
+			update_lines(EditorFrame.Input, EditorFrame.Lines);
+		end)
+		
+		-- ✅ PROTECTED HIGHLIGHTER
+		pcall(function()
+			if highlighter then
+				highlighter.highlight({ textObject = EditorFrame.Input });
+			end
+		end)
 		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
@@ -5549,6 +5568,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		goTo("Home", true);
 	end;
 InitTabs.Autoexecute = function()
+		task.wait(3)
 		-- Decompiler stuff (Keep if needed, or remove if you just want AutoExec)
 		local request = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request);
 		
@@ -5561,8 +5581,14 @@ InitTabs.Autoexecute = function()
 						task.spawn(function()
 							local content = CLONED_Detectedly.readfile(path)
 							if content and #content > 0 then
-								local func = CLONED_Detectedly.runcode(content)
-								if func then func() end
+								-- ✅ USE PROTECTED RUNCODE INSTEAD OF DIRECT LOADSTRING
+								local success, err = pcall(function()
+									UIEvents.Executor.RunCode(content)()
+								end)
+								if not success then
+									print("[PUNK X] Autoexec error in " .. path .. ": " .. tostring(err))
+								end
+							end
 							end
 						end)
 					end
