@@ -1,15 +1,10 @@
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
--- ⚠️ TEMPORARILY DISABLED FOR DEBUGGING
---[[
 if getgenv then
     getgenv().print = function(...) end
     getgenv().warn = function(...) end
 end
 local print = function(...) end
 local warn = function(...) end
---]]
-
-print("[PUNK X DEBUG] Script started loading...")
 
 -- Decryption function
 local function decrypt(str)
@@ -73,10 +68,6 @@ G2L["1"]["DisplayOrder"] = 999
 G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets
 G2L["1"]["ClipToDeviceSafeArea"] = false
 G2L["1"]["ResetOnSpawn"] = false
-
-print("[PUNK X DEBUG] ScreenGui created!")
-print("[PUNK X DEBUG] Initial parent:", G2L["1"].Parent and G2L["1"].Parent:GetFullName() or "NIL")
-print("[PUNK X DEBUG] ScreenGui.Enabled:", G2L["1"].Enabled)
 
 
 -- StarterGui.ScreenGui.LocalScript
@@ -3124,16 +3115,8 @@ local script = G2L["2"];
 	if not game:IsLoaded() then game.Loaded:Wait() end
 	
 	local ps = pcall(function()
-		local targetParent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
-		print("[PUNK X DEBUG] Re-parenting ScreenGui to:", targetParent and targetParent:GetFullName() or "NIL")
-		script.Parent.Parent = targetParent
-		print("[PUNK X DEBUG] ScreenGui parent is now:", script.Parent.Parent and script.Parent.Parent:GetFullName() or "NIL")
-		print("[PUNK X DEBUG] ScreenGui.Enabled:", script.Parent.Enabled)
+		script.Parent.Parent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 	end)
-	
-	if not ps then
-		warn("[PUNK X] Failed to re-parent ScreenGui!")
-	end
 	
 	local function deepCopy(tbl)
 		if (type(tbl) ~= "table") then
@@ -3249,20 +3232,6 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 	end
 	hideUI(false);
-	
-	-- 🔍 DEBUG: Check if Open button is visible after hideUI
-	task.spawn(function()
-		task.wait(0.5)
-		local openButton = script.Parent:FindFirstChild("Open")
-		if openButton then
-			print("[PUNK X DEBUG] Open button found!")
-			print("[PUNK X DEBUG] Open button visible:", openButton.Visible)
-			print("[PUNK X DEBUG] Open button parent:", openButton.Parent and openButton.Parent:GetFullName() or "NIL")
-		else
-			warn("[PUNK X DEBUG] Open button NOT FOUND!")
-		end
-	end)
-	
 	-- 🛡️ REMOVED: _PULL_INT (Detected Trigger)
 
 -- 🟢 FIX: Connect to Real Executor Functions
