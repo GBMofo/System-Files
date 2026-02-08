@@ -3117,14 +3117,15 @@ local script = G2L["2"];
 		return func
 	end
 	--local loadstring = clonefunction(loadstring);
-	local PlayerInfo = {
-		ip = "127.0.0.1",
-		country = "Hidden",
-		city = "Hidden"
-	}
+	local PlayerInfo do
+		local success = pcall(function()
+			PlayerInfo = HttpService:JSONDecode(game:HttpGet("https://ipwho.is") or {})
+		end)
+		if not success then
+			PlayerInfo = {}
+		end
+	end
 	local InvisTriggerOpen = false;
-	local InvisToggleBtn = nil; -- Reference to toggle button for /e open command
-	local InvisToggleLayout = nil; -- Reference to toggle layout for /e open command
 	local TweenService = game:GetService("TweenService");
 	local UserInputService = game:GetService("UserInputService");
 	local StarterGui = game:GetService("StarterGui");
@@ -3160,7 +3161,7 @@ if v.Name == "Popups" then v.Visible = false return end
 	end
 	hideUI(false);
 	pcall(function()
-		-- getgenv()._PULL_INT(); -- REMOVED: Detected trigger (BAC-7205)
+		-- getgenv()._PULL_INT(); -- REMOVED: BAC-7205
 	end);
 	local CLONED_Detectedly = deepCopy(Detectedly or {});
 	Detectedly = nil;
@@ -4933,24 +4934,14 @@ if v.Name == "Popups" then v.Visible = false return end
 		},
 		Executor = {
 			RunCode = function(content)
+				createNotification("Executed!", "Success", 5);
 				local func, x = loadstring(content);
 				if not func then
-					-- ✅ SYNTAX ERROR: Silent handling
-					createNotification("Syntax Error: " .. tostring(x), "Error", 5);
-					return function() end;
+					task.spawn(function() error(x) end);
+				else
+					return func;
 				end
-				
-				-- ✅ RUNTIME ERROR PROTECTION: Wrap execution in pcall
-				return function()
-					local success, err = pcall(func);
-					if success then
-						-- Script executed successfully
-						createNotification("Executed!", "Success", 5);
-					else
-						-- Script had runtime error - show notification instead of crashing
-						createNotification("Runtime Error: " .. tostring(err), "Error", 5);
-					end
-				end
+				return function() end;
 			end
 		},
 	Key = {
@@ -5182,21 +5173,6 @@ if v.Name == "Popups" then v.Visible = false return end
 			InvisTriggerOpen = v;
 			if v then createNotification('Chat "/e open" to open UI', "Info", 5); end
 		end);
-		
-		-- Capture the toggle elements right after creation
-		task.wait(0.1) -- Small delay to ensure toggle is created
-		do
-			local toggleContainer = Pages.Settings.Scripts:FindFirstChild("Invisible Open Trigger");
-			if toggleContainer then
-				local toggleMain = toggleContainer:FindFirstChild("Main");
-				if toggleMain then
-					InvisToggleBtn = toggleMain:FindFirstChild("Button");
-					if InvisToggleBtn then
-						InvisToggleLayout = InvisToggleBtn:FindFirstChild("UIListLayout");
-					end
-				end
-			end
-		end
 
 		newToggle("Censored Name In UI", function(v)
 			if v then Main.Title.TextLabel.Text = "Hello, User!";
@@ -5206,7 +5182,6 @@ if v.Name == "Popups" then v.Visible = false return end
 		newToggle("Anti AFK", function(v)
 			local speaker = game:GetService("Players").LocalPlayer
 			if v then
-				-- 🛡️ PASSIVE ANTI-AFK (Fixes BAC-3205)
 				local antiAFKConn = nil
 				local function armAntiAFK()
 					if antiAFKConn then antiAFKConn:Disconnect() end
@@ -5381,39 +5356,20 @@ if v.Name == "Popups" then v.Visible = false return end
 			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
 		end);
 		
-		-- ✅ PROTECTED HIGHLIGHTER INITIALIZATION
-		pcall(function()
-			if not highlighter then
-				highlighter = load_highlighter();
-				print("[PUNK X] Highlighter loaded");
-			end
-		end)
+		if not highlighter then
+			highlighter = load_highlighter();
+			print("int");
+		end
 		
-		-- ✅ PROTECTED TEXT CHANGE HANDLER
-		pcall(function()
-			EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
-				pcall(function()
-					update_lines(EditorFrame.Input, EditorFrame.Lines);
-				end)
-				if not Data.Editor.EditingSavedFile then
-					pcall(function()
-						UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
-					end)
-				end
-			end);
-		end)
-		
-		-- ✅ PROTECTED LINE UPDATE
-		pcall(function()
+		EditorFrame.Input:GetPropertyChangedSignal("Text"):Connect(function()
 			update_lines(EditorFrame.Input, EditorFrame.Lines);
-		end)
-		
-		-- ✅ PROTECTED HIGHLIGHTER
-		pcall(function()
-			if highlighter then
-				highlighter.highlight({ textObject = EditorFrame.Input });
+			if not Data.Editor.EditingSavedFile then
+				UIEvents.EditorTabs.saveTab(nil, EditorFrame.Input.Text, false);
 			end
-		end)
+		end);
+		
+		update_lines(EditorFrame.Input, EditorFrame.Lines);
+		highlighter.highlight({ textObject = EditorFrame.Input });
 		
 		local pos = EditorFrame.Position;
 		local size = EditorFrame.Size;
@@ -5568,7 +5524,6 @@ if v.Name == "Popups" then v.Visible = false return end
 		goTo("Home", true);
 	end;
 InitTabs.Autoexecute = function()
-		task.wait(3)
 		-- Decompiler stuff (Keep if needed, or remove if you just want AutoExec)
 		local request = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request);
 		
@@ -5581,14 +5536,8 @@ InitTabs.Autoexecute = function()
 						task.spawn(function()
 							local content = CLONED_Detectedly.readfile(path)
 							if content and #content > 0 then
-								-- ✅ USE PROTECTED RUNCODE INSTEAD OF DIRECT LOADSTRING
-								local success, err = pcall(function()
-									UIEvents.Executor.RunCode(content)()
-								end)
-								if not success then
-									print("[PUNK X] Autoexec error in " .. path .. ": " .. tostring(err))
-								end
-							end
+								local func = CLONED_Detectedly.runcode(content)
+								if func then func() end
 							end
 						end)
 					end
@@ -5672,19 +5621,9 @@ InitTabs.Autoexecute = function()
 		
 		Players.LocalPlayer.Chatted:Connect(function(m)
 			if ((m:sub(1, #command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
-				-- Re-enable the UI
 				script.Parent.Enabled = true;
 				if Main:FindFirstChild("EnableFrame") then
 					Main.EnableFrame.Visible = true;
-				end
-				
-				-- Turn off the Invisible Open Trigger toggle
-				InvisTriggerOpen = false;
-				
-				-- Update toggle visual state
-				if InvisToggleBtn and InvisToggleLayout then
-					InvisToggleLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left; -- OFF position
-					InvisToggleBtn.BackgroundColor3 = Color3.fromRGB(69, 72, 85); -- OFF color
 				end
 			end
 		end);
