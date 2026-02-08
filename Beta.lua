@@ -21,21 +21,23 @@ local G2L = {};
 
 -- StarterGui.ScreenGui
 local function GetSafeParent()
-    -- 🛡️ STRICT STEALTH: ONLY ALLOW HIDDEN UI
+    -- Try gethui first (best option)
     if gethui then 
-        return gethui()
-    end
-    -- If gethui is missing, we return nil to prevent unsafe loading
-    return nil 
-end
-    
-    -- 2. GOOD: CoreGui (Hard to detect)
-    local CoreGui = game:GetService("CoreGui")
-    if CoreGui:FindFirstChild("RobloxGui") then 
-        return CoreGui 
+        local success, result = pcall(function() return gethui() end)
+        if success and result then
+            return result
+        end
     end
     
-    -- 3. RISKY: PlayerGui (Visible, fallback)
+    -- Fallback to CoreGui
+    local success2, CoreGui = pcall(function() 
+        return game:GetService("CoreGui") 
+    end)
+    if success2 and CoreGui then
+        return CoreGui
+    end
+    
+    -- Last resort: PlayerGui (at least it works!)
     return game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 end
 
