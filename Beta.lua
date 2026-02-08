@@ -30,14 +30,24 @@ local HttpService = (function()
 end)()
 
 -- StarterGui.ScreenGui
--- // 🛡️ SECURITY: STRICT STEALTH PARENTING //
+-- // 🛡️ SECURITY: SAFE PARENTING WITH FALLBACKS //
 local function GetSafeParent()
-    -- 🛡️ STRICT STEALTH: ONLY ALLOW HIDDEN UI
+    -- Try gethui first (best option - hidden UI)
     if gethui then 
-        return gethui()
+        local success, result = pcall(function() return gethui() end)
+        if success and result then
+            return result
+        end
     end
-    -- If gethui is missing, we return nil to prevent unsafe loading
-    return nil 
+    
+    -- Fallback to CoreGui (still relatively hidden)
+    local success2, CoreGui = pcall(function() return game:GetService("CoreGui") end)
+    if success2 and CoreGui then
+        return CoreGui
+    end
+    
+    -- Last resort: PlayerGui (visible but at least it works!)
+    return game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 end
 
 -- // 🛡️ SECURITY: SAFE RANDOM NAME GENERATION //
