@@ -5173,7 +5173,7 @@ if v.Name == "Popups" then v.Visible = false return end
 
 		newToggle("Censored Name In UI", function(v)
 			if v then Main.Title.TextLabel.Text = "Hello, User!";
-			else Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!"; end
+			else Main.Title.TextLabel.Text = "Hello, " .. Players.LocalPlayer.Name .. "!"; end
 		end);
 		
 		newToggle("Anti AFK", function(v)
@@ -5201,7 +5201,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					if obj:IsA("BasePart") then obj.CastShadow = false; obj.Material = "Plastic" end
 					if obj:IsA("Texture") or obj:IsA("Decal") then obj.Transparency = 1 end
 				end
-				game.Lighting.GlobalShadows = false
+				Lighting.GlobalShadows = false
 			end
 		end)
 
@@ -5615,9 +5615,9 @@ InitTabs.Autoexecute = function()
 	-- [PART 1: UI SETUP AFTER LOAD]
 	task.spawn(function()
 		local command = "/e open";
-		repeat task.wait(0.1) until game.Players.LocalPlayer
+		repeat task.wait(0.1) until Players.LocalPlayer
 		
-		game.Players.LocalPlayer.Chatted:Connect(function(m)
+		Players.LocalPlayer.Chatted:Connect(function(m)
 			if ((m:sub(1, #command):lower() == command) and not script.Parent.Enabled and InvisTriggerOpen) then
 				script.Parent.Enabled = true;
 				if Main:FindFirstChild("EnableFrame") then
@@ -5635,7 +5635,7 @@ InitTabs.Autoexecute = function()
 		
 		if KeyVailded then
 			if Main and Main:FindFirstChild("Title") and Main.Title:FindFirstChild("TextLabel") then
-				Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!";
+				Main.Title.TextLabel.Text = "Hello, " .. Players.LocalPlayer.Name .. "!";
 			end
 		end
 	end);
