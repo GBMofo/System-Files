@@ -1,3 +1,11 @@
+-- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
+if getgenv then
+    getgenv().print = function(...) end
+    getgenv().warn = function(...) end
+end
+local print = function(...) end
+local warn = function(...) end
+
 -- Decryption function
 local function decrypt(str)
     local result = ""
@@ -29,8 +37,22 @@ local function GetSafeParent()
     return game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- // 🛡️ SECURITY: RANDOM NAME //
-local randomName = game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
+-- // 🛡️ SECURITY: SAFE RANDOM NAME GENERATION //
+local function safeGenerateGUID()
+    local success, result = pcall(function()
+        return game:GetService("HttpService"):GenerateGUID(false):sub(1, 8)
+    end)
+    if success then return result end
+    local chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    local guid = ""
+    for i = 1, 8 do
+        local rand = math.random(1, #chars)
+        guid = guid .. chars:sub(rand, rand)
+    end
+    return guid
+end
+
+local randomName = safeGenerateGUID()
 
 -- // CREATE UI //
 G2L["1"] = Instance.new("ScreenGui", GetSafeParent())
@@ -3117,23 +3139,45 @@ local script = G2L["2"];
 		return func
 	end
 	--local loadstring = clonefunction(loadstring);
-	local PlayerInfo do
-		local success = pcall(function()
-			PlayerInfo = game.HttpService:JSONDecode(game:HttpGet("https://ipwho.is") or {})
-		end)
-		if not success then
-			PlayerInfo = {}
-		end
+-- 🛡️ FIX: Fake PlayerInfo to prevent HTTP detection
+	local PlayerInfo = {
+		ip = "127.0.0.1",
+		country = "Hidden",
+		city = "Hidden"
+	}
+local InvisTriggerOpen = false;
+
+	-- [[ 🛡️ FIX: SAFE SERVICE GETTER ]] 
+local function GetServiceSafe(name)
+    local success, service = pcall(function() return game:GetService(name) end)
+    if not success then return nil end
+    if typeof(service) ~= "Instance" then return nil end
+    return cloneref and cloneref(service) or service
+end
+
+	local MockHttpService = {
+		JSONEncode = function(self, data) return "{}" end,
+		JSONDecode = function(self, data) return {} end,
+		GenerateGUID = function(self) return tostring(math.random(100000, 999999)) end,
+		UrlEncode = function(self, str) return str end
+	}
+
+	local TweenService = GetServiceSafe("TweenService")
+	local UserInputService = GetServiceSafe("UserInputService")
+	local StarterGui = GetServiceSafe("StarterGui")
+	local GuiService = GetServiceSafe("GuiService")
+	local Lighting = GetServiceSafe("Lighting")
+	local ReplicatedStorage = GetServiceSafe("ReplicatedStorage")
+	local RunService = GetServiceSafe("RunService")
+	local Players = GetServiceSafe("Players")
+	local RealHttp = GetServiceSafe("HttpService")
+	local HttpService = RealHttp or MockHttpService
+	
+	if not Players or not TweenService then
+		if not game:IsLoaded() then game.Loaded:Wait() end
+		Players = GetServiceSafe("Players")
+		TweenService = GetServiceSafe("TweenService")
 	end
-	local InvisTriggerOpen = false;
-	local TweenService = game:GetService("TweenService");
-	local UserInputService = game:GetService("UserInputService");
-	local StarterGui = game:GetService("StarterGui");
-	local GuiService = game:GetService("GuiService");
-	local Lighting = game:GetService("Lighting");
-	local ReplicatedStorage = game:GetService("ReplicatedStorage");
-	local RunService = game:GetService("RunService");
-	local Players = game:GetService("Players");
 	local Main = script.Parent:WaitForChild("Main");
 	local Leftside = Main:WaitForChild("Leftside");
 	local Nav = Leftside:WaitForChild("Nav");
@@ -3159,34 +3203,23 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 	end
 	hideUI(false);
-	pcall(function()
-		getgenv()._PULL_INT();
-	end);
-	local CLONED_Detectedly = deepCopy(Detectedly or {});
-	Detectedly = nil;
-	local print = function(...)
-	end;
-	for i, v in pairs({
-		'pushautoexec',
-		'runcode',
-	
-		'open_url',
-		'toast',
-		-- file
-		'writefile' ,
-		'appendfile',
-		'readfile',
-		'isfile',
-		'listfiles',
-		'delfile',
-		-- folder
-		'deldir',
-		'isfolder',
-		'makedir'}) do
-		if not CLONED_Detectedly[v] then
-			CLONED_Detectedly[v] = function(...) print(v,"|", ...) end
-		end
-	end
+	-- 🛡️ REMOVED: _PULL_INT (Detected Trigger)
+
+-- 🟢 FIX: Connect to Real Executor Functions
+	local CLONED_Detectedly = {}
+	CLONED_Detectedly.writefile = writefile
+	CLONED_Detectedly.readfile = readfile
+	CLONED_Detectedly.appendfile = appendfile
+	CLONED_Detectedly.isfile = isfile
+	CLONED_Detectedly.listfiles = listfiles
+	CLONED_Detectedly.delfile = delfile
+	CLONED_Detectedly.isfolder = isfolder
+	CLONED_Detectedly.delfolder = delfolder
+	CLONED_Detectedly.makedir = makefolder or makedir
+	CLONED_Detectedly.deldir = delfolder or deldir
+	CLONED_Detectedly.setclipboard = setclipboard or toclipboard
+	CLONED_Detectedly.runcode = function(code) return loadstring(code) end
+	CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport)) or function() end
 	local BASE_WIDTH = 733;
 	local BASE_HEIGHT = 392;
 -- 🟢 1. CONNECT REAL EXECUTOR FUNCTIONS
@@ -3425,17 +3458,17 @@ if v.Name == "Popups" then v.Visible = false return end
 						Noification["7"].GroupTransparency = math.clamp(1 - Noification.Animator.Scale, 0, 1);
 					end);
 					Noification.Animator.Scale = 0;
-					local ATween = game.TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+					local ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
 						Scale = 1
 					});
 					ATween:Play();
 					ATween.Completed:Wait();
-					ATween = game.TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
+					ATween = TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
 						Size = UDim2.new(0, 0, 0, 4)
 					});
 					ATween:Play();
 					ATween.Completed:Wait();
-					ATween = game.TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
+					ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
 						Scale = 0
 					});
 					ATween:Play();
@@ -4612,7 +4645,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				
 				if not isTemp then
 					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
-					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
+					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
 						Name = TabName,
 						Content = Content,
 						Order = (HighestOrder + 1)
@@ -4648,7 +4681,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					else
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
-							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", HttpService:JSONEncode({
 								Name = tabName,
 								Content = Content,
 								Order = TabData[2]
@@ -4665,7 +4698,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				else
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
-						CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+						CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", HttpService:JSONEncode({
 							Name = tabName,
 							Content = Content,
 							Order = TabData[2]
@@ -4812,7 +4845,7 @@ if v.Name == "Popups" then v.Visible = false return end
 						Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab]
 					end
 					
-					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
+					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", HttpService:JSONEncode({
 						Name = NewName,
 						Content = Data.Editor.Tabs[TargetTab][1],
 						Order = Data.Editor.Tabs[TargetTab][2]
@@ -4832,7 +4865,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
 				end
 				
-				CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
+				CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", HttpService:JSONEncode({
 					Name = Name,
 					Content = Content
 				}));
@@ -4933,10 +4966,12 @@ if v.Name == "Popups" then v.Visible = false return end
 		},
 		Executor = {
 			RunCode = function(content)
-				createNotification("Executed!", "Success", 5);
 				local func, x = loadstring(content);
 				if not func then
-					task.spawn(function() error(x) end);
+					createNotification("Syntax Error: " .. tostring(x), "Error", 5);
+					return function() end;
+				end
+				createNotification("Executed!", "Success", 5);
 				else
 					return func;
 				end
@@ -5179,18 +5214,35 @@ if v.Name == "Popups" then v.Visible = false return end
 		end);
 		
 		newToggle("Anti AFK", function(v)
-			local speaker = game:GetService("Players").LocalPlayer
+			local speaker = Players.LocalPlayer
 			if v then
-				if getconnections then
-					for _, connection in pairs(getconnections(speaker.Idled)) do
-						connection:Disable()
+				local antiAFKConn = nil
+				local function armAntiAFK()
+					if antiAFKConn then antiAFKConn:Disconnect() end
+					if getconnections then
+						for _, conn in pairs(getconnections(speaker.Idled)) do
+							pcall(function() conn:Disable() end)
+						end
 					end
-				else
-					speaker.Idled:Connect(function()
-						Services.VirtualUser:CaptureController()
-						Services.VirtualUser:ClickButton2(Vector2.new())
+					antiAFKConn = speaker.Idled:Connect(function() end)
+				end
+				armAntiAFK()
+				if speaker.Character then
+					speaker.Character.Humanoid.Died:Connect(function()
+						task.wait(Players.RespawnTime + 0.5)
+						armAntiAFK()
 					end)
 				end
+				speaker.CharacterAdded:Connect(function(char)
+					task.wait(0.5)
+					armAntiAFK()
+					if char:FindFirstChild("Humanoid") then
+						char.Humanoid.Died:Connect(function()
+							task.wait(Players.RespawnTime + 0.5)
+							armAntiAFK()
+						end)
+					end
+				end)
 				createNotification("Anti AFK Enabled", "Success", 5)
 			end
 		end)
@@ -5239,7 +5291,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			if (filename == "recently.data") then continue; end
 			
 			local success, Loadedscript = pcall(function() 
-				return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/scripts/" .. filename)); 
+				return HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/scripts/" .. filename)); 
 			end)
 			
 			if success and Loadedscript and Loadedscript.Name then
@@ -5290,7 +5342,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					-- 🟢 3. Define path and read ONCE
 					local cleanPath = "Punk-X-Files/saves/" .. filename
 					local content = CLONED_Detectedly.readfile(cleanPath)
-					return game.HttpService:JSONDecode(content)
+					return HttpService:JSONDecode(content)
 				end)
 
 				-- 🟢 4. Clean Syntax Highlighting tags if present
@@ -5417,7 +5469,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 			local text = Search.TextBox.Text;
 			local isEmpty = # (string.gsub(text, "[%s]", "")) <= 0;
-			local search = game.HttpService:UrlEncode(text);
+			local search = HttpService:UrlEncode(text);
 			local scriptJson;
 			
 			if isEmpty then
@@ -5522,6 +5574,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		goTo("Home", true);
 	end;
 InitTabs.Autoexecute = function()
+		task.wait(3)
 		-- Decompiler stuff (Keep if needed, or remove if you just want AutoExec)
 		local request = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request);
 		
@@ -5669,7 +5722,11 @@ InitTabs.Autoexecute = function()
 		getgenv().PUNK_X_KEY = nil
 		_G.PUNK_X_KEY = nil
 		
-		loadUI() -- Load Executor
+		task.spawn(function()
+				task.wait(2)
+				initializeFileSystem()
+			end)
+			loadUI() -- Load Executor
 	else
         -- [[ 🟢 STANDARD USER VALIDATION ]]
         local valid, data = KeyLib.Validate(key)
