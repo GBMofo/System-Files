@@ -3206,8 +3206,9 @@ if v.Name == "Popups" then v.Visible = false return end
 	CLONED_Detectedly.runcode = function(code) return loadstring(code) end
 	CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or syn and syn.queue_on_teleport) or function() end
 
-	-- 🟢 2. FORCE FOLDER CREATION (IMMEDIATELY)
-	do
+	-- 🟢 2. DELAYED FOLDER CREATION (2 seconds delay)
+	task.spawn(function()
+		task.wait(2)
 		local function SafeMakeDir(dir)
 			if CLONED_Detectedly.isfolder and CLONED_Detectedly.makedir then
 				-- If folder doesn't exist, create it
@@ -3231,7 +3232,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		for _, folder in ipairs(subs) do
 			SafeMakeDir(folder)
 		end
-	end
+	end)
 	local OriginalProperties = {};
 	local function scaleUIElement(element, storeOnly)
 		if not OriginalProperties[element] then
@@ -5239,16 +5240,23 @@ if v.Name == "Popups" then v.Visible = false return end
 	end;
 
 	InitTabs.TabsData = function()
-		-- 🟢 1. Ensure folders exist
-		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
-			CLONED_Detectedly.makedir("Punk-X-Files")
-		end
-		if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
-			CLONED_Detectedly.makedir("Punk-X-Files/scripts")
-		end
+		-- 🟢 1. Ensure folders exist (PROTECTED)
+		pcall(function()
+			if not CLONED_Detectedly.isfolder("Punk-X-Files") then
+				CLONED_Detectedly.makedir("Punk-X-Files")
+			end
+		end)
+		pcall(function()
+			if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
+				CLONED_Detectedly.makedir("Punk-X-Files/scripts")
+			end
+		end)
 
-		-- 🟢 2. List files from new path
-		local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
+		-- 🟢 2. List files from new path (PROTECTED)
+		local scripts = {}
+		pcall(function()
+			scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
+		end)
 		
 		for index, Nextpath in ipairs(scripts) do
 			-- Extract filename safely
@@ -5275,13 +5283,19 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 		
 		if (# scripts == 0) then
-			UIEvents.EditorTabs.createTab("Script", "");
+			-- PROTECTED: Create default tab
+			pcall(function()
+				UIEvents.EditorTabs.createTab("Script", "");
+			end)
 		end
-		UIEvents.EditorTabs.updateUI();
+		-- PROTECTED: Update UI
+		pcall(function()
+			UIEvents.EditorTabs.updateUI();
+		end)
 	end;
 
 	InitTabs.Saved = function()
-		-- 🟢 1. Create folders if they don't exist
+		-- 🟢 1. Create folders if they don't exist (PROTECTED)
 		local folders = {
 			"Punk-X-Files",
 			"Punk-X-Files/saves",
@@ -5291,13 +5305,18 @@ if v.Name == "Popups" then v.Visible = false return end
 		}
 
 		for _, folder in ipairs(folders) do
-			if not CLONED_Detectedly.isfolder(folder) then
-				CLONED_Detectedly.makedir(folder)
-			end
+			pcall(function()
+				if not CLONED_Detectedly.isfolder(folder) then
+					CLONED_Detectedly.makedir(folder)
+				end
+			end)
 		end
 		
-		-- 🟢 2. List files from the correct folder
-		local saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
+		-- 🟢 2. List files from the correct folder (PROTECTED)
+		local saves = {}
+		pcall(function()
+			saves = CLONED_Detectedly.listfiles("Punk-X-Files/saves") or {};
+		end)
 		
 		for index, Nextpath in ipairs(saves) do
 			-- Extract filename
@@ -5511,15 +5530,23 @@ if v.Name == "Popups" then v.Visible = false return end
 			if Data.Editor.EditingSavedFile and Name ~= "Editor" then
 				local editingName = Data.Editor.EditingSavedFile
 				createNotification("Editing Cancelled", "Warn", 3)
-				CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. editingName .. ".lua");
+				-- ✅ PROTECTED: File delete
+				pcall(function()
+					CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. editingName .. ".lua");
+				end)
 				Data.Editor.Tabs[editingName] = nil;
 				Data.Editor.EditingSavedFile = nil
-				UIEvents.EditorTabs.updateUI();
+				pcall(function()
+					UIEvents.EditorTabs.updateUI();
+				end)
 				if Name ~= "Saved" then Name = "Saved" end
 			end
 			
 			if Pages:FindFirstChild(Name) then
-				Pages.UIPageLayout:JumpTo(Pages[Name]);
+				-- ✅ PROTECTED: Page jump
+				pcall(function()
+					Pages.UIPageLayout:JumpTo(Pages[Name]);
+				end)
 			end
 			local Button = findButton(Name);
 			if not Button then return; end
@@ -5536,12 +5563,15 @@ if v.Name == "Popups" then v.Visible = false return end
 				return;
 			end
 			
-			local TweenService = game:GetService("TweenService")
-			TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
-				Position = TargetPos,
-				Size = TargetSize,
-				BackgroundTransparency = 0
-			}):Play();
+			-- ✅ PROTECTED: Tween animation
+			pcall(function()
+				local TweenService = game:GetService("TweenService")
+				TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+					Position = TargetPos,
+					Size = TargetSize,
+					BackgroundTransparency = 0
+				}):Play();
+			end)
 		end
 		
 		for _, frame in ipairs(Nav:GetChildren()) do
@@ -5549,7 +5579,10 @@ if v.Name == "Popups" then v.Visible = false return end
 				for _, button in ipairs(frame:GetChildren()) do
 					if button:IsA("TextButton") then
 						button.MouseButton1Click:Connect(function()
-							goTo(button.Name);
+							-- ✅ PROTECTED: Tab navigation
+							pcall(function()
+								goTo(button.Name);
+							end)
 						end);
 					end
 				end
@@ -5559,6 +5592,9 @@ if v.Name == "Popups" then v.Visible = false return end
 		goTo("Home", true);
 	end;
 InitTabs.Autoexecute = function()
+		-- ✅ DELAY: Wait 3 seconds before running autoexec
+		task.wait(3)
+		
 		-- Decompiler stuff (Keep if needed, or remove if you just want AutoExec)
 		local request = request or http_request or (syn and syn.request) or (http and http.request) or (fluxus and fluxus.request);
 		
@@ -5569,11 +5605,14 @@ InitTabs.Autoexecute = function()
 				for _, path in pairs(files) do
 					if path:match("%.lua$") then
 						task.spawn(function()
-							local content = CLONED_Detectedly.readfile(path)
-							if content and #content > 0 then
-								local func = CLONED_Detectedly.runcode(content)
-								if func then func() end
-							end
+							-- ✅ PROTECTED: Use safe execution
+							pcall(function()
+								local content = CLONED_Detectedly.readfile(path)
+								if content and #content > 0 then
+									-- Use protected RunCode instead of unsafe loadstring
+									UIEvents.Executor.RunCode(content)()
+								end
+							end)
 						end)
 					end
 				end
