@@ -3123,6 +3123,8 @@ local script = G2L["2"];
 		city = "Hidden"
 	}
 	local InvisTriggerOpen = false;
+	local InvisToggleBtn = nil; -- Reference to toggle button for /e open command
+	local InvisToggleLayout = nil; -- Reference to toggle layout for /e open command
 	local TweenService = game:GetService("TweenService");
 	local UserInputService = game:GetService("UserInputService");
 	local StarterGui = game:GetService("StarterGui");
@@ -5166,10 +5168,6 @@ if v.Name == "Popups" then v.Visible = false return end
 				end);
 			end
 		end
-		
-		-- Store reference to Invisible Open Trigger toggle for chat command
-		local InvisToggleBtn = nil;
-		local InvisToggleLayout = nil;
 		
 		newToggle("Invisible Open Trigger", function(v)
 			InvisTriggerOpen = v;
