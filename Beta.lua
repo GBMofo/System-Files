@@ -4931,14 +4931,15 @@ if v.Name == "Popups" then v.Visible = false return end
 		},
 		Executor = {
 			RunCode = function(content)
-				createNotification("Executed!", "Success", 5);
 				local func, x = loadstring(content);
 				if not func then
-					task.spawn(function() error(x) end);
-				else
-					return func;
+					-- ✅ SILENT ERROR HANDLING (Fixes typing random stuff kick)
+					createNotification("Syntax Error: " .. tostring(x), "Error", 5);
+					return function() end;
 				end
-				return function() end;
+				-- Show success notification only if code is valid
+				createNotification("Executed!", "Success", 5);
+				return func;
 			end
 		},
 	Key = {
