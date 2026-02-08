@@ -19,14 +19,34 @@ end
 local SECRET_DEV_KEY = decrypt("\x2b\x2e\x35\x30\x56\x23\x56\x43\x39\x49\x42\x56\x4f\x3d\x4a\x3a\x56\x42\x38\x48\x3f\x56\x4c\x3e\x4a\x4a")
 local G2L = {};
 
+-- 🛡️ EARLY SAFE SERVICE LOADING (needed for UI creation)
+local cloneref = cloneref or function(o) return o end
+local HttpService = (function()
+	local success, service = pcall(function() return game:GetService("HttpService") end)
+	if success and service and typeof(service) == "Instance" then
+		return cloneref(service)
+	end
+	return nil
+end)()
+
 -- StarterGui.ScreenGui
 -- // 🛡️ SECURITY: STRICT STEALTH PARENTING //
 local function GetSafeParent()
     -- 🛡️ STRICT STEALTH: ONLY ALLOW HIDDEN UI
     if gethui then 
-        return gethui()
+        local success, parent = pcall(function() return gethui() end)
+        if success and parent and typeof(parent) == "Instance" then
+            return parent
+        end
+        
+        -- Retry once after a small delay (gethui might not be ready yet)
+        task.wait(0.1)
+        success, parent = pcall(function() return gethui() end)
+        if success and parent and typeof(parent) == "Instance" then
+            return parent
+        end
     end
-    -- If gethui is missing, we return nil to prevent unsafe loading
+    -- If gethui is missing or returns nil, we return nil to prevent unsafe loading
     return nil 
 end
 
@@ -58,6 +78,18 @@ G2L["1"]["DisplayOrder"] = 999
 G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets
 G2L["1"]["ClipToDeviceSafeArea"] = false
 G2L["1"]["ResetOnSpawn"] = false
+
+-- 🛑 CRITICAL CHECK: Ensure ScreenGui has a valid parent
+if not G2L["1"].Parent then
+    -- gethui() returned nil or failed - ScreenGui has no parent!
+    warn("[PUNK X] CRITICAL ERROR: gethui() unavailable or returned nil!")
+    warn("[PUNK X] Your executor does not support hidden UI mode.")
+    warn("[PUNK X] The UI cannot load safely. Script aborted.")
+    
+    -- Clean up and abort
+    if G2L["1"] then G2L["1"]:Destroy() end
+    return
+end
 
 
 -- StarterGui.ScreenGui.LocalScript
@@ -2869,7 +2901,7 @@ G2L["123"]["BackgroundTransparency"] = 0.3;
 -- StarterGui.ScreenGui.Open
 G2L["138"] = Instance.new("ImageButton", G2L["1"]);
 G2L["138"]["BorderSizePixel"] = 0;
-G2L["138"]["Visible"] = true -- ✅ FIXED;
+G2L["138"]["Visible"] = false;
 G2L["138"]["BackgroundTransparency"] = 1;
 G2L["138"]["BackgroundColor3"] = Color3.fromRGB(26, 27, 32);
 G2L["138"]["ImageColor3"] = Color3.fromRGB(26, 27, 32);
@@ -3193,6 +3225,11 @@ end
 	end
 	
 	-- 🛑 CRITICAL ABORT: If these are STILL missing, stop execution
+	if not TweenService or not Players then
+		warn("[PUNK X] Critical services unavailable - script paused to prevent kick")
+		return
+	end
+	local Main = script.Parent:WaitForChild("Main");
 	local Leftside = Main:WaitForChild("Leftside");
 	local Nav = Leftside:WaitForChild("Nav");
 	local Pages = Main:WaitForChild("Pages");
@@ -3216,7 +3253,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 	end
-hideUI(false);
+	hideUI(false);
 	-- 🛡️ REMOVED: _PULL_INT (Detected Trigger)
 
 -- 🟢 FIX: Connect to Real Executor Functions
