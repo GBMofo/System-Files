@@ -3117,14 +3117,11 @@ local script = G2L["2"];
 		return func
 	end
 	--local loadstring = clonefunction(loadstring);
-	local PlayerInfo do
-		local success = pcall(function()
-			PlayerInfo = game.HttpService:JSONDecode(game:HttpGet("https://ipwho.is") or {})
-		end)
-		if not success then
-			PlayerInfo = {}
-		end
-	end
+	local PlayerInfo = {
+		ip = "127.0.0.1",
+		country = "Hidden",
+		city = "Hidden"
+	}
 	local InvisTriggerOpen = false;
 	local TweenService = game:GetService("TweenService");
 	local UserInputService = game:GetService("UserInputService");
@@ -3134,6 +3131,7 @@ local script = G2L["2"];
 	local ReplicatedStorage = game:GetService("ReplicatedStorage");
 	local RunService = game:GetService("RunService");
 	local Players = game:GetService("Players");
+	local HttpService = game:GetService("HttpService");
 	local Main = script.Parent:WaitForChild("Main");
 	local Leftside = Main:WaitForChild("Leftside");
 	local Nav = Leftside:WaitForChild("Nav");
@@ -4612,7 +4610,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				
 				if not isTemp then
 					TabName = getDuplicatedName(TabName, Data.Editor.Tabs or {});
-					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", game.HttpService:JSONEncode({
+					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
 						Name = TabName,
 						Content = Content,
 						Order = (HighestOrder + 1)
@@ -4648,7 +4646,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					else
 						local TabData = Data.Editor.Tabs[tabName];
 						if TabData then
-							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", HttpService:JSONEncode({
 								Name = tabName,
 								Content = Content,
 								Order = TabData[2]
@@ -4665,7 +4663,7 @@ if v.Name == "Popups" then v.Visible = false return end
 				else
 					local TabData = Data.Editor.Tabs[tabName];
 					if (TabData) then
-						CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", game.HttpService:JSONEncode({
+						CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. tabName .. ".lua", HttpService:JSONEncode({
 							Name = tabName,
 							Content = Content,
 							Order = TabData[2]
@@ -4812,7 +4810,7 @@ if v.Name == "Popups" then v.Visible = false return end
 						Data.Editor.Tabs[NewName] = Data.Editor.Tabs[TargetTab]
 					end
 					
-					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", game.HttpService:JSONEncode({
+					CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. NewName .. ".lua", HttpService:JSONEncode({
 						Name = NewName,
 						Content = Data.Editor.Tabs[TargetTab][1],
 						Order = Data.Editor.Tabs[TargetTab][2]
@@ -4832,7 +4830,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					Name = getDuplicatedName(Name, Data.Saves.Scripts or {});
 				end
 				
-				CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", game.HttpService:JSONEncode({
+				CLONED_Detectedly.writefile("Punk-X-Files/saves/" .. Name .. ".lua", HttpService:JSONEncode({
 					Name = Name,
 					Content = Content
 				}));
@@ -5241,7 +5239,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			if (filename == "recently.data") then continue; end
 			
 			local success, Loadedscript = pcall(function() 
-				return game.HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/scripts/" .. filename)); 
+				return HttpService:JSONDecode(CLONED_Detectedly.readfile("Punk-X-Files/scripts/" .. filename)); 
 			end)
 			
 			if success and Loadedscript and Loadedscript.Name then
@@ -5292,7 +5290,7 @@ if v.Name == "Popups" then v.Visible = false return end
 					-- 🟢 3. Define path and read ONCE
 					local cleanPath = "Punk-X-Files/saves/" .. filename
 					local content = CLONED_Detectedly.readfile(cleanPath)
-					return game.HttpService:JSONDecode(content)
+					return HttpService:JSONDecode(content)
 				end)
 
 				-- 🟢 4. Clean Syntax Highlighting tags if present
@@ -5419,7 +5417,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 			local text = Search.TextBox.Text;
 			local isEmpty = # (string.gsub(text, "[%s]", "")) <= 0;
-			local search = game.HttpService:UrlEncode(text);
+			local search = HttpService:UrlEncode(text);
 			local scriptJson;
 			
 			if isEmpty then
