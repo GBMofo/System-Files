@@ -4935,13 +4935,22 @@ if v.Name == "Popups" then v.Visible = false return end
 			RunCode = function(content)
 				local func, x = loadstring(content);
 				if not func then
-					-- ✅ SILENT ERROR HANDLING (Fixes typing random stuff kick)
+					-- ✅ SYNTAX ERROR: Silent handling
 					createNotification("Syntax Error: " .. tostring(x), "Error", 5);
 					return function() end;
 				end
-				-- Show success notification only if code is valid
-				createNotification("Executed!", "Success", 5);
-				return func;
+				
+				-- ✅ RUNTIME ERROR PROTECTION: Wrap execution in pcall
+				return function()
+					local success, err = pcall(func);
+					if success then
+						-- Script executed successfully
+						createNotification("Executed!", "Success", 5);
+					else
+						-- Script had runtime error - show notification instead of crashing
+						createNotification("Runtime Error: " .. tostring(err), "Error", 5);
+					end
+				end
 			end
 		},
 	Key = {
