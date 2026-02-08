@@ -1,10 +1,15 @@
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
+-- ⚠️ TEMPORARILY DISABLED FOR DEBUGGING
+--[[
 if getgenv then
     getgenv().print = function(...) end
     getgenv().warn = function(...) end
 end
 local print = function(...) end
 local warn = function(...) end
+--]]
+
+print("[PUNK X DEBUG] Script started loading...")
 
 -- Decryption function
 local function decrypt(str)
@@ -34,19 +39,9 @@ end)()
 local function GetSafeParent()
     -- 🛡️ STRICT STEALTH: ONLY ALLOW HIDDEN UI
     if gethui then 
-        local success, parent = pcall(function() return gethui() end)
-        if success and parent and typeof(parent) == "Instance" then
-            return parent
-        end
-        
-        -- Retry once after a small delay (gethui might not be ready yet)
-        task.wait(0.1)
-        success, parent = pcall(function() return gethui() end)
-        if success and parent and typeof(parent) == "Instance" then
-            return parent
-        end
+        return gethui()
     end
-    -- If gethui is missing or returns nil, we return nil to prevent unsafe loading
+    -- If gethui is missing, we return nil to prevent unsafe loading
     return nil 
 end
 
@@ -79,17 +74,9 @@ G2L["1"]["ScreenInsets"] = Enum.ScreenInsets.DeviceSafeInsets
 G2L["1"]["ClipToDeviceSafeArea"] = false
 G2L["1"]["ResetOnSpawn"] = false
 
--- 🛑 CRITICAL CHECK: Ensure ScreenGui has a valid parent
-if not G2L["1"].Parent then
-    -- gethui() returned nil or failed - ScreenGui has no parent!
-    warn("[PUNK X] CRITICAL ERROR: gethui() unavailable or returned nil!")
-    warn("[PUNK X] Your executor does not support hidden UI mode.")
-    warn("[PUNK X] The UI cannot load safely. Script aborted.")
-    
-    -- Clean up and abort
-    if G2L["1"] then G2L["1"]:Destroy() end
-    return
-end
+print("[PUNK X DEBUG] ScreenGui created!")
+print("[PUNK X DEBUG] Initial parent:", G2L["1"].Parent and G2L["1"].Parent:GetFullName() or "NIL")
+print("[PUNK X DEBUG] ScreenGui.Enabled:", G2L["1"].Enabled)
 
 
 -- StarterGui.ScreenGui.LocalScript
@@ -3137,8 +3124,16 @@ local script = G2L["2"];
 	if not game:IsLoaded() then game.Loaded:Wait() end
 	
 	local ps = pcall(function()
-		script.Parent.Parent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+		local targetParent = gethui and gethui() or game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
+		print("[PUNK X DEBUG] Re-parenting ScreenGui to:", targetParent and targetParent:GetFullName() or "NIL")
+		script.Parent.Parent = targetParent
+		print("[PUNK X DEBUG] ScreenGui parent is now:", script.Parent.Parent and script.Parent.Parent:GetFullName() or "NIL")
+		print("[PUNK X DEBUG] ScreenGui.Enabled:", script.Parent.Enabled)
 	end)
+	
+	if not ps then
+		warn("[PUNK X] Failed to re-parent ScreenGui!")
+	end
 	
 	local function deepCopy(tbl)
 		if (type(tbl) ~= "table") then
@@ -3254,6 +3249,20 @@ if v.Name == "Popups" then v.Visible = false return end
 		end
 	end
 	hideUI(false);
+	
+	-- 🔍 DEBUG: Check if Open button is visible after hideUI
+	task.spawn(function()
+		task.wait(0.5)
+		local openButton = script.Parent:FindFirstChild("Open")
+		if openButton then
+			print("[PUNK X DEBUG] Open button found!")
+			print("[PUNK X DEBUG] Open button visible:", openButton.Visible)
+			print("[PUNK X DEBUG] Open button parent:", openButton.Parent and openButton.Parent:GetFullName() or "NIL")
+		else
+			warn("[PUNK X DEBUG] Open button NOT FOUND!")
+		end
+	end)
+	
 	-- 🛡️ REMOVED: _PULL_INT (Detected Trigger)
 
 -- 🟢 FIX: Connect to Real Executor Functions
