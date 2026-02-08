@@ -19,34 +19,23 @@ end
 local SECRET_DEV_KEY = decrypt("\x2b\x2e\x35\x30\x56\x23\x56\x43\x39\x49\x42\x56\x4f\x3d\x4a\x3a\x56\x42\x38\x48\x3f\x56\x4c\x3e\x4a\x4a")
 local G2L = {};
 
--- 🛡️ EARLY SAFE SERVICE LOADING (needed for UI creation)
-local cloneref = cloneref or function(o) return o end
-local HttpService = (function()
-	local success, service = pcall(function() return game:GetService("HttpService") end)
-	if success and service and typeof(service) == "Instance" then
-		return cloneref(service)
-	end
-	return nil
-end)()
-
 -- StarterGui.ScreenGui
--- // 🛡️ SECURITY: SAFE PARENTING WITH FALLBACKS //
 local function GetSafeParent()
-    -- Try gethui first (best option - hidden UI)
+    -- 🛡️ STRICT STEALTH: ONLY ALLOW HIDDEN UI
     if gethui then 
-        local success, result = pcall(function() return gethui() end)
-        if success and result then
-            return result
-        end
+        return gethui()
+    end
+    -- If gethui is missing, we return nil to prevent unsafe loading
+    return nil 
+end
+    
+    -- 2. GOOD: CoreGui (Hard to detect)
+    local CoreGui = game:GetService("CoreGui")
+    if CoreGui:FindFirstChild("RobloxGui") then 
+        return CoreGui 
     end
     
-    -- Fallback to CoreGui (still relatively hidden)
-    local success2, CoreGui = pcall(function() return game:GetService("CoreGui") end)
-    if success2 and CoreGui then
-        return CoreGui
-    end
-    
-    -- Last resort: PlayerGui (visible but at least it works!)
+    -- 3. RISKY: PlayerGui (Visible, fallback)
     return game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui")
 end
 
@@ -3163,9 +3152,6 @@ local script = G2L["2"];
 	}
 local InvisTriggerOpen = false;
 
-	-- Define cloneref (needed for GetServiceSafe)
-	local cloneref = cloneref or function(o) return o end
-
 	-- [[ 🛡️ FIX: SAFE SERVICE GETTER WITH ANTI-HOOK CHECK ]] 
 local function GetServiceSafe(name)
     local success, service = pcall(function() return game:GetService(name) end)
@@ -3189,12 +3175,12 @@ end
 	local MockHttpService = {
 		JSONEncode = function(self, data) return "{}" end,
 		JSONDecode = function(self, data) return {} end,
-		GenerateGUID = function(self) return tostring(math.random(100000, 999999)) end
+		GenerateGUID = function(self) return tostring(math.random(100000, 999999)) end,
+		UrlEncode = function(self, str) return str end
 	}
 
 	-- Load Services Safely (Returns nil instead of crashing if missing)
 	local TweenService = GetServiceSafe("TweenService")
-	local HttpService = GetServiceSafe("HttpService")
 	local UserInputService = GetServiceSafe("UserInputService")
 	local StarterGui = GetServiceSafe("StarterGui")
 	local GuiService = GetServiceSafe("GuiService")
@@ -3202,6 +3188,8 @@ end
 	local ReplicatedStorage = GetServiceSafe("ReplicatedStorage")
 	local RunService = GetServiceSafe("RunService")
 	local Players = GetServiceSafe("Players")
+	local RealHttp = GetServiceSafe("HttpService")
+	local HttpService = RealHttp or MockHttpService
 	
 	-- [[ 🛡️ FIX: CRITICAL WAIT ]]
 	-- If services are missing (because of lag or ban), wait safely instead of erroring
@@ -3210,12 +3198,6 @@ end
 		-- Try one last fetch
 		Players = GetServiceSafe("Players")
 		TweenService = GetServiceSafe("TweenService")
-	end
-	
-	-- 🛑 CRITICAL ABORT: If these are STILL missing, stop execution
-	if not TweenService or not Players then
-		warn("[PUNK X] Critical services unavailable - script paused to prevent kick")
-		return
 	end
 	local Main = script.Parent:WaitForChild("Main");
 	local Leftside = Main:WaitForChild("Leftside");
@@ -3265,7 +3247,6 @@ if v.Name == "Popups" then v.Visible = false return end
 	CLONED_Detectedly.setclipboard = setclipboard or toclipboard
 	CLONED_Detectedly.runcode = function(code) return loadstring(code) end
 	CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport)) or function() end
-
 	local BASE_WIDTH = 733;
 	local BASE_HEIGHT = 392;
 -- 🟢 1. CONNECT REAL EXECUTOR FUNCTIONS
@@ -3284,8 +3265,8 @@ if v.Name == "Popups" then v.Visible = false return end
 	CLONED_Detectedly.runcode = function(code) return loadstring(code) end
 	CLONED_Detectedly.pushautoexec = (queue_on_teleport or queueonteleport or syn and syn.queue_on_teleport) or function() end
 
-	-- 🟢 2. DELAYED FOLDER CREATION (Called after key validation)
-	local function initializeFileSystem()
+	-- 🟢 2. FORCE FOLDER CREATION (IMMEDIATELY)
+	do
 		local function SafeMakeDir(dir)
 			if CLONED_Detectedly.isfolder and CLONED_Detectedly.makedir then
 				-- If folder doesn't exist, create it
@@ -3309,9 +3290,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		for _, folder in ipairs(subs) do
 			SafeMakeDir(folder)
 		end
-		print("[PUNK X] File system initialized")
 	end
-	-- Note: This function is called later with delay, NOT immediately
 	local OriginalProperties = {};
 	local function scaleUIElement(element, storeOnly)
 		if not OriginalProperties[element] then
@@ -3506,32 +3485,21 @@ if v.Name == "Popups" then v.Visible = false return end
 						Noification["7"].GroupTransparency = math.clamp(1 - Noification.Animator.Scale, 0, 1);
 					end);
 					Noification.Animator.Scale = 0;
-					
-					-- ✅ FIXED: Safe TweenService with fallback
-					if TweenService then
-						local ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
-							Scale = 1
-						});
-						ATween:Play();
-						ATween.Completed:Wait();
-						ATween = TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
-							Size = UDim2.new(0, 0, 0, 4)
-						});
-						ATween:Play();
-						ATween.Completed:Wait();
-						ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
-							Scale = 0
-						});
-						ATween:Play();
-						ATween.Completed:Wait();
-					else
-						-- Fallback: Show notification without animations
-						warn("[PUNK X] TweenService unavailable - notification shown without animation")
-						Noification.Animator.Scale = 1
-						task.wait(dur)
-						Noification.Animator.Scale = 0
-					end
-					
+					local ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+						Scale = 1
+					});
+					ATween:Play();
+					ATween.Completed:Wait();
+					ATween = TweenService:Create(Noification["7"].Misc.Fill, TweenInfo.new(dur, Enum.EasingStyle.Linear), {
+						Size = UDim2.new(0, 0, 0, 4)
+					});
+					ATween:Play();
+					ATween.Completed:Wait();
+					ATween = TweenService:Create(Noification.Animator, TweenInfo.new(0.1, Enum.EasingStyle.Exponential, Enum.EasingDirection.In), {
+						Scale = 0
+					});
+					ATween:Play();
+					ATween.Completed:Wait();
 					Noification["7"]:Destroy();
 					table.clear(Noification);
 				end);
@@ -5034,7 +5002,10 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 				-- Show success notification only if code is valid
 				createNotification("Executed!", "Success", 5);
-				return func
+				else
+					return func;
+				end
+				return function() end;
 			end
 		},
 	Key = {
@@ -5084,8 +5055,7 @@ if v.Name == "Popups" then v.Visible = false return end
 		local Settings = Pages:WaitForChild("Settings");
 		for _, v in pairs(Settings.Scripts:GetChildren()) do
 			if SetData[v.Name] and SetData[v.Name].Type == "Slider" then
-				-- ✅ FIXED: Use safe UserInputService variable
-				local UIS = UserInputService or game:GetService("UserInputService");
+				local UIS = game:GetService("UserInputService");
 				local Dragging = false;
 				v.Main.Line.Interact.MouseButton1Down:Connect(function() Dragging = true; end);
 				UIS.InputChanged:Connect(function()
@@ -5263,7 +5233,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 		
-		newToggle("Hidden Mode", function(v)
+		newToggle("Invisible Open Trigger", function(v)
 			InvisTriggerOpen = v;
 			if v then createNotification('Chat "/e open" to open UI', "Info", 5); end
 		end);
@@ -5273,63 +5243,41 @@ if v.Name == "Popups" then v.Visible = false return end
 			else Main.Title.TextLabel.Text = "Hello, " .. game.Players.LocalPlayer.Name .. "!"; end
 		end);
 		
-		-- ✅ SAFER ANTI-AFK (From NEW UI - No VirtualUser detection)
-		-- Anti AFK (Passive Mode - Stealth)
-		-- VirtualUser variable removed to fix BAC-3205
-		local player = Players.LocalPlayer
-		local antiAFKConn
-		local charConn
-
-		local function armAntiAFK()
-			-- 🛡️ STEALTH ANTI-AFK: PASSIVE SIGNAL DISABLE
-			-- Instead of faking inputs (Detected), we just cut the wire.
-			if antiAFKConn then antiAFKConn:Disconnect() end
-			
-			-- Loop through connections and disable them
-			if getconnections then
-				for _, conn in pairs(getconnections(player.Idled)) do
-					pcall(function() conn:Disable() end)
-				end
-			end
-			
-			-- Fallback: Create a dummy connection that does nothing
-			antiAFKConn = player.Idled:Connect(function() end)
-		end
-
-		newToggle("Anti AFK", function(enabled)
-			if enabled then
-				-- Try to disable Roblox's AFK listeners (executor-supported only)
-				if getconnections then
-					for _, c in pairs(getconnections(player.Idled)) do
-						pcall(function()
-							if c.Disable then c:Disable()
-							elseif c.Disconnect then c:Disconnect() end
-						end)
+		newToggle("Anti AFK", function(v)
+			local speaker = Players.LocalPlayer
+			if v then
+				-- 🛡️ PASSIVE ANTI-AFK (Fixes BAC-3205)
+				local antiAFKConn = nil
+				
+				local function armAntiAFK()
+					if antiAFKConn then antiAFKConn:Disconnect() end
+					if getconnections then
+						for _, conn in pairs(getconnections(speaker.Idled)) do
+							pcall(function() conn:Disable() end)
+						end
 					end
+					antiAFKConn = speaker.Idled:Connect(function() end)
 				end
-
-				-- Arm immediately
+				
 				armAntiAFK()
-
-				-- Auto-rearm after character respawn
-				if not charConn then
-					charConn = player.CharacterAdded:Connect(function()
-						task.wait(1) -- wait for Roblox to fully rebuild character
+				
+				if speaker.Character then
+					speaker.Character.Humanoid.Died:Connect(function()
+						task.wait(Players.RespawnTime + 0.5)
 						armAntiAFK()
 					end)
 				end
-				createNotification("Anti AFK Enabled", "Success", 3)
-			else
-				-- Cleanup
-				if antiAFKConn then
-					antiAFKConn:Disconnect()
-					antiAFKConn = nil
-				end
-				if charConn then
-					charConn:Disconnect()
-					charConn = nil
-				end
-				createNotification("Anti AFK Disabled", "Info", 3)
+				speaker.CharacterAdded:Connect(function(char)
+					task.wait(0.5)
+					armAntiAFK()
+					if char:FindFirstChild("Humanoid") then
+						char.Humanoid.Died:Connect(function()
+							task.wait(Players.RespawnTime + 0.5)
+							armAntiAFK()
+						end)
+					end
+				end)
+				createNotification("Anti AFK Enabled", "Success", 5)
 			end
 		end)
 		
@@ -5555,7 +5503,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 			local text = Search.TextBox.Text;
 			local isEmpty = # (string.gsub(text, "[%s]", "")) <= 0;
-			local search = HttpService and HttpService:UrlEncode(text) or text;
+			local search = HttpService:UrlEncode(text);
 			local scriptJson;
 			
 			if isEmpty then
@@ -5565,7 +5513,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 			
 			local success, scripts = pcall(function()
-				return HttpService:JSONDecode(scriptJson);
+				return game:GetService("HttpService"):JSONDecode(scriptJson);
 			end);
 			if (not success or not scripts.result or (# scripts.result.scripts <= 0)) then
 				Search.TextBox.Text = "No results found.";
@@ -5637,13 +5585,12 @@ if v.Name == "Popups" then v.Visible = false return end
 				return;
 			end
 			
-			-- ✅ FIXED: Use safe TweenService variable
+			local TweenService = game:GetService("TweenService")
 			TweenService:Create(EnableFrame, TweenInfo.new(0.35, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
 				Position = TargetPos,
-					Size = TargetSize,
-					BackgroundTransparency = 0
-				}):Play();
-			end
+				Size = TargetSize,
+				BackgroundTransparency = 0
+			}):Play();
 		end
 		
 		for _, frame in ipairs(Nav:GetChildren()) do
@@ -5725,8 +5672,7 @@ InitTabs.Autoexecute = function()
 		local function updateInput(input)
 			local Delta = input.Position - dragStart;
 			local Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + Delta.X, startPos.Y.Scale, startPos.Y.Offset + Delta.Y);
-			if TweenService then
-				TweenService:Create(Frame, TweenInfo.new(0.125), {
+			game:GetService("TweenService"):Create(Frame, TweenInfo.new(0.125), {
 				Position = Position
 			}):Play();
 		end
@@ -5747,14 +5693,11 @@ InitTabs.Autoexecute = function()
 				dragInput = input;
 			end
 		end);
-		-- ✅ FIXED: Use safe UserInputService variable
-		if UserInputService then
-			UserInputService.InputChanged:Connect(function(input)
-				if ((input == dragInput) and dragToggle) then
-					updateInput(input);
-				end
-			end);
-		end
+		game:GetService("UserInputService").InputChanged:Connect(function(input)
+			if ((input == dragInput) and dragToggle) then
+				updateInput(input);
+			end
+		end);
 	end
 	dragify(script.Parent.Open);
 	
@@ -5815,7 +5758,13 @@ InitTabs.Autoexecute = function()
 		getgenv().PUNK_X_KEY = nil
 		_G.PUNK_X_KEY = nil
 		
-		loadUI() -- Load Executor
+		-- ✅ INITIALIZE FILE SYSTEM AFTER DELAY
+			task.spawn(function()
+				task.wait(2)
+				initializeFileSystem()
+			end)
+			
+			loadUI() -- Load Executor
 	else
         -- [[ 🟢 STANDARD USER VALIDATION ]]
         local valid, data = KeyLib.Validate(key)
@@ -5841,12 +5790,6 @@ InitTabs.Autoexecute = function()
             -- Clear keys for security
             getgenv().PUNK_X_KEY = nil
             _G.PUNK_X_KEY = nil
-            
-            -- ✅ INITIALIZE FILE SYSTEM AFTER DELAY (ANTI-KICK)
-            task.spawn(function()
-                task.wait(2) -- Wait 2 seconds after UI loads
-                initializeFileSystem()
-            end)
             
             loadUI() -- Load Executor
             
@@ -5878,8 +5821,7 @@ InitTabs.Autoexecute = function()
     end
 else
     warn("⛔ No key provided! Use the Loader.")
-    -- ✅ FIXED: Use safe RunService variable
-    if RunService and not RunService:IsStudio() then
+    if not game:GetService("RunService"):IsStudio() then
         if script.Parent then script.Parent:Destroy() end
     end
 end
