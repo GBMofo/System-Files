@@ -1,18 +1,18 @@
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
-local _original_print = print
-local _original_warn = warn
+--local _original_print = print
+--local _original_warn = warn
 
 -- Now silence them
-if getgenv then
-    getgenv().print = function(...) end
-    getgenv().warn = function(...) end
-end
-print = function(...) end
-warn = function(...) end
+--if getgenv then
+    --getgenv().print = function(...) end
+   -- getgenv().warn = function(...) end
+--end
+--print = function(...) end
+--warn = function(...) end
 
 -- Store in global for console to use
-_G._original_print = _original_print
-_G._original_warn = _original_warn
+--_G._original_print = _original_print
+--_G._original_warn = _original_warn
 
 -- Decryption function
 local function decrypt(str)
