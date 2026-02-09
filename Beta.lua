@@ -4950,18 +4950,19 @@ if v.Name == "Popups" then v.Visible = false return end
 				end
 			end
 		},
-		Executor = {
-			RunCode = function(content)
-				createNotification("Executed!", "Success", 5);
-				local func, x = loadstring(content);
-				if not func then
-					task.spawn(function() error(x) end);
-				else
-					return func;
+	Executor = {
+				RunCode = function(content)
+					local func, x = loadstring(content);
+					if not func then
+						createNotification("Execution Failed!", "Error", 5);
+						task.spawn(function() error(x) end);
+						return function() end;
+					else
+						createNotification("Executed!", "Success", 5);
+						return func;
+					end
 				end
-				return function() end;
-			end
-		},
+			},
 	Key = {
 			Save = function(Key)
 				CLONED_Detectedly.writefile("Punk-X-Files/punk-x-key.txt", Key);
