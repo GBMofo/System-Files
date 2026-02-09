@@ -6454,36 +6454,41 @@ end))
     local debugCard = createCard("Punk X Console", "Displays real-time logs, errors, and script output for debugging.", 51)
     debugCard.Size = UDim2.new(1, 0, 0, 55)
 
-    createToggle(debugCard, function(enabled)
+        createToggle(debugCard, function(enabled)
         if enabled then
             if not activeConsoleCleanup then
                 activeConsoleCleanup = LaunchConsole()
                 createNotification("Console Launched", "Success", 3)
                 
                 task.spawn(function()
-                    task.wait(1)
+                    task.wait(1.5)  -- Give console time to fully load
                     
-                    -- Use saved original functions
+                    -- 🟢 FIX: Use LogService.ExecuteScript to force messages into LogService
+                    local LogService = game:GetService("LogService")
+                    
                     _G.cprint = function(msg)
-                        if _G._original_print then
-                            _G._original_print("[INFO] " .. tostring(msg))
-                        end
+                        pcall(function()
+                            msg = tostring(msg):gsub("'", "\\'"):gsub('"', '\\"')
+                            LogService:ExecuteScript('print("[INFO] ' .. msg .. '")')
+                        end)
                     end
                     
                     _G.cwarn = function(msg)
-                        if _G._original_warn then
-                            _G._original_warn("[WARN] " .. tostring(msg))
-                        end
+                        pcall(function()
+                            msg = tostring(msg):gsub("'", "\\'"):gsub('"', '\\"')
+                            LogService:ExecuteScript('warn("[WARN] ' .. msg .. '")')
+                        end)
                     end
                     
                     _G.cerror = function(msg)
-                        if _G._original_warn then
-                            _G._original_warn("[ERROR] " .. tostring(msg))
-                        end
+                        pcall(function()
+                            msg = tostring(msg):gsub("'", "\\'"):gsub('"', '\\"')
+                            LogService:ExecuteScript('warn("[ERROR] ' .. msg .. '")')
+                        end)
                     end
                     
-                    -- Test
-                    _G.cprint("🟢 Console Ready!")
+                    -- Test message
+                    LogService:ExecuteScript('print("[PUNK X] 🟢 Console Ready!")')
                 end)
             end
         else
@@ -6498,6 +6503,7 @@ end))
             end
         end
     end)
+
 
     -- [[ RESET LOADER (Moved Down to 52) ]] --
     local resetCard = createCard("Change UI Version", "Resets interface choice - lets you pick old or new UI again", 52)
