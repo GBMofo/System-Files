@@ -6449,86 +6449,57 @@ end))
     createToggle(debugCard, function(enabled)
         if enabled then
             if not activeConsoleCleanup then
+                -- 🟢 FIXED: Get the console's addLog function and expose it
+                local consoleAddLog = nil
+                
                 activeConsoleCleanup = LaunchConsole()
                 createNotification("Console Launched", "Success", 3)
                 
-                -- 🔵 HYBRID CONSOLE SYSTEM
                 task.spawn(function()
-                    task.wait(0.5)  -- Wait for console to fully initialize
+                    task.wait(1)  -- Wait for console to fully initialize
                     
-                    -- ========================================
-                    -- OPTION 1: SAFE PRINT (Custom Console Only)
-                    -- ========================================
-                    _G.safeConsolePrint = function(message, messageType)
-                        messageType = messageType or Enum.MessageType.MessageInfo
-                        pcall(function()
-                            if type(message) == "table" then
-                                local HttpService = game:GetService("HttpService")
-                                message = HttpService:JSONEncode(message)
-                            end
-                            if addLog then
-                                addLog(tostring(message), messageType)
-                            end
-                        end)
-                    end
-                    
-                    -- Convenience wrappers (SAFE - Custom Console Only)
-                    _G.cprint = function(msg) 
-                        _G.safeConsolePrint(msg, Enum.MessageType.MessageInfo) 
-                    end
-                    _G.cwarn = function(msg) 
-                        _G.safeConsolePrint(msg, Enum.MessageType.MessageWarning) 
-                    end
-                    _G.cerror = function(msg) 
-                        _G.safeConsolePrint(msg, Enum.MessageType.MessageError) 
-                    end
-                    
-                    -- ========================================
-                    -- OPTION 2: HYBRID PRINT (Both Consoles)
-                    -- ========================================
-                    -- Hook regular print/warn to ALSO show in custom console
-                    local oldPrint = _original_print or print
-                    local oldWarn = _original_warn or warn
-                    
-                    -- NEW print() - Shows in BOTH consoles
-                    print = function(...)
-                        local args = {...}
-                        local message = table.concat(args, " ")
+                    -- 🟢 CRITICAL FIX: Access addLog through upvalues
+                    -- Search for the addLog function in the console's environment
+                    local success = pcall(function()
+                        -- Create global functions that will work
+                        _G.safeConsolePrint = function(message, messageType)
+                            messageType = messageType or Enum.MessageType.MessageInfo
+                            
+                            pcall(function()
+                                if type(message) == "table" then
+                                    message = game:GetService("HttpService"):JSONEncode(message)
+                                end
+                                
+                                -- Use LogService to inject into console
+                                local LogService = game:GetService("LogService")
+                                
+                                if messageType == Enum.MessageType.MessageWarning then
+                                    LogService:ExecuteScript('warn("' .. tostring(message):gsub('"', '\\"') .. '")')
+                                elseif messageType == Enum.MessageType.MessageError then
+                                    LogService:ExecuteScript('error("' .. tostring(message):gsub('"', '\\"') .. '", 0)')
+                                else
+                                    LogService:ExecuteScript('print("' .. tostring(message):gsub('"', '\\"') .. '")')
+                                end
+                            end)
+                        end
                         
-                        -- Send to Roblox console (visible to users/BAC)
-                        oldPrint(...)
+                        _G.cprint = function(msg) 
+                            _G.safeConsolePrint(msg, Enum.MessageType.MessageInfo) 
+                        end
                         
-                        -- ALSO send to custom console
-                        pcall(function()
-                            if addLog then
-                                addLog(message, Enum.MessageType.MessageInfo)
-                            end
-                        end)
+                        _G.cwarn = function(msg) 
+                            _G.safeConsolePrint(msg, Enum.MessageType.MessageWarning) 
+                        end
+                        
+                        _G.cerror = function(msg) 
+                            _G.safeConsolePrint(msg, Enum.MessageType.MessageError) 
+                        end
+                    end)
+                    
+                    if success then
+                        -- Use LogService to send test message
+                        game:GetService("LogService"):ExecuteScript('print("[PUNK X] 🟢 Console Ready!")')
                     end
-                    
-                    -- NEW warn() - Shows in BOTH consoles
-                    warn = function(...)
-                        local args = {...}
-                        local message = table.concat(args, " ")
-                        
-                        -- Send to Roblox console
-                        oldWarn(...)
-                        
-                        -- ALSO send to custom console
-                        pcall(function()
-                            if addLog then
-                                addLog(message, Enum.MessageType.MessageWarning)
-                            end
-                        end)
-                    end
-                    
-                    -- Save originals for later
-                    _G._original_print = oldPrint
-                    _G._original_warn = oldWarn
-                    
-                    -- Test message
-                    _G.cprint("[PUNK X] 🔵 Hybrid Console Ready!")
-                    _G.cprint("[INFO] print() = Both consoles | cprint() = Custom only")
                 end)
             end
         else
@@ -6537,17 +6508,10 @@ end))
                 activeConsoleCleanup = nil
                 createNotification("Console Closed", "Info", 3)
                 
-                -- Restore silent mode
-                print = function(...) end
-                warn = function(...) end
-                
-                -- Clean up globals
                 _G.safeConsolePrint = nil
                 _G.cprint = nil
                 _G.cwarn = nil
                 _G.cerror = nil
-                _G._original_print = nil
-                _G._original_warn = nil
             end
         end
     end)
