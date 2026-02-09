@@ -5368,9 +5368,21 @@ if v.Name == "Popups" then v.Visible = false return end
 		local EditorFrame = Editor:WaitForChild("Editor");
 		local Method = "Activated";
 		
-		Panel.Execute[Method]:Connect(function()
-			UIEvents.Executor.RunCode(EditorFrame.Input.Text)();
-		end);
+Panel.Execute[Method]:Connect(function()
+    local success, result = pcall(function()
+        local codeFunc = UIEvents.Executor.RunCode(EditorFrame.Input.Text)
+        if codeFunc and type(codeFunc) == "function" then
+            codeFunc()
+        else
+            warn("RunCode did not return a function")
+        end
+    end)
+    
+    if not success then
+        warn("Execute error:", result)
+        createNotification("Execution Error!", "Error", 5)
+    end
+end)
 		
 		Panel.Paste[Method]:Connect(function()
 			EditorFrame.Input.Text = (getclipboard and getclipboard()) or "";
