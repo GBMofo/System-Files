@@ -1,10 +1,18 @@
 -- // 🛡️ STEALTH MODE: SILENCE CONSOLE //
+local _original_print = print
+local _original_warn = warn
+
+-- Now silence them
 if getgenv then
     getgenv().print = function(...) end
     getgenv().warn = function(...) end
 end
-local print = function(...) end
-local warn = function(...) end
+print = function(...) end
+warn = function(...) end
+
+-- Store in global for console to use
+_G._original_print = _original_print
+_G._original_warn = _original_warn
 
 -- Decryption function
 local function decrypt(str)
@@ -6449,57 +6457,33 @@ end))
     createToggle(debugCard, function(enabled)
         if enabled then
             if not activeConsoleCleanup then
-                -- 🟢 FIXED: Get the console's addLog function and expose it
-                local consoleAddLog = nil
-                
                 activeConsoleCleanup = LaunchConsole()
                 createNotification("Console Launched", "Success", 3)
                 
                 task.spawn(function()
-                    task.wait(1)  -- Wait for console to fully initialize
+                    task.wait(1)
                     
-                    -- 🟢 CRITICAL FIX: Access addLog through upvalues
-                    -- Search for the addLog function in the console's environment
-                    local success = pcall(function()
-                        -- Create global functions that will work
-                        _G.safeConsolePrint = function(message, messageType)
-                            messageType = messageType or Enum.MessageType.MessageInfo
-                            
-                            pcall(function()
-                                if type(message) == "table" then
-                                    message = game:GetService("HttpService"):JSONEncode(message)
-                                end
-                                
-                                -- Use LogService to inject into console
-                                local LogService = game:GetService("LogService")
-                                
-                                if messageType == Enum.MessageType.MessageWarning then
-                                    LogService:ExecuteScript('warn("' .. tostring(message):gsub('"', '\\"') .. '")')
-                                elseif messageType == Enum.MessageType.MessageError then
-                                    LogService:ExecuteScript('error("' .. tostring(message):gsub('"', '\\"') .. '", 0)')
-                                else
-                                    LogService:ExecuteScript('print("' .. tostring(message):gsub('"', '\\"') .. '")')
-                                end
-                            end)
+                    -- Use saved original functions
+                    _G.cprint = function(msg)
+                        if _G._original_print then
+                            _G._original_print("[INFO] " .. tostring(msg))
                         end
-                        
-                        _G.cprint = function(msg) 
-                            _G.safeConsolePrint(msg, Enum.MessageType.MessageInfo) 
-                        end
-                        
-                        _G.cwarn = function(msg) 
-                            _G.safeConsolePrint(msg, Enum.MessageType.MessageWarning) 
-                        end
-                        
-                        _G.cerror = function(msg) 
-                            _G.safeConsolePrint(msg, Enum.MessageType.MessageError) 
-                        end
-                    end)
-                    
-                    if success then
-                        -- Use LogService to send test message
-                        game:GetService("LogService"):ExecuteScript('print("[PUNK X] 🟢 Console Ready!")')
                     end
+                    
+                    _G.cwarn = function(msg)
+                        if _G._original_warn then
+                            _G._original_warn("[WARN] " .. tostring(msg))
+                        end
+                    end
+                    
+                    _G.cerror = function(msg)
+                        if _G._original_warn then
+                            _G._original_warn("[ERROR] " .. tostring(msg))
+                        end
+                    end
+                    
+                    -- Test
+                    _G.cprint("🟢 Console Ready!")
                 end)
             end
         else
@@ -6508,7 +6492,6 @@ end))
                 activeConsoleCleanup = nil
                 createNotification("Console Closed", "Info", 3)
                 
-                _G.safeConsolePrint = nil
                 _G.cprint = nil
                 _G.cwarn = nil
                 _G.cerror = nil
