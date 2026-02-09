@@ -5205,7 +5205,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end
 		
-		newToggle("Invisible Open Trigger", function(v)
+		newToggle("Hide UI", function(v)
 			InvisTriggerOpen = v;
 			if v then createNotification('Chat "/e open" to open UI', "Info", 5); end
 		end);
@@ -5243,7 +5243,7 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		end)
 
-	newButton("Reset Loader Environment", "RESET", function()
+	newButton("Change UI Version", "RESET", function()
 			if delfile and isfile then
 				if isfile("Punk-X-Files/punk-x-env.txt") then
 					delfile("Punk-X-Files/punk-x-env.txt")
