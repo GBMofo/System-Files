@@ -4951,18 +4951,35 @@ if v.Name == "Popups" then v.Visible = false return end
 			end
 		},
 	Executor = {
-				RunCode = function(content)
-					local func, x = loadstring(content);
-					if not func then
-						createNotification("Execution Failed!", "Error", 5);
-						task.spawn(function() error(x) end);
-						return function() end;
-					else
-						createNotification("Executed!", "Success", 5);
-						return func;
-					end
-				end
-			},
+    RunCode = function(content)
+        local func, x = loadstring(content);
+        if not func then
+            createNotification("Execution Failed!", "Error", 5);
+            task.spawn(function() error(x) end);
+            return function() end;
+        else
+            createNotification("Executed!", "Success", 5);
+            return func;
+        end
+    end,
+    
+    -- Initialize safe console print
+    Init = function()
+        _G.safeConsolePrint = function(message, messageType)
+            messageType = messageType or Enum.MessageType.MessageOutput
+            
+            if messageType == Enum.MessageType.MessageInfo then
+                print("[INFO]:", message)
+            elseif messageType == Enum.MessageType.MessageWarning then
+                warn("[WARNING]:", message)
+            elseif messageType == Enum.MessageType.MessageError then
+                error("[ERROR]: " .. message)
+            else
+                print(message)
+            end
+        end
+    end
+},
 	Key = {
 			Save = function(Key)
 				CLONED_Detectedly.writefile("Punk-X-Files/punk-x-key.txt", Key);
@@ -5633,21 +5650,24 @@ InitTabs.Autoexecute = function()
 		end
 	end;
 	local Loaded = false;
-	local function loadUI()
-		if Loaded then
-			return;
-		end
-		
-		-- (Folders are already created at the top of the script now)
-		
-		for _, f in pairs(InitTabs) do
-			task.spawn(f);
-		end
-		
-		createNotification("Punk X: Files organized! Check Punk-X-Files folder.", "Info", 5)
-		
-		Loaded = true;
-	end
+local function loadUI()
+    if Loaded then
+        return;
+    end
+    
+    -- (Folders are already created at the top of the script now)
+    
+    -- Initialize safe console print
+    UIEvents.Executor.Init()
+    
+    for _, f in pairs(InitTabs) do
+        task.spawn(f);
+    end
+    
+    createNotification("Punk X: Files organized! Check Punk-X-Files folder.", "Info", 5)
+    
+    Loaded = true;
+end
 	--print("Migration Completed");
 	
 	local Stored = {};
