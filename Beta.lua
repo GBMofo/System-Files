@@ -6985,9 +6985,15 @@ InitTabs.Saved = function()
         end
     end
 
-    safeConnect("Execute", function() 
-        UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))() 
+   safeConnect("Execute", function() 
+    local success, func = pcall(function()
+        return UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))
     end)
+    
+    if success and func and type(func) == "function" then
+        pcall(func)
+    end
+end)
     
     safeConnect("Delete", function() 
         RealInput.Text = "" 
