@@ -7077,38 +7077,13 @@ safeConnect("Paste", function()
         UIEvents.Executor.RunCode(safeGetClipboard())() 
     end)
 
-    -- Tab creation
     -- Tab creation (AC BYPASS)
     local createBtn = Editor.Tabs:FindFirstChild("Create")
     if createBtn then
-        -- Disable all existing connections
-        for _, connection in pairs(getconnections(createBtn.Activated)) do
-            connection:Disable()
-        end
-        for _, connection in pairs(getconnections(createBtn.MouseButton1Click)) do
-            connection:Disable()
-        end
-        
-        local UserInputService = game:GetService("UserInputService")
-        local clicking = false
-        
-        UserInputService.InputBegan:Connect(function(input, gameProcessed)
-            if gameProcessed then return end
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                local mouse = game.Players.LocalPlayer:GetMouse()
-                if mouse.Target and mouse.Target:IsDescendantOf(createBtn) then
-                    clicking = true
-                    task.wait(0.1)
-                    if clicking then
-                        UIEvents.EditorTabs.createTab("Script", "")
-                    end
-                end
-            end
-        end)
-        
-        UserInputService.InputEnded:Connect(function(input)
-            if input.UserInputType == Enum.UserInputType.MouseButton1 then
-                clicking = false
+        createBtn.InputBegan:Connect(function(input)
+            if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+                task.wait(0.1) -- Delay to bypass AC
+                UIEvents.EditorTabs.createTab("Script", "")
             end
         end)
     end
