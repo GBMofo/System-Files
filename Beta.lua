@@ -3791,62 +3791,30 @@ UIEvents.Search = {
 			end,
 
 			createTab = function(TabName, Content, isTemp)
-				-- 🛡️ CRITICAL: Wrap entire function in pcall to prevent kicks
-				local success, err = pcall(function()
-					
-					-- Safety check: Limit max tabs to prevent memory issues
-					local currentTabCount = 0
-					if Data.Editor.Tabs then
-						for _ in pairs(Data.Editor.Tabs) do
-							currentTabCount = currentTabCount + 1
-						end
-					end
-					
-					if currentTabCount >= 25 then
-						createNotification("Maximum tabs reached (25)", "Warning", 3)
-						return
-					end
-					
-					local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
-					Content = Content or "";
-					
-					if not isTemp then
-						TabName = sanitizeFilename(TabName)
-						TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
-						-- 🟢 PATH: Punk-X-Files/scripts/
-						-- ✅ FIXED: Use safe HttpService with additional protection
-						if HttpService then
-							pcall(function()
-								task.wait(0.05) -- Small delay to avoid detection
-								CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
-									Name = TabName, Content = Content, Order = (HighestOrder + 1)
-								}));
-							end)
-						else
-							warn("[PUNK X] Cannot save tab - HttpService unavailable")
-						end
-					end
-
-					if Data.Editor.Tabs then
-						Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
-					end
-					
-					-- Add small delay before UI operations
-					task.wait(0.03)
-					UIEvents.EditorTabs.switchTab(TabName);
-					task.wait(0.03)
-					UIEvents.EditorTabs.updateUI();
-					
-					-- Success notification
-					if not isTemp then
-						createNotification("Created: " .. TabName, "Success", 2)
-					end
-				end)
+				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
+				Content = Content or "";
 				
-				if not success then
-					warn("[PUNK X] Tab creation failed:", err)
-					createNotification("Failed to create tab", "Error", 3)
+				if not isTemp then
+					TabName = sanitizeFilename(TabName)
+					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
+					-- 🟢 PATH: Punk-X-Files/scripts/
+					-- ✅ FIXED: Use safe HttpService
+					if HttpService then
+						pcall(function()
+							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
+								Name = TabName, Content = Content, Order = (HighestOrder + 1)
+							}));
+						end)
+					else
+						warn("[PUNK X] Cannot save tab - HttpService unavailable")
+					end
 				end
+
+				if Data.Editor.Tabs then
+					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
+				end
+				UIEvents.EditorTabs.switchTab(TabName);
+				UIEvents.EditorTabs.updateUI();
 			end,
 
 			saveTab = function(tabName, Content, isExplicitSave)
@@ -3968,44 +3936,135 @@ UIEvents.Search = {
 			end,
 
 			updateUI = function()
-				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
-					if v:GetAttribute("no") then continue end
-					if v:IsA("TextButton") then v:Destroy() end
-				end
-				
-				if Pages.Editor.Tabs:FindFirstChild("Create") then
-					-- Hides "+" button if editing
-					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
-				end
-
-				local total = 0;
-				for i, v in pairs(Data.Editor.Tabs) do
-					-- Isolation: If editing, only show the active tab
-					if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
-						continue 
+				local success, err = pcall(function()
+					
+					for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
+						if v:GetAttribute("no") then continue end
+						if v:IsA("TextButton") and v.Name ~= "Create" then 
+							pcall(function() task.wait(0.01) v:Destroy() end)
+						end
 					end
 					
-					total = total + 1;
-					local new = script.Yo:Clone();
-					new.Parent = Pages.Editor.Tabs;
-					new.Title.Text = i;
-					new.Name = i;
-					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
-					new.LayoutOrder = v[2];
-					if (Data.Editor.CurrentTab == i) then
-						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
+					if Pages.Editor.Tabs:FindFirstChild("Create") then
+						Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
 					end
-				end
+
+					local total = 0
+					for i, v in pairs(Data.Editor.Tabs) do
+						if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
+							continue 
+						end
+						
+						total = total + 1
+						
+						local tabSuccess = pcall(function()
+							task.wait(0.1)
+							
+							local new = Instance.new("TextButton")
+							new.Name = i
+							new.Active = false
+							new.BorderSizePixel = 0
+							new.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+							new.Selectable = false
+							new.AutomaticSize = Enum.AutomaticSize.X
+							new.Size = UDim2.new(0, 0, 1, 0)
+							new.ClipsDescendants = true
+							new.Text = ""
+							
+							task.wait(0.02)
+							
+							local corner = Instance.new("UICorner", new)
+							corner.CornerRadius = UDim.new(0, 12)
+							
+							local layout = Instance.new("UIListLayout", new)
+							layout.HorizontalFlex = Enum.UIFlexAlignment.Fill
+							layout.Wraps = true
+							layout.VerticalFlex = Enum.UIFlexAlignment.Fill
+							layout.SortOrder = Enum.SortOrder.LayoutOrder
+							
+							local padding = Instance.new("UIPadding", new)
+							padding.PaddingTop = UDim.new(0, 6)
+							padding.PaddingRight = UDim.new(0, 6)
+							padding.PaddingLeft = UDim.new(0, 12)
+							padding.PaddingBottom = UDim.new(0, 6)
+							
+							task.wait(0.02)
+							
+							local deleteBtn = Instance.new("ImageButton", new)
+							deleteBtn.Name = "Delete"
+							deleteBtn.BorderSizePixel = 0
+							deleteBtn.ScaleType = Enum.ScaleType.Fit
+							deleteBtn.BackgroundTransparency = 1
+							deleteBtn.ImageColor3 = Color3.fromRGB(255, 100, 100)
+							deleteBtn.Image = "rbxassetid://122962777517764"
+							deleteBtn.Size = UDim2.new(0.05509, 0, 1, 0)
+							deleteBtn.Position = UDim2.new(0.46157, 0, 0, 0)
+							
+							local stroke = Instance.new("UIStroke", new)
+							stroke.Transparency = 0.8
+							stroke.Thickness = 1
+							stroke.Color = Color3.fromRGB(160, 85, 255)
+							stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+							
+							task.wait(0.02)
+							
+							local title = Instance.new("TextLabel", new)
+							title.Name = "Title"
+							title.Text = i
+							title.TextWrapped = true
+							title.TextSize = 14
+							title.TextXAlignment = Enum.TextXAlignment.Left
+							title.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+							title.TextColor3 = Color3.fromRGB(255, 255, 255)
+							title.BackgroundTransparency = 1
+							title.Size = UDim2.new(0, 0, 1, 0)
+							title.LayoutOrder = -1
+							title.AutomaticSize = Enum.AutomaticSize.X
+							
+							new.LayoutOrder = v[2]
+							if (Data.Editor.CurrentTab == i) then
+								new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+							end
+							
+							task.wait(0.02)
+							
+							pcall(function()
+								new.MouseButton1Click:Connect(function() 
+									UIEvents.EditorTabs.switchTab(i) 
+								end)
+							end)
+							
+							pcall(function()
+								deleteBtn.MouseButton1Click:Connect(function() 
+									UIEvents.EditorTabs.delTab(i) 
+								end)
+							end)
+							
+							task.wait(0.02)
+							new.Parent = Pages.Editor.Tabs
+						end)
+						
+						if not tabSuccess then
+							warn("[PUNK X] Tab creation failed:", i)
+						end
+					end
+					
+					local Editor = Pages:WaitForChild("Editor")
+					local Panel = Editor:WaitForChild("Panel")
+					local EditorFrame = Editor:WaitForChild("Editor")
+					
+					if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
+						EditorFrame.Visible = false
+						Panel.Visible = false
+					else
+						EditorFrame.Visible = true
+						Panel.Visible = true
+					end
+					
+				end)
 				
-				local Editor = Pages:WaitForChild("Editor");
-				local Panel = Editor:WaitForChild("Panel");
-				local EditorFrame = Editor:WaitForChild("Editor");
-				
-				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
-					EditorFrame.Visible = false; Panel.Visible = false;
-				else
-					EditorFrame.Visible = true; Panel.Visible = true;
+				if not success then
+					warn("[PUNK X] updateUI failed:", err)
 				end
 			end,
 
@@ -7059,11 +7118,22 @@ safeConnect("Paste", function()
         UIEvents.Executor.RunCode(safeGetClipboard())() 
     end)
 
-    -- Tab creation
+    -- Tab creation (ULTRA SAFE)
     local createBtn = Editor.Tabs:FindFirstChild("Create")
     if createBtn then
-        createBtn.Activated:Connect(function() 
-            UIEvents.EditorTabs.createTab("Script", "") 
+        local debounce = false
+        createBtn.Activated:Connect(function()
+            if debounce then 
+                createNotification("Please wait...", "Warn", 2)
+                return 
+            end
+            debounce = true
+            task.wait(0.5)
+            pcall(function()
+                UIEvents.EditorTabs.createTab("Script", "")
+            end)
+            task.wait(1)
+            debounce = false
         end)
     end
 
