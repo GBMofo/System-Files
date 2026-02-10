@@ -3215,45 +3215,57 @@ local function deepCopy(tbl)
 	}
 local InvisTriggerOpen = false;
 
-	-- [[ 🛡️ FIX: SAFE SERVICE GETTER WITH ANTI-HOOK CHECK ]] 
+-- [[ 🛡️ FIX: SAFE SERVICE GETTER WITH ANTI-HOOK CHECK ]] 
 local function GetServiceSafe(name)
     local success, service = pcall(function() return game:GetService(name) end)
-    
-    if not success then
-        warn("[PUNK X] Failed to get service:", name)
-        return nil
-    end
-    
-    -- Verify it's a real service (detects anti-cheat hooks)
-    if typeof(service) ~= "Instance" then
-        warn("[PUNK X] Service returned invalid type:", name)
-        return nil
-    end
-    
-    return cloneref and cloneref(service) or service
+    if not success or not service then return nil end
+    -- Stealth: Use cloneref to bypass Anti-Cheat hooks
+    if cloneref then return cloneref(service) end
+    return service
 end
 
-	-- [[ 🛡️ FIX: FAKE HTTP SERVICE ]] 
-	-- This fixes the errors in 'createTab' and 'SaveTheme'
-	local MockHttpService = {
-		JSONEncode = function(self, data) return "{}" end,
-		JSONDecode = function(self, data) return {} end,
-		GenerateGUID = function(self) return tostring(math.random(100000, 999999)) end
-	}
+-- [[ 🛡️ FIX: FILE SYSTEM SAFETY WRAPPER ]]
+-- This prevents the "Directory not found" crash that triggers BAC Kick
+local function SafeEnsureFolder(path)
+    if not CLONED_Detectedly.isfolder then return end
+    if not CLONED_Detectedly.isfolder(path) then
+        pcall(function() CLONED_Detectedly.makedir(path) end)
+    end
+end
 
-	-- Load Services Safely (Returns nil instead of crashing if missing)
-	local TweenService = GetServiceSafe("TweenService")
-	local UserInputService = GetServiceSafe("UserInputService")
-	local StarterGui = GetServiceSafe("StarterGui")
-	local GuiService = GetServiceSafe("GuiService")
-	local Lighting = GetServiceSafe("Lighting")
-	local ReplicatedStorage = GetServiceSafe("ReplicatedStorage")
-	local RunService = GetServiceSafe("RunService")
-	local Players = GetServiceSafe("Players")
-	
-	-- Handle HttpService specifically for your Theme/Tabs error
-	local RealHttp = GetServiceSafe("HttpService")
-	local HttpService = RealHttp or MockHttpService
+local function SafeWriteFile(path, content)
+    -- 1. Ensure the root folders exist immediately
+    SafeEnsureFolder("Punk-X-Files")
+    if path:find("scripts/") then SafeEnsureFolder("Punk-X-Files/scripts") end
+    if path:find("saves/") then SafeEnsureFolder("Punk-X-Files/saves") end
+    if path:find("autoexec/") then SafeEnsureFolder("Punk-X-Files/autoexec") end
+    
+    -- 2. Write securely
+    pcall(function()
+        CLONED_Detectedly.writefile(path, content)
+    end)
+end
+
+local MockHttpService = {
+    JSONEncode = function(self, data) return "{}" end,
+    JSONDecode = function(self, data) return {} end,
+    GenerateGUID = function(self) return tostring(math.random(100000, 999999)) end
+}
+
+-- Load Services Safely
+local TweenService = GetServiceSafe("TweenService")
+local UserInputService = GetServiceSafe("UserInputService")
+local StarterGui = GetServiceSafe("StarterGui")
+local GuiService = GetServiceSafe("GuiService")
+local Lighting = GetServiceSafe("Lighting")
+local ReplicatedStorage = GetServiceSafe("ReplicatedStorage")
+local RunService = GetServiceSafe("RunService")
+local Players = GetServiceSafe("Players")
+
+-- Handle HttpService specifically
+local RealHttp = GetServiceSafe("HttpService")
+local HttpService = RealHttp or MockHttpService
+
 
 	-- [[ 🛡️ FIX: CRITICAL WAIT ]]
 	-- If services are missing (because of lag or ban), wait safely instead of erroring
@@ -3790,27 +3802,21 @@ UIEvents.Search = {
 				return HighestOrder;
 			end,
 
-			createTab = function(TabName, Content, isTemp)
+		createTab = function(TabName, Content, isTemp)
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
 				
 				if not isTemp then
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
-					-- 🟢 PATH: Punk-X-Files/scripts/
-					-- ✅ FIXED: Delayed write to bypass AC
-					task.spawn(function()
-						task.wait(0.2)
-						if HttpService then
-							pcall(function()
-								CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
-									Name = TabName, Content = Content, Order = (HighestOrder + 1)
-								}));
-							end)
-						else
-							warn("[PUNK X] Cannot save tab - HttpService unavailable")
-						end
-					end)
+					
+					-- 🛡️ FIX: Use SafeWriteFile instead of task.spawn
+                    -- This ensures the folder exists instantly, stopping the error.
+					if HttpService then
+						SafeWriteFile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
+							Name = TabName, Content = Content, Order = (HighestOrder + 1)
+						}))
+					end
 				end
 
 				if Data.Editor.Tabs then
@@ -6755,13 +6761,9 @@ end))
 end -- End of InitTabs.Settings
 
 InitTabs.TabsData = function()
-		-- 🟢 ENSURE FOLDERS EXIST
-		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
-			CLONED_Detectedly.makedir("Punk-X-Files")
-		end
-		if not CLONED_Detectedly.isfolder("Punk-X-Files/scripts") then
-			CLONED_Detectedly.makedir("Punk-X-Files/scripts")
-		end
+		-- 🛡️ FIX: Use SafeEnsureFolder to guarantee path exists before listing
+		SafeEnsureFolder("Punk-X-Files")
+		SafeEnsureFolder("Punk-X-Files/scripts")
 
 		local scripts = CLONED_Detectedly.listfiles("Punk-X-Files/scripts") or {};
 		
