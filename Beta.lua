@@ -49,46 +49,22 @@ writefile = function(path, content)
         end)
     end
 -- ============================================
--- 🔴 AC BYPASS: SMART WHITELIST + CACHED LOOKUP
+-- 🔴 AC BYPASS: SMART WHITELIST (SAFE VERSION)
 -- ============================================
--- ✅ OPTIMIZED: Won't block critical remotes, still protects from AC kicks
 local _remote_cache = {}
-
--- Whitelist: NEVER block these (prevents disconnects)
-local CRITICAL_REMOTES = {
-    "gui", "player", "character", "humanoid", "workspace",
-    "replicate", "animate", "camera", "sound", "teleport",
-    "chat", "default", "health", "load", "spawn"
-}
-
--- AC Keywords: Only block if 2+ matches (more precise)
+local CRITICAL_REMOTES = {"gui", "player", "character", "humanoid", "workspace", "replicate", "animate", "camera", "sound", "teleport", "chat", "default", "health", "load", "spawn"}
 local AC_KEYWORDS = {"anticheat", "ban", "kick", "detect", "exploit", "cheat"}
 
 local function isACRemote(remoteName)
-    -- Check cache first (instant lookup)
-    if _remote_cache[remoteName] ~= nil then
-        return _remote_cache[remoteName]
-    end
-    
+    if _remote_cache[remoteName] ~= nil then return _remote_cache[remoteName] end
     local lower = remoteName:lower()
-    
-    -- WHITELIST CHECK: If contains critical keyword, ALLOW
     for _, safe in ipairs(CRITICAL_REMOTES) do
-        if lower:find(safe) then
-            _remote_cache[remoteName] = false
-            return false
-        end
+        if lower:find(safe) then _remote_cache[remoteName] = false return false end
     end
-    
-    -- AC PATTERN CHECK: Count matching keywords
     local matches = 0
     for _, keyword in ipairs(AC_KEYWORDS) do
-        if lower:find(keyword) then
-            matches = matches + 1
-        end
+        if lower:find(keyword) then matches = matches + 1 end
     end
-    
-    -- Only block if 2+ AC keywords (prevents false positives)
     local isAC = matches >= 2
     _remote_cache[remoteName] = isAC
     return isAC
@@ -3871,26 +3847,17 @@ UIEvents.Search = {
 				return HighestOrder;
 			end,
 
-
 			createTab = function(TabName, Content, isTemp)
-				-- ✅ STEALTH MODE: Delayed creation to avoid AC detection
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
 				Content = Content or "";
-				
-				-- Show loading state
-				local wasVisible = Pages.Editor.Editor.Visible
-				Pages.Editor.Editor.Visible = false
-				
-				-- Random delay (0.3-0.7s) to look natural
-				task.wait(0.3 + math.random() * 0.4)
 				
 				if not isTemp then
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					-- ✅ STEALTH: Delayed writefile in background
+					-- ✅ FIXED: Delayed writefile to bypass AC
 					task.spawn(function()
-						task.wait(0.5 + math.random() * 0.3) -- Random delay
+						task.wait(0.2) -- Critical delay
 						if HttpService then
 							pcall(function()
 								CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
@@ -3906,11 +3873,6 @@ UIEvents.Search = {
 				if Data.Editor.Tabs then
 					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
 				end
-				
-				-- Restore visibility after delay
-				task.wait(0.1)
-				Pages.Editor.Editor.Visible = wasVisible
-				
 				UIEvents.EditorTabs.switchTab(TabName);
 				UIEvents.EditorTabs.updateUI();
 			end,
@@ -4034,54 +3996,35 @@ UIEvents.Search = {
 			end,
 
 			updateUI = function()
-
-			updateUI = function()
-				-- ✅ STEALTH MODE: Delayed UI updates with random intervals
 				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
 					if v:GetAttribute("no") then continue end
 					if v:IsA("TextButton") then v:Destroy() end
 				end
 				
 				if Pages.Editor.Tabs:FindFirstChild("Create") then
+					-- Hides "+" button if editing
 					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
 				end
 
 				local total = 0;
-				local creationDelay = 0 -- Stagger tab creation
-				
 				for i, v in pairs(Data.Editor.Tabs) do
+					-- Isolation: If editing, only show the active tab
 					if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
 						continue 
 					end
 					
 					total = total + 1;
-					
-					-- ✅ STEALTH: Create tabs one-by-one with delays
-					task.spawn(function()
-						task.wait(creationDelay)
-						
-						local new = script.Yo:Clone();
-						-- ✅ STEALTH: Random name to avoid pattern detection
-						new.Name = game:GetService("HttpService"):GenerateGUID(false):sub(1, 8) .. "_" .. i;
-						new.Parent = Pages.Editor.Tabs;
-						new.Title.Text = i;
-						
-						-- ✅ STEALTH: Delay event connections
-						task.wait(0.05)
-						new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-						new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
-						
-						new.LayoutOrder = v[2];
-						if (Data.Editor.CurrentTab == i) then
-							new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
-						end
-					end)
-					
-					creationDelay = creationDelay + 0.03 -- 30ms between each tab
+					local new = script.Yo:Clone();
+					new.Parent = Pages.Editor.Tabs;
+					new.Title.Text = i;
+					new.Name = i;
+					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
+					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
+					new.LayoutOrder = v[2];
+					if (Data.Editor.CurrentTab == i) then
+						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
+					end
 				end
-				
-				-- Wait for all tabs to be created
-				task.wait(creationDelay + 0.1)
 				
 				local Editor = Pages:WaitForChild("Editor");
 				local Panel = Editor:WaitForChild("Panel");
@@ -7873,21 +7816,16 @@ end
     end
     
     -- Connect buttons
-    -- ✅ OPTIMIZED: Initialize filesystem on-demand + stealth delays
+    -- ✅ OPTIMIZED: Initialize filesystem on-demand when user clicks Saved/Search tabs
     for _, frame in ipairs(Nav:GetChildren()) do
         if frame:IsA("Frame") then
             for _, button in ipairs(frame:GetChildren()) do
                 if button:IsA("TextButton") then
                     button.MouseButton1Click:Connect(function()
-                        -- ✅ STEALTH: Random delay before page switch
-                        local delay = 0.1 + math.random() * 0.2
-                        task.wait(delay)
-                        
-                        -- Initialize filesystem ONLY when needed
+                        -- Initialize filesystem ONLY when user opens Saved or Search tabs
                         if (button.Name == "Saved" or button.Name == "Search") and _G.initFileSystemOnDemand then
                             _G.initFileSystemOnDemand()
                         end
-                        
                         goTo(button.Name);
                     end);
                 end
@@ -8119,14 +8057,15 @@ task.spawn(function()
     
     -- ✅ INITIALIZE FILE SYSTEM AFTER DELAY
     
-    -- ✅ OPTIMIZED + STEALTH: On-demand filesystem initialization
+    -- ✅ OPTIMIZED: Don't auto-initialize filesystem (saves 2-5 seconds on join)
+    -- OLD CODE: task.spawn(function() task.wait(2) initializeFileSystem() end)
+    -- NEW: Will initialize ONLY when user clicks Saved or Search tabs
     _G.filesystemInitialized = false
     _G.initFileSystemOnDemand = function()
         if not _G.filesystemInitialized then
             _G.filesystemInitialized = true
             task.spawn(function()
-                -- ✅ STEALTH: Random delay to avoid pattern detection
-                task.wait(0.2 + math.random() * 0.3)
+                task.wait(0.1) -- Small delay to prevent UI freeze
                 initializeFileSystem()
             end)
         end
@@ -8181,9 +8120,10 @@ end  -- 🔴 4TH END (closes the outer block, probably "do" from line ~2640)
 		-- [PART 3: UI SCALING - OPTIMIZED WITH DEBOUNCE]
 		task.defer(function()
 			local lastUpdate = 0
-			local updateCooldown = 0.5
+			local updateCooldown = 0.5 -- Only allow updates every 0.5 seconds
 			
 			local function UpdateSize()
+				-- Debounce: Skip if called too frequently
 				local now = tick()
 				if now - lastUpdate < updateCooldown then
 					return
@@ -8208,6 +8148,7 @@ end  -- 🔴 4TH END (closes the outer block, probably "do" from line ~2640)
 				workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateSize);
 			end
 			UpdateSize();
+			--print("✅ UI Scaled")
 		end);
 	end;
 	C_2()
