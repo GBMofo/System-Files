@@ -3798,7 +3798,7 @@ UIEvents.Search = {
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					-- 🟢 PATH: Punk-X-Files/scripts/
-				-- ✅ FIXED: Delayed write to bypass AC
+					-- ✅ FIXED: Delayed write to bypass AC
 					task.spawn(function()
 						task.wait(0.2)
 						if HttpService then
@@ -7039,7 +7039,8 @@ safeConnect("Paste", function()
                 UIEvents.EditorTabs.createTab("Script", "")
             end
         end)
-				
+    end
+
     -- Popup controls
     local Popups = script.Parent:FindFirstChild("Popups")
     if Popups and Popups:FindFirstChild("Main") then
