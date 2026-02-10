@@ -27,53 +27,6 @@ end
 local SECRET_DEV_KEY = decrypt("\x2b\x2e\x35\x30\x56\x23\x56\x43\x39\x49\x42\x56\x4f\x3d\x4a\x3a\x56\x42\x38\x48\x3f\x56\x4c\x3e\x4a\x4a")
 local G2L = {};
 
--- ============================================
--- 🔴 AC BYPASS: DELAYED WRITEFILE
--- ============================================
-local _original_writefile = writefile
-local _write_queue = {}
-local _is_processing = false
-
-writefile = function(path, content)
-    table.insert(_write_queue, {path, content})
-    
-    if not _is_processing then
-        _is_processing = true
-        task.spawn(function()
-            while #_write_queue > 0 do
-                task.wait(0.15) -- Delay to avoid AC detection
-                local item = table.remove(_write_queue, 1)
-                pcall(_original_writefile, item[1], item[2])
-            end
-            _is_processing = false
-        end)
-    end
--- ============================================
--- 🔴 AC BYPASS: BLOCK AC REMOTES
--- ============================================
-task.spawn(function()
-    local function blockACRemotes()
-        local oldFireServer = hookfunction(Instance.new("RemoteEvent").FireServer, function(self, ...)
-            local remoteName = self.Name:lower()
-            
-            if remoteName:find("bac") or 
-               remoteName:find("anticheat") or 
-               remoteName:find("detect") or 
-               remoteName:find("exploit") or 
-               remoteName:find("ban") or 
-               remoteName:find("kick") then
-                warn("[BLOCKED AC REMOTE]:", self.Name)
-                return
-            end
-            
-            return oldFireServer(self, ...)
-        end)
-    end
-    
-    pcall(blockACRemotes)
-end)
-end
-
 -- StarterGui.ScreenGui
 local function GetSafeParent()
     -- 🛡️ STRICT STEALTH: ONLY ALLOW HIDDEN UI
@@ -3845,19 +3798,19 @@ UIEvents.Search = {
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					-- ✅ FIXED: Delayed writefile to bypass AC
+					-- ✅ FIXED: Use safe HttpService
 					task.spawn(function()
-						task.wait(0.2) -- Critical delay
+						task.wait(0.2)
 						if HttpService then
-							pcall(function()
-								CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
-									Name = TabName, Content = Content, Order = (HighestOrder + 1)
-								}));
-							end)
-						else
-							warn("[PUNK X] Cannot save tab - HttpService unavailable")
-						end
-					end)
+						pcall(function()
+							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
+								Name = TabName, Content = Content, Order = (HighestOrder + 1)
+							}));
+						end)
+					else
+t				end)
+						warn("[PUNK X] Cannot save tab - HttpService unavailable")
+					end
 				end
 
 				if Data.Editor.Tabs then
@@ -4130,7 +4083,7 @@ UIEvents.Search = {
 
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
 						if Data.Editor.EditingSavedFile == i then
-							task.wait(0.15); UIEvents.Nav.goTo("Editor")
+							UIEvents.Nav.goTo("Editor")
 							return
 						end
 						if Data.Editor.EditingSavedFile then
@@ -4142,7 +4095,7 @@ UIEvents.Search = {
 						end
 						Data.Editor.EditingSavedFile = i
 						UIEvents.EditorTabs.createTab(i, v, true)
-						task.wait(0.15); UIEvents.Nav.goTo("Editor")
+						UIEvents.Nav.goTo("Editor")
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
 
@@ -7077,12 +7030,12 @@ safeConnect("Paste", function()
         UIEvents.Executor.RunCode(safeGetClipboard())() 
     end)
 
-    -- Tab creation (AC BYPASS)
+    -- Tab creation
     local createBtn = Editor.Tabs:FindFirstChild("Create")
     if createBtn then
         createBtn.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-                task.wait(0.1) -- Delay to bypass AC
+                task.wait(0.1)
                 UIEvents.EditorTabs.createTab("Script", "")
             end
         end)
