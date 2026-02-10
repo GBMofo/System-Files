@@ -3791,30 +3791,62 @@ UIEvents.Search = {
 			end,
 
 			createTab = function(TabName, Content, isTemp)
-				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
-				Content = Content or "";
-				
-				if not isTemp then
-					TabName = sanitizeFilename(TabName)
-					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
-					-- 🟢 PATH: Punk-X-Files/scripts/
-					-- ✅ FIXED: Use safe HttpService
-					if HttpService then
-						pcall(function()
-							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
-								Name = TabName, Content = Content, Order = (HighestOrder + 1)
-							}));
-						end)
-					else
-						warn("[PUNK X] Cannot save tab - HttpService unavailable")
+				-- 🛡️ CRITICAL: Wrap entire function in pcall to prevent kicks
+				local success, err = pcall(function()
+					
+					-- Safety check: Limit max tabs to prevent memory issues
+					local currentTabCount = 0
+					if Data.Editor.Tabs then
+						for _ in pairs(Data.Editor.Tabs) do
+							currentTabCount = currentTabCount + 1
+						end
 					end
-				end
+					
+					if currentTabCount >= 25 then
+						createNotification("Maximum tabs reached (25)", "Warning", 3)
+						return
+					end
+					
+					local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
+					Content = Content or "";
+					
+					if not isTemp then
+						TabName = sanitizeFilename(TabName)
+						TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
+						-- 🟢 PATH: Punk-X-Files/scripts/
+						-- ✅ FIXED: Use safe HttpService with additional protection
+						if HttpService then
+							pcall(function()
+								task.wait(0.05) -- Small delay to avoid detection
+								CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
+									Name = TabName, Content = Content, Order = (HighestOrder + 1)
+								}));
+							end)
+						else
+							warn("[PUNK X] Cannot save tab - HttpService unavailable")
+						end
+					end
 
-				if Data.Editor.Tabs then
-					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
+					if Data.Editor.Tabs then
+						Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
+					end
+					
+					-- Add small delay before UI operations
+					task.wait(0.03)
+					UIEvents.EditorTabs.switchTab(TabName);
+					task.wait(0.03)
+					UIEvents.EditorTabs.updateUI();
+					
+					-- Success notification
+					if not isTemp then
+						createNotification("Created: " .. TabName, "Success", 2)
+					end
+				end)
+				
+				if not success then
+					warn("[PUNK X] Tab creation failed:", err)
+					createNotification("Failed to create tab", "Error", 3)
 				end
-				UIEvents.EditorTabs.switchTab(TabName);
-				UIEvents.EditorTabs.updateUI();
 			end,
 
 			saveTab = function(tabName, Content, isExplicitSave)
