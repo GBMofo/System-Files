@@ -3799,18 +3799,19 @@ UIEvents.Search = {
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					-- 🟢 PATH: Punk-X-Files/scripts/
 					-- ✅ FIXED: Use safe HttpService
+					-- ✅ FIXED: Delayed write to bypass AC
 					task.spawn(function()
 						task.wait(0.2)
 						if HttpService then
-						pcall(function()
-							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
-								Name = TabName, Content = Content, Order = (HighestOrder + 1)
-							}));
-						end)
-					else
-t				end)
-						warn("[PUNK X] Cannot save tab - HttpService unavailable")
-					end
+							pcall(function()
+								CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
+									Name = TabName, Content = Content, Order = (HighestOrder + 1)
+								}));
+							end)
+						else
+							warn("[PUNK X] Cannot save tab - HttpService unavailable")
+						end
+					end)
 				end
 
 				if Data.Editor.Tabs then
