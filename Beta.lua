@@ -3811,6 +3811,7 @@ UIEvents.Search = {
 							warn("[PUNK X] Cannot save tab - HttpService unavailable")
 						end
 					end)
+				end
 
 				if Data.Editor.Tabs then
 					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
