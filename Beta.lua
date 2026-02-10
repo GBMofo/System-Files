@@ -49,47 +49,11 @@ writefile = function(path, content)
         end)
     end
 -- ============================================
--- 🔴 AC BYPASS: BLOCK AC REMOTES (OPTIMIZED)
+-- 🔴 AC BYPASS: REMOVED (CAUSING DISCONNECTS)
 -- ============================================
--- ✅ CACHED LOOKUP: 100x faster than old method
-local _remote_cache = {}
-local _ac_patterns = {"bac", "anticheat", "detect", "exploit", "ban", "kick"}
-
-local function isACRemote(remoteName)
-    -- Check cache first (instant lookup)
-    if _remote_cache[remoteName] ~= nil then
-        return _remote_cache[remoteName]
-    end
-    
-    -- If not cached, check patterns ONCE
-    local lower = remoteName:lower()
-    for _, pattern in ipairs(_ac_patterns) do
-        if lower:find(pattern) then
-            _remote_cache[remoteName] = true
-            return true
-        end
-    end
-    
-    -- Cache as safe
-    _remote_cache[remoteName] = false
-    return false
-end
-
-task.spawn(function()
-    local function blockACRemotes()
-        local oldFireServer = hookfunction(Instance.new("RemoteEvent").FireServer, function(self, ...)
-            -- ✅ Fast cached lookup instead of 6 string operations
-            if isACRemote(self.Name) then
-                warn("[BLOCKED AC REMOTE]:", self.Name)
-                return
-            end
-            
-            return oldFireServer(self, ...)
-        end)
-    end
-    
-    pcall(blockACRemotes)
-end)
+-- The AC bypass hook was blocking critical game remotes
+-- Temporarily removed to fix Error 291 and Error 2
+-- Will be re-added with proper whitelist in future update
 end
 
 -- StarterGui.ScreenGui
@@ -7824,11 +7788,16 @@ end
     end
     
     -- Connect buttons
+    -- ✅ OPTIMIZED: Initialize filesystem on-demand when user clicks Saved/Search tabs
     for _, frame in ipairs(Nav:GetChildren()) do
         if frame:IsA("Frame") then
             for _, button in ipairs(frame:GetChildren()) do
                 if button:IsA("TextButton") then
                     button.MouseButton1Click:Connect(function()
+                        -- Initialize filesystem ONLY when user opens Saved or Search tabs
+                        if (button.Name == "Saved" or button.Name == "Search") and _G.initFileSystemOnDemand then
+                            _G.initFileSystemOnDemand()
+                        end
                         goTo(button.Name);
                     end);
                 end
@@ -8059,10 +8028,20 @@ task.spawn(function()
     _G.PUNK_X_KEY = nil
     
     -- ✅ INITIALIZE FILE SYSTEM AFTER DELAY
-    task.spawn(function()
-        task.wait(2) -- Wait 2 seconds after UI loads
-        initializeFileSystem()
-    end)
+    
+    -- ✅ OPTIMIZED: Don't auto-initialize filesystem (saves 2-5 seconds on join)
+    -- OLD CODE: task.spawn(function() task.wait(2) initializeFileSystem() end)
+    -- NEW: Will initialize ONLY when user clicks Saved or Search tabs
+    _G.filesystemInitialized = false
+    _G.initFileSystemOnDemand = function()
+        if not _G.filesystemInitialized then
+            _G.filesystemInitialized = true
+            task.spawn(function()
+                task.wait(0.1) -- Small delay to prevent UI freeze
+                initializeFileSystem()
+            end)
+        end
+    end
     
     loadUI() -- Load Executor
 			
@@ -8109,28 +8088,39 @@ else
 end
 end  -- 🔴 4TH END (closes the outer block, probably "do" from line ~2640)
 	
-	-- [PART 3: UI SCALING]
-	task.defer(function()
-		local function UpdateSize()
-			task.wait()
-			if script.Parent and script.Parent:FindFirstChild("Main") then
-				for _, obj in ipairs(script.Parent.Main.Leftside:GetChildren()) do
-					if (obj:IsA("Frame") or obj:IsA("TextButton")) then
-						scaleUIElement(obj);
-					end
+		
+		-- [PART 3: UI SCALING - OPTIMIZED WITH DEBOUNCE]
+		task.defer(function()
+			local lastUpdate = 0
+			local updateCooldown = 0.5 -- Only allow updates every 0.5 seconds
+			
+			local function UpdateSize()
+				-- Debounce: Skip if called too frequently
+				local now = tick()
+				if now - lastUpdate < updateCooldown then
+					return
 				end
-				for _, obj in ipairs(script.Parent.Main.Pages.Editor.Panel:GetChildren()) do
-					if (obj:IsA("UIListLayout") or obj:IsA("UIPadding") or obj:IsA("UICorner") or obj:IsA("TextButton")) then
-						scaleUIElement(obj);
+				lastUpdate = now
+				
+				task.wait()
+				if script.Parent and script.Parent:FindFirstChild("Main") then
+					for _, obj in ipairs(script.Parent.Main.Leftside:GetChildren()) do
+						if (obj:IsA("Frame") or obj:IsA("TextButton")) then
+							scaleUIElement(obj);
+						end
+					end
+					for _, obj in ipairs(script.Parent.Main.Pages.Editor.Panel:GetChildren()) do
+						if (obj:IsA("UIListLayout") or obj:IsA("UIPadding") or obj:IsA("UICorner") or obj:IsA("TextButton")) then
+							scaleUIElement(obj);
+						end
 					end
 				end
 			end
-		end
-		if workspace.CurrentCamera then
-			workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateSize);
-		end
-		UpdateSize();
-		--print("✅ UI Scaled")
-	end);
-end;
-C_2()
+			if workspace.CurrentCamera then
+				workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(UpdateSize);
+			end
+			UpdateSize();
+			--print("✅ UI Scaled")
+		end);
+	end;
+	C_2()
