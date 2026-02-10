@@ -4083,7 +4083,7 @@ UIEvents.Search = {
 
 					new.Misc.Panel.Edit.MouseButton1Click:Connect(function()
 						if Data.Editor.EditingSavedFile == i then
-							UIEvents.Nav.goTo("Editor")
+							task.wait(0.15); UIEvents.Nav.goTo("Editor")
 							return
 						end
 						if Data.Editor.EditingSavedFile then
@@ -4095,7 +4095,7 @@ UIEvents.Search = {
 						end
 						Data.Editor.EditingSavedFile = i
 						UIEvents.EditorTabs.createTab(i, v, true)
-						UIEvents.Nav.goTo("Editor")
+						task.wait(0.15); UIEvents.Nav.goTo("Editor")
 						createNotification("Editing: " .. i, "Info", 3)
 					end)
 
@@ -7764,7 +7764,7 @@ end
             for _, button in ipairs(frame:GetChildren()) do
                 if button:IsA("TextButton") then
                     button.MouseButton1Click:Connect(function()
-                        goTo(button.Name);
+                        task.wait(0.15); goTo(button.Name);
                     end);
                 end
             end
