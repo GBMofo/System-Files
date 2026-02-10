@@ -3798,8 +3798,7 @@ UIEvents.Search = {
 					TabName = sanitizeFilename(TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					-- ✅ FIXED: Use safe HttpService
-					-- ✅ FIXED: Delayed write to bypass AC
+				-- ✅ FIXED: Delayed write to bypass AC
 					task.spawn(function()
 						task.wait(0.2)
 						if HttpService then
@@ -3812,7 +3811,6 @@ UIEvents.Search = {
 							warn("[PUNK X] Cannot save tab - HttpService unavailable")
 						end
 					end)
-				end
 
 				if Data.Editor.Tabs then
 					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
@@ -7040,8 +7038,7 @@ safeConnect("Paste", function()
                 UIEvents.EditorTabs.createTab("Script", "")
             end
         end)
-    end
-
+				
     -- Popup controls
     local Popups = script.Parent:FindFirstChild("Popups")
     if Popups and Popups:FindFirstChild("Main") then
