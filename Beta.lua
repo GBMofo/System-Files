@@ -1403,14 +1403,14 @@ G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["RichText"] = true; 
+G2L["83"]["RichText"] = false; -- 🔴 FIX: Start with RichText OFF for placeholder
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["83"]["TextWrapped"] = false; -- 🔴 DELTA: NO WRAPPING
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
 G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); -- Fills width minus the scrollbar
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
-G2L["83"]["Text"] = [[]];
+G2L["83"]["Text"] = [[-- Welcome to Punk X Editor. Click tabs above or create a new script with the + button.]];
 
 -- [[ 4. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
@@ -4169,51 +4169,15 @@ UIEvents.Search = {
 				local Editor = Pages:WaitForChild("Editor");
 				local Panel = Editor:WaitForChild("Panel");
 				local EditorFrame = Editor:WaitForChild("Editor");
-				local EditorInput = EditorFrame:WaitForChild("Input");
 				debug(">> Got Editor elements")
 				
-				-- 🔴 FIX: Never toggle visibility! Always keep them visible
-				-- Instead, show placeholder text when no tabs exist
-				debug(">> Before setting placeholder (total: " .. total .. ")")
-				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
-					debug(">> No tabs - showing placeholder")
-					-- Keep visible, but show placeholder
-					EditorFrame.Visible = true
-					Panel.Visible = true
-					-- Disconnect auto-save temporarily
-					if Data.Editor.AutoSaveConnection then
-						Data.Editor.AutoSaveConnection:Disconnect()
-					end
-					-- Show placeholder text
-					EditorInput.RichText = false
-					EditorInput.Text = "-- No tabs open. Click the + button to create a new script."
-					EditorInput.TextColor3 = Color3.fromRGB(120, 120, 130) -- Dim gray
-					-- Reconnect auto-save (but it won't save the placeholder)
-					if Data.Editor.AutoSaveConnection then
-						local Editor = Pages:WaitForChild("Editor")
-						local EditorFrame = Editor:WaitForChild("Editor")
-						local RealInput = EditorFrame:WaitForChild("Input")
-						local Lines = EditorFrame:WaitForChild("Lines")
-						local autoSaveDebounce = nil
-						
-						Data.Editor.AutoSaveConnection = RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-							if UpdateLineNumbers then UpdateLineNumbers(RealInput, Lines) end
-							if not Data.Editor.EditingSavedFile and Data.Editor.CurrentTab then
-								if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-								autoSaveDebounce = task.delay(1, function()
-									local cleanText = StripSyntax(RealInput.Text)
-									UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-								end)
-							end
-						end)
-					end
-				else
-					debug(">> Tabs exist - normal mode")
-					-- Keep visible, restore normal color
-					EditorFrame.Visible = true
-					Panel.Visible = true
-					EditorInput.TextColor3 = Color3.fromRGB(235, 235, 235) -- Normal white
-				end
+				-- 🔴 FIX: NEVER toggle visibility or change ANY properties!
+				-- Keep everything static - just let switchTab handle content
+				debug(">> Keeping UI static (total tabs: " .. total .. ")")
+				
+				-- Always keep visible - no changes at all
+				EditorFrame.Visible = true
+				Panel.Visible = true
 				
 				debug(">> updateUI END")
 			end,
