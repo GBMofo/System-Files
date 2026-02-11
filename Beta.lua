@@ -1364,18 +1364,8 @@ G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
--- [[ 🛡️ ANTI-KICK: EditorWrapper CanvasGroup — never toggles Visible ]] --
-G2L["EditorWrapper"] = Instance.new("CanvasGroup", G2L["7a"]);
-G2L["EditorWrapper"]["Name"] = [[EditorWrapper]];
-G2L["EditorWrapper"]["BorderSizePixel"] = 0;
-G2L["EditorWrapper"]["BackgroundTransparency"] = 1;
-G2L["EditorWrapper"]["Size"] = UDim2.new(1, 0, 1, 0);
-G2L["EditorWrapper"]["Position"] = UDim2.new(0, 0, 0, 0);
-G2L["EditorWrapper"]["GroupTransparency"] = 1; -- Hidden by default via transparency, NOT Visible
-G2L["EditorWrapper"]["Interactable"] = false;
-
 -- [[ 1. EDITOR SCROLLING FRAME (THE MAIN BOX) ]] --
-G2L["82"] = Instance.new("ScrollingFrame", G2L["EditorWrapper"]);
+G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
 G2L["82"]["Active"] = true;
 G2L["82"]["ZIndex"] = 1; 
@@ -1445,7 +1435,7 @@ G2L["88"]["Color"] = Color3.fromRGB(160, 85, 255); -- Purple Border
 G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
-G2L["89"] = Instance.new("CanvasGroup", G2L["EditorWrapper"]);
+G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
 G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
@@ -3890,13 +3880,8 @@ UIEvents.Search = {
 				end
 
 				if Data.Editor.Tabs[ToTab] then
-					-- 🛡️ ANTI-KICK: Use FindFirstChild instead of WaitForChild — no yielding
-					local Editor = Pages:FindFirstChild("Editor");
-					if not Editor then return end
-					local EditorScrollFrame = Editor:FindFirstChild("EditorWrapper") and Editor.EditorWrapper:FindFirstChild("Editor");
-					if not EditorScrollFrame then return end
-					local EditorFrame = EditorScrollFrame:FindFirstChild("Input"); -- This is the TextBox
-					if not EditorFrame then return end
+					local Editor = Pages:WaitForChild("Editor");
+					local EditorFrame = Editor:WaitForChild("Editor").Input; -- This is the TextBox
 					local OldTab = Data.Editor.CurrentTab;
 
 					-- 1. Save the old tab as RAW text before leaving it
@@ -3910,20 +3895,14 @@ UIEvents.Search = {
 					-- 2. CLEAN the new content (remove any leftover HTML tags)
 					TabContent = StripSyntax(TabContent)
 
-					-- ✅ ANTI-KICK FIX: AGGRESSIVE delays to avoid rapid property spam
-					task.spawn(function()
-						-- 3. APPLY to the TextBox (View mode = RichText ON)
-						if #TabContent > 50000 then
-							EditorFrame.RichText = false 
-							task.wait(0.15)
-							EditorFrame.Text = TabContent
-						else
-							-- ⚠️ TEMPORARY: Syntax highlighting DISABLED for testing
-							EditorFrame.RichText = false
-							task.wait(0.15)
-							EditorFrame.Text = TabContent -- Just plain text, no syntax
-						end
-					end)
+					-- 3. APPLY to the TextBox (View mode = RichText ON)
+					if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
+						EditorFrame.RichText = false 
+						EditorFrame.Text = TabContent
+					else
+						EditorFrame.RichText = true
+						EditorFrame.Text = ApplySyntax(TabContent)
+					end
 
 					UIEvents.EditorTabs.updateUI();
 				end
@@ -3979,22 +3958,8 @@ UIEvents.Search = {
 					new.Parent = Pages.Editor.Tabs;
 					new.Title.Text = i;
 					new.Name = i;
-					
-					-- ✅ CRITICAL FIX: Store Delete button reference before task.spawn
-					local deleteBtn = new:FindFirstChild("Delete")
-					
-					-- ✅ ANTI-KICK FIX: AGGRESSIVE delays for connection staggering
-					task.spawn(function()
-						task.wait(0.05 * total) -- Increased from 0.01s to 0.05s per tab
-						new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-						
-						-- Only connect delete if button exists
-						if deleteBtn then
-							task.wait(0.05) -- Added delay between connections
-							deleteBtn.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
-						end
-					end)
-					
+					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
+					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
 					new.LayoutOrder = v[2];
 					if (Data.Editor.CurrentTab == i) then
 						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
@@ -4002,18 +3967,13 @@ UIEvents.Search = {
 				end
 				
 				local Editor = Pages:WaitForChild("Editor");
-				local Wrapper = Editor:FindFirstChild("EditorWrapper");
-
-				if Wrapper then
-					if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
-						-- 🛡️ ANTI-KICK: Never touch .Visible on TextBox-containing frames
-						-- Use GroupTransparency instead — BAC doesn't watch this
-						Wrapper.GroupTransparency = 1;
-						Wrapper.Interactable = false;
-					else
-						Wrapper.GroupTransparency = 0;
-						Wrapper.Interactable = true;
-					end
+				local Panel = Editor:WaitForChild("Panel");
+				local EditorFrame = Editor:WaitForChild("Editor");
+				
+				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
+					EditorFrame.Visible = false; Panel.Visible = false;
+				else
+					EditorFrame.Visible = true; Panel.Visible = true;
 				end
 			end,
 
@@ -4596,8 +4556,8 @@ end
         end
         
        -- 🟢 NEW: Re-highlight editor text with new theme
-        if Pages.Editor and Pages.Editor:FindFirstChild("EditorWrapper") and Pages.Editor.EditorWrapper:FindFirstChild("Editor") then
-            local editor = Pages.Editor.EditorWrapper.Editor:FindFirstChild("Input")
+        if Pages.Editor and Pages.Editor:FindFirstChild("Editor") then
+            local editor = Pages.Editor.Editor:FindFirstChild("Input")
             if editor then
                 -- 1. Strip tags to get raw text
                 local raw = StripSyntax(editor.Text)
@@ -6903,17 +6863,11 @@ InitTabs.Saved = function()
 	end;
 
 	InitTabs.Editor = function()
-    -- 🛡️ ANTI-KICK: Use FindFirstChild — no yielding, no BAC detection
-    local Editor = Pages:FindFirstChild("Editor");
-    if not Editor then return end
-    local Wrapper = Editor:FindFirstChild("EditorWrapper");
-    if not Wrapper then return end
-    local Panel = Wrapper:FindFirstChild("Panel");
-    local EditorFrame = Wrapper:FindFirstChild("Editor"); 
-    if not Panel or not EditorFrame then return end
-    local RealInput = EditorFrame:FindFirstChild("Input");
-    local Lines = EditorFrame:FindFirstChild("Lines");
-    if not RealInput or not Lines then return end
+    local Editor = Pages:WaitForChild("Editor");
+    local Panel = Editor:WaitForChild("Panel");
+    local EditorFrame = Editor:WaitForChild("Editor"); 
+    local RealInput = EditorFrame:WaitForChild("Input");
+    local Lines = EditorFrame:WaitForChild("Lines");
     
     local Method = "MouseButton1Click"; 
     local autoSaveDebounce = nil 
@@ -6927,7 +6881,7 @@ InitTabs.Saved = function()
     local originalPanelAnchor = Panel.AnchorPoint
 
     -- 🔴 CRITICAL FIX: Verify this is the EDITOR panel, not SaveTemplate panel
-    if Panel.Parent ~= Wrapper then
+    if Panel.Parent ~= Editor then
         warn("[PunkX] Wrong panel detected!")
         return
     end
@@ -6956,11 +6910,7 @@ InitTabs.Saved = function()
         end
     end
 
--- ✅ ANTI-KICK FIX: AGGRESSIVE delayed connection setup (INCREASED DELAYS)
-task.spawn(function()
-    task.wait(1.0) -- Increased from 0.3s to 1.0s
-    
-    -- [[ EDIT MODE - When user taps editor ]]
+-- [[ EDIT MODE - When user taps editor ]]
     RealInput.Focused:Connect(function()
         Data.Editor.IsEditing = true
         UIEvents.EditorTabs.updateUI() -- Trigger tab isolation
@@ -6981,16 +6931,14 @@ task.spawn(function()
         Panel.ZIndex = 100
         
         -- 4. FIX SYNTAX BLEED: Disable RichText BEFORE setting stripped text
-        task.wait(0.1) -- ADDED DELAY before property changes
         RealInput.RichText = false 
-        task.wait(0.1) -- ADDED DELAY
         RealInput.Text = StripSyntax(RealInput.Text)
     end)
 
-    -- [[ VIEWING MODE - When user exits editor ]]
+ -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
         -- 🟢 ADD THIS LINE: Wait for button click to finish
-        task.wait(0.2) -- Increased from 0.1s to 0.2s
+        task.wait(0.1) 
         
         Data.Editor.IsEditing = false 
         UIEvents.EditorTabs.updateUI()
@@ -7010,40 +6958,28 @@ task.spawn(function()
         Panel.Visible = true
         Panel.ZIndex = 100
         
-        -- 4. Re-apply syntax highlighting with delay
-        task.spawn(function()
-            task.wait(0.2) -- Increased from 0.05s to 0.2s
-            local raw = RealInput.Text
-            -- ⚠️ TEMPORARY: Syntax highlighting DISABLED for testing
-            RealInput.RichText = false
-            -- RealInput.Text = ApplySyntax(raw) -- DISABLED
-        end)
+        -- 4. Re-apply syntax highlighting
+        local raw = RealInput.Text
+        RealInput.RichText = true
+        RealInput.Text = ApplySyntax(raw)
 
         -- 5. Auto-save
         if not Data.Editor.EditingSavedFile then
-            task.wait(0.1) -- ADDED DELAY before autosave
-            UIEvents.EditorTabs.saveTab(nil, RealInput.Text, false)
+            UIEvents.EditorTabs.saveTab(nil, raw, false)
         end
     end)
-    
-end) -- End of delayed connection setup
 
--- ✅ ANTI-KICK FIX: AGGRESSIVE delayed line number sync
-task.spawn(function()
-    task.wait(1.5) -- Increased from 0.5s to 1.5s
-    
     -- Line number sync
     RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
         if not Data.Editor.EditingSavedFile then
             if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-            autoSaveDebounce = task.delay(2, function() -- Increased from 1s to 2s
+            autoSaveDebounce = task.delay(1, function()
                 local cleanText = StripSyntax(RealInput.Text)
                 UIEvents.EditorTabs.saveTab(nil, cleanText, false)
             end)
         end
     end)
-end)
 
     -- BUTTON CONNECTIONS - Use WaitForChild to ensure correct panel
     local function safeConnect(buttonName, callback)
