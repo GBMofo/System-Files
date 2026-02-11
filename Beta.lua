@@ -3895,14 +3895,23 @@ UIEvents.Search = {
 					-- 2. CLEAN the new content (remove any leftover HTML tags)
 					TabContent = StripSyntax(TabContent)
 
-					-- 3. APPLY to the TextBox (View mode = RichText ON)
-					if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
-						EditorFrame.RichText = false 
-						EditorFrame.Text = TabContent
-					else
-						EditorFrame.RichText = true
-						EditorFrame.Text = ApplySyntax(TabContent)
-					end
+					-- ✅ ANTI-KICK FIX: Delay text changes to avoid rapid property spam
+					task.spawn(function()
+						-- 3. APPLY to the TextBox (View mode = RichText ON)
+						if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
+							EditorFrame.RichText = false 
+							task.wait(0.05) -- Small delay
+							EditorFrame.Text = TabContent
+						else
+							EditorFrame.RichText = false -- Disable first
+							task.wait(0.05) -- Small delay
+							EditorFrame.Text = TabContent -- Set text
+							task.wait(0.05) -- Small delay
+							EditorFrame.RichText = true -- Enable RichText
+							task.wait(0.05) -- Small delay
+							EditorFrame.Text = ApplySyntax(TabContent) -- Apply syntax
+						end
+					end)
 
 					UIEvents.EditorTabs.updateUI();
 				end
@@ -3958,8 +3967,14 @@ UIEvents.Search = {
 					new.Parent = Pages.Editor.Tabs;
 					new.Title.Text = i;
 					new.Name = i;
-					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
+					
+					-- ✅ ANTI-KICK FIX: Use task.spawn to delay connections slightly
+					task.spawn(function()
+						task.wait(0.01 * total) -- Stagger connections by a tiny amount
+						new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
+						new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
+					end)
+					
 					new.LayoutOrder = v[2];
 					if (Data.Editor.CurrentTab == i) then
 						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
@@ -6910,7 +6925,11 @@ InitTabs.Saved = function()
         end
     end
 
--- [[ EDIT MODE - When user taps editor ]]
+-- ✅ ANTI-KICK FIX: Delayed connection setup to avoid detection
+task.spawn(function()
+    task.wait(0.3) -- Small delay before adding connections
+    
+    -- [[ EDIT MODE - When user taps editor ]]
     RealInput.Focused:Connect(function()
         Data.Editor.IsEditing = true
         UIEvents.EditorTabs.updateUI() -- Trigger tab isolation
@@ -6935,7 +6954,7 @@ InitTabs.Saved = function()
         RealInput.Text = StripSyntax(RealInput.Text)
     end)
 
- -- [[ VIEWING MODE - When user exits editor ]]
+    -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
         -- 🟢 ADD THIS LINE: Wait for button click to finish
         task.wait(0.1) 
@@ -6958,17 +6977,26 @@ InitTabs.Saved = function()
         Panel.Visible = true
         Panel.ZIndex = 100
         
-        -- 4. Re-apply syntax highlighting
-        local raw = RealInput.Text
-        RealInput.RichText = true
-        RealInput.Text = ApplySyntax(raw)
+        -- 4. Re-apply syntax highlighting with delay
+        task.spawn(function()
+            task.wait(0.05) -- Small delay before syntax highlighting
+            local raw = RealInput.Text
+            RealInput.RichText = true
+            RealInput.Text = ApplySyntax(raw)
+        end)
 
         -- 5. Auto-save
         if not Data.Editor.EditingSavedFile then
-            UIEvents.EditorTabs.saveTab(nil, raw, false)
+            UIEvents.EditorTabs.saveTab(nil, RealInput.Text, false)
         end
     end)
+    
+end) -- End of delayed connection setup
 
+-- ✅ ANTI-KICK FIX: Delayed line number sync
+task.spawn(function()
+    task.wait(0.5) -- Longer delay for text change connection
+    
     -- Line number sync
     RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
@@ -6980,6 +7008,7 @@ InitTabs.Saved = function()
             end)
         end
     end)
+end)
 
     -- BUTTON CONNECTIONS - Use WaitForChild to ensure correct panel
     local function safeConnect(buttonName, callback)
