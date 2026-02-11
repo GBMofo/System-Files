@@ -3760,6 +3760,12 @@ local function sanitizeFilename(name)
     return name
 end
 	-- [[ UPDATED UI EVENTS & LOGIC ]]
+
+-- Debug helper function
+local function debug(message)
+	print("[DEBUG] " .. message)
+end
+
 local UIEvents = {};
 
 -- 🟢 PRE-INITIALIZE UIEvents.Search (Prevents nil error)
@@ -3790,11 +3796,6 @@ UIEvents.Search = {
 				return HighestOrder;
 			end,
 
-			-- Debug helper
-			local function debug(message)
-				print("[DEBUG] " .. message)
-			end
-			
 			createTab = function(TabName, Content, isTemp)
 				debug("1. Starting createTab with name: " .. tostring(TabName))
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
@@ -3820,7 +3821,7 @@ UIEvents.Search = {
 						debug("8. After writefile operation")
 					else
 						warn("[PUNK X] Cannot save tab - HttpService unavailable")
-						debug("8. HttpService unavailable - skip writefile")
+						debug("8. HttpService unavailable")
 					end
 				end
 
@@ -3829,10 +3830,10 @@ UIEvents.Search = {
 					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
 				end
 				debug("10. Added to tabs table")
-				debug("11. Before calling switchTab from createTab")
+				debug("11. Before calling switchTab")
 				UIEvents.EditorTabs.switchTab(TabName);
-				debug("12. After switchTab call")
-				debug("13. Before calling updateUI from createTab")
+				debug("12. After switchTab")
+				debug("13. Before calling updateUI")
 				UIEvents.EditorTabs.updateUI();
 				debug("14. createTab complete")
 			end,
@@ -3897,30 +3898,30 @@ UIEvents.Search = {
 					local editingName = Data.Editor.EditingSavedFile
 					createNotification("Editing Cancelled", "Warn", 3)
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					debug("C. Before delfile for cancelled edit")
+					debug("C. Before delfile")
 					CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. editingName .. ".lua");
-					debug("D. After delfile for cancelled edit")
+					debug("D. After delfile")
 					Data.Editor.Tabs[editingName] = nil;
 					Data.Editor.EditingSavedFile = nil
-					debug("E. Before updateUI from cancel edit")
+					debug("E. Before updateUI")
 					UIEvents.EditorTabs.updateUI()
-					debug("F. After updateUI from cancel edit")
+					debug("F. After updateUI")
 				end
 
-				debug("G. Checking if tab exists in Data.Editor.Tabs")
+				debug("G. Checking if tab exists")
 				if Data.Editor.Tabs[ToTab] then
-					debug("H. Tab exists, getting editor elements")
+					debug("H. Getting editor elements")
 					local Editor = Pages:WaitForChild("Editor");
 					local EditorFrame = Editor:WaitForChild("Editor").Input; -- This is the TextBox
 					local OldTab = Data.Editor.CurrentTab;
-					debug("I. Got editor elements, OldTab: " .. tostring(OldTab))
+					debug("I. Got editor, OldTab: " .. tostring(OldTab))
 
 					-- 1. Save the old tab as RAW text before leaving it
-					debug("J. Before saving old tab content")
+					debug("J. Before saving old tab")
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
 						debug("K. Getting EditorFrame.Text")
 						Data.Editor.Tabs[OldTab][1] = StripSyntax(EditorFrame.Text)
-						debug("L. Saved old tab content")
+						debug("L. Saved old tab")
 					end
 
 					debug("M. Setting current tab to: " .. ToTab)
@@ -3945,12 +3946,12 @@ UIEvents.Search = {
 						EditorFrame.RichText = true
 						debug("S. Before ApplySyntax")
 						EditorFrame.Text = ApplySyntax(TabContent)
-						debug("T. After setting syntax highlighted text")
+						debug("T. After setting text")
 					end
 
-					debug("U. Before calling updateUI from switchTab")
+					debug("U. Before calling updateUI")
 					UIEvents.EditorTabs.updateUI();
-					debug("V. After updateUI call")
+					debug("V. After updateUI")
 				end
 				
 				debug("=== SWITCH TAB END ===")
@@ -4016,15 +4017,15 @@ UIEvents.Search = {
 					debug(">> Set parent")
 					new.Title.Text = i;
 					new.Name = i;
-					debug(">> Before connecting MouseButton1Click")
+					debug(">> Before connecting click events")
 					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-					debug(">> After connecting MouseButton1Click")
+					debug(">> After MouseButton1Click")
 					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
 					new.LayoutOrder = v[2];
 					if (Data.Editor.CurrentTab == i) then
 						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
 					end
-					debug(">> Finished creating button for tab: " .. i)
+					debug(">> Finished button for tab: " .. i)
 				end
 				debug(">> Created " .. total .. " tab buttons")
 				
@@ -4034,12 +4035,12 @@ UIEvents.Search = {
 				local EditorFrame = Editor:WaitForChild("Editor");
 				debug(">> Got Editor elements")
 				
-				debug(">> Before setting visibility (total tabs: " .. total .. ")")
+				debug(">> Before setting visibility (total: " .. total .. ")")
 				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
-					debug(">> Setting editor invisible")
+					debug(">> Setting invisible")
 					EditorFrame.Visible = false; Panel.Visible = false;
 				else
-					debug(">> Setting editor visible")
+					debug(">> Setting visible")
 					EditorFrame.Visible = true; Panel.Visible = true;
 				end
 				
