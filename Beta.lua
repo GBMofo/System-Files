@@ -3742,7 +3742,7 @@ local Data = {
         CurrentOrder = 0,
         Tabs = {},
         IsEditing = false, -- Added this line
-        IsProgrammaticChange = false -- 🔴 FIX: Flag to prevent Focused events during tab switching
+        IsProgrammaticChange = false -- 🔴 FIX: Prevent auto-save during tab switching
     },
     Saves = {
         Scripts = {}
@@ -3938,7 +3938,7 @@ UIEvents.Search = {
 					-- 3. APPLY to the TextBox (View mode = RichText ON)
 					debug("Q. Before setting EditorFrame.Text")
 					
-					-- 🔴 FIX: Set flag to prevent Focused event from triggering
+					-- 🔴 FIX: Set flag to prevent auto-save from triggering
 					Data.Editor.IsProgrammaticChange = true
 					
 					if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
@@ -3954,9 +3954,11 @@ UIEvents.Search = {
 						debug("T. After setting text")
 					end
 					
-					-- 🔴 FIX: Reset flag after text is set
-					task.wait(0.05) -- Small delay to ensure text is fully set
-					Data.Editor.IsProgrammaticChange = false
+					-- 🔴 FIX: Reset flag after a delay to allow normal auto-save afterward
+					task.delay(0.1, function()
+						Data.Editor.IsProgrammaticChange = false
+						debug(">> IsProgrammaticChange reset to false")
+					end)
 
 					debug("U. Before calling updateUI")
 					UIEvents.EditorTabs.updateUI();
@@ -7096,12 +7098,6 @@ InitTabs.Saved = function()
 
 -- [[ EDIT MODE - When user taps editor ]]
     RealInput.Focused:Connect(function()
-        -- 🔴 FIX: Ignore if this is a programmatic change (tab switching)
-        if Data.Editor.IsProgrammaticChange then 
-            debug(">> Focused event blocked (programmatic change)")
-            return 
-        end
-        
         Data.Editor.IsEditing = true
         UIEvents.EditorTabs.updateUI() -- Trigger tab isolation
 
@@ -7127,12 +7123,6 @@ InitTabs.Saved = function()
 
  -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
-        -- 🔴 FIX: Ignore if this is a programmatic change (tab switching)
-        if Data.Editor.IsProgrammaticChange then 
-            debug(">> FocusLost event blocked (programmatic change)")
-            return 
-        end
-        
         -- 🟢 ADD THIS LINE: Wait for button click to finish
         task.wait(0.1) 
         
@@ -7168,6 +7158,13 @@ InitTabs.Saved = function()
     -- Line number sync
     RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
+        
+        -- 🔴 FIX: Don't auto-save during programmatic changes (tab switching)
+        if Data.Editor.IsProgrammaticChange then
+            debug(">> Auto-save blocked (programmatic change)")
+            return
+        end
+        
         if not Data.Editor.EditingSavedFile then
             if autoSaveDebounce then task.cancel(autoSaveDebounce) end
             autoSaveDebounce = task.delay(1, function()
