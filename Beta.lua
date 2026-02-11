@@ -3895,21 +3895,18 @@ UIEvents.Search = {
 					-- 2. CLEAN the new content (remove any leftover HTML tags)
 					TabContent = StripSyntax(TabContent)
 
-					-- ✅ ANTI-KICK FIX: Delay text changes to avoid rapid property spam
+					-- ✅ ANTI-KICK FIX: AGGRESSIVE delays to avoid rapid property spam
 					task.spawn(function()
 						-- 3. APPLY to the TextBox (View mode = RichText ON)
-						if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
+						if #TabContent > 50000 then
 							EditorFrame.RichText = false 
-							task.wait(0.05) -- Small delay
+							task.wait(0.15)
 							EditorFrame.Text = TabContent
 						else
-							EditorFrame.RichText = false -- Disable first
-							task.wait(0.05) -- Small delay
-							EditorFrame.Text = TabContent -- Set text
-							task.wait(0.05) -- Small delay
-							EditorFrame.RichText = true -- Enable RichText
-							task.wait(0.05) -- Small delay
-							EditorFrame.Text = ApplySyntax(TabContent) -- Apply syntax
+							-- ⚠️ TEMPORARY: Syntax highlighting DISABLED for testing
+							EditorFrame.RichText = false
+							task.wait(0.15)
+							EditorFrame.Text = TabContent -- Just plain text, no syntax
 						end
 					end)
 
@@ -3971,13 +3968,14 @@ UIEvents.Search = {
 					-- ✅ CRITICAL FIX: Store Delete button reference before task.spawn
 					local deleteBtn = new:FindFirstChild("Delete")
 					
-					-- ✅ ANTI-KICK FIX: Use task.spawn to delay connections slightly
+					-- ✅ ANTI-KICK FIX: AGGRESSIVE delays for connection staggering
 					task.spawn(function()
-						task.wait(0.01 * total) -- Stagger connections by a tiny amount
+						task.wait(0.05 * total) -- Increased from 0.01s to 0.05s per tab
 						new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
 						
 						-- Only connect delete if button exists
 						if deleteBtn then
+							task.wait(0.05) -- Added delay between connections
 							deleteBtn.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
 						end
 					end)
@@ -6932,9 +6930,9 @@ InitTabs.Saved = function()
         end
     end
 
--- ✅ ANTI-KICK FIX: Delayed connection setup to avoid detection
+-- ✅ ANTI-KICK FIX: AGGRESSIVE delayed connection setup (INCREASED DELAYS)
 task.spawn(function()
-    task.wait(0.3) -- Small delay before adding connections
+    task.wait(1.0) -- Increased from 0.3s to 1.0s
     
     -- [[ EDIT MODE - When user taps editor ]]
     RealInput.Focused:Connect(function()
@@ -6957,14 +6955,16 @@ task.spawn(function()
         Panel.ZIndex = 100
         
         -- 4. FIX SYNTAX BLEED: Disable RichText BEFORE setting stripped text
+        task.wait(0.1) -- ADDED DELAY before property changes
         RealInput.RichText = false 
+        task.wait(0.1) -- ADDED DELAY
         RealInput.Text = StripSyntax(RealInput.Text)
     end)
 
     -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
         -- 🟢 ADD THIS LINE: Wait for button click to finish
-        task.wait(0.1) 
+        task.wait(0.2) -- Increased from 0.1s to 0.2s
         
         Data.Editor.IsEditing = false 
         UIEvents.EditorTabs.updateUI()
@@ -6986,30 +6986,32 @@ task.spawn(function()
         
         -- 4. Re-apply syntax highlighting with delay
         task.spawn(function()
-            task.wait(0.05) -- Small delay before syntax highlighting
+            task.wait(0.2) -- Increased from 0.05s to 0.2s
             local raw = RealInput.Text
-            RealInput.RichText = true
-            RealInput.Text = ApplySyntax(raw)
+            -- ⚠️ TEMPORARY: Syntax highlighting DISABLED for testing
+            RealInput.RichText = false
+            -- RealInput.Text = ApplySyntax(raw) -- DISABLED
         end)
 
         -- 5. Auto-save
         if not Data.Editor.EditingSavedFile then
+            task.wait(0.1) -- ADDED DELAY before autosave
             UIEvents.EditorTabs.saveTab(nil, RealInput.Text, false)
         end
     end)
     
 end) -- End of delayed connection setup
 
--- ✅ ANTI-KICK FIX: Delayed line number sync
+-- ✅ ANTI-KICK FIX: AGGRESSIVE delayed line number sync
 task.spawn(function()
-    task.wait(0.5) -- Longer delay for text change connection
+    task.wait(1.5) -- Increased from 0.5s to 1.5s
     
     -- Line number sync
     RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
         if not Data.Editor.EditingSavedFile then
             if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-            autoSaveDebounce = task.delay(1, function()
+            autoSaveDebounce = task.delay(2, function() -- Increased from 1s to 2s
                 local cleanText = StripSyntax(RealInput.Text)
                 UIEvents.EditorTabs.saveTab(nil, cleanText, false)
             end)
