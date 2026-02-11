@@ -1363,82 +1363,10 @@ G2L["81"]["Thickness"] = 1;
 G2L["81"]["Color"] = Color3.fromRGB(160, 85, 255);
 G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
--- 🔴 PRE-CREATE BUTTON POOL (in static UI section - safest time)
-local TabButtonPool = {}
-for i = 1, 20 do
-	local btn = Instance.new("TextButton", G2L["7b"]);
-	btn.Active = false;
-	btn.BorderSizePixel = 0;
-	btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40);
-	btn.Selectable = false;
-	btn.AutomaticSize = Enum.AutomaticSize.X;
-	btn.Size = UDim2.new(0, 0, 1, 0);
-	btn.ClipsDescendants = true;
-	btn.BorderColor3 = Color3.fromRGB(0, 0, 0);
-	btn.Text = "";
-	btn.Name = "_pool_" .. i;
-	btn.Visible = false;
-	
-	local corner = Instance.new("UICorner", btn);
-	corner.CornerRadius = UDim.new(0, 12);
-	
-	local listLayout = Instance.new("UIListLayout", btn);
-	listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill;
-	listLayout.Wraps = true;
-	listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill;
-	listLayout.SortOrder = Enum.SortOrder.LayoutOrder;
-	
-	local padding = Instance.new("UIPadding", btn);
-	padding.PaddingTop = UDim.new(0, 6);
-	padding.PaddingRight = UDim.new(0, 6);
-	padding.PaddingLeft = UDim.new(0, 12);
-	padding.PaddingBottom = UDim.new(0, 6);
-	
-	local deleteBtn = Instance.new("ImageButton", btn);
-	deleteBtn.Name = "Delete";
-	deleteBtn.BorderSizePixel = 0;
-	deleteBtn.ScaleType = Enum.ScaleType.Fit;
-	deleteBtn.BackgroundTransparency = 1;
-	deleteBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
-	deleteBtn.ImageColor3 = Color3.fromRGB(255, 100, 100);
-	deleteBtn.Selectable = false;
-	deleteBtn.Image = "rbxassetid://122962777517764";
-	deleteBtn.Size = UDim2.new(0.05509, 0, 1, 0);
-	deleteBtn.BorderColor3 = Color3.fromRGB(0, 0, 0);
-	deleteBtn.Position = UDim2.new(0.46157, 0, 0, 0);
-	
-	local stroke = Instance.new("UIStroke", btn);
-	stroke.Transparency = 0.8;
-	stroke.Thickness = 1;
-	stroke.Color = Color3.fromRGB(160, 85, 255);
-	stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border;
-	
-	local titleLabel = Instance.new("TextLabel", btn);
-	titleLabel.Name = "Title";
-	titleLabel.TextWrapped = true;
-	titleLabel.BorderSizePixel = 0;
-	titleLabel.TextSize = 14;
-	titleLabel.TextXAlignment = Enum.TextXAlignment.Left;
-	titleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255);
-	titleLabel.TextDirection = Enum.TextDirection.LeftToRight;
-	titleLabel.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal);
-	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255);
-	titleLabel.BackgroundTransparency = 1;
-	titleLabel.Size = UDim2.new(0, 0, 1, 0);
-	titleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0);
-	titleLabel.Text = "Pool";
-	titleLabel.LayoutOrder = -1;
-	titleLabel.AutomaticSize = Enum.AutomaticSize.X;
-	
-	table.insert(TabButtonPool, btn);
-end
-_G.TabButtonPool = TabButtonPool;
-
 
 -- [[ 1. EDITOR SCROLLING FRAME (THE MAIN BOX) ]] --
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
-G2L["82"]["Visible"] = true; -- 🔴 FIX: Always visible
 G2L["82"]["Active"] = true;
 G2L["82"]["ZIndex"] = 1; 
 G2L["82"]["BorderSizePixel"] = 0;
@@ -1474,14 +1402,14 @@ G2L["83"]["BackgroundTransparency"] = 1;
 G2L["83"]["FontFace"] = Font.new([[rbxasset://fonts/families/RobotoMono.json]], Enum.FontWeight.Medium, Enum.FontStyle.Normal);
 G2L["83"]["MultiLine"] = true;
 G2L["83"]["ClearTextOnFocus"] = false;
-G2L["83"]["RichText"] = false; -- 🔴 FIX: Start with RichText OFF for placeholder
+G2L["83"]["RichText"] = true; 
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["83"]["TextWrapped"] = false; -- 🔴 DELTA: NO WRAPPING
 G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
 G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); -- Fills width minus the scrollbar
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
-G2L["83"]["Text"] = [[-- Welcome to Punk X Editor. Click tabs above or create a new script with the + button.]];
+G2L["83"]["Text"] = [[]];
 
 -- [[ 4. LINE NUMBERS ]] --
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
@@ -1508,7 +1436,6 @@ G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
-G2L["89"]["Visible"] = true; -- 🔴 FIX: Always visible
 G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
@@ -3833,12 +3760,6 @@ local function sanitizeFilename(name)
     return name
 end
 	-- [[ UPDATED UI EVENTS & LOGIC ]]
-
--- Debug helper function
-local function debug(message)
-	print("[DEBUG] " .. message)
-end
-
 local UIEvents = {};
 
 -- 🟢 PRE-INITIALIZE UIEvents.Search (Prevents nil error)
@@ -3870,45 +3791,30 @@ UIEvents.Search = {
 			end,
 
 			createTab = function(TabName, Content, isTemp)
-				debug("1. Starting createTab with name: " .. tostring(TabName))
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
-				debug("2. Got highest order: " .. tostring(HighestOrder))
 				Content = Content or "";
-				debug("3. Content initialized")
 				
-				debug("4. Before sanitize and duplicate check")
 				if not isTemp then
 					TabName = sanitizeFilename(TabName)
-					debug("5. Filename sanitized: " .. TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
-					debug("6. Checked for duplicates: " .. TabName)
 					-- 🟢 PATH: Punk-X-Files/scripts/
 					-- ✅ FIXED: Use safe HttpService
-					debug("7. Before writefile operation")
 					if HttpService then
 						pcall(function()
 							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
 								Name = TabName, Content = Content, Order = (HighestOrder + 1)
 							}));
 						end)
-						debug("8. After writefile operation")
 					else
 						warn("[PUNK X] Cannot save tab - HttpService unavailable")
-						debug("8. HttpService unavailable")
 					end
 				end
 
-				debug("9. Before adding to Data.Editor.Tabs")
 				if Data.Editor.Tabs then
 					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
 				end
-				debug("10. Added to tabs table")
-				debug("11. Before calling switchTab")
 				UIEvents.EditorTabs.switchTab(TabName);
-				debug("12. After switchTab")
-				debug("13. Before calling updateUI")
 				UIEvents.EditorTabs.updateUI();
-				debug("14. createTab complete")
 			end,
 
 			saveTab = function(tabName, Content, isExplicitSave)
@@ -3963,100 +3869,43 @@ UIEvents.Search = {
 			end,
 
 			switchTab = function(ToTab)
-				debug("=== SWITCH TAB START === ID: " .. tostring(ToTab))
-				
-				debug("A. Checking if editing saved file")
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
-					debug("B. Canceling edit for: " .. Data.Editor.EditingSavedFile)
 					local editingName = Data.Editor.EditingSavedFile
 					createNotification("Editing Cancelled", "Warn", 3)
 					-- 🟢 PATH: Punk-X-Files/scripts/
-					debug("C. Before delfile")
 					CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. editingName .. ".lua");
-					debug("D. After delfile")
 					Data.Editor.Tabs[editingName] = nil;
 					Data.Editor.EditingSavedFile = nil
-					debug("E. Before updateUI")
 					UIEvents.EditorTabs.updateUI()
-					debug("F. After updateUI")
 				end
 
-				debug("G. Checking if tab exists")
 				if Data.Editor.Tabs[ToTab] then
-					debug("H. Getting editor elements")
 					local Editor = Pages:WaitForChild("Editor");
 					local EditorFrame = Editor:WaitForChild("Editor").Input; -- This is the TextBox
 					local OldTab = Data.Editor.CurrentTab;
-					debug("I. Got editor, OldTab: " .. tostring(OldTab))
 
 					-- 1. Save the old tab as RAW text before leaving it
-					debug("J. Before saving old tab")
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
-						debug("K. Getting EditorFrame.Text")
 						Data.Editor.Tabs[OldTab][1] = StripSyntax(EditorFrame.Text)
-						debug("L. Saved old tab")
 					end
 
-					debug("M. Setting current tab to: " .. ToTab)
 					Data.Editor.CurrentTab = ToTab;
 					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
-					debug("N. Got tab content, length: " .. #TabContent)
 					
 					-- 2. CLEAN the new content (remove any leftover HTML tags)
-					debug("O. Before StripSyntax")
 					TabContent = StripSyntax(TabContent)
-					debug("P. After StripSyntax")
 
 					-- 3. APPLY to the TextBox (View mode = RichText ON)
-					debug("Q. Before setting EditorFrame.Text")
-					
-					-- 🔴 FIX: Disconnect auto-save to prevent writefile trigger
-					if Data.Editor.AutoSaveConnection then
-						Data.Editor.AutoSaveConnection:Disconnect()
-						debug(">> Auto-save disconnected")
-					end
-					
 					if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
-						debug("R. Large content, disabling RichText")
 						EditorFrame.RichText = false 
 						EditorFrame.Text = TabContent
-						debug("S. Set plain text")
 					else
-						debug("R. Normal content, enabling RichText")
 						EditorFrame.RichText = true
-						debug("S. Before ApplySyntax")
 						EditorFrame.Text = ApplySyntax(TabContent)
-						debug("T. After setting text")
-					end
-					
-					-- 🔴 FIX: Reconnect auto-save immediately (no delay needed!)
-					if Data.Editor.AutoSaveConnection then
-						-- Get the RealInput reference
-						local Editor = Pages:WaitForChild("Editor")
-						local EditorFrame = Editor:WaitForChild("Editor")
-						local RealInput = EditorFrame:WaitForChild("Input")
-						local Lines = EditorFrame:WaitForChild("Lines")
-						local autoSaveDebounce = nil
-						
-						Data.Editor.AutoSaveConnection = RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-							if UpdateLineNumbers then UpdateLineNumbers(RealInput, Lines) end
-							if not Data.Editor.EditingSavedFile then
-								if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-								autoSaveDebounce = task.delay(1, function()
-									local cleanText = StripSyntax(RealInput.Text)
-									UIEvents.EditorTabs.saveTab(nil, cleanText, false)
-								end)
-							end
-						end)
-						debug(">> Auto-save reconnected")
 					end
 
-					debug("U. Before calling updateUI")
 					UIEvents.EditorTabs.updateUI();
-					debug("V. After updateUI")
 				end
-				
-				debug("=== SWITCH TAB END ===")
 			end,
 
 			delTab = function(Name)
@@ -4087,32 +3936,17 @@ UIEvents.Search = {
 			end,
 
 			updateUI = function()
-				debug(">> updateUI START")
-				
-				debug(">> Before clearing old tabs")
-				-- Hide all pool buttons first
-				if _G.TabButtonPool then
-					for _, poolBtn in ipairs(_G.TabButtonPool) do
-						poolBtn.Visible = false
-						-- Disconnect old events to prevent memory leaks
-						for _, conn in ipairs(poolBtn:GetConnections()) do
-							pcall(function() conn:Disconnect() end)
-						end
-					end
+				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
+					if v:GetAttribute("no") then continue end
+					if v:IsA("TextButton") then v:Destroy() end
 				end
-				debug(">> After clearing old tabs")
 				
-				debug(">> Before checking Create button")
 				if Pages.Editor.Tabs:FindFirstChild("Create") then
 					-- Hides "+" button if editing
 					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
 				end
-				debug(">> After checking Create button")
 
-				debug(">> Before creating tab buttons")
 				local total = 0;
-				local poolIndex = 1;
-				
 				for i, v in pairs(Data.Editor.Tabs) do
 					-- Isolation: If editing, only show the active tab
 					if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
@@ -4120,64 +3954,27 @@ UIEvents.Search = {
 					end
 					
 					total = total + 1;
-					debug(">> Processing tab: " .. i)
-					
-					-- Get button from pool
-					local new = nil
-					if _G.TabButtonPool and _G.TabButtonPool[poolIndex] then
-						new = _G.TabButtonPool[poolIndex]
-						poolIndex = poolIndex + 1
-						debug(">> Reusing pool button for: " .. i)
-					else
-						warn(">> Pool exhausted! Increase MAX_BUTTONS")
-						break
-					end
-					
-					if new then
-						-- Update button properties
-						new.Name = i
-						new.Visible = true
-						new.LayoutOrder = v[2];
-						
-						if (Data.Editor.CurrentTab == i) then
-							new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
-						else
-							new.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-						end
-						
-						-- Update title text
-						local titleLabel = new:FindFirstChild("Title")
-						if titleLabel then
-							titleLabel.Text = i
-						end
-						
-						-- Connect click events
-						new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-						local deleteBtn = new:FindFirstChild("Delete")
-						if deleteBtn then
-							deleteBtn.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
-						end
-						
-						debug(">> Finished button for tab: " .. i)
+					local new = script.Yo:Clone();
+					new.Parent = Pages.Editor.Tabs;
+					new.Title.Text = i;
+					new.Name = i;
+					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
+					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
+					new.LayoutOrder = v[2];
+					if (Data.Editor.CurrentTab == i) then
+						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
 					end
 				end
-				debug(">> Created " .. total .. " tab buttons")
 				
-				debug(">> Before getting Editor elements")
 				local Editor = Pages:WaitForChild("Editor");
 				local Panel = Editor:WaitForChild("Panel");
 				local EditorFrame = Editor:WaitForChild("Editor");
-				debug(">> Got Editor elements")
 				
-				-- 🔴 FIX: NEVER toggle visibility or change ANY properties!
-				-- Keep everything static - just let switchTab handle content
-				debug(">> Keeping UI static (total tabs: " .. total .. ")")
-				
-				-- Always keep visible - no changes at all
-				EditorFrame.Visible = true
-				Panel.Visible = true
-				
-				debug(">> updateUI END")
+				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
+					EditorFrame.Visible = false; Panel.Visible = false;
+				else
+					EditorFrame.Visible = true; Panel.Visible = true;
+				end
 			end,
 
 			RenameFile = function(NewName, TargetTab)
@@ -7172,8 +6969,8 @@ InitTabs.Saved = function()
         end
     end)
 
-    -- Line number sync and auto-save
-    local autoSaveConnection = RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+    -- Line number sync
+    RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
         if not Data.Editor.EditingSavedFile then
             if autoSaveDebounce then task.cancel(autoSaveDebounce) end
@@ -7183,9 +6980,6 @@ InitTabs.Saved = function()
             end)
         end
     end)
-    
-    -- 🔴 FIX: Store connection in Data so switchTab can access it
-    Data.Editor.AutoSaveConnection = autoSaveConnection
 
     -- BUTTON CONNECTIONS - Use WaitForChild to ensure correct panel
     local function safeConnect(buttonName, callback)
