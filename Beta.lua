@@ -6884,90 +6884,6 @@ end))
 end -- End of InitTabs.Settings
 
 InitTabs.TabsData = function()
-		-- 🔴 PRE-CREATE BUTTON POOL (before loading tabs)
-		-- This prevents Instance.new() during gameplay
-		local buttonPool = {}
-		local MAX_BUTTONS = 20 -- Pre-create 20 buttons
-		
-		for i = 1, MAX_BUTTONS do
-			local btn = Instance.new("TextButton")
-			btn.Active = false
-			btn.BorderSizePixel = 0
-			btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-			btn.Selectable = false
-			btn.AutomaticSize = Enum.AutomaticSize.X
-			btn.Size = UDim2.new(0, 0, 1, 0)
-			btn.ClipsDescendants = true
-			btn.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			btn.Text = ""
-			btn.Name = "_pool_" .. i
-			btn.Visible = false -- Hidden initially
-			
-			-- Add UICorner
-			local corner = Instance.new("UICorner", btn)
-			corner.CornerRadius = UDim.new(0, 12)
-			
-			-- Add UIListLayout
-			local listLayout = Instance.new("UIListLayout", btn)
-			listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
-			listLayout.Wraps = true
-			listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
-			listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-			
-			-- Add UIPadding
-			local padding = Instance.new("UIPadding", btn)
-			padding.PaddingTop = UDim.new(0, 6)
-			padding.PaddingRight = UDim.new(0, 6)
-			padding.PaddingLeft = UDim.new(0, 12)
-			padding.PaddingBottom = UDim.new(0, 6)
-			
-			-- Add Delete button
-			local deleteBtn = Instance.new("ImageButton", btn)
-			deleteBtn.Name = "Delete"
-			deleteBtn.BorderSizePixel = 0
-			deleteBtn.ScaleType = Enum.ScaleType.Fit
-			deleteBtn.BackgroundTransparency = 1
-			deleteBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			deleteBtn.ImageColor3 = Color3.fromRGB(255, 100, 100)
-			deleteBtn.Selectable = false
-			deleteBtn.Image = "rbxassetid://122962777517764"
-			deleteBtn.Size = UDim2.new(0.05509, 0, 1, 0)
-			deleteBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			deleteBtn.Position = UDim2.new(0.46157, 0, 0, 0)
-			
-			-- Add UIStroke
-			local stroke = Instance.new("UIStroke", btn)
-			stroke.Transparency = 0.8
-			stroke.Thickness = 1
-			stroke.Color = Color3.fromRGB(160, 85, 255)
-			stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-			
-			-- Add Title label
-			local titleLabel = Instance.new("TextLabel", btn)
-			titleLabel.Name = "Title"
-			titleLabel.TextWrapped = true
-			titleLabel.BorderSizePixel = 0
-			titleLabel.TextSize = 14
-			titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-			titleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-			titleLabel.TextDirection = Enum.TextDirection.LeftToRight
-			titleLabel.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-			titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-			titleLabel.BackgroundTransparency = 1
-			titleLabel.Size = UDim2.new(0, 0, 1, 0)
-			titleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-			titleLabel.Text = "Pool"
-			titleLabel.LayoutOrder = -1
-			titleLabel.AutomaticSize = Enum.AutomaticSize.X
-			
-			-- Add to pool (NOT parented yet)
-			btn.Parent = Pages.Editor.Tabs
-			table.insert(buttonPool, btn)
-		end
-		
-		-- Store pool globally for updateUI to use
-		_G.TabButtonPool = buttonPool
-		
 		-- 🟢 ENSURE FOLDERS EXIST
 		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
 			CLONED_Detectedly.makedir("Punk-X-Files")
@@ -7084,6 +7000,81 @@ InitTabs.Saved = function()
     local EditorFrame = Editor:WaitForChild("Editor"); 
     local RealInput = EditorFrame:WaitForChild("Input");
     local Lines = EditorFrame:WaitForChild("Lines");
+    
+    -- 🔴 PRE-CREATE BUTTON POOL HERE (after Pages exists)
+    local buttonPool = {}
+    local MAX_BUTTONS = 20
+    
+    for i = 1, MAX_BUTTONS do
+        local btn = Instance.new("TextButton")
+        btn.Active = false
+        btn.BorderSizePixel = 0
+        btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+        btn.Selectable = false
+        btn.AutomaticSize = Enum.AutomaticSize.X
+        btn.Size = UDim2.new(0, 0, 1, 0)
+        btn.ClipsDescendants = true
+        btn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        btn.Text = ""
+        btn.Name = "_pool_" .. i
+        btn.Visible = false
+        
+        local corner = Instance.new("UICorner", btn)
+        corner.CornerRadius = UDim.new(0, 12)
+        
+        local listLayout = Instance.new("UIListLayout", btn)
+        listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
+        listLayout.Wraps = true
+        listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
+        listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        
+        local padding = Instance.new("UIPadding", btn)
+        padding.PaddingTop = UDim.new(0, 6)
+        padding.PaddingRight = UDim.new(0, 6)
+        padding.PaddingLeft = UDim.new(0, 12)
+        padding.PaddingBottom = UDim.new(0, 6)
+        
+        local deleteBtn = Instance.new("ImageButton", btn)
+        deleteBtn.Name = "Delete"
+        deleteBtn.BorderSizePixel = 0
+        deleteBtn.ScaleType = Enum.ScaleType.Fit
+        deleteBtn.BackgroundTransparency = 1
+        deleteBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        deleteBtn.ImageColor3 = Color3.fromRGB(255, 100, 100)
+        deleteBtn.Selectable = false
+        deleteBtn.Image = "rbxassetid://122962777517764"
+        deleteBtn.Size = UDim2.new(0.05509, 0, 1, 0)
+        deleteBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        deleteBtn.Position = UDim2.new(0.46157, 0, 0, 0)
+        
+        local stroke = Instance.new("UIStroke", btn)
+        stroke.Transparency = 0.8
+        stroke.Thickness = 1
+        stroke.Color = Color3.fromRGB(160, 85, 255)
+        stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+        
+        local titleLabel = Instance.new("TextLabel", btn)
+        titleLabel.Name = "Title"
+        titleLabel.TextWrapped = true
+        titleLabel.BorderSizePixel = 0
+        titleLabel.TextSize = 14
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        titleLabel.TextDirection = Enum.TextDirection.LeftToRight
+        titleLabel.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Size = UDim2.new(0, 0, 1, 0)
+        titleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        titleLabel.Text = "Pool"
+        titleLabel.LayoutOrder = -1
+        titleLabel.AutomaticSize = Enum.AutomaticSize.X
+        
+        btn.Parent = Pages.Editor.Tabs
+        table.insert(buttonPool, btn)
+    end
+    
+    _G.TabButtonPool = buttonPool
     
     local Method = "MouseButton1Click"; 
     local autoSaveDebounce = nil 
