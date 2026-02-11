@@ -3790,31 +3790,51 @@ UIEvents.Search = {
 				return HighestOrder;
 			end,
 
+			-- Debug helper
+			local function debug(message)
+				print("[DEBUG] " .. message)
+			end
+			
 			createTab = function(TabName, Content, isTemp)
+				debug("1. Starting createTab with name: " .. tostring(TabName))
 				local HighestOrder = UIEvents.EditorTabs.getHighestOrder();
+				debug("2. Got highest order: " .. tostring(HighestOrder))
 				Content = Content or "";
+				debug("3. Content initialized")
 				
+				debug("4. Before sanitize and duplicate check")
 				if not isTemp then
 					TabName = sanitizeFilename(TabName)
+					debug("5. Filename sanitized: " .. TabName)
 					TabName = UIEvents.EditorTabs.getDuplicatedName(TabName, Data.Editor.Tabs or {});
+					debug("6. Checked for duplicates: " .. TabName)
 					-- 🟢 PATH: Punk-X-Files/scripts/
 					-- ✅ FIXED: Use safe HttpService
+					debug("7. Before writefile operation")
 					if HttpService then
 						pcall(function()
 							CLONED_Detectedly.writefile("Punk-X-Files/scripts/" .. TabName .. ".lua", HttpService:JSONEncode({
 								Name = TabName, Content = Content, Order = (HighestOrder + 1)
 							}));
 						end)
+						debug("8. After writefile operation")
 					else
 						warn("[PUNK X] Cannot save tab - HttpService unavailable")
+						debug("8. HttpService unavailable - skip writefile")
 					end
 				end
 
+				debug("9. Before adding to Data.Editor.Tabs")
 				if Data.Editor.Tabs then
 					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
 				end
+				debug("10. Added to tabs table")
+				debug("11. Before calling switchTab from createTab")
 				UIEvents.EditorTabs.switchTab(TabName);
+				debug("12. After switchTab call")
+				debug("13. Before calling updateUI from createTab")
 				UIEvents.EditorTabs.updateUI();
+				debug("14. createTab complete")
 			end,
 
 			saveTab = function(tabName, Content, isExplicitSave)
@@ -3869,45 +3889,71 @@ UIEvents.Search = {
 			end,
 
 			switchTab = function(ToTab)
-				-- Handle cancelling an edit if switching away
+				debug("=== SWITCH TAB START === ID: " .. tostring(ToTab))
+				
+				debug("A. Checking if editing saved file")
 				if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
+					debug("B. Canceling edit for: " .. Data.Editor.EditingSavedFile)
 					local editingName = Data.Editor.EditingSavedFile
 					createNotification("Editing Cancelled", "Warn", 3)
+					-- 🟢 PATH: Punk-X-Files/scripts/
+					debug("C. Before delfile for cancelled edit")
 					CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. editingName .. ".lua");
+					debug("D. After delfile for cancelled edit")
 					Data.Editor.Tabs[editingName] = nil;
 					Data.Editor.EditingSavedFile = nil
+					debug("E. Before updateUI from cancel edit")
 					UIEvents.EditorTabs.updateUI()
+					debug("F. After updateUI from cancel edit")
 				end
 
+				debug("G. Checking if tab exists in Data.Editor.Tabs")
 				if Data.Editor.Tabs[ToTab] then
+					debug("H. Tab exists, getting editor elements")
 					local Editor = Pages:WaitForChild("Editor");
-					local EditorFrame = Editor:WaitForChild("Editor")
-					local RealInput = EditorFrame:WaitForChild("Input")
+					local EditorFrame = Editor:WaitForChild("Editor").Input; -- This is the TextBox
 					local OldTab = Data.Editor.CurrentTab;
+					debug("I. Got editor elements, OldTab: " .. tostring(OldTab))
 
-					-- 1. Save the OLD tab as RAW TEXT (Not HTML!)
+					-- 1. Save the old tab as RAW text before leaving it
+					debug("J. Before saving old tab content")
 					if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
-						Data.Editor.Tabs[OldTab][1] = RealInput.Text -- Save what is actually typed
+						debug("K. Getting EditorFrame.Text")
+						Data.Editor.Tabs[OldTab][1] = StripSyntax(EditorFrame.Text)
+						debug("L. Saved old tab content")
 					end
 
+					debug("M. Setting current tab to: " .. ToTab)
 					Data.Editor.CurrentTab = ToTab;
 					local TabContent = Data.Editor.Tabs[ToTab][1] or "";
+					debug("N. Got tab content, length: " .. #TabContent)
 					
-					-- 2. CLEAN the content (Remove any lingering HTML tags from old saves)
+					-- 2. CLEAN the new content (remove any leftover HTML tags)
+					debug("O. Before StripSyntax")
 					TabContent = StripSyntax(TabContent)
+					debug("P. After StripSyntax")
 
-					-- 3. APPLY RAW TEXT TO INPUT WITH DELAY
-					-- This stops the kick. We do NOT apply syntax here. 
-					-- The Syntax Highlighting happens visually in InitTabs.Editor via the Ghost Label
-					task.spawn(function()
-						task.wait(0.4)  -- Delay text change to avoid instant detection
-						if RealInput and RealInput.Parent then
-							RealInput.Text = TabContent
-						end
-					end)
+					-- 3. APPLY to the TextBox (View mode = RichText ON)
+					debug("Q. Before setting EditorFrame.Text")
+					if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
+						debug("R. Large content, disabling RichText")
+						EditorFrame.RichText = false 
+						EditorFrame.Text = TabContent
+						debug("S. Set plain text")
+					else
+						debug("R. Normal content, enabling RichText")
+						EditorFrame.RichText = true
+						debug("S. Before ApplySyntax")
+						EditorFrame.Text = ApplySyntax(TabContent)
+						debug("T. After setting syntax highlighted text")
+					end
 
+					debug("U. Before calling updateUI from switchTab")
 					UIEvents.EditorTabs.updateUI();
+					debug("V. After updateUI call")
 				end
+				
+				debug("=== SWITCH TAB END ===")
 			end,
 
 			delTab = function(Name)
@@ -3938,16 +3984,23 @@ UIEvents.Search = {
 			end,
 
 			updateUI = function()
+				debug(">> updateUI START")
+				
+				debug(">> Before clearing old tabs")
 				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
 					if v:GetAttribute("no") then continue end
 					if v:IsA("TextButton") then v:Destroy() end
 				end
+				debug(">> After clearing old tabs")
 				
+				debug(">> Before checking Create button")
 				if Pages.Editor.Tabs:FindFirstChild("Create") then
 					-- Hides "+" button if editing
 					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
 				end
+				debug(">> After checking Create button")
 
+				debug(">> Before creating tab buttons")
 				local total = 0;
 				for i, v in pairs(Data.Editor.Tabs) do
 					-- Isolation: If editing, only show the active tab
@@ -3956,27 +4009,41 @@ UIEvents.Search = {
 					end
 					
 					total = total + 1;
+					debug(">> Creating button for tab: " .. i)
 					local new = script.Yo:Clone();
+					debug(">> Cloned Yo template")
 					new.Parent = Pages.Editor.Tabs;
+					debug(">> Set parent")
 					new.Title.Text = i;
 					new.Name = i;
+					debug(">> Before connecting MouseButton1Click")
 					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
+					debug(">> After connecting MouseButton1Click")
 					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
 					new.LayoutOrder = v[2];
 					if (Data.Editor.CurrentTab == i) then
 						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
 					end
+					debug(">> Finished creating button for tab: " .. i)
 				end
+				debug(">> Created " .. total .. " tab buttons")
 				
+				debug(">> Before getting Editor elements")
 				local Editor = Pages:WaitForChild("Editor");
 				local Panel = Editor:WaitForChild("Panel");
 				local EditorFrame = Editor:WaitForChild("Editor");
+				debug(">> Got Editor elements")
 				
+				debug(">> Before setting visibility (total tabs: " .. total .. ")")
 				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
+					debug(">> Setting editor invisible")
 					EditorFrame.Visible = false; Panel.Visible = false;
 				else
+					debug(">> Setting editor visible")
 					EditorFrame.Visible = true; Panel.Visible = true;
 				end
+				
+				debug(">> updateUI END")
 			end,
 
 			RenameFile = function(NewName, TargetTab)
@@ -6865,173 +6932,206 @@ InitTabs.Saved = function()
 	end;
 
 	InitTabs.Editor = function()
-		local Editor = Pages:WaitForChild("Editor");
-		local Panel = Editor:WaitForChild("Panel");
-		local EditorFrame = Editor:WaitForChild("Editor");
-		local RealInput = EditorFrame:WaitForChild("Input");
-		local Lines = EditorFrame:WaitForChild("Lines");
+    local Editor = Pages:WaitForChild("Editor");
+    local Panel = Editor:WaitForChild("Panel");
+    local EditorFrame = Editor:WaitForChild("Editor"); 
+    local RealInput = EditorFrame:WaitForChild("Input");
+    local Lines = EditorFrame:WaitForChild("Lines");
+    
+    local Method = "MouseButton1Click"; 
+    local autoSaveDebounce = nil 
 
-		-- [[ 🛡️ THE FIX: GHOST HIGHLIGHTER ]]
-		-- We create a Label to show colors. The TextBox will be invisible but type-able.
-		local Highlighter = Instance.new("TextLabel")
-		Highlighter.Name = "Highlighter"
-		Highlighter.BackgroundTransparency = 1
-		Highlighter.Size = UDim2.new(1, 0, 1, 0)
-		Highlighter.Position = UDim2.new(0, 0, 0, 0)
-		Highlighter.TextSize = RealInput.TextSize
-		Highlighter.TextColor3 = Color3.new(1,1,1)
-		Highlighter.FontFace = RealInput.FontFace
-		Highlighter.TextXAlignment = RealInput.TextXAlignment
-		Highlighter.TextYAlignment = RealInput.TextYAlignment
-		Highlighter.RichText = true -- Enable RichText ONLY on the visual label
-		Highlighter.Text = ""
-		Highlighter.ZIndex = RealInput.ZIndex - 1 -- Sit behind the input
-		Highlighter.Parent = RealInput -- Parent to Input so it moves/scrolls with it
-		
-		-- Setup the Input for Ghost Mode
-		RealInput.BackgroundTransparency = 1
-		RealInput.TextTransparency = 1 -- Hide the raw text (User sees Highlighter instead)
-		-- Note: If the cursor disappears, change TextTransparency to 0.5 or set TextColor3 to match background slightly
-		RealInput.TextColor3 = Color3.new(1,1,1) -- Cursor color
-		RealInput.RichText = false -- 🔴 DISABLE RICHTEXT ON INPUT (Prevents Kick)
-		RealInput.ClearTextOnFocus = false
+    -- Store original states ONCE
+    local originalSize = EditorFrame.Size
+    local originalPos = EditorFrame.Position
+    local originalTextPos = RealInput.Position
+    local originalPanelPos = Panel.Position
+    local originalPanelSize = Panel.Size
+    local originalPanelAnchor = Panel.AnchorPoint
 
-		local Method = "MouseButton1Click"; 
-		local autoSaveDebounce = nil 
+    -- 🔴 CRITICAL FIX: Verify this is the EDITOR panel, not SaveTemplate panel
+    if Panel.Parent ~= Editor then
+        warn("[PunkX] Wrong panel detected!")
+        return
+    end
 
-		-- [[ EDIT MODE ]]
-		RealInput.Focused:Connect(function()
-			Data.Editor.IsEditing = true
-			UIEvents.EditorTabs.updateUI()
+    -- 🔴 FIX: Set ZIndex ONCE at initialization (no loops, no repeats)
+    Panel.ZIndex = 100
+    Panel.BackgroundTransparency = 0.2
+    Panel.Visible = true -- Ensure it's visible
+    
+    -- Set ZIndex for all children ONCE
+    for _, child in pairs(Panel:GetChildren()) do
+        if child:IsA("TextButton") or child:IsA("ImageButton") then
+            child.ZIndex = 101
+            child.Visible = true
+            local icon = child:FindFirstChild("Icon")
+            if icon then
+                icon.ZIndex = 102
+                icon.Visible = true
+            end
+        elseif child:IsA("Frame") and child.Name:match("Spacer") then
+            child.ZIndex = 101
+            child.Visible = true
+            child.BackgroundTransparency = 0.5
+        elseif child:IsA("UIListLayout") or child:IsA("UIPadding") or child:IsA("UICorner") or child:IsA("UIScale") then
+            -- Layout elements, don't modify
+        end
+    end
 
-			-- Hide lines and move layout
-			Lines.Visible = false
-			RealInput.Position = UDim2.new(0, 10, 0, 0)
-			EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
-			EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
-			
-			-- Move Panel
-			Panel.AnchorPoint = Vector2.new(1, 0.5)
-			Panel.Position = UDim2.new(0.98, 0, 0.085, 0)
-			Panel.Size = UDim2.new(0.42, 0, 0.12, 0)
-			Panel.Visible = true
-			
-			-- Sync Highlighter position (ensure it stays visible)
-			Highlighter.TextTransparency = 0
-		end)
+-- [[ EDIT MODE - When user taps editor ]]
+    RealInput.Focused:Connect(function()
+        Data.Editor.IsEditing = true
+        UIEvents.EditorTabs.updateUI() -- Trigger tab isolation
 
-		-- [[ VIEW MODE ]]
-		RealInput.FocusLost:Connect(function()
-			task.wait(0.1)
-			Data.Editor.IsEditing = false 
-			UIEvents.EditorTabs.updateUI()
+        -- 1. Hide line numbers
+        Lines.Visible = false
+        RealInput.Position = UDim2.new(0, 10, 0, 0)
+        
+        -- 2. Position the Code Box
+        EditorFrame.Position = UDim2.new(0.02, 0, 0.22, 0) 
+        EditorFrame.Size = UDim2.new(0.96, 0, 0.38, 0)
+        
+        -- 3. Move Panel to Top Right (Same level as Trial tab)
+        Panel.AnchorPoint = Vector2.new(1, 0.5) -- Right-center pivot
+        Panel.Position = UDim2.new(0.98, 0, 0.085, 0) -- Level with Trial, Aligned with code box edge
+        Panel.Size = UDim2.new(0.42, 0, 0.12, 0)
+        Panel.Visible = true
+        Panel.ZIndex = 100
+        
+        -- 4. FIX SYNTAX BLEED: Disable RichText BEFORE setting stripped text
+        RealInput.RichText = false 
+        RealInput.Text = StripSyntax(RealInput.Text)
+    end)
 
-			-- Restore layout
-			Lines.Visible = true
-			RealInput.Position = UDim2.new(0, 60, 0, 0)
-			EditorFrame.Size = UDim2.new(1, 0, 0.85, 0)
-			EditorFrame.Position = UDim2.new(0, 0, 0.15, 0)
-			
-			-- Restore Panel
-			Panel.AnchorPoint = Vector2.new(1, 1)
-			Panel.Position = UDim2.new(0.99, 0, 0.98, 0)
-			Panel.Size = UDim2.new(0.421, 0, 0.15, 0)
-			
-			-- Auto-save raw text
-			if not Data.Editor.EditingSavedFile then
-				UIEvents.EditorTabs.saveTab(nil, RealInput.Text, false)
-			end
-		end)
+ -- [[ VIEWING MODE - When user exits editor ]]
+    RealInput.FocusLost:Connect(function()
+        -- 🟢 ADD THIS LINE: Wait for button click to finish
+        task.wait(0.1) 
+        
+        Data.Editor.IsEditing = false 
+        UIEvents.EditorTabs.updateUI()
 
-		-- [[ SYNC LOGIC ]] --
-		RealInput:GetPropertyChangedSignal("Text"):Connect(function()
-			local rawText = RealInput.Text
-			
-			-- 1. Sync Line Numbers
-			UpdateLineNumbers(RealInput, Lines)
-			
-			-- 2. Sync Highlighter (Visuals)
-			-- Only apply colors if text isn't massive (prevents lag)
-			if #rawText < 15000 then
-				Highlighter.RichText = true
-				Highlighter.Text = ApplySyntax(rawText)
-			else
-				Highlighter.RichText = false
-				Highlighter.Text = rawText
-			end
+        -- 1. Restore line numbers
+        Lines.Visible = true
+        RealInput.Position = originalTextPos
+        
+        -- 2. Restore editor size/position
+        EditorFrame.Size = originalSize
+        EditorFrame.Position = originalPos
+        
+        -- 3. 🔴 FIX: Restore Panel to ORIGINAL position
+        Panel.AnchorPoint = originalPanelAnchor
+        Panel.Position = originalPanelPos
+        Panel.Size = originalPanelSize
+        Panel.Visible = true
+        Panel.ZIndex = 100
+        
+        -- 4. Re-apply syntax highlighting
+        local raw = RealInput.Text
+        RealInput.RichText = true
+        RealInput.Text = ApplySyntax(raw)
 
-			-- 3. Auto Save
-			if not Data.Editor.EditingSavedFile then
-				if autoSaveDebounce then task.cancel(autoSaveDebounce) end
-				autoSaveDebounce = task.delay(1, function()
-					UIEvents.EditorTabs.saveTab(nil, rawText, false)
-				end)
-			end
-		end)
+        -- 5. Auto-save
+        if not Data.Editor.EditingSavedFile then
+            UIEvents.EditorTabs.saveTab(nil, raw, false)
+        end
+    end)
 
-		-- Button Connections
-		local function safeConnect(buttonName, callback)
-			local btn = Panel:FindFirstChild(buttonName)
-			if btn then btn[Method]:Connect(callback) end
-		end
+    -- Line number sync
+    RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+        UpdateLineNumbers(RealInput, Lines)
+        if not Data.Editor.EditingSavedFile then
+            if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+            autoSaveDebounce = task.delay(1, function()
+                local cleanText = StripSyntax(RealInput.Text)
+                UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+            end)
+        end
+    end)
 
-		safeConnect("Execute", function() 
-			UIEvents.Executor.RunCode(RealInput.Text)()
-		end)
-		
-		safeConnect("Delete", function() 
-			RealInput.Text = "" 
-		end)
-		
-		safeConnect("Paste", function()
-			local clip = safeGetClipboard()
-			RealInput.Text = StripSyntax(clip) -- Just set text, .Changed handles highlight
-		end)
-		
-		safeConnect("Save", function() 
-			UIEvents.EditorTabs.saveTab(nil, RealInput.Text, true) 
-		end)
-		
-		safeConnect("Rename", function()
-			script.Parent.Popups.Visible = true
-			script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
-			script.Parent.Popups.Main.Input:CaptureFocus() -- This is safe because it's a tiny popup input
-		end)
-		
-		safeConnect("ExecuteClipboard", function() 
-			UIEvents.Executor.RunCode(safeGetClipboard())() 
-		end)
+    -- BUTTON CONNECTIONS - Use WaitForChild to ensure correct panel
+    local function safeConnect(buttonName, callback)
+        local btn = Panel:FindFirstChild(buttonName)
+        if btn then
+            btn[Method]:Connect(callback)
+        else
+            warn("[PunkX] Button not found: " .. buttonName)
+        end
+    end
 
-		if Editor.Tabs:FindFirstChild("Create") then
-			Editor.Tabs.Create.Activated:Connect(function() 
-				UIEvents.EditorTabs.createTab("Script", "") 
-			end)
-		end
-		
-		-- Initialize
-		Highlighter.Text = ApplySyntax(RealInput.Text)
-		UpdateLineNumbers(RealInput, Lines)
-		
-		-- Handle Popups
-		local Popups = script.Parent:FindFirstChild("Popups")
-		if Popups and Popups:FindFirstChild("Main") then
-			local Buttons = Popups.Main:FindFirstChild("Button")
-			if Buttons then
-				if Buttons:FindFirstChild("Confirm") then
-					Buttons.Confirm[Method]:Connect(function()
-						local newName = string.gsub(Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
-						if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
-							UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
-						end
-						Popups.Visible = false
-					end)
-				end
-				if Buttons:FindFirstChild("Cancel") then
-					Buttons.Cancel[Method]:Connect(function() Popups.Visible = false end)
-				end
-			end
-		end
-	end;
+   safeConnect("Execute", function() 
+    local success, func = pcall(function()
+        return UIEvents.Executor.RunCode(StripSyntax(RealInput.Text))
+    end)
+    
+    if success and func and type(func) == "function" then
+        pcall(func)
+    end
+end)
+    
+    safeConnect("Delete", function() 
+        RealInput.Text = "" 
+    end)
+    
+safeConnect("Paste", function()
+        local clip = safeGetClipboard()
+        RealInput.RichText = false -- Clear formatting
+        RealInput.Text = StripSyntax(clip)
+        RealInput.RichText = true
+        RealInput.Text = ApplySyntax(RealInput.Text)
+    end)
+    
+    safeConnect("Save", function() 
+        UIEvents.EditorTabs.saveTab(nil, StripSyntax(RealInput.Text), true) 
+    end)
+    
+ safeConnect("Rename", function()
+        script.Parent.Popups.Visible = true
+        script.Parent.Popups.Main.Input.Text = Data.Editor.CurrentTab or ""
+        script.Parent.Popups.Main.Input:CaptureFocus()
+    end)
+    
+    safeConnect("ExecuteClipboard", function() 
+        UIEvents.Executor.RunCode(safeGetClipboard())() 
+    end)
+
+    -- Tab creation
+    local createBtn = Editor.Tabs:FindFirstChild("Create")
+    if createBtn then
+        createBtn.Activated:Connect(function() 
+            UIEvents.EditorTabs.createTab("Script", "") 
+        end)
+    end
+
+    -- Popup controls
+    local Popups = script.Parent:FindFirstChild("Popups")
+    if Popups and Popups:FindFirstChild("Main") then
+        local Buttons = Popups.Main:FindFirstChild("Button")
+        if Buttons then
+            local confirmBtn = Buttons:FindFirstChild("Confirm")
+            local cancelBtn = Buttons:FindFirstChild("Cancel")
+            
+            if confirmBtn then
+                confirmBtn[Method]:Connect(function()
+                    local newName = string.gsub(Popups.Main.Input.Text, "^%s*(.-)%s*$", "%1")
+                    if (#newName > 0 and newName ~= Data.Editor.CurrentTab) then
+                        UIEvents.EditorTabs.RenameFile(newName, Data.Editor.CurrentTab)
+                    end
+                    Popups.Visible = false
+                end)
+            end
+            
+            if cancelBtn then
+                cancelBtn[Method]:Connect(function() 
+                    Popups.Visible = false 
+                end)
+            end
+        end
+    end
+
+    UpdateLineNumbers(RealInput, Lines)
+end;
 
 InitTabs.Search = function()
 	local Search = Pages:WaitForChild("Search");
