@@ -3936,18 +3936,23 @@ UIEvents.Search = {
 
 					-- 3. APPLY to the TextBox (View mode = RichText ON)
 					debug("Q. Before setting EditorFrame.Text")
-					if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
-						debug("R. Large content, disabling RichText")
-						EditorFrame.RichText = false 
-						EditorFrame.Text = TabContent
-						debug("S. Set plain text")
-					else
-						debug("R. Normal content, enabling RichText")
-						EditorFrame.RichText = true
-						debug("S. Before ApplySyntax")
-						EditorFrame.Text = ApplySyntax(TabContent)
-						debug("T. After setting text")
-					end
+					-- ❌ TESTING: DISABLED RICHTEXT & SYNTAX HIGHLIGHTING
+					debug("R. RichText DISABLED for anti-cheat test")
+					EditorFrame.RichText = false 
+					EditorFrame.Text = TabContent
+					debug("S. Set plain text only")
+					-- if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
+					-- 	debug("R. Large content, disabling RichText")
+					-- 	EditorFrame.RichText = false 
+					-- 	EditorFrame.Text = TabContent
+					-- 	debug("S. Set plain text")
+					-- else
+					-- 	debug("R. Normal content, enabling RichText")
+					-- 	EditorFrame.RichText = true
+					-- 	debug("S. Before ApplySyntax")
+					-- 	EditorFrame.Text = ApplySyntax(TabContent)
+					-- 	debug("T. After setting text")
+					-- end
 
 					debug("U. Before calling updateUI")
 					UIEvents.EditorTabs.updateUI();
