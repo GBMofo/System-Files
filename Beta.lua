@@ -4019,12 +4019,14 @@ UIEvents.Search = {
 				debug(">> updateUI START")
 				
 				debug(">> Before clearing old tabs")
-				-- Instead of destroying, hide all existing tab buttons
-				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
-					if v:GetAttribute("no") then continue end
-					if v:IsA("TextButton") then 
-						v.Visible = false  -- Hide instead of destroy
-						debug(">> Hid existing tab button: " .. v.Name)
+				-- Hide all pool buttons first
+				if _G.TabButtonPool then
+					for _, poolBtn in ipairs(_G.TabButtonPool) do
+						poolBtn.Visible = false
+						-- Disconnect old events to prevent memory leaks
+						for _, conn in ipairs(poolBtn:GetConnections()) do
+							pcall(function() conn:Disconnect() end)
+						end
 					end
 				end
 				debug(">> After clearing old tabs")
@@ -4038,6 +4040,8 @@ UIEvents.Search = {
 
 				debug(">> Before creating tab buttons")
 				local total = 0;
+				local poolIndex = 1;
+				
 				for i, v in pairs(Data.Editor.Tabs) do
 					-- Isolation: If editing, only show the active tab
 					if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
@@ -4047,121 +4051,44 @@ UIEvents.Search = {
 					total = total + 1;
 					debug(">> Processing tab: " .. i)
 					
-					-- Check if button already exists
-					local existingButton = Pages.Editor.Tabs:FindFirstChild(i)
-					local new
-					
-					if existingButton and existingButton:IsA("TextButton") then
-						debug(">> Reusing existing button for: " .. i)
-						new = existingButton
-						new.Visible = true
+					-- Get button from pool
+					local new = nil
+					if _G.TabButtonPool and _G.TabButtonPool[poolIndex] then
+						new = _G.TabButtonPool[poolIndex]
+						poolIndex = poolIndex + 1
+						debug(">> Reusing pool button for: " .. i)
 					else
-						debug(">> Creating new button for tab: " .. i)
-						
-						-- Create tab button from scratch instead of cloning
-						new = Instance.new("TextButton")
-						new.Active = false
-						new.BorderSizePixel = 0
-						new.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-						new.Selectable = false
-						new.AutomaticSize = Enum.AutomaticSize.X
-						new.Size = UDim2.new(0, 0, 1, 0)
-						new.ClipsDescendants = true
-						new.BorderColor3 = Color3.fromRGB(0, 0, 0)
-						new.Text = ""
+						warn(">> Pool exhausted! Increase MAX_BUTTONS")
+						break
+					end
+					
+					if new then
+						-- Update button properties
 						new.Name = i
-						debug(">> Created TextButton")
+						new.Visible = true
+						new.LayoutOrder = v[2];
 						
-						-- Add UICorner
-						local corner = Instance.new("UICorner", new)
-						corner.CornerRadius = UDim.new(0, 12)
-						debug(">> Added UICorner")
+						if (Data.Editor.CurrentTab == i) then
+							new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
+						else
+							new.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+						end
 						
-						-- Add UIListLayout
-						local listLayout = Instance.new("UIListLayout", new)
-						listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
-						listLayout.Wraps = true
-						listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
-						listLayout.SortOrder = Enum.SortOrder.LayoutOrder
-						debug(">> Added UIListLayout")
+						-- Update title text
+						local titleLabel = new:FindFirstChild("Title")
+						if titleLabel then
+							titleLabel.Text = i
+						end
 						
-						-- Add UIPadding
-						local padding = Instance.new("UIPadding", new)
-						padding.PaddingTop = UDim.new(0, 6)
-						padding.PaddingRight = UDim.new(0, 6)
-						padding.PaddingLeft = UDim.new(0, 12)
-						padding.PaddingBottom = UDim.new(0, 6)
-						debug(">> Added UIPadding")
-						
-						-- Add Delete button
-						local deleteBtn = Instance.new("ImageButton", new)
-						deleteBtn.Name = "Delete"
-						deleteBtn.BorderSizePixel = 0
-						deleteBtn.ScaleType = Enum.ScaleType.Fit
-						deleteBtn.BackgroundTransparency = 1
-						deleteBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-						deleteBtn.ImageColor3 = Color3.fromRGB(255, 100, 100)
-						deleteBtn.Selectable = false
-						deleteBtn.Image = "rbxassetid://122962777517764"
-						deleteBtn.Size = UDim2.new(0.05509, 0, 1, 0)
-						deleteBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
-						deleteBtn.Position = UDim2.new(0.46157, 0, 0, 0)
-						debug(">> Added Delete button")
-						
-						-- Add UIStroke
-						local stroke = Instance.new("UIStroke", new)
-						stroke.Transparency = 0.8
-						stroke.Thickness = 1
-						stroke.Color = Color3.fromRGB(160, 85, 255)
-						stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
-						debug(">> Added UIStroke")
-						
-						-- Add Title label
-						local titleLabel = Instance.new("TextLabel", new)
-						titleLabel.Name = "Title"
-						titleLabel.TextWrapped = true
-						titleLabel.BorderSizePixel = 0
-						titleLabel.TextSize = 14
-						titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-						titleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-						titleLabel.TextDirection = Enum.TextDirection.LeftToRight
-						titleLabel.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
-						titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-						titleLabel.BackgroundTransparency = 1
-						titleLabel.Size = UDim2.new(0, 0, 1, 0)
-						titleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-						titleLabel.Text = i
-						titleLabel.LayoutOrder = -1
-						titleLabel.AutomaticSize = Enum.AutomaticSize.X
-						debug(">> Added Title label")
-						
-						debug(">> Set parent")
-						new.Parent = Pages.Editor.Tabs
-						
-						debug(">> Before connecting click events")
+						-- Connect click events
 						new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-						debug(">> After MouseButton1Click")
 						local deleteBtn = new:FindFirstChild("Delete")
 						if deleteBtn then
 							deleteBtn.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
 						end
+						
+						debug(">> Finished button for tab: " .. i)
 					end
-					
-					-- Update button properties
-					new.LayoutOrder = v[2];
-					if (Data.Editor.CurrentTab == i) then
-						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
-					else
-						new.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-					end
-					
-					-- Update title text if it exists
-					local titleLabel = new:FindFirstChild("Title")
-					if titleLabel then
-						titleLabel.Text = i
-					end
-					
-					debug(">> Finished button for tab: " .. i)
 				end
 				debug(">> Created " .. total .. " tab buttons")
 				
@@ -6957,6 +6884,90 @@ end))
 end -- End of InitTabs.Settings
 
 InitTabs.TabsData = function()
+		-- 🔴 PRE-CREATE BUTTON POOL (before loading tabs)
+		-- This prevents Instance.new() during gameplay
+		local buttonPool = {}
+		local MAX_BUTTONS = 20 -- Pre-create 20 buttons
+		
+		for i = 1, MAX_BUTTONS do
+			local btn = Instance.new("TextButton")
+			btn.Active = false
+			btn.BorderSizePixel = 0
+			btn.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+			btn.Selectable = false
+			btn.AutomaticSize = Enum.AutomaticSize.X
+			btn.Size = UDim2.new(0, 0, 1, 0)
+			btn.ClipsDescendants = true
+			btn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			btn.Text = ""
+			btn.Name = "_pool_" .. i
+			btn.Visible = false -- Hidden initially
+			
+			-- Add UICorner
+			local corner = Instance.new("UICorner", btn)
+			corner.CornerRadius = UDim.new(0, 12)
+			
+			-- Add UIListLayout
+			local listLayout = Instance.new("UIListLayout", btn)
+			listLayout.HorizontalFlex = Enum.UIFlexAlignment.Fill
+			listLayout.Wraps = true
+			listLayout.VerticalFlex = Enum.UIFlexAlignment.Fill
+			listLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			
+			-- Add UIPadding
+			local padding = Instance.new("UIPadding", btn)
+			padding.PaddingTop = UDim.new(0, 6)
+			padding.PaddingRight = UDim.new(0, 6)
+			padding.PaddingLeft = UDim.new(0, 12)
+			padding.PaddingBottom = UDim.new(0, 6)
+			
+			-- Add Delete button
+			local deleteBtn = Instance.new("ImageButton", btn)
+			deleteBtn.Name = "Delete"
+			deleteBtn.BorderSizePixel = 0
+			deleteBtn.ScaleType = Enum.ScaleType.Fit
+			deleteBtn.BackgroundTransparency = 1
+			deleteBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			deleteBtn.ImageColor3 = Color3.fromRGB(255, 100, 100)
+			deleteBtn.Selectable = false
+			deleteBtn.Image = "rbxassetid://122962777517764"
+			deleteBtn.Size = UDim2.new(0.05509, 0, 1, 0)
+			deleteBtn.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			deleteBtn.Position = UDim2.new(0.46157, 0, 0, 0)
+			
+			-- Add UIStroke
+			local stroke = Instance.new("UIStroke", btn)
+			stroke.Transparency = 0.8
+			stroke.Thickness = 1
+			stroke.Color = Color3.fromRGB(160, 85, 255)
+			stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+			
+			-- Add Title label
+			local titleLabel = Instance.new("TextLabel", btn)
+			titleLabel.Name = "Title"
+			titleLabel.TextWrapped = true
+			titleLabel.BorderSizePixel = 0
+			titleLabel.TextSize = 14
+			titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+			titleLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+			titleLabel.TextDirection = Enum.TextDirection.LeftToRight
+			titleLabel.FontFace = Font.new("rbxassetid://12187365364", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+			titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			titleLabel.BackgroundTransparency = 1
+			titleLabel.Size = UDim2.new(0, 0, 1, 0)
+			titleLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+			titleLabel.Text = "Pool"
+			titleLabel.LayoutOrder = -1
+			titleLabel.AutomaticSize = Enum.AutomaticSize.X
+			
+			-- Add to pool (NOT parented yet)
+			btn.Parent = Pages.Editor.Tabs
+			table.insert(buttonPool, btn)
+		end
+		
+		-- Store pool globally for updateUI to use
+		_G.TabButtonPool = buttonPool
+		
 		-- 🟢 ENSURE FOLDERS EXIST
 		if not CLONED_Detectedly.isfolder("Punk-X-Files") then
 			CLONED_Detectedly.makedir("Punk-X-Files")
