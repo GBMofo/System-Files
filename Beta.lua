@@ -3741,7 +3741,8 @@ local Data = {
         CurrentTab = nil,
         CurrentOrder = 0,
         Tabs = {},
-        IsEditing = false -- Added this line
+        IsEditing = false, -- Added this line
+        IsProgrammaticChange = false -- 🔴 FIX: Flag to prevent Focused events during tab switching
     },
     Saves = {
         Scripts = {}
@@ -3936,23 +3937,26 @@ UIEvents.Search = {
 
 					-- 3. APPLY to the TextBox (View mode = RichText ON)
 					debug("Q. Before setting EditorFrame.Text")
-					-- ❌ TESTING: DISABLED RICHTEXT & SYNTAX HIGHLIGHTING
-					debug("R. RichText DISABLED for anti-cheat test")
-					EditorFrame.RichText = false 
-					EditorFrame.Text = TabContent
-					debug("S. Set plain text only")
-					-- if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
-					-- 	debug("R. Large content, disabling RichText")
-					-- 	EditorFrame.RichText = false 
-					-- 	EditorFrame.Text = TabContent
-					-- 	debug("S. Set plain text")
-					-- else
-					-- 	debug("R. Normal content, enabling RichText")
-					-- 	EditorFrame.RichText = true
-					-- 	debug("S. Before ApplySyntax")
-					-- 	EditorFrame.Text = ApplySyntax(TabContent)
-					-- 	debug("T. After setting text")
-					-- end
+					
+					-- 🔴 FIX: Set flag to prevent Focused event from triggering
+					Data.Editor.IsProgrammaticChange = true
+					
+					if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
+						debug("R. Large content, disabling RichText")
+						EditorFrame.RichText = false 
+						EditorFrame.Text = TabContent
+						debug("S. Set plain text")
+					else
+						debug("R. Normal content, enabling RichText")
+						EditorFrame.RichText = true
+						debug("S. Before ApplySyntax")
+						EditorFrame.Text = ApplySyntax(TabContent)
+						debug("T. After setting text")
+					end
+					
+					-- 🔴 FIX: Reset flag after text is set
+					task.wait(0.05) -- Small delay to ensure text is fully set
+					Data.Editor.IsProgrammaticChange = false
 
 					debug("U. Before calling updateUI")
 					UIEvents.EditorTabs.updateUI();
@@ -7092,6 +7096,12 @@ InitTabs.Saved = function()
 
 -- [[ EDIT MODE - When user taps editor ]]
     RealInput.Focused:Connect(function()
+        -- 🔴 FIX: Ignore if this is a programmatic change (tab switching)
+        if Data.Editor.IsProgrammaticChange then 
+            debug(">> Focused event blocked (programmatic change)")
+            return 
+        end
+        
         Data.Editor.IsEditing = true
         UIEvents.EditorTabs.updateUI() -- Trigger tab isolation
 
@@ -7117,6 +7127,12 @@ InitTabs.Saved = function()
 
  -- [[ VIEWING MODE - When user exits editor ]]
     RealInput.FocusLost:Connect(function()
+        -- 🔴 FIX: Ignore if this is a programmatic change (tab switching)
+        if Data.Editor.IsProgrammaticChange then 
+            debug(">> FocusLost event blocked (programmatic change)")
+            return 
+        end
+        
         -- 🟢 ADD THIS LINE: Wait for button click to finish
         task.wait(0.1) 
         
