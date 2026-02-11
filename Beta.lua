@@ -3896,10 +3896,15 @@ UIEvents.Search = {
 					-- 2. CLEAN the content (Remove any lingering HTML tags from old saves)
 					TabContent = StripSyntax(TabContent)
 
-					-- 3. APPLY RAW TEXT TO INPUT
+					-- 3. APPLY RAW TEXT TO INPUT WITH DELAY
 					-- This stops the kick. We do NOT apply syntax here. 
 					-- The Syntax Highlighting happens visually in InitTabs.Editor via the Ghost Label
-					RealInput.Text = TabContent 
+					task.spawn(function()
+						task.wait(0.4)  -- Delay text change to avoid instant detection
+						if RealInput and RealInput.Parent then
+							RealInput.Text = TabContent
+						end
+					end)
 
 					UIEvents.EditorTabs.updateUI();
 				end
