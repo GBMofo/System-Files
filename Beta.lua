@@ -1367,6 +1367,7 @@ G2L["81"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 -- [[ 1. EDITOR SCROLLING FRAME (THE MAIN BOX) ]] --
 G2L["82"] = Instance.new("ScrollingFrame", G2L["7a"]);
 G2L["82"]["Name"] = [[Editor]];
+G2L["82"]["Visible"] = true; -- 🔴 FIX: Always visible
 G2L["82"]["Active"] = true;
 G2L["82"]["ZIndex"] = 1; 
 G2L["82"]["BorderSizePixel"] = 0;
@@ -1436,6 +1437,7 @@ G2L["88"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- [[ 5. PANEL (BUTTONS) - HIGH ZINDEX ]] --
 G2L["89"] = Instance.new("CanvasGroup", G2L["7a"]);
+G2L["89"]["Visible"] = true; -- 🔴 FIX: Always visible
 G2L["89"]["ZIndex"] = 10; -- High ZIndex ensures buttons work
 G2L["89"]["BorderSizePixel"] = 0;
 G2L["89"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
@@ -4167,15 +4169,50 @@ UIEvents.Search = {
 				local Editor = Pages:WaitForChild("Editor");
 				local Panel = Editor:WaitForChild("Panel");
 				local EditorFrame = Editor:WaitForChild("Editor");
+				local EditorInput = EditorFrame:WaitForChild("Input");
 				debug(">> Got Editor elements")
 				
-				debug(">> Before setting visibility (total: " .. total .. ")")
+				-- 🔴 FIX: Never toggle visibility! Always keep them visible
+				-- Instead, show placeholder text when no tabs exist
+				debug(">> Before setting placeholder (total: " .. total .. ")")
 				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
-					debug(">> Setting invisible")
-					EditorFrame.Visible = false; Panel.Visible = false;
+					debug(">> No tabs - showing placeholder")
+					-- Keep visible, but show placeholder
+					EditorFrame.Visible = true
+					Panel.Visible = true
+					-- Disconnect auto-save temporarily
+					if Data.Editor.AutoSaveConnection then
+						Data.Editor.AutoSaveConnection:Disconnect()
+					end
+					-- Show placeholder text
+					EditorInput.RichText = false
+					EditorInput.Text = "-- No tabs open. Click the + button to create a new script."
+					EditorInput.TextColor3 = Color3.fromRGB(120, 120, 130) -- Dim gray
+					-- Reconnect auto-save (but it won't save the placeholder)
+					if Data.Editor.AutoSaveConnection then
+						local Editor = Pages:WaitForChild("Editor")
+						local EditorFrame = Editor:WaitForChild("Editor")
+						local RealInput = EditorFrame:WaitForChild("Input")
+						local Lines = EditorFrame:WaitForChild("Lines")
+						local autoSaveDebounce = nil
+						
+						Data.Editor.AutoSaveConnection = RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+							if UpdateLineNumbers then UpdateLineNumbers(RealInput, Lines) end
+							if not Data.Editor.EditingSavedFile and Data.Editor.CurrentTab then
+								if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+								autoSaveDebounce = task.delay(1, function()
+									local cleanText = StripSyntax(RealInput.Text)
+									UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+								end)
+							end
+						end)
+					end
 				else
-					debug(">> Setting visible")
-					EditorFrame.Visible = true; Panel.Visible = true;
+					debug(">> Tabs exist - normal mode")
+					-- Keep visible, restore normal color
+					EditorFrame.Visible = true
+					Panel.Visible = true
+					EditorInput.TextColor3 = Color3.fromRGB(235, 235, 235) -- Normal white
 				end
 				
 				debug(">> updateUI END")
