@@ -3813,10 +3813,8 @@ UIEvents.Search = {
 				if Data.Editor.Tabs then
 					Data.Editor.Tabs[TabName] = { Content, (HighestOrder + 1) };
 				end
-				task.wait(0.15) -- Delay before opening editor
 				UIEvents.EditorTabs.switchTab(TabName);
-				task.wait(0.1)
-				UIEvents.EditorTabs.updateUI(true);
+				UIEvents.EditorTabs.updateUI(true); -- Force recreate
 			end,
 
 			saveTab = function(tabName, Content, isExplicitSave)
@@ -3875,52 +3873,53 @@ UIEvents.Search = {
 					if Data.Editor.EditingSavedFile and Data.Editor.EditingSavedFile ~= ToTab then
 						local editingName = Data.Editor.EditingSavedFile
 						createNotification("Editing Cancelled", "Warn", 3)
+						-- 🟢 PATH: Punk-X-Files/scripts/
 						CLONED_Detectedly.delfile("Punk-X-Files/scripts/" .. editingName .. ".lua");
 						Data.Editor.Tabs[editingName] = nil;
 						Data.Editor.EditingSavedFile = nil
 						UIEvents.EditorTabs.updateUI()
 					end
-
-					if Data.Editor.Tabs[ToTab] then
+									if Data.Editor.Tabs[ToTab] then
 						local Editor = Pages:WaitForChild("Editor");
-						local EditorFrame = Editor:WaitForChild("Editor").Input;
+						local EditorFrame = Editor:WaitForChild("Editor").Input; -- This is the TextBox
 						local OldTab = Data.Editor.CurrentTab;
-
-						-- Save old tab content
+										-- 1. Save the old tab as RAW text before leaving it
 						if (OldTab and Data.Editor.Tabs[OldTab] and OldTab ~= Data.Editor.EditingSavedFile) then
-							pcall(function()
-								Data.Editor.Tabs[OldTab][1] = StripSyntax(EditorFrame.Text)
-							end)
+							Data.Editor.Tabs[OldTab][1] = StripSyntax(EditorFrame.Text)
 						end
-
-						Data.Editor.CurrentTab = ToTab;
+										Data.Editor.CurrentTab = ToTab;
 						local TabContent = Data.Editor.Tabs[ToTab][1] or "";
+						
+						-- 2. CLEAN the new content (remove any leftover HTML tags)
 						TabContent = StripSyntax(TabContent)
-
-						-- 🛡️ PROTECTED: Editor text update with delays
-						task.spawn(function()
-							task.wait(0.1) -- Delay before touching editor
-							
-							pcall(function()
-								if #TabContent > 50000 then
-									task.wait(0.05)
-									EditorFrame.RichText = false
-									task.wait(0.05)
-									EditorFrame.Text = TabContent
-								else
-									task.wait(0.05)
-									EditorFrame.RichText = false -- Turn off first
-									task.wait(0.05)
-									EditorFrame.Text = "" -- Clear first
-									task.wait(0.05)
-									EditorFrame.RichText = true -- Turn on
-									task.wait(0.05)
-									EditorFrame.Text = ApplySyntax(TabContent) -- Set content
-								end
-							end)
+										-- 3. APPLY to the TextBox (View mode = RichText ON)
+						if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
+					-- 🛡️ PROTECTED: Editor text update with delays
+					task.spawn(function()
+						task.wait(0.1)
+						
+						pcall(function()
+							if #TabContent > 50000 then
+								task.wait(0.05)
+								EditorFrame.RichText = false
+								task.wait(0.05)
+								EditorFrame.Text = TabContent
+							else
+								task.wait(0.05)
+								EditorFrame.RichText = false
+								task.wait(0.05)
+								EditorFrame.Text = ""
+								task.wait(0.05)
+								EditorFrame.RichText = true
+								task.wait(0.05)
+								EditorFrame.Text = ApplySyntax(TabContent)
+							end
 						end)
-
-						UIEvents.EditorTabs.updateUI(false);
+					end)
+					
+						else
+						end
+										UIEvents.EditorTabs.updateUI();
 					end
 				end)
 				
@@ -3954,48 +3953,136 @@ UIEvents.Search = {
 					Data.Editor.EditingSavedFile = nil
 					UIEvents.Nav.goTo("Saved") 
 				end
-				UIEvents.EditorTabs.updateUI();
+				UIEvents.EditorTabs.updateUI(true); -- Force recreate
 			end,
 
-			updateUI = function()
-				for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
-					if v:GetAttribute("no") then continue end
-					if v:IsA("TextButton") then v:Destroy() end
-				end
-				
-				if Pages.Editor.Tabs:FindFirstChild("Create") then
-					-- Hides "+" button if editing
-					Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
-				end
-
-				local total = 0;
-				for i, v in pairs(Data.Editor.Tabs) do
-					-- Isolation: If editing, only show the active tab
-					if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
-						continue 
+			updateUI = function(forceRecreate)
+				local success, err = pcall(function()
+					
+					-- Check if we need to recreate tabs
+					local needsRecreate = forceRecreate or false
+					
+					if not needsRecreate then
+						-- Count existing tab buttons
+						local existingTabs = {}
+						for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
+							if v:IsA("TextButton") and v.Name ~= "Create" then
+								existingTabs[v.Name] = true
+							end
+						end
+						
+						-- Check if tab list changed
+						local expectedTabs = {}
+						for i, v in pairs(Data.Editor.Tabs) do
+							if not ((Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab)) then
+								expectedTabs[i] = true
+							end
+						end
+						
+						-- Compare
+						for name, _ in pairs(existingTabs) do
+							if not expectedTabs[name] then
+								needsRecreate = true
+								break
+							end
+						end
+						
+						for name, _ in pairs(expectedTabs) do
+							if not existingTabs[name] then
+								needsRecreate = true
+								break
+							end
+						end
 					end
 					
-					total = total + 1;
-					local new = script.Yo:Clone();
-					new.Parent = Pages.Editor.Tabs;
-					new.Title.Text = i;
-					new.Name = i;
-					new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-					new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
-					new.LayoutOrder = v[2];
-					if (Data.Editor.CurrentTab == i) then
-						new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255);
+					if needsRecreate then
+						-- Full recreate (only when tabs change)
+						for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
+							if v:GetAttribute("no") then continue end
+							if v:IsA("TextButton") and v.Name ~= "Create" then 
+								pcall(function() v:Destroy() end)
+							end
+						end
+						
+						local total = 0
+						for i, v in pairs(Data.Editor.Tabs) do
+							if (Data.Editor.EditingSavedFile and i ~= Data.Editor.EditingSavedFile) or (Data.Editor.IsEditing and i ~= Data.Editor.CurrentTab) then 
+								continue 
+							end
+							
+							total = total + 1
+							
+							-- Use :Clone() but protected
+							local cloneSuccess, new = pcall(function()
+								return script.Yo:Clone()
+							end)
+							
+							if not cloneSuccess or not new then
+								warn("[PUNK X] Clone failed for:", i)
+								continue
+							end
+							
+							pcall(function()
+								new.Parent = Pages.Editor.Tabs
+								new.Title.Text = i
+								new.Name = i
+								new.LayoutOrder = v[2]
+								
+								if (Data.Editor.CurrentTab == i) then
+									new.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+								else
+									new.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+								end
+								
+								new.MouseButton1Click:Connect(function() 
+									UIEvents.EditorTabs.switchTab(i)
+								end)
+								
+								new.Delete.MouseButton1Click:Connect(function() 
+									UIEvents.EditorTabs.delTab(i)
+								end)
+							end)
+						end
+					else
+						-- Just update colors (fast, no recreation)
+						for _, v in pairs(Pages.Editor.Tabs:GetChildren()) do
+							if v:IsA("TextButton") and v.Name ~= "Create" then
+								pcall(function()
+									if v.Name == Data.Editor.CurrentTab then
+										v.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+									else
+										v.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+									end
+								end)
+							end
+						end
 					end
-				end
+					
+					if Pages.Editor.Tabs:FindFirstChild("Create") then
+						Pages.Editor.Tabs.Create.Visible = (Data.Editor.EditingSavedFile == nil and Data.Editor.IsEditing == false)
+					end
+					
+					local Editor = Pages:WaitForChild("Editor")
+					local Panel = Editor:WaitForChild("Panel")
+					local EditorFrame = Editor:WaitForChild("Editor")
+					
+					local total = 0
+					for i, v in pairs(Data.Editor.Tabs) do
+						total = total + 1
+					end
+					
+					if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
+						EditorFrame.Visible = false
+						Panel.Visible = false
+					else
+						EditorFrame.Visible = true
+						Panel.Visible = true
+					end
+					
+				end)
 				
-				local Editor = Pages:WaitForChild("Editor");
-				local Panel = Editor:WaitForChild("Panel");
-				local EditorFrame = Editor:WaitForChild("Editor");
-				
-				if ((total <= 0) or (Data.Editor.CurrentTab == nil)) then
-					EditorFrame.Visible = false; Panel.Visible = false;
-				else
-					EditorFrame.Visible = true; Panel.Visible = true;
+				if not success then
+					warn("[PUNK X] updateUI failed:", err)
 				end
 			end,
 
