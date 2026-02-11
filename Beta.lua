@@ -3741,8 +3741,7 @@ local Data = {
         CurrentTab = nil,
         CurrentOrder = 0,
         Tabs = {},
-        IsEditing = false, -- Added this line
-        IsProgrammaticChange = false -- 🔴 FIX: Prevent auto-save during tab switching
+        IsEditing = false -- Added this line
     },
     Saves = {
         Scripts = {}
@@ -3938,8 +3937,11 @@ UIEvents.Search = {
 					-- 3. APPLY to the TextBox (View mode = RichText ON)
 					debug("Q. Before setting EditorFrame.Text")
 					
-					-- 🔴 FIX: Set flag to prevent auto-save from triggering
-					Data.Editor.IsProgrammaticChange = true
+					-- 🔴 FIX: Disconnect auto-save to prevent writefile trigger
+					if Data.Editor.AutoSaveConnection then
+						Data.Editor.AutoSaveConnection:Disconnect()
+						debug(">> Auto-save disconnected")
+					end
 					
 					if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
 						debug("R. Large content, disabling RichText")
@@ -3954,11 +3956,27 @@ UIEvents.Search = {
 						debug("T. After setting text")
 					end
 					
-					-- 🔴 FIX: Reset flag after a delay to allow normal auto-save afterward
-					task.delay(0.1, function()
-						Data.Editor.IsProgrammaticChange = false
-						debug(">> IsProgrammaticChange reset to false")
-					end)
+					-- 🔴 FIX: Reconnect auto-save immediately (no delay needed!)
+					if Data.Editor.AutoSaveConnection then
+						-- Get the RealInput reference
+						local Editor = Pages:WaitForChild("Editor")
+						local EditorFrame = Editor:WaitForChild("Editor")
+						local RealInput = EditorFrame:WaitForChild("Input")
+						local Lines = EditorFrame:WaitForChild("Lines")
+						local autoSaveDebounce = nil
+						
+						Data.Editor.AutoSaveConnection = RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+							if UpdateLineNumbers then UpdateLineNumbers(RealInput, Lines) end
+							if not Data.Editor.EditingSavedFile then
+								if autoSaveDebounce then task.cancel(autoSaveDebounce) end
+								autoSaveDebounce = task.delay(1, function()
+									local cleanText = StripSyntax(RealInput.Text)
+									UIEvents.EditorTabs.saveTab(nil, cleanText, false)
+								end)
+							end
+						end)
+						debug(">> Auto-save reconnected")
+					end
 
 					debug("U. Before calling updateUI")
 					UIEvents.EditorTabs.updateUI();
@@ -7155,16 +7173,9 @@ InitTabs.Saved = function()
         end
     end)
 
-    -- Line number sync
-    RealInput:GetPropertyChangedSignal("Text"):Connect(function()
+    -- Line number sync and auto-save
+    local autoSaveConnection = RealInput:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateLineNumbers(RealInput, Lines)
-        
-        -- 🔴 FIX: Don't auto-save during programmatic changes (tab switching)
-        if Data.Editor.IsProgrammaticChange then
-            debug(">> Auto-save blocked (programmatic change)")
-            return
-        end
-        
         if not Data.Editor.EditingSavedFile then
             if autoSaveDebounce then task.cancel(autoSaveDebounce) end
             autoSaveDebounce = task.delay(1, function()
@@ -7173,6 +7184,9 @@ InitTabs.Saved = function()
             end)
         end
     end)
+    
+    -- 🔴 FIX: Store connection in Data so switchTab can access it
+    Data.Editor.AutoSaveConnection = autoSaveConnection
 
     -- BUTTON CONNECTIONS - Use WaitForChild to ensure correct panel
     local function safeConnect(buttonName, callback)
