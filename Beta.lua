@@ -3968,11 +3968,18 @@ UIEvents.Search = {
 					new.Title.Text = i;
 					new.Name = i;
 					
+					-- ✅ CRITICAL FIX: Store Delete button reference before task.spawn
+					local deleteBtn = new:FindFirstChild("Delete")
+					
 					-- ✅ ANTI-KICK FIX: Use task.spawn to delay connections slightly
 					task.spawn(function()
 						task.wait(0.01 * total) -- Stagger connections by a tiny amount
 						new.MouseButton1Click:Connect(function() UIEvents.EditorTabs.switchTab(i); end);
-						new.Delete.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
+						
+						-- Only connect delete if button exists
+						if deleteBtn then
+							deleteBtn.MouseButton1Click:Connect(function() UIEvents.EditorTabs.delTab(i); end);
+						end
 					end)
 					
 					new.LayoutOrder = v[2];
