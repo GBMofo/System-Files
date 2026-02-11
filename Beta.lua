@@ -3894,27 +3894,37 @@ UIEvents.Search = {
 						TabContent = StripSyntax(TabContent)
 										-- 3. APPLY to the TextBox (View mode = RichText ON)
 						if #TabContent > 50000 then -- Reduced limit slightly for better mobile speed
-					-- 🛡️ PROTECTED: Editor text update with delays
-					task.spawn(function()
-						task.wait(0.1)
-						
-						pcall(function()
-							if #TabContent > 50000 then
-								task.wait(0.05)
-								EditorFrame.RichText = false
-								task.wait(0.05)
-								EditorFrame.Text = TabContent
-							else
-								task.wait(0.05)
-								EditorFrame.RichText = false
-								task.wait(0.05)
-								EditorFrame.Text = ""
-								task.wait(0.05)
-								EditorFrame.RichText = true
-								task.wait(0.05)
-								EditorFrame.Text = ApplySyntax(TabContent)
-							end
-						end)
+									-- 🛡️ PROTECTED: Editor text update (NO FLASH)
+				task.wait(0.15)
+				
+				pcall(function()
+					local EditorContainer = Editor:FindFirstChild("Editor")
+					if EditorContainer then
+						EditorContainer.Visible = false
+					end
+					
+					task.wait(0.08)
+					
+					if #TabContent > 50000 then
+						EditorFrame.RichText = false
+						task.wait(0.08)
+						EditorFrame.Text = TabContent
+					else
+						EditorFrame.RichText = false
+						task.wait(0.08)
+						EditorFrame.Text = TabContent
+						task.wait(0.08)
+						EditorFrame.RichText = true
+						task.wait(0.08)
+						EditorFrame.Text = ApplySyntax(TabContent)
+					end
+					
+					task.wait(0.05)
+					
+					if EditorContainer then
+						EditorContainer.Visible = true
+					end
+				end)
 					end)
 					
 						else
