@@ -686,12 +686,10 @@ G2L["3f"]["Visible"] = false;
 G2L["3f"]["Active"] = true;
 G2L["3f"]["BorderSizePixel"] = 0;
 G2L["3f"]["BackgroundColor3"] = Color3.fromRGB(30, 20, 50); -- Dark purple
-G2L["3f"]["Size"] = UDim2.new(0.9, 0, 0.8, 0); -- ✅ RESPONSIVE: 90% width, 80% height
+G2L["3f"]["Size"] = UDim2.new(1, 0, 1, 0);
 G2L["3f"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["3f"]["Name"] = [[Main]];
 G2L["3f"]["BackgroundTransparency"] = 0.3; -- Semi-transparent
-G2L["3f"]["AnchorPoint"] = Vector2.new(0.5, 0.5); -- ✅ Center anchor
-G2L["3f"]["Position"] = UDim2.new(0.5, 0, 0.5, 0); -- ✅ Center position
 
 -- Rounded corners
 local corner = Instance.new("UICorner", G2L["3f"]);
