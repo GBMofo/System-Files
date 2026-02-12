@@ -4712,25 +4712,20 @@ end
         circle.ScaleType = Enum.ScaleType.Fit
         
         local isEnabled = false
-        
-        -- ✅ NEW: Function to set state programmatically
-        local function setState(newState, silent)
-            isEnabled = newState
+        toggleBtn.MouseButton1Click:Connect(function()
+            -- ✅ Sync with attribute if it exists
+            local attrState = toggleBg:GetAttribute("IsToggleOn")
+            if attrState ~= nil then
+                isEnabled = attrState
+            end
+            
+            isEnabled = not isEnabled
             toggleBg:SetAttribute("IsToggleOn", isEnabled)
             toggleLayout.HorizontalAlignment = isEnabled and Enum.HorizontalAlignment.Right or Enum.HorizontalAlignment.Left
             toggleBg.BackgroundColor3 = isEnabled and (getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)) or Color3.fromRGB(50, 50, 60)
-            
-            -- Only trigger callback if not silent
-            if not silent then
-                callback(isEnabled)
-            end
-        end
-        
-        toggleBtn.MouseButton1Click:Connect(function()
-            setState(not isEnabled, false) -- Use setState instead of manual toggle
+            callback(isEnabled)
         end)
-        
-        return toggleContainer, toggleBg, setState -- ✅ RETURN setState function
+        return toggleContainer, toggleBg
     end
     
     local function createSlider(card, callback)
@@ -5288,7 +5283,7 @@ end)
     end
 
     local afkCard = createCard("Anti AFK", "Prevents disconnection from idling", 1)
-    local afkToggle, afkToggleBg, setAfkState = createToggle(afkCard, function(enabled)
+    local afkToggle, afkToggleBg = createToggle(afkCard, function(enabled)
         PunkXSettings.antiAFK = enabled
         saveSettings(PunkXSettings)
         
@@ -5330,7 +5325,7 @@ end)
 
 	-- [[ 1. LOW GRAPHICS ]] --
     local lowGfxCard = createCard("Low Graphics", "Removes surface images for smoother performance", 2)
-    local lowGfxToggle, lowGfxBg, setLowGfxState = createToggle(lowGfxCard, function(enabled)
+    local lowGfxToggle, lowGfxBg = createToggle(lowGfxCard, function(enabled)
         PunkXSettings.lowGraphics = enabled
         saveSettings(PunkXSettings)
         
@@ -5346,7 +5341,7 @@ end)
 
     -- [[ 2. POTATO MODE ]] --
     local potatoCard = createCard("Potato Mode", "Converts models to basic shapes - major FPS boost", 3)
-    local potatoToggle, potatoBg, setPotatoState = createToggle(potatoCard, function(enabled)
+    local potatoToggle, potatoBg = createToggle(potatoCard, function(enabled)
         PunkXSettings.potatoMode = enabled
         saveSettings(PunkXSettings)
         
@@ -5364,7 +5359,7 @@ end)
 
     -- [[ 3. BLANK SCREEN MODE ]] --
     local blankCard = createCard("Blank Screen Mode", "Hides everything for max FPS - best for AFK farming", 4)
-    local blankToggle, blankBg, setBlankState = createToggle(blankCard, function(enabled)
+    local blankToggle, blankBg = createToggle(blankCard, function(enabled)
         PunkXSettings.blankScreen = enabled
         saveSettings(PunkXSettings)
         
@@ -6632,15 +6627,25 @@ end))
         
         -- PERFORMANCE
         if PunkXSettings.antiAFK then
-            if setAfkState then
-                setAfkState(true, true) -- enabled, silent
+            -- Trigger the toggle visually
+            if afkToggleBg then
+                afkToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                afkToggleBg:SetAttribute("IsToggleOn", true) -- ✅ SET INTERNAL STATE
+                local toggleBtn = afkToggleBg:FindFirstChild("TextButton")
+                if toggleBtn and toggleBtn:FindFirstChild("UIListLayout") then
+                    toggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
             end
-        end
 
-        -- Low Graphics Load
+				-- Low Graphics Load
         if PunkXSettings.lowGraphics then
-            if setLowGfxState then
-                setLowGfxState(true, true)
+            if lowGfxBg then
+                lowGfxBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                lowGfxBg:SetAttribute("IsToggleOn", true) -- ✅ SET INTERNAL STATE
+                local toggleBtn = lowGfxBg:FindFirstChild("TextButton")
+                if toggleBtn and toggleBtn:FindFirstChild("UIListLayout") then
+                    toggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
             end
             for _, v in pairs(game:GetDescendants()) do 
                 if v:IsA("Texture") or v:IsA("Decal") then v.Transparency = 1 end 
@@ -6649,8 +6654,13 @@ end))
 
         -- Potato Mode Load
         if PunkXSettings.potatoMode then
-            if setPotatoState then
-                setPotatoState(true, true)
+            if potatoBg then
+                potatoBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                potatoBg:SetAttribute("IsToggleOn", true) -- ✅ SET INTERNAL STATE
+                local toggleBtn = potatoBg:FindFirstChild("TextButton")
+                if toggleBtn and toggleBtn:FindFirstChild("UIListLayout") then
+                    toggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
             end
             for _, v in pairs(game:GetDescendants()) do
                 if v:IsA("MeshPart") then v.Transparency = 1 end
@@ -6659,8 +6669,13 @@ end))
 
         -- Blank Screen Load
         if PunkXSettings.blankScreen then
-            if setBlankState then
-                setBlankState(true, true)
+            if blankBg then
+                blankBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
+                blankBg:SetAttribute("IsToggleOn", true) -- ✅ SET INTERNAL STATE
+                local toggleBtn = blankBg:FindFirstChild("TextButton")
+                if toggleBtn and toggleBtn:FindFirstChild("UIListLayout") then
+                    toggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                end
             end
             game:GetService("RunService"):Set3dRenderingEnabled(false)
         end
