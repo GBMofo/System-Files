@@ -6624,8 +6624,10 @@ end))
             -- Trigger the toggle visually
             if afkToggleBg then
                 afkToggleBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                if afkToggle:FindFirstChild("UIListLayout") then
-                    afkToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                -- ✅ FIX: Find UIListLayout in the correct location (toggleBg → TextButton → UIListLayout)
+                local toggleBtn = afkToggleBg:FindFirstChild("TextButton")
+                if toggleBtn and toggleBtn:FindFirstChild("UIListLayout") then
+                    toggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
                 end
             end
 
@@ -6633,8 +6635,10 @@ end))
         if PunkXSettings.lowGraphics then
             if lowGfxBg then
                 lowGfxBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                if lowGfxToggle:FindFirstChild("UIListLayout") then
-                    lowGfxToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                -- ✅ FIX: Find UIListLayout in the correct location
+                local toggleBtn = lowGfxBg:FindFirstChild("TextButton")
+                if toggleBtn and toggleBtn:FindFirstChild("UIListLayout") then
+                    toggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
                 end
             end
             for _, v in pairs(game:GetDescendants()) do 
@@ -6646,8 +6650,10 @@ end))
         if PunkXSettings.potatoMode then
             if potatoBg then
                 potatoBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                if potatoToggle:FindFirstChild("UIListLayout") then
-                    potatoToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                -- ✅ FIX: Find UIListLayout in the correct location
+                local toggleBtn = potatoBg:FindFirstChild("TextButton")
+                if toggleBtn and toggleBtn:FindFirstChild("UIListLayout") then
+                    toggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
                 end
             end
             for _, v in pairs(game:GetDescendants()) do
@@ -6659,8 +6665,10 @@ end))
         if PunkXSettings.blankScreen then
             if blankBg then
                 blankBg.BackgroundColor3 = getgenv().CurrentTheme or Color3.fromRGB(160, 85, 255)
-                if blankToggle:FindFirstChild("UIListLayout") then
-                    blankToggle:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
+                -- ✅ FIX: Find UIListLayout in the correct location
+                local toggleBtn = blankBg:FindFirstChild("TextButton")
+                if toggleBtn and toggleBtn:FindFirstChild("UIListLayout") then
+                    toggleBtn:FindFirstChild("UIListLayout").HorizontalAlignment = Enum.HorizontalAlignment.Right
                 end
             end
             game:GetService("RunService"):Set3dRenderingEnabled(false)
