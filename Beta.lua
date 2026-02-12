@@ -88,7 +88,7 @@ G2L["3"]["Name"] = [[Yo]];
 
 -- StarterGui.ScreenGui.LocalScript.Yo.UICorner
 G2L["4"] = Instance.new("UICorner", G2L["3"]);
-G2L["4"]["CornerRadius"] = UDim.new(0.12, 0); -- Softer Rounding
+G2L["4"]["CornerRadius"] = UDim.new(0, 12); -- Softer Rounding
 
 
 -- StarterGui.ScreenGui.LocalScript.Yo.UIListLayout
@@ -101,10 +101,10 @@ G2L["5"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 -- StarterGui.ScreenGui.LocalScript.Yo.UIPadding
 G2L["6"] = Instance.new("UIPadding", G2L["3"]);
-G2L["6"]["PaddingTop"] = UDim.new(0.0056, 0);
-G2L["6"]["PaddingRight"] = UDim.new(0.0056, 0);
-G2L["6"]["PaddingLeft"] = UDim.new(0.0111, 0);
-G2L["6"]["PaddingBottom"] = UDim.new(0.0056, 0);
+G2L["6"]["PaddingTop"] = UDim.new(0, 6);
+G2L["6"]["PaddingRight"] = UDim.new(0, 6);
+G2L["6"]["PaddingLeft"] = UDim.new(0, 12);
+G2L["6"]["PaddingBottom"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.LocalScript.Yo.Delete
@@ -131,7 +131,6 @@ G2L["8"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 
 -- StarterGui.ScreenGui.LocalScript.Yo.Title
-G2L["9"]["TextScaled"] = true;
 G2L["9"] = Instance.new("TextLabel", G2L["3"]);
 G2L["9"]["TextWrapped"] = true;
 G2L["9"]["BorderSizePixel"] = 0;
@@ -181,7 +180,7 @@ G2L["b"]["Position"] = UDim2.new(0, 0, -0, 0);
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.UICorner
 G2L["c"] = Instance.new("UICorner", G2L["a"]);
-G2L["c"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["c"]["CornerRadius"] = UDim.new(0, 16);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.UIListLayout
@@ -199,10 +198,10 @@ G2L["e"]["Color"] = Color3.fromRGB(160, 85, 255);
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.UIPadding
 G2L["f"] = Instance.new("UIPadding", G2L["a"]);
-G2L["f"]["PaddingTop"] = UDim.new(0.0093, 0);
-G2L["f"]["PaddingRight"] = UDim.new(0.0093, 0);
-G2L["f"]["PaddingLeft"] = UDim.new(0.0093, 0);
-G2L["f"]["PaddingBottom"] = UDim.new(0.0093, 0);
+G2L["f"]["PaddingTop"] = UDim.new(0, 10);
+G2L["f"]["PaddingRight"] = UDim.new(0, 10);
+G2L["f"]["PaddingLeft"] = UDim.new(0, 10);
+G2L["f"]["PaddingBottom"] = UDim.new(0, 10);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Misc
@@ -220,12 +219,12 @@ G2L["11"]["Size"] = UDim2.new(1, 20, 1, 20); -- Fill background
 G2L["11"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["11"]["BackgroundTransparency"] = 1;
 G2L["11"]["Name"] = [[Thumbnail]];
-G2L["11"]["Position"] = UDim2.new(-0.0052, 0, -0.0093, 0);
+G2L["11"]["Position"] = UDim2.new(0, -10, 0, -10);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Misc.Thumbnail.UICorner
 G2L["12"] = Instance.new("UICorner", G2L["11"]);
-G2L["12"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["12"]["CornerRadius"] = UDim.new(0, 16);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Misc.Thumbnail.UIGradient
@@ -257,7 +256,7 @@ G2L["15"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Misc.Panel.UICorner
 G2L["16"] = Instance.new("UICorner", G2L["14"]);
-G2L["16"]["CornerRadius"] = UDim.new(0.12, 0);
+G2L["16"]["CornerRadius"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Misc.Panel.Spacer1
@@ -348,10 +347,10 @@ G2L["1d"]["Scale"] = 0.9;
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Misc.Panel.UIPadding
 G2L["1e"] = Instance.new("UIPadding", G2L["14"]);
-G2L["1e"]["PaddingTop"] = UDim.new(0.0019, 0);
-G2L["1e"]["PaddingRight"] = UDim.new(0.0019, 0);
-G2L["1e"]["PaddingLeft"] = UDim.new(0.0019, 0);
-G2L["1e"]["PaddingBottom"] = UDim.new(0.0019, 0);
+G2L["1e"]["PaddingTop"] = UDim.new(0, 2);
+G2L["1e"]["PaddingRight"] = UDim.new(0, 2);
+G2L["1e"]["PaddingLeft"] = UDim.new(0, 2);
+G2L["1e"]["PaddingBottom"] = UDim.new(0, 2);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags
@@ -374,7 +373,6 @@ G2L["20"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Key
-G2L["21"]["TextScaled"] = true;
 G2L["21"] = Instance.new("TextLabel", G2L["1f"]);
 G2L["21"]["BorderSizePixel"] = 0;
 G2L["21"]["TextSize"] = 12;
@@ -390,17 +388,16 @@ G2L["21"]["Name"] = [[Key]];
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Key.UIPadding
 G2L["22"] = Instance.new("UIPadding", G2L["21"]);
-G2L["22"]["PaddingRight"] = UDim.new(0.0093, 0);
-G2L["22"]["PaddingLeft"] = UDim.new(0.0093, 0);
+G2L["22"]["PaddingRight"] = UDim.new(0, 10);
+G2L["22"]["PaddingLeft"] = UDim.new(0, 10);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Key.UICorner
 G2L["23"] = Instance.new("UICorner", G2L["21"]);
-G2L["23"]["CornerRadius"] = UDim.new(0.06, 0);
+G2L["23"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Paid
-G2L["24"]["TextScaled"] = true;
 G2L["24"] = Instance.new("TextLabel", G2L["1f"]);
 G2L["24"]["BorderSizePixel"] = 0;
 G2L["24"]["TextSize"] = 12;
@@ -416,17 +413,16 @@ G2L["24"]["Name"] = [[Paid]];
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Paid.UIPadding
 G2L["25"] = Instance.new("UIPadding", G2L["24"]);
-G2L["25"]["PaddingRight"] = UDim.new(0.0093, 0);
-G2L["25"]["PaddingLeft"] = UDim.new(0.0093, 0);
+G2L["25"]["PaddingRight"] = UDim.new(0, 10);
+G2L["25"]["PaddingLeft"] = UDim.new(0, 10);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Paid.UICorner
 G2L["26"] = Instance.new("UICorner", G2L["24"]);
-G2L["26"]["CornerRadius"] = UDim.new(0.06, 0);
+G2L["26"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Patched
-G2L["27"]["TextScaled"] = true;
 G2L["27"] = Instance.new("TextLabel", G2L["1f"]);
 G2L["27"]["BorderSizePixel"] = 0;
 G2L["27"]["TextSize"] = 12;
@@ -442,17 +438,16 @@ G2L["27"]["Name"] = [[Patched]];
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Patched.UIPadding
 G2L["28"] = Instance.new("UIPadding", G2L["27"]);
-G2L["28"]["PaddingRight"] = UDim.new(0.0093, 0);
-G2L["28"]["PaddingLeft"] = UDim.new(0.0093, 0);
+G2L["28"]["PaddingRight"] = UDim.new(0, 10);
+G2L["28"]["PaddingLeft"] = UDim.new(0, 10);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Patched.UICorner
 G2L["29"] = Instance.new("UICorner", G2L["27"]);
-G2L["29"]["CornerRadius"] = UDim.new(0.06, 0);
+G2L["29"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Universal
-G2L["2a"]["TextScaled"] = true;
 G2L["2a"] = Instance.new("TextLabel", G2L["1f"]);
 G2L["2a"]["BorderSizePixel"] = 0;
 G2L["2a"]["TextSize"] = 12;
@@ -468,13 +463,13 @@ G2L["2a"]["Name"] = [[Universal]];
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Universal.UIPadding
 G2L["2b"] = Instance.new("UIPadding", G2L["2a"]);
-G2L["2b"]["PaddingRight"] = UDim.new(0.0093, 0);
-G2L["2b"]["PaddingLeft"] = UDim.new(0.0093, 0);
+G2L["2b"]["PaddingRight"] = UDim.new(0, 10);
+G2L["2b"]["PaddingLeft"] = UDim.new(0, 10);
 
 
 -- StarterGui.ScreenGui.LocalScript.SearchTemplate.Tags.Universal.UICorner
 G2L["2c"] = Instance.new("UICorner", G2L["2a"]);
-G2L["2c"]["CornerRadius"] = UDim.new(0.06, 0);
+G2L["2c"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate
@@ -488,7 +483,7 @@ G2L["2d"]["Name"] = [[SaveTemplate]];
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.UICorner
 G2L["2e"] = Instance.new("UICorner", G2L["2d"]);
-G2L["2e"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["2e"]["CornerRadius"] = UDim.new(0, 16);
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.UIListLayout
 G2L["2f"] = Instance.new("UIListLayout", G2L["2d"]);
@@ -503,10 +498,10 @@ G2L["30"]["Color"] = Color3.fromRGB(160, 85, 255);
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.UIPadding
 G2L["31"] = Instance.new("UIPadding", G2L["2d"]);
-G2L["31"]["PaddingTop"] = UDim.new(0.0074, 0);
-G2L["31"]["PaddingRight"] = UDim.new(0.0074, 0);
-G2L["31"]["PaddingLeft"] = UDim.new(0.0074, 0);
-G2L["31"]["PaddingBottom"] = UDim.new(0.0074, 0);
+G2L["31"]["PaddingTop"] = UDim.new(0, 8);
+G2L["31"]["PaddingRight"] = UDim.new(0, 8);
+G2L["31"]["PaddingLeft"] = UDim.new(0, 8);
+G2L["31"]["PaddingBottom"] = UDim.new(0, 8);
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc
 G2L["32"] = Instance.new("Folder", G2L["2d"]);
@@ -534,7 +529,7 @@ G2L["34"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.UICorner
 G2L["35"] = Instance.new("UICorner", G2L["33"]);
-G2L["35"]["CornerRadius"] = UDim.new(0.12, 0);
+G2L["35"]["CornerRadius"] = UDim.new(0, 12);
 
 -- [[ 1. DELETE BUTTON (Leftmost) ]]
 G2L["DeleteBtn"] = Instance.new("TextButton", G2L["33"]);
@@ -545,7 +540,7 @@ G2L["DeleteBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["DeleteBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["DeleteBtn"]["ZIndex"] = 4;
 G2L["DeleteBtn"]["BackgroundTransparency"] = 1;
-G2L["DeleteBtn"]["Size"] = UDim2.new(0.0146, 0, 0.0259, 0);
+G2L["DeleteBtn"]["Size"] = UDim2.new(0, 28, 0, 28);
 G2L["DeleteBtn"]["LayoutOrder"] = 1;
 G2L["DeleteBtn"]["Text"] = [[]];
 G2L["DeleteBtn"]["Name"] = [[Delete]];
@@ -581,7 +576,7 @@ G2L["AutoExecBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["AutoExecBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["AutoExecBtn"]["ZIndex"] = 4;
 G2L["AutoExecBtn"]["BackgroundTransparency"] = 1;
-G2L["AutoExecBtn"]["Size"] = UDim2.new(0.0146, 0, 0.0259, 0);
+G2L["AutoExecBtn"]["Size"] = UDim2.new(0, 28, 0, 28);
 G2L["AutoExecBtn"]["LayoutOrder"] = 3;
 G2L["AutoExecBtn"]["Text"] = [[]];
 G2L["AutoExecBtn"]["Name"] = [[AutoExec]];
@@ -608,7 +603,7 @@ G2L["EditBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["EditBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["EditBtn"]["ZIndex"] = 4;
 G2L["EditBtn"]["BackgroundTransparency"] = 1;
-G2L["EditBtn"]["Size"] = UDim2.new(0.0146, 0, 0.0259, 0);
+G2L["EditBtn"]["Size"] = UDim2.new(0, 28, 0, 28);
 G2L["EditBtn"]["LayoutOrder"] = 4;
 G2L["EditBtn"]["Text"] = [[]];
 G2L["EditBtn"]["Name"] = [[Edit]];
@@ -635,7 +630,7 @@ G2L["ExecBtn"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["ExecBtn"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["ExecBtn"]["ZIndex"] = 4;
 G2L["ExecBtn"]["BackgroundTransparency"] = 1;
-G2L["ExecBtn"]["Size"] = UDim2.new(0.0146, 0, 0.0259, 0);
+G2L["ExecBtn"]["Size"] = UDim2.new(0, 28, 0, 28);
 G2L["ExecBtn"]["LayoutOrder"] = 5;
 G2L["ExecBtn"]["Text"] = [[]];
 G2L["ExecBtn"]["Name"] = [[Execute]];
@@ -659,10 +654,10 @@ G2L["3c"]["Scale"] = 0.9;
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Misc.Panel.UIPadding
 G2L["3d"] = Instance.new("UIPadding", G2L["33"]);
-G2L["3d"]["PaddingTop"] = UDim.new(0.0019, 0);
-G2L["3d"]["PaddingRight"] = UDim.new(0.0019, 0);
-G2L["3d"]["PaddingLeft"] = UDim.new(0.0019, 0);
-G2L["3d"]["PaddingBottom"] = UDim.new(0.0019, 0);
+G2L["3d"]["PaddingTop"] = UDim.new(0, 2);
+G2L["3d"]["PaddingRight"] = UDim.new(0, 2);
+G2L["3d"]["PaddingLeft"] = UDim.new(0, 2);
+G2L["3d"]["PaddingBottom"] = UDim.new(0, 2);
 
 -- StarterGui.ScreenGui.LocalScript.SaveTemplate.Title
 G2L["3e"] = Instance.new("TextBox", G2L["2d"]);
@@ -770,7 +765,7 @@ G2L["41"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["41"]["FontFace"] = Font.new([[rbxassetid://12187365364]], Enum.FontWeight.Bold, Enum.FontStyle.Normal); -- Gotham Bold
 G2L["41"]["TextColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["41"]["BackgroundTransparency"] = 1;
-G2L["41"]["Size"] = UDim2.new(0.1562, 0, 0.0463, 0);
+G2L["41"]["Size"] = UDim2.new(0, 300, 0, 50);
 G2L["41"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["41"]["Text"] = [[Hello, Username_1!]];
 
@@ -789,7 +784,7 @@ G2L["43"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 -- StarterGui.ScreenGui.Main.Title.UIPadding
 G2L["44"] = Instance.new("UIPadding", G2L["40"]);
-G2L["44"]["PaddingTop"] = UDim.new(0.0278, 0);
+G2L["44"]["PaddingTop"] = UDim.new(0, 30);
 G2L["44"]["PaddingLeft"] = UDim.new(0, 0);
 
 
@@ -806,7 +801,7 @@ G2L["45"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["45"]["FontFace"] = Font.new([[rbxassetid://12187365364]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["45"]["TextColor3"] = Color3.fromRGB(150, 150, 160); -- Lighter Grey
 G2L["45"]["BackgroundTransparency"] = 1;
-G2L["45"]["Size"] = UDim2.new(0.5078, 0, 0.0204, 0);
+G2L["45"]["Size"] = UDim2.new(0, 975, 0, 22);
 G2L["45"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["45"]["Text"] = [[What are you using today?]];
 G2L["45"]["Name"] = [[TextLabel1]];
@@ -841,7 +836,7 @@ G2L["48"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 -- StarterGui.ScreenGui.Main.Leftside.UIPadding
 G2L["49"] = Instance.new("UIPadding", G2L["47"]);
-G2L["49"]["PaddingTop"] = UDim.new(0.0056, 0);
+G2L["49"]["PaddingTop"] = UDim.new(0, 6);
 G2L["49"]["PaddingRight"] = UDim.new(0.05, 0);
 G2L["49"]["PaddingLeft"] = UDim.new(0.05, 0);
 
@@ -853,7 +848,7 @@ G2L["4a"]["BackgroundColor3"] = Color3.fromRGB(160, 85, 255); -- Purple
 G2L["4a"]["Selectable"] = false;
 G2L["4a"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
 G2L["4a"]["BackgroundTransparency"] = 0.2; -- Glowing effect
-G2L["4a"]["Size"] = UDim2.new(0.0255, 0, 0.0454, 0);
+G2L["4a"]["Size"] = UDim2.new(0, 49, 0, 49);
 G2L["4a"]["LayoutOrder"] = 1;
 G2L["4a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["4a"]["Text"] = [[]];
@@ -910,7 +905,7 @@ G2L["50"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25); -- Dark Nav Backgrou
 G2L["50"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
 G2L["50"]["ClipsDescendants"] = true;
 G2L["50"]["AutomaticSize"] = Enum.AutomaticSize.Y;
-G2L["50"]["Size"] = UDim2.new(0.0255, 0, 0.2213, 0);
+G2L["50"]["Size"] = UDim2.new(0, 49, 0, 239);
 G2L["50"]["Position"] = UDim2.new(0.5, 0, 0.72015, 0);
 G2L["50"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["50"]["Name"] = [[Nav]];
@@ -1173,11 +1168,11 @@ G2L["6d"]["Name"] = [[UIListLayout1]];
 
 -- StarterGui.ScreenGui.Main.Leftside.Nav.Page1.UIPadding1
 G2L["6e"] = Instance.new("UIPadding", G2L["53"]);
-G2L["6e"]["PaddingTop"] = UDim.new(0.0046, 0);
-G2L["6e"]["PaddingRight"] = UDim.new(0.0046, 0);
+G2L["6e"]["PaddingTop"] = UDim.new(0, 5);
+G2L["6e"]["PaddingRight"] = UDim.new(0, 5);
 G2L["6e"]["Name"] = [[UIPadding1]];
-G2L["6e"]["PaddingLeft"] = UDim.new(0.0046, 0);
-G2L["6e"]["PaddingBottom"] = UDim.new(0.0046, 0);
+G2L["6e"]["PaddingLeft"] = UDim.new(0, 5);
+G2L["6e"]["PaddingBottom"] = UDim.new(0, 5);
 
 
 -- StarterGui.ScreenGui.Main.Leftside.Nav.UIPageLayout
@@ -1212,11 +1207,11 @@ G2L["71"]["Name"] = [[UIListLayout1]];
 
 -- StarterGui.ScreenGui.Main.Leftside.Nav.Page2.UIPadding1
 G2L["72"] = Instance.new("UIPadding", G2L["70"]);
-G2L["72"]["PaddingTop"] = UDim.new(0.0046, 0);
-G2L["72"]["PaddingRight"] = UDim.new(0.0046, 0);
+G2L["72"]["PaddingTop"] = UDim.new(0, 5);
+G2L["72"]["PaddingRight"] = UDim.new(0, 5);
 G2L["72"]["Name"] = [[UIPadding1]];
-G2L["72"]["PaddingLeft"] = UDim.new(0.0046, 0);
-G2L["72"]["PaddingBottom"] = UDim.new(0.0046, 0);
+G2L["72"]["PaddingLeft"] = UDim.new(0, 5);
+G2L["72"]["PaddingBottom"] = UDim.new(0, 5);
 
 
 -- StarterGui.ScreenGui.Main.Leftside.Nav.Page2.Console
@@ -1321,9 +1316,9 @@ G2L["7b"]["BackgroundTransparency"] = 1;
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Tabs.UIPadding
 G2L["7c"] = Instance.new("UIPadding", G2L["7b"]);
-G2L["7c"]["PaddingTop"] = UDim.new(0.0028, 0);
-G2L["7c"]["PaddingLeft"] = UDim.new(0.0028, 0);
-G2L["7c"]["PaddingBottom"] = UDim.new(0.0065, 0);
+G2L["7c"]["PaddingTop"] = UDim.new(0, 3);
+G2L["7c"]["PaddingLeft"] = UDim.new(0, 3);
+G2L["7c"]["PaddingBottom"] = UDim.new(0, 7);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Tabs.UIListLayout
@@ -1358,7 +1353,7 @@ G2L["7f"] = Instance.new("UIAspectRatioConstraint", G2L["7e"]);
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Tabs.Create.UICorner
 G2L["80"] = Instance.new("UICorner", G2L["7e"]);
-G2L["80"]["CornerRadius"] = UDim.new(0.12, 0);
+G2L["80"]["CornerRadius"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Editor.Tabs.Create.UIStroke
@@ -1388,7 +1383,7 @@ G2L["82"]["ClipsDescendants"] = true; -- 🔴 THE "WALL" THAT STOPS BLEEDING
 
 -- [[ 2. CONTAINER DECORATION ]] --
 G2L["86"] = Instance.new("UICorner", G2L["82"]);
-G2L["86"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["86"]["CornerRadius"] = UDim.new(0, 16);
 
 G2L["88"] = Instance.new("UIStroke", G2L["82"]);
 G2L["88"]["Transparency"] = 0.8;
@@ -1411,13 +1406,12 @@ G2L["83"]["RichText"] = true;
 G2L["83"]["TextXAlignment"] = Enum.TextXAlignment.Left;
 G2L["83"]["TextYAlignment"] = Enum.TextYAlignment.Top;
 G2L["83"]["TextWrapped"] = false; -- 🔴 DELTA: NO WRAPPING
-G2L["83"]["Position"] = UDim2.new(0.0312, 0, 0, 0); 
+G2L["83"]["Position"] = UDim2.new(0, 60, 0, 0); 
 G2L["83"]["Size"] = UDim2.new(1, -70, 1, 0); -- Fills width minus the scrollbar
 G2L["83"]["AutomaticSize"] = Enum.AutomaticSize.XY; 
 G2L["83"]["Text"] = [[]];
 
 -- [[ 4. LINE NUMBERS ]] --
-G2L["87"]["TextScaled"] = true;
 G2L["87"] = Instance.new("TextLabel", G2L["82"]);
 G2L["87"]["Name"] = [[Lines]];
 G2L["87"]["ZIndex"] = 2; 
@@ -1460,7 +1454,7 @@ G2L["8a"]["FillDirection"] = Enum.FillDirection.Horizontal;
 G2L["8a"]["SortOrder"] = Enum.SortOrder.LayoutOrder;  -- ✅ ADD THIS LINE
 
 G2L["8b"] = Instance.new("UICorner", G2L["89"]);
-G2L["8b"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["8b"]["CornerRadius"] = UDim.new(0, 16);
 
 
 
@@ -1500,7 +1494,7 @@ G2L["90"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["90"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["90"]["ZIndex"] = 11;
 G2L["90"]["BackgroundTransparency"] = 1;
-G2L["90"]["Size"] = UDim2.new(0.0177, 0, 0.0315, 0);
+G2L["90"]["Size"] = UDim2.new(0, 34, 0, 34);
 -- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Rename Button
 G2L["90"]["LayoutOrder"] = -2;  -- Rename
 G2L["90"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1529,7 +1523,7 @@ G2L["92"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["92"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["92"]["ZIndex"] = 11;
 G2L["92"]["BackgroundTransparency"] = 1;
-G2L["92"]["Size"] = UDim2.new(0.0177, 0, 0.0315, 0);
+G2L["92"]["Size"] = UDim2.new(0, 34, 0, 34);
 -- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Paste Button
 G2L["92"]["LayoutOrder"] = -1;  -- Paste
 G2L["92"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1558,7 +1552,7 @@ G2L["94"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["94"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["94"]["ZIndex"] = 11;
 G2L["94"]["BackgroundTransparency"] = 1;
-G2L["94"]["Size"] = UDim2.new(0.0177, 0, 0.0315, 0);
+G2L["94"]["Size"] = UDim2.new(0, 34, 0, 34);
 -- StarterGui.ScreenGui.Main.Pages.Editor.Panel.ExecuteClipboard Button
 G2L["94"]["LayoutOrder"] = 0;   -- ExecuteClipboard
 G2L["94"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1587,7 +1581,7 @@ G2L["96"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["96"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["96"]["ZIndex"] = 11;
 G2L["96"]["BackgroundTransparency"] = 1;
-G2L["96"]["Size"] = UDim2.new(0.0177, 0, 0.0315, 0);
+G2L["96"]["Size"] = UDim2.new(0, 34, 0, 34);
 -- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Execute Button (RIGHTMOST)
 G2L["96"]["LayoutOrder"] = 2;   -- Execute (rightmost)
 G2L["96"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1616,7 +1610,7 @@ G2L["98"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["98"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["98"]["ZIndex"] = 11;
 G2L["98"]["BackgroundTransparency"] = 1;
-G2L["98"]["Size"] = UDim2.new(0.0177, 0, 0.0315, 0);
+G2L["98"]["Size"] = UDim2.new(0, 34, 0, 34);
 -- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Save/Bookmark Button (LEFTMOST)
 G2L["98"]["LayoutOrder"] = -5;  -- Save (leftmost)
 G2L["98"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1645,7 +1639,7 @@ G2L["9a"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["9a"]["FontFace"] = Font.new([[rbxasset://fonts/families/SourceSansPro.json]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["9a"]["ZIndex"] = 11;
 G2L["9a"]["BackgroundTransparency"] = 1;
-G2L["9a"]["Size"] = UDim2.new(0.0177, 0, 0.0315, 0);
+G2L["9a"]["Size"] = UDim2.new(0, 34, 0, 34);
 -- StarterGui.ScreenGui.Main.Pages.Editor.Panel.Delete Button 
 G2L["9a"]["LayoutOrder"] = -4;  -- Delete
 G2L["9a"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
@@ -1703,7 +1697,7 @@ G2L["9e"]["BackgroundTransparency"] = 0.6;
 -- StarterGui.ScreenGui.Main.Pages.Search.Scripts.UICorner1
 G2L["9f"] = Instance.new("UICorner", G2L["9e"]);
 G2L["9f"]["Name"] = [[UICorner1]];
-G2L["9f"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["9f"]["CornerRadius"] = UDim.new(0, 16);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Search.Scripts.UIStroke1
@@ -1722,10 +1716,10 @@ G2L["a1"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 -- StarterGui.ScreenGui.Main.Pages.Search.Scripts.UIPadding
 G2L["a2"] = Instance.new("UIPadding", G2L["9e"]);
-G2L["a2"]["PaddingTop"] = UDim.new(0.0111, 0);
-G2L["a2"]["PaddingRight"] = UDim.new(0.013, 0);
-G2L["a2"]["PaddingLeft"] = UDim.new(0.013, 0);
-G2L["a2"]["PaddingBottom"] = UDim.new(0.0111, 0);
+G2L["a2"]["PaddingTop"] = UDim.new(0, 12);
+G2L["a2"]["PaddingRight"] = UDim.new(0, 14);
+G2L["a2"]["PaddingLeft"] = UDim.new(0, 14);
+G2L["a2"]["PaddingBottom"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Search.TextBox
@@ -1738,7 +1732,7 @@ G2L["a3"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 35);
 G2L["a3"]["FontFace"] = Font.new([[rbxassetid://16658246179]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["a3"]["ClearTextOnFocus"] = false;
 G2L["a3"]["PlaceholderText"] = [[Search]];
-G2L["a3"]["Size"] = UDim2.new(0.3333, 0, 0.0417, 0);
+G2L["a3"]["Size"] = UDim2.new(0, 640, 0, 45);
 G2L["a3"]["Position"] = UDim2.new(0, 0, 0.00368, 0);
 G2L["a3"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["a3"]["Text"] = [[]];
@@ -1790,8 +1784,8 @@ G2L["a5"]["Name"] = [[UIStroke1]];
 
 -- StarterGui.ScreenGui.Main.Pages.Search.UIPadding
 G2L["a6"] = Instance.new("UIPadding", G2L["9c"]);
-G2L["a6"]["PaddingRight"] = UDim.new(0.0019, 0);
-G2L["a6"]["PaddingLeft"] = UDim.new(0.0019, 0);
+G2L["a6"]["PaddingRight"] = UDim.new(0, 2);
+G2L["a6"]["PaddingLeft"] = UDim.new(0, 2);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Saved
@@ -1831,7 +1825,7 @@ G2L["a9"]["BackgroundTransparency"] = 0.6;
 -- StarterGui.ScreenGui.Main.Pages.Saved.Scripts.UICorner1
 G2L["aa"] = Instance.new("UICorner", G2L["a9"]);
 G2L["aa"]["Name"] = [[UICorner1]];
-G2L["aa"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["aa"]["CornerRadius"] = UDim.new(0, 16);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Saved.Scripts.UIStroke1
@@ -1850,10 +1844,10 @@ G2L["ac"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 -- StarterGui.ScreenGui.Main.Pages.Saved.Scripts.UIPadding
 G2L["ad"] = Instance.new("UIPadding", G2L["a9"]);
-G2L["ad"]["PaddingTop"] = UDim.new(0.0111, 0);
-G2L["ad"]["PaddingRight"] = UDim.new(0.013, 0);
-G2L["ad"]["PaddingLeft"] = UDim.new(0.013, 0);
-G2L["ad"]["PaddingBottom"] = UDim.new(0.0111, 0);
+G2L["ad"]["PaddingTop"] = UDim.new(0, 12);
+G2L["ad"]["PaddingRight"] = UDim.new(0, 14);
+G2L["ad"]["PaddingLeft"] = UDim.new(0, 14);
+G2L["ad"]["PaddingBottom"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Saved.TextBox
@@ -1866,7 +1860,7 @@ G2L["ae"]["BackgroundColor3"] = Color3.fromRGB(25, 25, 35);
 G2L["ae"]["FontFace"] = Font.new([[rbxassetid://16658246179]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["ae"]["ClearTextOnFocus"] = false;
 G2L["ae"]["PlaceholderText"] = [[Search]];
-G2L["ae"]["Size"] = UDim2.new(0.3333, 0, 0.0417, 0);
+G2L["ae"]["Size"] = UDim2.new(0, 640, 0, 45);
 G2L["ae"]["Position"] = UDim2.new(0, 0, 0.00368, 0);
 G2L["ae"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["ae"]["Text"] = [[]];
@@ -1889,13 +1883,13 @@ G2L["b0"]["Name"] = [[UIStroke1]];
 
 -- StarterGui.ScreenGui.Main.Pages.Saved.UIPadding
 G2L["b1"] = Instance.new("UIPadding", G2L["a7"]);
-G2L["b1"]["PaddingRight"] = UDim.new(0.0019, 0);
-G2L["b1"]["PaddingLeft"] = UDim.new(0.0019, 0);
+G2L["b1"]["PaddingRight"] = UDim.new(0, 2);
+G2L["b1"]["PaddingLeft"] = UDim.new(0, 2);
 
 
 -- StarterGui.ScreenGui.Main.Pages.UIPadding
 G2L["b2"] = Instance.new("UIPadding", G2L["78"]);
-G2L["b2"]["PaddingRight"] = UDim.new(0.0111, 0);
+G2L["b2"]["PaddingRight"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home
@@ -1923,7 +1917,7 @@ G2L["b5"] = Instance.new("Frame", G2L["b3"]);
 G2L["b5"]["BorderSizePixel"] = 0;
 G2L["b5"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["b5"]["AnchorPoint"] = Vector2.new(1, 1);
-G2L["b5"]["Size"] = UDim2.new(0.0521, 0, 0.0926, 0);
+G2L["b5"]["Size"] = UDim2.new(0, 100, 0, 100);
 G2L["b5"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["b5"]["Name"] = [[Features]];
 G2L["b5"]["BackgroundTransparency"] = 1;
@@ -1942,7 +1936,7 @@ G2L["b6"]["Name"] = [[RScript]];
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.UICorner
 G2L["b7"] = Instance.new("UICorner", G2L["b6"]);
-G2L["b7"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["b7"]["CornerRadius"] = UDim.new(0, 16);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.UIStroke
@@ -1985,7 +1979,7 @@ G2L["ba"]["Position"] = UDim2.new(0, 0, -0, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Title.TextLabel.UIPadding
 G2L["bb"] = Instance.new("UIPadding", G2L["ba"]);
-G2L["bb"]["PaddingLeft"] = UDim.new(0.0139, 0);
+G2L["bb"]["PaddingLeft"] = UDim.new(0, 15);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Title.UIListLayout
@@ -2017,12 +2011,12 @@ G2L["bd"]["Position"] = UDim2.new(0, 0, 0.5, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Title.TextLabel1.UIPadding
 G2L["be"] = Instance.new("UIPadding", G2L["bd"]);
-G2L["be"]["PaddingLeft"] = UDim.new(0.0139, 0);
+G2L["be"]["PaddingLeft"] = UDim.new(0, 15);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Title.UIPadding
 G2L["bf"] = Instance.new("UIPadding", G2L["b9"]);
-G2L["bf"]["PaddingTop"] = UDim.new(0.0046, 0);
+G2L["bf"]["PaddingTop"] = UDim.new(0, 5);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.UIListLayout
@@ -2055,7 +2049,7 @@ G2L["c3"]["Transparency"] = NumberSequence.new{NumberSequenceKeypoint.new(0.000,
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Misc.Fade.UICorner
 G2L["c4"] = Instance.new("UICorner", G2L["c2"]);
-G2L["c4"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["c4"]["CornerRadius"] = UDim.new(0, 16);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Lists
@@ -2074,7 +2068,6 @@ G2L["c5"]["BackgroundTransparency"] = 1;
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Lists.A
-G2L["c6"]["TextScaled"] = true;
 G2L["c6"] = Instance.new("TextLabel", G2L["c5"]);
 G2L["c6"]["BorderSizePixel"] = 0;
 G2L["c6"]["TextSize"] = 14;
@@ -2105,7 +2098,7 @@ G2L["c8"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Lists.A.UIPadding
 G2L["c9"] = Instance.new("UIPadding", G2L["c6"]);
-G2L["c9"]["PaddingLeft"] = UDim.new(0.0111, 0);
+G2L["c9"]["PaddingLeft"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Lists.UIListLayout
@@ -2116,10 +2109,10 @@ G2L["ca"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.RScript.Lists.UIPadding
 G2L["cb"] = Instance.new("UIPadding", G2L["c5"]);
-G2L["cb"]["PaddingTop"] = UDim.new(0.0046, 0);
-G2L["cb"]["PaddingRight"] = UDim.new(0.0111, 0);
-G2L["cb"]["PaddingLeft"] = UDim.new(0.0111, 0);
-G2L["cb"]["PaddingBottom"] = UDim.new(0.0222, 0);
+G2L["cb"]["PaddingTop"] = UDim.new(0, 5);
+G2L["cb"]["PaddingRight"] = UDim.new(0, 12);
+G2L["cb"]["PaddingLeft"] = UDim.new(0, 12);
+G2L["cb"]["PaddingBottom"] = UDim.new(0, 24);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Features.UIPageLayout
@@ -2131,14 +2124,14 @@ G2L["cc"]["Padding"] = UDim.new(1, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Home.UIPadding
 G2L["cd"] = Instance.new("UIPadding", G2L["b3"]);
-G2L["cd"]["PaddingTop"] = UDim.new(0.0111, 0);
+G2L["cd"]["PaddingTop"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Key
 G2L["ce"] = Instance.new("Frame", G2L["b3"]);
 G2L["ce"]["BorderSizePixel"] = 0;
 G2L["ce"]["BackgroundColor3"] = Color3.fromRGB(20, 20, 25);
-G2L["ce"]["Size"] = UDim2.new(0.3271, 0, 0, 0);
+G2L["ce"]["Size"] = UDim2.new(0, 628, 0, -25);
 G2L["ce"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["ce"]["Name"] = [[Key]];
 G2L["ce"]["LayoutOrder"] = -1;
@@ -2175,20 +2168,20 @@ G2L["d0"]["Position"] = UDim2.new(0, 0, 0, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Key.KeyText.UIPadding
 G2L["d1"] = Instance.new("UIPadding", G2L["d0"]);
-G2L["d1"]["PaddingLeft"] = UDim.new(0.0139, 0);
+G2L["d1"]["PaddingLeft"] = UDim.new(0, 15);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Key.UIPadding
 G2L["d2"] = Instance.new("UIPadding", G2L["ce"]);
-G2L["d2"]["PaddingTop"] = UDim.new(0.0111, 0);
-G2L["d2"]["PaddingRight"] = UDim.new(0.0111, 0);
-G2L["d2"]["PaddingLeft"] = UDim.new(0.0111, 0);
-G2L["d2"]["PaddingBottom"] = UDim.new(0.0111, 0);
+G2L["d2"]["PaddingTop"] = UDim.new(0, 12);
+G2L["d2"]["PaddingRight"] = UDim.new(0, 12);
+G2L["d2"]["PaddingLeft"] = UDim.new(0, 12);
+G2L["d2"]["PaddingBottom"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Key.UICorner
 G2L["d3"] = Instance.new("UICorner", G2L["ce"]);
-G2L["d3"]["CornerRadius"] = UDim.new(0.16, 0);
+G2L["d3"]["CornerRadius"] = UDim.new(0, 16);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Key.UIStroke
@@ -2218,7 +2211,7 @@ G2L["d5"]["Position"] = UDim2.new(0, 0, 0.33333, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Key.Duration.UIPadding
 G2L["d6"] = Instance.new("UIPadding", G2L["d5"]);
-G2L["d6"]["PaddingLeft"] = UDim.new(0.0139, 0);
+G2L["d6"]["PaddingLeft"] = UDim.new(0, 15);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Home.Key.Folder
@@ -2239,7 +2232,7 @@ G2L["d8"]["Size"] = UDim2.new(1, 24, 1, 24);
 G2L["d8"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["d8"]["BackgroundTransparency"] = 1;
 G2L["d8"]["Name"] = [[Background]];
-G2L["d8"]["Position"] = UDim2.new(-0.0063, 0, -0.0111, 0);
+G2L["d8"]["Position"] = UDim2.new(0, -12, 0, -12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings
@@ -2279,7 +2272,7 @@ G2L["db"]["BackgroundTransparency"] = 0.6;
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UICorner1
 G2L["dc"] = Instance.new("UICorner", G2L["db"]);
 G2L["dc"]["Name"] = [[UICorner1]];
-G2L["dc"]["CornerRadius"] = UDim.new(0.24, 0);
+G2L["dc"]["CornerRadius"] = UDim.new(0, 24);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UIStroke1
@@ -2298,10 +2291,10 @@ G2L["de"]["SortOrder"] = Enum.SortOrder.LayoutOrder;
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UIPadding
 G2L["df"] = Instance.new("UIPadding", G2L["db"]);
-G2L["df"]["PaddingTop"] = UDim.new(0.0111, 0);
-G2L["df"]["PaddingRight"] = UDim.new(0.013, 0);
-G2L["df"]["PaddingLeft"] = UDim.new(0.013, 0);
-G2L["df"]["PaddingBottom"] = UDim.new(0.0111, 0);
+G2L["df"]["PaddingTop"] = UDim.new(0, 12);
+G2L["df"]["PaddingRight"] = UDim.new(0, 14);
+G2L["df"]["PaddingLeft"] = UDim.new(0, 14);
+G2L["df"]["PaddingBottom"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.AFK
@@ -2317,7 +2310,7 @@ G2L["e0"]["Name"] = [[AFK]];
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.AFK.UICorner
 G2L["e1"] = Instance.new("UICorner", G2L["e0"]);
-G2L["e1"]["CornerRadius"] = UDim.new(0.18, 0);
+G2L["e1"]["CornerRadius"] = UDim.new(0, 18);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.AFK.UIListLayout
@@ -2337,10 +2330,10 @@ G2L["e3"]["Color"] = Color3.fromRGB(160, 85, 255);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.AFK.UIPadding
 G2L["e4"] = Instance.new("UIPadding", G2L["e0"]);
-G2L["e4"]["PaddingTop"] = UDim.new(0.0056, 0);
-G2L["e4"]["PaddingRight"] = UDim.new(0.0111, 0);
-G2L["e4"]["PaddingLeft"] = UDim.new(0.0111, 0);
-G2L["e4"]["PaddingBottom"] = UDim.new(0.0056, 0);
+G2L["e4"]["PaddingTop"] = UDim.new(0, 6);
+G2L["e4"]["PaddingRight"] = UDim.new(0, 12);
+G2L["e4"]["PaddingLeft"] = UDim.new(0, 12);
+G2L["e4"]["PaddingBottom"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.AFK.Title
@@ -2383,7 +2376,6 @@ G2L["e7"]["CornerRadius"] = UDim.new(1, 0);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.AFK.Main.Button
-G2L["e8"]["TextScaled"] = true;
 G2L["e8"] = Instance.new("TextButton", G2L["e6"]);
 G2L["e8"]["BorderSizePixel"] = 0;
 G2L["e8"]["TextSize"] = 14;
@@ -2403,10 +2395,10 @@ G2L["e9"]["CornerRadius"] = UDim.new(1, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.AFK.Main.Button.UIPadding
 G2L["ea"] = Instance.new("UIPadding", G2L["e8"]);
-G2L["ea"]["PaddingTop"] = UDim.new(0.0028, 0);
-G2L["ea"]["PaddingRight"] = UDim.new(0.0028, 0);
-G2L["ea"]["PaddingLeft"] = UDim.new(0.0028, 0);
-G2L["ea"]["PaddingBottom"] = UDim.new(0.0028, 0);
+G2L["ea"]["PaddingTop"] = UDim.new(0, 3);
+G2L["ea"]["PaddingRight"] = UDim.new(0, 3);
+G2L["ea"]["PaddingLeft"] = UDim.new(0, 3);
+G2L["ea"]["PaddingBottom"] = UDim.new(0, 3);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.AFK.Main.Button.UIListLayout
@@ -2453,7 +2445,7 @@ G2L["ef"]["Name"] = [[UITransparency]];
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UITransparency.UICorner
 G2L["f0"] = Instance.new("UICorner", G2L["ef"]);
-G2L["f0"]["CornerRadius"] = UDim.new(0.18, 0);
+G2L["f0"]["CornerRadius"] = UDim.new(0, 18);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UITransparency.UIListLayout
@@ -2475,10 +2467,10 @@ G2L["f2"]["Color"] = Color3.fromRGB(160, 85, 255);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UITransparency.UIPadding
 G2L["f3"] = Instance.new("UIPadding", G2L["ef"]);
-G2L["f3"]["PaddingTop"] = UDim.new(0.0056, 0);
-G2L["f3"]["PaddingRight"] = UDim.new(0.0111, 0);
-G2L["f3"]["PaddingLeft"] = UDim.new(0.0111, 0);
-G2L["f3"]["PaddingBottom"] = UDim.new(0.0056, 0);
+G2L["f3"]["PaddingTop"] = UDim.new(0, 6);
+G2L["f3"]["PaddingRight"] = UDim.new(0, 12);
+G2L["f3"]["PaddingLeft"] = UDim.new(0, 12);
+G2L["f3"]["PaddingBottom"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UITransparency.Title
@@ -2536,7 +2528,6 @@ G2L["f8"]["CornerRadius"] = UDim.new(0.3, 0);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UITransparency.Main.Line.Interact
-G2L["f9"]["TextScaled"] = true;
 G2L["f9"] = Instance.new("TextButton", G2L["f7"]);
 G2L["f9"]["BorderSizePixel"] = 0;
 G2L["f9"]["TextSize"] = 14;
@@ -2554,7 +2545,7 @@ G2L["f9"]["Position"] = UDim2.new(0, 0, 0.5, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UITransparency.Main.Line.Interact.UICorner
 G2L["fa"] = Instance.new("UICorner", G2L["f9"]);
-G2L["fa"]["CornerRadius"] = UDim.new(0.04, 0);
+G2L["fa"]["CornerRadius"] = UDim.new(0, 4);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UITransparency.Main.Line.Percentage
@@ -2580,8 +2571,8 @@ G2L["fd"]["CornerRadius"] = UDim.new(0.3, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Scripts.UITransparency.Main.UIPadding
 G2L["fe"] = Instance.new("UIPadding", G2L["f5"]);
-G2L["fe"]["PaddingRight"] = UDim.new(0.0046, 0);
-G2L["fe"]["PaddingLeft"] = UDim.new(0.0046, 0);
+G2L["fe"]["PaddingRight"] = UDim.new(0, 5);
+G2L["fe"]["PaddingLeft"] = UDim.new(0, 5);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.TextBox
@@ -2595,7 +2586,7 @@ G2L["ff"]["BackgroundColor3"] = Color3.fromRGB(44, 46, 54);
 G2L["ff"]["FontFace"] = Font.new([[rbxassetid://16658246179]], Enum.FontWeight.Regular, Enum.FontStyle.Normal);
 G2L["ff"]["ClearTextOnFocus"] = false;
 G2L["ff"]["PlaceholderText"] = [[Search]];
-G2L["ff"]["Size"] = UDim2.new(0.3333, 0, 0.037, 0);
+G2L["ff"]["Size"] = UDim2.new(0, 640, 0, 40);
 G2L["ff"]["Position"] = UDim2.new(0, 0, 0.00368, 0);
 G2L["ff"]["BorderColor3"] = Color3.fromRGB(0, 0, 0);
 G2L["ff"]["Text"] = [[]];
@@ -2618,8 +2609,8 @@ G2L["101"]["Name"] = [[UIStroke1]];
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.UIPadding
 G2L["102"] = Instance.new("UIPadding", G2L["d9"]);
-G2L["102"]["PaddingRight"] = UDim.new(0.0019, 0);
-G2L["102"]["PaddingLeft"] = UDim.new(0.0019, 0);
+G2L["102"]["PaddingRight"] = UDim.new(0, 2);
+G2L["102"]["PaddingLeft"] = UDim.new(0, 2);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc
@@ -2702,7 +2693,7 @@ G2L["10c"]["ZIndex"] = 11;
 G2L["10c"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
 G2L["10c"]["AnchorPoint"] = Vector2.new(0.5, 0.5);
 G2L["10c"]["Image"] = [[rbxassetid://11226149359]];
-G2L["10c"]["Size"] = UDim2.new(0.0078, 0, 0.0139, 0);
+G2L["10c"]["Size"] = UDim2.new(0, 15, 0, 15);
 G2L["10c"]["BorderColor3"] = Color3.fromRGB(28, 43, 54);
 G2L["10c"]["BackgroundTransparency"] = 1;
 G2L["10c"]["Name"] = [[Cursor]];
@@ -2718,14 +2709,14 @@ G2L["10d"] = Instance.new("UIAspectRatioConstraint", G2L["10b"]);
 G2L["10e"] = Instance.new("Frame", G2L["104"]);
 G2L["10e"]["ZIndex"] = 11;
 G2L["10e"]["BackgroundColor3"] = Color3.fromRGB(255, 255, 255);
-G2L["10e"]["Size"] = UDim2.new(0.0474, 0, 0.0843, 0);
+G2L["10e"]["Size"] = UDim2.new(0, 91, 0, 91);
 G2L["10e"]["Position"] = UDim2.new(0.71819, 0, 0.39056, 0);
 G2L["10e"]["BorderColor3"] = Color3.fromRGB(28, 43, 54);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.Frame.UICorner
 G2L["10f"] = Instance.new("UICorner", G2L["10e"]);
-G2L["10f"]["CornerRadius"] = UDim.new(0.24, 0);
+G2L["10f"]["CornerRadius"] = UDim.new(0, 24);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.Frame.TextLabel
@@ -2748,7 +2739,7 @@ G2L["110"]["Position"] = UDim2.new(-0.6044, 0, -0.63736, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.UICorner
 G2L["111"] = Instance.new("UICorner", G2L["104"]);
-G2L["111"]["CornerRadius"] = UDim.new(0.24, 0);
+G2L["111"]["CornerRadius"] = UDim.new(0, 24);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.UIStroke
@@ -2760,8 +2751,8 @@ G2L["112"]["Color"] = Color3.fromRGB(232, 229, 255);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.UIPadding
 G2L["113"] = Instance.new("UIPadding", G2L["104"]);
-G2L["113"]["PaddingTop"] = UDim.new(0.0111, 0);
-G2L["113"]["PaddingBottom"] = UDim.new(0.0111, 0);
+G2L["113"]["PaddingTop"] = UDim.new(0, 12);
+G2L["113"]["PaddingBottom"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.Close
@@ -2783,7 +2774,7 @@ G2L["114"]["Position"] = UDim2.new(0.945, 0, 0.075, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.Close.UICorner
 G2L["115"] = Instance.new("UICorner", G2L["114"]);
-G2L["115"]["CornerRadius"] = UDim.new(0.18, 0);
+G2L["115"]["CornerRadius"] = UDim.new(0, 18);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.Close.ImageLabel
@@ -2829,7 +2820,7 @@ G2L["119"]["Position"] = UDim2.new(0.79131, 0, 0.88406, 0);
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.Confirm.UICorner
 G2L["11a"] = Instance.new("UICorner", G2L["119"]);
-G2L["11a"]["CornerRadius"] = UDim.new(0.18, 0);
+G2L["11a"]["CornerRadius"] = UDim.new(0, 18);
 
 
 -- StarterGui.ScreenGui.Main.Pages.Settings.Misc.ColorEditor.Confirm.UIAspectRatioConstraint1
@@ -3004,7 +2995,7 @@ G2L["13f"]["Name"] = [[Main]];
 
 -- StarterGui.ScreenGui.Popups.Main.UICorner
 G2L["140"] = Instance.new("UICorner", G2L["13f"]);
-G2L["140"]["CornerRadius"] = UDim.new(0.12, 0);
+G2L["140"]["CornerRadius"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Popups.Main.UIListLayout
@@ -3034,7 +3025,7 @@ G2L["142"]["Position"] = UDim2.new(0.2195, 0, 0, 0);
 
 -- StarterGui.ScreenGui.Popups.Main.UIPadding
 G2L["143"] = Instance.new("UIPadding", G2L["13f"]);
-G2L["143"]["PaddingTop"] = UDim.new(0.0111, 0);
+G2L["143"]["PaddingTop"] = UDim.new(0, 12);
 
 
 -- StarterGui.ScreenGui.Popups.Main.Input
@@ -3067,7 +3058,7 @@ G2L["145"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- StarterGui.ScreenGui.Popups.Main.Input.UICorner
 G2L["146"] = Instance.new("UICorner", G2L["144"]);
-G2L["146"]["CornerRadius"] = UDim.new(0.06, 0);
+G2L["146"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.Popups.Main.Button
@@ -3091,7 +3082,6 @@ G2L["148"]["FillDirection"] = Enum.FillDirection.Horizontal;
 
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Cancel
-G2L["149"]["TextScaled"] = true;
 G2L["149"] = Instance.new("TextButton", G2L["147"]);
 G2L["149"]["BorderSizePixel"] = 0;
 G2L["149"]["TextSize"] = 14;
@@ -3108,7 +3098,7 @@ G2L["149"]["Position"] = UDim2.new(0.22715, 0, 0.50288, 0);
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Cancel.UICorner
 G2L["14a"] = Instance.new("UICorner", G2L["149"]);
-G2L["14a"]["CornerRadius"] = UDim.new(0.06, 0);
+G2L["14a"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Cancel.UIStroke
@@ -3121,12 +3111,11 @@ G2L["14b"]["ApplyStrokeMode"] = Enum.ApplyStrokeMode.Border;
 
 -- StarterGui.ScreenGui.Popups.Main.Button.UIPadding
 G2L["14c"] = Instance.new("UIPadding", G2L["147"]);
-G2L["14c"]["PaddingRight"] = UDim.new(0.0167, 0);
-G2L["14c"]["PaddingLeft"] = UDim.new(0.0167, 0);
+G2L["14c"]["PaddingRight"] = UDim.new(0, 18);
+G2L["14c"]["PaddingLeft"] = UDim.new(0, 18);
 
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Confirm
-G2L["14d"]["TextScaled"] = true;
 G2L["14d"] = Instance.new("TextButton", G2L["147"]);
 G2L["14d"]["BorderSizePixel"] = 0;
 G2L["14d"]["TextSize"] = 14;
@@ -3143,7 +3132,7 @@ G2L["14d"]["Position"] = UDim2.new(0.22715, 0, 0.50288, 0);
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Confirm.UICorner
 G2L["14e"] = Instance.new("UICorner", G2L["14d"]);
-G2L["14e"]["CornerRadius"] = UDim.new(0.06, 0);
+G2L["14e"]["CornerRadius"] = UDim.new(0, 6);
 
 
 -- StarterGui.ScreenGui.Popups.Main.Button.Confirm.UIStroke
@@ -8072,5 +8061,48 @@ end  -- 🔴 4TH END (closes the outer block, probably "do" from line ~2640)
 		UpdateSize();
 		--print("✅ UI Scaled")
 	end);
+
+-- ✅ VIEWPORT-BASED AUTO-SCALING (RESPONSIVE FIX)
+task.spawn(function()
+    local function applyViewportScaling()
+        local viewport = workspace.CurrentCamera.ViewportSize
+        local baseWidth = 1920  -- Reference resolution
+        local baseHeight = 1080
+        
+        -- Calculate scale factor (use smaller dimension to fit)
+        local scaleX = viewport.X / baseWidth
+        local scaleY = viewport.Y / baseHeight
+        local scaleFactor = math.min(scaleX, scaleY, 1) -- Don't scale up, only down
+        
+        -- Apply to Main frame if it exists
+        if script.Parent:FindFirstChild("Main") then
+            local Main = script.Parent.Main
+            -- Scale the entire frame
+            local originalSize = UDim2.new(1, 0, 1, 0)
+            Main.Size = UDim2.new(scaleFactor, 0, scaleFactor, 0)
+            Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+            Main.AnchorPoint = Vector2.new(0.5, 0.5)
+        end
+        
+        -- Apply to Open button if it exists  
+        if script.Parent:FindFirstChild("Open") then
+            local OpenBtn = script.Parent.Open
+            -- Keep button at reasonable size
+            local btnScale = math.max(scaleFactor, 0.7) -- Don't shrink button too much
+            OpenBtn.Size = UDim2.new(0.06821 * btnScale, 0, 0.12755 * btnScale, 0)
+        end
+    end
+    
+    -- Apply on load
+    task.wait(0.5)
+    applyViewportScaling()
+    
+    -- Reapply when viewport changes
+    workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(function()
+        task.wait(0.1)
+        applyViewportScaling()
+    end)
+end)
+
 end;
 C_2()
